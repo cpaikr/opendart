@@ -1,0 +1,105 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify release input
+        run: npm run verify:opendart
+
+      - name: Detect interrupted draft release
+        id: draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(jq -r '.["."]' .release-please-manifest.json)"
+          tag_name="v${version}"
+          release="$(gh release view "${tag_name}" --json isDraft,targetCommitish 2>/dev/null || true)"
+          if test -n "${release}" && test "$(jq -r .isDraft <<<"${release}")" = true; then
+            echo "recovering=true" >> "${GITHUB_OUTPUT}"
+            echo "tag_name=${tag_name}" >> "${GITHUB_OUTPUT}"
+            echo "sha=$(jq -r .targetCommitish <<<"${release}")" >> "${GITHUB_OUTPUT}"
+          else
+            echo "recovering=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Run Release Please
+        if: ${{ steps.draft.outputs.recovering != 'true' }}
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check out released commit
+        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ steps.release.outputs.sha || steps.draft.outputs.sha }}
+          persist-credentials: false
+
+      - name: Prepare release assets
+        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}
+        run: |
+          mkdir release-assets
+          cp openapi/generated/openapi.bundle.yaml release-assets/openapi.bundle.yaml
+          cd release-assets
+          sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256
+
+      - name: Upload release assets
+        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.release.outputs.tag_name || steps.draft.outputs.tag_name }}
+        run: |
+          for asset_path in \
+            release-assets/openapi.bundle.yaml \
+            release-assets/openapi.bundle.yaml.sha256
+          do
+            asset_name="${asset_path##*/}"
+            if gh release view "${TAG_NAME}" --json assets --jq '.assets[].name' | grep -Fqx "${asset_name}"; then
+              mkdir -p existing-assets
+              gh release download "${TAG_NAME}" --pattern "${asset_name}" --dir existing-assets
+              if ! cmp -s "${asset_path}" "existing-assets/${asset_name}"; then
+                echo "existing release asset differs: ${asset_name}" >&2
+                exit 1
+              fi
+            else
+              gh release upload "${TAG_NAME}" "${asset_path}"
+            fi
+          done
+
+      - name: Publish immutable release
+        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.release.outputs.tag_name || steps.draft.outputs.tag_name }}
+        run: gh release edit "${TAG_NAME}" --draft=false --latest
