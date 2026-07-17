@@ -23,8 +23,9 @@ credential-free [guide drift](guide-drift.md).
 ## Constraints
 
 - Derive the matrix from every physical operation in the canonical OpenAPI
-  document. JSON, XML, and binary paths are separate cases, and each operation
-  has exactly one reviewed primary request.
+  document. A physical operation is one path, method, and representation tuple;
+  JSON, XML, and binary variants are therefore separate operations, each with
+  exactly one reviewed primary case.
 - Use OpenAPI for enumeration, routing, serialization, and structural
   validation. Keep public inputs, narrowly scoped discovery dependencies, and
   stable semantic assertions in typed Go cases rather than the released
@@ -66,8 +67,8 @@ credential-free [guide drift](guide-drift.md).
 
 ## Acceptance criteria
 
-- Every physical operation has exactly one reviewed primary case in every
-  scheduled matrix.
+- Every path, method, and representation tuple has exactly one reviewed primary
+  case in every scheduled matrix.
 - Each passing case proves representation and meaningful content, not only
   transport success.
 - Discovery remains explicit, budgeted, reusable, and distinguishable from

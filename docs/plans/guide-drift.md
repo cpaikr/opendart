@@ -65,5 +65,6 @@ This credential-free work is independent of authenticated
 ## Next action
 
 Complete the generation and semantic-comparison portion of the
-[Go tooling migration](go-tooling-migration.md), then implement the offline
-drift command before adding GitHub write permissions or scheduling.
+[Go tooling migration](go-tooling-migration.md), then implement the
+credential-free drift command and its offline fixtures before adding GitHub
+write permissions or scheduling.
