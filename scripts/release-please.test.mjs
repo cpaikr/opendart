@@ -23,10 +23,11 @@ async function readReleaseFiles() {
   };
 }
 
-test("configures one simple root release beginning before v0.1.0", async () => {
+test("configures one simple root release with a SemVer manifest", async () => {
   const { config, manifest } = await readReleaseFiles();
 
-  assert.deepEqual(manifest, { ".": "0.0.0" });
+  assert.deepEqual(Object.keys(manifest), ["."]);
+  assert.match(manifest["."], /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/);
   assert.deepEqual(Object.keys(config.packages), ["."]);
   assert.equal(config.packages["."].releaseType, undefined);
   assert.equal(config.packages["."]["release-type"], "simple");
