@@ -1,7 +1,9 @@
 # OpenDART API Specification
 
-This directory contains a source-backed OpenAPI 3.2.0 description of every API
-operation published in the six official OpenDART development-guide groups.
+This unofficial, community-maintained repository contains a source-backed
+OpenAPI 3.2.0 description of every API operation published in the six official
+OpenDART development-guide groups. It is not affiliated with or endorsed by
+the Financial Supervisory Service or OpenDART.
 
 ## Inventory
 
@@ -17,16 +19,19 @@ The source was checked on 2026-07-17 (Asia/Seoul). Each operation links to its
 official guide page and retains its group code, API ID, source descriptions,
 request table, reference tables, and verification date under `x-opendart`.
 
-## Files
+## Artifacts
 
-- [`openapi.yaml`](openapi.yaml) is the canonical multi-file entry point.
-- `paths/` contains one Path Item fragment per physical request URL.
-- `schemas/` contains one conservative response schema per logical endpoint.
-- `components/schemas.yaml` contains the shared status-code and observed XML-error
+- [`openapi/openapi.yaml`](openapi/openapi.yaml) is the canonical multi-file
+  entry point.
+- `openapi/paths/` contains one Path Item fragment per physical request URL.
+- `openapi/schemas/` contains one conservative response schema per logical endpoint.
+- `openapi/components/schemas.yaml` contains the shared status-code and observed XML-error
   definitions.
-- [`generated/openapi.bundle.yaml`](generated/openapi.bundle.yaml) is the
-  portable single-file bundle for external tools.
-- [`redocly.yaml`](redocly.yaml) contains strict linting rules.
+- [`openapi/generated/openapi.bundle.yaml`](openapi/generated/openapi.bundle.yaml)
+  is the stable, portable consumer artifact.
+- [`openapi/redocly.yaml`](openapi/redocly.yaml) contains strict linting rules.
+- [`docs/plans/specification.md`](docs/plans/specification.md) records completed
+  source-contract work and the pending authenticated probe.
 
 The fragments and bundle are generated from the official guide. Do not edit
 them by hand; update the extractor or its source-normalization rules instead.
@@ -92,11 +97,9 @@ catch-all response.
 
 ## Refresh and validation
 
-The tooling is isolated from future application technology under
-`tools/openapi/`. It requires Node.js `>=22.12.0` or `20.19.x`, with npm `>=10`:
+The tooling requires Node.js `>=22.12.0` or `20.19.x`, with npm `>=10`:
 
 ```sh
-cd tools/openapi
 npm ci --ignore-scripts
 npm run sync:opendart -- --checked-at YYYY-MM-DD
 npm run bundle:opendart
@@ -124,3 +127,23 @@ Refresh runs the catalog check and strict Redocly lint against a staging tree
 before publishing a complete catalog. Redocly also validates the committed
 multi-file description and bundle; verification proves the bundle matches a
 fresh build without rewriting it.
+
+## Provenance and releases
+
+Every operation records its official guide URL, group code, API ID, source
+tables, and check date under `x-opendart`. The specification is generated from
+those guide pages; committed fragments are reviewed artifacts, not independent
+claims about undocumented wire behavior.
+
+The portable bundle is the release interface. Reviewed releases should attach
+`openapi.bundle.yaml` and a SHA-256 checksum so consumers can pin an immutable
+version. No release has been published from this extracted repository yet.
+
+## Secrets and live probes
+
+Offline verification and source refreshes require no OpenDART API key. The
+multi-company probe is the only current credentialed command. Supply
+`OPENDART_API_KEY` through the process environment; never commit it, place it in
+arguments, or include authenticated URLs or raw response bodies in reports.
+The probe makes ten sequential requests without automatic retries and emits
+only a sanitized JSON observation.

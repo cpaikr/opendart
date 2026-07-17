@@ -5,11 +5,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const TOOL_DIR = dirname(fileURLToPath(import.meta.url));
-const SPEC_DIR = fileURLToPath(new URL("../../docs/opendart/", import.meta.url));
+const SPEC_DIR = fileURLToPath(new URL("../openapi/", import.meta.url));
 const ROOT = join(SPEC_DIR, "openapi.yaml");
 const CONFIG = join(SPEC_DIR, "redocly.yaml");
 const COMMITTED_BUNDLE = join(SPEC_DIR, "generated", "openapi.bundle.yaml");
-const REDOCLY = join(TOOL_DIR, "node_modules", "@redocly", "cli", "bin", "cli.js");
+const REDOCLY = fileURLToPath(
+  new URL("../node_modules/@redocly/cli/bin/cli.js", import.meta.url),
+);
 
 async function runRedocly(output) {
   await new Promise((resolve, reject) => {
@@ -37,7 +39,7 @@ async function runRedocly(output) {
 }
 
 async function main() {
-  const temporaryDirectory = await mkdtemp(join(tmpdir(), "dartdb-opendart-bundle-"));
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), "opendart-bundle-"));
   try {
     const temporaryBundle = join(temporaryDirectory, "openapi.bundle.yaml");
     await runRedocly(temporaryBundle);

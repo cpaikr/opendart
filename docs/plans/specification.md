@@ -10,8 +10,10 @@ separate from documented source facts.
 ## Authority and scope
 
 - The official OpenDART development guide is the source of truth.
-- The acceptance contract is
-  [`docs/research/opendart-spec-contract.md`](../research/opendart-spec-contract.md).
+- The extraction baseline was accepted against the consumer-owned
+  [`dartdb` specification contract](https://github.com/cpaikr/dartdb/blob/81093c36f0c68ae6aefa36bc0af5a66c403e0c52/docs/research/opendart-spec-contract.md).
+  This repository owns the external-source contract and does not mirror that
+  application-specific document.
 - The initial inventory is 85 logical endpoints across `DS001` through `DS006`.
 - Interactive test controls, page chrome, commented-out content, and transient
   API results are outside the persisted specification, except test-form values
@@ -45,6 +47,8 @@ separate from documented source facts.
 
 ## Current state
 
+- The specification, generator, offline validation, and reusable probe now live
+  in a standalone filtered-history repository with root-level package commands.
 - The official guide was checked on 2026-07-17 and all six groups were
   extracted: 85 logical endpoints and 167 physical request paths.
 - The generated catalog preserves 337 request-argument rows, 2,383
@@ -113,6 +117,10 @@ separate from documented source facts.
   A missing `OPENDART_API_KEY` is rejected before any request. The live
   authenticated matrix has not run because the key is not present in this
   process environment.
+- After repository extraction, `npm ci --ignore-scripts` and
+  `npm run verify:opendart` passed from the repository root with the portable
+  bundle unchanged at SHA-256
+  `f622a6a849207523fd1f675c7b681fa65fd0c019b4066b61009d863b13081f3f`.
 
 ## Next action
 

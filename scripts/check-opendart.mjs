@@ -7,7 +7,7 @@ import { parseArgs } from "node:util";
 import { parseDocument } from "yaml";
 
 const DEFAULT_ROOT = fileURLToPath(
-  new URL("../../docs/opendart/openapi.yaml", import.meta.url),
+  new URL("../openapi/openapi.yaml", import.meta.url),
 );
 const OPENAPI_VERSION = "3.2.0";
 const MULTI_COMPANY_OPERATIONS = new Set(["DS003-2019017", "DS003-2022002"]);
@@ -340,7 +340,7 @@ async function main() {
     "Generated-output marker must be a regular non-symlink file",
     { markerFile },
   );
-  assert(markerContent === "dartdb-opendart-spec-v1\n", "Generated-output marker changed", {
+  assert(markerContent === "opendart-spec-v1\n", "Generated-output marker changed", {
     markerFile,
   });
   const { value: root } = await yamlFile(rootFile);

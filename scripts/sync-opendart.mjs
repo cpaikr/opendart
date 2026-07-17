@@ -22,18 +22,18 @@ const GUIDE_ORIGIN = "https://opendart.fss.or.kr";
 const API_SERVER = `${GUIDE_ORIGIN}/api`;
 const OPENAPI_VERSION = "3.2.0";
 const DEFAULT_OUTPUT = fileURLToPath(
-  new URL("../../docs/opendart", import.meta.url),
+  new URL("../openapi", import.meta.url),
 );
-const REPOSITORY_ROOT = fileURLToPath(new URL("../../", import.meta.url));
+const REPOSITORY_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const CHECK_SCRIPT = fileURLToPath(new URL("./check-opendart.mjs", import.meta.url));
 const REDOCLY_CLI = fileURLToPath(
-  new URL("./node_modules/@redocly/cli/bin/cli.js", import.meta.url),
+  new URL("../node_modules/@redocly/cli/bin/cli.js", import.meta.url),
 );
 const REDOCLY_CONFIG = fileURLToPath(
-  new URL("../../docs/opendart/redocly.yaml", import.meta.url),
+  new URL("../openapi/redocly.yaml", import.meta.url),
 );
 const OUTPUT_MARKER = ".opendart-spec-output";
-const OUTPUT_MARKER_CONTENT = "dartdb-opendart-spec-v1\n";
+const OUTPUT_MARKER_CONTENT = "opendart-spec-v1\n";
 const MANAGED_OUTPUTS = [
   "paths",
   "schemas",
@@ -220,7 +220,7 @@ async function fetchHtml(url) {
       const response = await fetch(trustedUrl, {
         headers: {
           Accept: "text/html,application/xhtml+xml",
-          "User-Agent": "dartdb-opendart-spec/1.0",
+          "User-Agent": "opendart-spec/1.0",
         },
         redirect: "error",
         signal: AbortSignal.timeout(30_000),

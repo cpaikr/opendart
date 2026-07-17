@@ -129,7 +129,7 @@ async function observe(testCase, format, serialization, key, expectedIdentityVal
     response = await fetch(encodedQuery(testCase, format, serialization, key), {
       headers: {
         Accept: format === "json" ? "application/json" : "application/xml",
-        "User-Agent": "dartdb-opendart-serialization-probe/1.0",
+        "User-Agent": "opendart-serialization-probe/1.0",
       },
       redirect: "error",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
