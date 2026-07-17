@@ -1,0 +1,363 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  rcept_no:
+    description: |-
+      접수번호
+
+      접수번호(14자리)
+
+      ※ 공시뷰어 연결에 이용예시
+      - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 접수번호
+  corp_cls:
+    description: |-
+      법인구분
+
+      법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 법인구분
+  corp_code:
+    description: |-
+      고유번호
+
+      공시대상회사의 고유번호(8자리)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 고유번호
+  corp_name:
+    description: |-
+      회사명
+
+      공시대상회사명
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 회사명
+  stlm_dt:
+    description: |-
+      결산기준일
+
+      YYYY-MM-DD
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 결산기준일
+  group:
+    type: array
+    items:
+      type: object
+      properties:
+        nm:
+          description: |-
+            이름
+
+            홍길동
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 이름
+        fscl_year:
+          description: |-
+            사업연도
+
+            당기,전기,전전기
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사업연도
+        ofcps:
+          description: |-
+            직위
+
+            이사, 대표이사 등
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 직위
+        mendng_totamt:
+          description: |-
+            보수 총액
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 보수 총액
+        list:
+          type: array
+          items:
+            type: object
+            properties:
+              stk_bsd_pd_mendng_totamt_knd:
+                description: 보수총액 중 주식기준보상 지급액-종류
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 보수총액 중 주식기준보상 지급액-종류
+              stk_bsd_pd_mendng_totamt_qty:
+                description: |-
+                  보수총액 중 주식기준보상 지급액-수량
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 보수총액 중 주식기준보상 지급액-수량
+              stk_bsd_pd_mendng_totamt_amt:
+                description: |-
+                  보수총액 중 주식기준보상 지급액-금액
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 보수총액 중 주식기준보상 지급액-금액
+              stk_opt_exrcsbl_qty:
+                description: |-
+                  주식매수선택권 행사가능수량
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 주식매수선택권 행사가능수량
+              stk_opt_unexrcsbl_qty:
+                description: |-
+                  주식매수선택권 행사불가수량
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 주식매수선택권 행사불가수량
+              stk_opt_exrc_pr:
+                description: |-
+                  주식매수선택권 행사가격
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 주식매수선택권 행사가격
+              stk_opt_rmn_blce:
+                description: |-
+                  주식매수선택권 잔여금액
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 주식매수선택권 잔여금액
+              othr_stk_bsd_cmpn_unpyd_qty:
+                description: |-
+                  그 외 주식기준 보상 미지급수량
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 그 외 주식기준 보상 미지급수량
+              othr_stk_bsd_cmpn_mkt_vl:
+                description: |-
+                  그 외 주식기준 보상 시장가치
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 그 외 주식기준 보상 시장가치
+              rm:
+                description: 비고
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 비고
+            additionalProperties: true
+          description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+          x-opendart-normalization: source-derived-unverified
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics:
+    - code: result-source-icon-is-not-container
+      sourceIndex: 0
+      sourceIconClass: iconFile
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 4
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: stlm_dt
+      name: 결산기준일
+      description: YYYY-MM-DD
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: group
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 9
+      key: nm
+      name: 이름
+      description: 홍길동
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: fscl_year
+      name: 사업연도
+      description: 당기,전기,전전기
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: ofcps
+      name: 직위
+      description: 이사, 대표이사 등
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: mendng_totamt
+      name: 보수 총액
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: list
+      name: ""
+      description: ""
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 14
+      key: stk_bsd_pd_mendng_totamt_knd
+      name: 보수총액 중 주식기준보상 지급액-종류
+      description: ""
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: stk_bsd_pd_mendng_totamt_qty
+      name: 보수총액 중 주식기준보상 지급액-수량
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: stk_bsd_pd_mendng_totamt_amt
+      name: 보수총액 중 주식기준보상 지급액-금액
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: stk_opt_exrcsbl_qty
+      name: 주식매수선택권 행사가능수량
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: stk_opt_unexrcsbl_qty
+      name: 주식매수선택권 행사불가수량
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: stk_opt_exrc_pr
+      name: 주식매수선택권 행사가격
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: stk_opt_rmn_blce
+      name: 주식매수선택권 잔여금액
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: othr_stk_bsd_cmpn_unpyd_qty
+      name: 그 외 주식기준 보상 미지급수량
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: othr_stk_bsd_cmpn_mkt_vl
+      name: 그 외 주식기준 보상 시장가치
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: rm
+      name: 비고
+      description: ""
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field

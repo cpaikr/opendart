@@ -1,0 +1,194 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        sj_div:
+          description: 재무제표구분
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 재무제표구분
+        account_id:
+          description: |-
+            계정ID
+
+            계정 고유명칭
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 계정ID
+        account_nm:
+          description: 계정명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 계정명
+        bsns_de:
+          description: |-
+            기준일
+
+            적용 기준일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 기준일
+        label_kor:
+          description: 한글 출력명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 한글 출력명
+        label_eng:
+          description: 영문 출력명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 영문 출력명
+        data_tp:
+          description: |-
+            데이터 유형
+
+            ※ 데이타 유형설명
+
+            - text block : 제목
+            - Text : Text
+            - yyyy-mm-dd : Date
+            - X : Monetary Value
+            - (X): Monetary Value(Negative)
+            - X.XX : Decimalized Value
+            - Shares : Number of shares (주식 수)
+            - For each : 공시된 항목이 전후로 반복적으로 공시될 경우 사용
+            - 공란 : 입력 필요 없음
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 데이터 유형
+        ifrs_ref:
+          description: |-
+            IFRS Reference
+
+            IFRS Reference
+
+            ※ 출력예시
+            K-IFRS 1001 문단 54 (9),K-IFRS 1007 문단 45
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: IFRS Reference
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: sj_div
+      name: 재무제표구분
+      description: 재무제표구분
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: account_id
+      name: 계정ID
+      description: 계정 고유명칭
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: account_nm
+      name: 계정명
+      description: 계정명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: bsns_de
+      name: 기준일
+      description: 적용 기준일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: label_kor
+      name: 한글 출력명
+      description: 한글 출력명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: label_eng
+      name: 영문 출력명
+      description: 영문 출력명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: data_tp
+      name: 데이터 유형
+      description: |-
+        ※ 데이타 유형설명
+
+        - text block : 제목
+        - Text : Text
+        - yyyy-mm-dd : Date
+        - X : Monetary Value
+        - (X): Monetary Value(Negative)
+        - X.XX : Decimalized Value
+        - Shares : Number of shares (주식 수)
+        - For each : 공시된 항목이 전후로 반복적으로 공시될 경우 사용
+        - 공란 : 입력 필요 없음
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: ifrs_ref
+      name: IFRS Reference
+      description: |-
+        IFRS Reference
+
+        ※ 출력예시
+        K-IFRS 1001 문단 54 (9),K-IFRS 1007 문단 45
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

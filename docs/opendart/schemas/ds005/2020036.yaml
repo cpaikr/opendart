@@ -1,0 +1,185 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        corp_cls:
+          description: |-
+            법인구분
+
+            법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 법인구분
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: |-
+            회사명
+
+            공시대상회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        mngt_pcsp_dd:
+          description: 관리절차중단 결정일자
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 관리절차중단 결정일자
+        mngt_int:
+          description: 관리기관
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 관리기관
+        sp_rs:
+          description: 중단사유
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 중단사유
+        ft_ctp:
+          description: 향후대책
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 향후대책
+        cfd:
+          description: 확인일자
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 확인일자
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: mngt_pcsp_dd
+      name: 관리절차중단 결정일자
+      description: 관리절차중단 결정일자
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: mngt_int
+      name: 관리기관
+      description: 관리기관
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: sp_rs
+      name: 중단사유
+      description: 중단사유
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: ft_ctp
+      name: 향후대책
+      description: 향후대책
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: cfd
+      name: 확인일자
+      description: 확인일자
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

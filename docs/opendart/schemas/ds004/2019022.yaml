@@ -1,0 +1,242 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        rcept_dt:
+          description: |-
+            접수일자
+
+            공시 접수일자(YYYY-MM-DD)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수일자
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: 회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        repror:
+          description: |-
+            보고자
+
+            보고자명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 보고자
+        isu_exctv_rgist_at:
+          description: |-
+            발행 회사 관계 임원(등기여부)
+
+            등기임원, 비등기임원 등
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 발행 회사 관계 임원(등기여부)
+        isu_exctv_ofcps:
+          description: |-
+            발행 회사 관계 임원 직위
+
+            대표이사, 이사, 전무 등
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 발행 회사 관계 임원 직위
+        isu_main_shrholdr:
+          description: |-
+            발행 회사 관계 주요 주주
+
+            10%이상주주 등
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 발행 회사 관계 주요 주주
+        sp_stock_lmp_cnt:
+          description: |-
+            특정 증권 등 소유 수
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 특정 증권 등 소유 수
+        sp_stock_lmp_irds_cnt:
+          description: |-
+            특정 증권 등 소유 증감 수
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 특정 증권 등 소유 증감 수
+        sp_stock_lmp_rate:
+          description: |-
+            특정 증권 등 소유 비율
+
+            0.00
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 특정 증권 등 소유 비율
+        sp_stock_lmp_irds_rate:
+          description: |-
+            특정 증권 등 소유 증감 비율
+
+            0.00
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 특정 증권 등 소유 증감 비율
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: rcept_dt
+      name: 접수일자
+      description: 공시 접수일자(YYYY-MM-DD)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: repror
+      name: 보고자
+      description: 보고자명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: isu_exctv_rgist_at
+      name: 발행 회사 관계 임원(등기여부)
+      description: 등기임원, 비등기임원 등
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: isu_exctv_ofcps
+      name: 발행 회사 관계 임원 직위
+      description: 대표이사, 이사, 전무 등
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: isu_main_shrholdr
+      name: 발행 회사 관계 주요 주주
+      description: 10%이상주주 등
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: sp_stock_lmp_cnt
+      name: 특정 증권 등 소유 수
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: sp_stock_lmp_irds_cnt
+      name: 특정 증권 등 소유 증감 수
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: sp_stock_lmp_rate
+      name: 특정 증권 등 소유 비율
+      description: "0.00"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: sp_stock_lmp_irds_rate
+      name: 특정 증권 등 소유 증감 비율
+      description: "0.00"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

@@ -1,0 +1,800 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        corp_cls:
+          description: |-
+            법인구분
+
+            법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 법인구분
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: |-
+            회사명
+
+            공시대상회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        extr_sen:
+          description: 구분
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 구분
+        extr_stn:
+          description: 교환ㆍ이전 형태
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 형태
+        extr_tgcmp_cmpnm:
+          description: 교환ㆍ이전 대상법인(회사명)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(회사명)
+        extr_tgcmp_rp:
+          description: 교환ㆍ이전 대상법인(대표자)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(대표자)
+        extr_tgcmp_mbsn:
+          description: 교환ㆍ이전 대상법인(주요사업)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(주요사업)
+        extr_tgcmp_rl_cmpn:
+          description: 교환ㆍ이전 대상법인(회사와의 관계)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(회사와의 관계)
+        extr_tgcmp_tisstk_ostk:
+          description: |-
+            교환ㆍ이전 대상법인(발행주식총수(주)(보통주식))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(발행주식총수(주)(보통주식))
+        extr_tgcmp_tisstk_cstk:
+          description: |-
+            교환ㆍ이전 대상법인(발행주식총수(주)(종류주식))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(발행주식총수(주)(종류주식))
+        rbsnfdtl_tast:
+          description: |-
+            교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자산총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자산총계))
+        rbsnfdtl_tdbt:
+          description: |-
+            교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(부채총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(부채총계))
+        rbsnfdtl_teqt:
+          description: |-
+            교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자본총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자본총계))
+        rbsnfdtl_cpt:
+          description: |-
+            교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자본금))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자본금))
+        extr_rt:
+          description: 교환ㆍ이전 비율
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 비율
+        extr_rt_bs:
+          description: 교환ㆍ이전 비율 산출근거
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 비율 산출근거
+        exevl_atn:
+          description: 외부평가에 관한 사항(외부평가 여부)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(외부평가 여부)
+        exevl_bs_rs:
+          description: 외부평가에 관한 사항(근거 및 사유)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(근거 및 사유)
+        exevl_intn:
+          description: 외부평가에 관한 사항(외부평가기관의 명칭)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(외부평가기관의 명칭)
+        exevl_pd:
+          description: 외부평가에 관한 사항(외부평가 기간)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(외부평가 기간)
+        exevl_op:
+          description: 외부평가에 관한 사항(외부평가 의견)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(외부평가 의견)
+        extr_pp:
+          description: 교환ㆍ이전 목적
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 목적
+        extrsc_extrctrd:
+          description: 교환ㆍ이전일정(교환ㆍ이전계약일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(교환ㆍ이전계약일)
+        extrsc_shddstd:
+          description: 교환ㆍ이전일정(주주확정기준일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(주주확정기준일)
+        extrsc_shclspd_bgd:
+          description: 교환ㆍ이전일정(주주명부 폐쇄기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(주주명부 폐쇄기간(시작일))
+        extrsc_shclspd_edd:
+          description: 교환ㆍ이전일정(주주명부 폐쇄기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(주주명부 폐쇄기간(종료일))
+        extrsc_extrop_rcpd_bgd:
+          description: 교환ㆍ이전일정(주식교환ㆍ이전 반대의사 통지접수기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(주식교환ㆍ이전 반대의사 통지접수기간(시작일))
+        extrsc_extrop_rcpd_edd:
+          description: 교환ㆍ이전일정(주식교환ㆍ이전 반대의사 통지접수기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(주식교환ㆍ이전 반대의사 통지접수기간(종료일))
+        extrsc_gmtsck_prd:
+          description: 교환ㆍ이전일정(주주총회 예정일자)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(주주총회 예정일자)
+        extrsc_aprskh_expd_bgd:
+          description: 교환ㆍ이전일정(주식매수청구권 행사기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(주식매수청구권 행사기간(시작일))
+        extrsc_aprskh_expd_edd:
+          description: 교환ㆍ이전일정(주식매수청구권 행사기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(주식매수청구권 행사기간(종료일))
+        extrsc_osprpd_bgd:
+          description: 교환ㆍ이전일정(구주권제출기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(구주권제출기간(시작일))
+        extrsc_osprpd_edd:
+          description: 교환ㆍ이전일정(구주권제출기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(구주권제출기간(종료일))
+        extrsc_trspprpd:
+          description: |-
+            교환ㆍ이전일정(매매거래정지예정기간)
+
+            교환ㆍ이전일정(매매거래정지예정기간)
+
+            ① 2019년 12월 08일까지 사용됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(매매거래정지예정기간)
+        extrsc_trspprpd_bgd:
+          description: |-
+            교환ㆍ이전일정(매매거래정지예정기간(시작일))
+
+            교환ㆍ이전일정(매매거래정지예정기간(시작일))
+
+            ② 2019년 12월 09일부터 추가됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(매매거래정지예정기간(시작일))
+        extrsc_trspprpd_edd:
+          description: |-
+            교환ㆍ이전일정(매매거래정지예정기간(종료일))
+
+            교환ㆍ이전일정(매매거래정지예정기간(종료일))
+
+            ② 2019년 12월 09일부터 추가됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(매매거래정지예정기간(종료일))
+        extrsc_extrdt:
+          description: 교환ㆍ이전일정(교환ㆍ이전일자)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(교환ㆍ이전일자)
+        extrsc_nstkdlprd:
+          description: 교환ㆍ이전일정(신주권교부예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(신주권교부예정일)
+        extrsc_nstklstprd:
+          description: 교환ㆍ이전일정(신주의 상장예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전일정(신주의 상장예정일)
+        atextr_cpcmpnm:
+          description: 교환ㆍ이전 후 완전모회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 교환ㆍ이전 후 완전모회사명
+        aprskh_plnprc:
+          description: |-
+            주식매수청구권에 관한 사항(매수예정가격)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 주식매수청구권에 관한 사항(매수예정가격)
+        aprskh_pym_plpd_mth:
+          description: 주식매수청구권에 관한 사항(지급예정시기, 지급방법)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 주식매수청구권에 관한 사항(지급예정시기, 지급방법)
+        aprskh_lmt:
+          description: 주식매수청구권에 관한 사항(주식매수청구권 제한 관련 내용)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 주식매수청구권에 관한 사항(주식매수청구권 제한 관련 내용)
+        aprskh_ctref:
+          description: 주식매수청구권에 관한 사항(계약에 미치는 효력)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 주식매수청구권에 관한 사항(계약에 미치는 효력)
+        bdlst_atn:
+          description: 우회상장 해당 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 우회상장 해당 여부
+        otcpr_bdlst_sf_atn:
+          description: 타법인의 우회상장 요건 충족 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 타법인의 우회상장 요건 충족 여부
+        bddd:
+          description: 이사회결의일(결정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 이사회결의일(결정일)
+        od_a_at_t:
+          description: |-
+            사외이사참석여부(참석(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사참석여부(참석(명))
+        od_a_at_b:
+          description: |-
+            사외이사참석여부(불참(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사참석여부(불참(명))
+        adt_a_atn:
+          description: 감사(사외이사가 아닌 감사위원) 참석여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감사(사외이사가 아닌 감사위원) 참석여부
+        popt_ctr_atn:
+          description: 풋옵션 등 계약 체결여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 풋옵션 등 계약 체결여부
+        popt_ctr_cn:
+          description: 계약내용
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 계약내용
+        rs_sm_atn:
+          description: 증권신고서 제출대상 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 증권신고서 제출대상 여부
+        ex_sm_r:
+          description: 제출을 면제받은 경우 그 사유
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 제출을 면제받은 경우 그 사유
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: extr_sen
+      name: 구분
+      description: 구분
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: extr_stn
+      name: 교환ㆍ이전 형태
+      description: 교환ㆍ이전 형태
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: extr_tgcmp_cmpnm
+      name: 교환ㆍ이전 대상법인(회사명)
+      description: 교환ㆍ이전 대상법인(회사명)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: extr_tgcmp_rp
+      name: 교환ㆍ이전 대상법인(대표자)
+      description: 교환ㆍ이전 대상법인(대표자)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: extr_tgcmp_mbsn
+      name: 교환ㆍ이전 대상법인(주요사업)
+      description: 교환ㆍ이전 대상법인(주요사업)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: extr_tgcmp_rl_cmpn
+      name: 교환ㆍ이전 대상법인(회사와의 관계)
+      description: 교환ㆍ이전 대상법인(회사와의 관계)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: extr_tgcmp_tisstk_ostk
+      name: 교환ㆍ이전 대상법인(발행주식총수(주)(보통주식))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: extr_tgcmp_tisstk_cstk
+      name: 교환ㆍ이전 대상법인(발행주식총수(주)(종류주식))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: rbsnfdtl_tast
+      name: 교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자산총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: rbsnfdtl_tdbt
+      name: 교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(부채총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: rbsnfdtl_teqt
+      name: 교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자본총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: rbsnfdtl_cpt
+      name: 교환ㆍ이전 대상법인(최근 사업연도 요약재무내용(원)(자본금))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: extr_rt
+      name: 교환ㆍ이전 비율
+      description: 교환ㆍ이전 비율
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: extr_rt_bs
+      name: 교환ㆍ이전 비율 산출근거
+      description: 교환ㆍ이전 비율 산출근거
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: exevl_atn
+      name: 외부평가에 관한 사항(외부평가 여부)
+      description: 외부평가에 관한 사항(외부평가 여부)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: exevl_bs_rs
+      name: 외부평가에 관한 사항(근거 및 사유)
+      description: 외부평가에 관한 사항(근거 및 사유)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 24
+      key: exevl_intn
+      name: 외부평가에 관한 사항(외부평가기관의 명칭)
+      description: 외부평가에 관한 사항(외부평가기관의 명칭)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 25
+      key: exevl_pd
+      name: 외부평가에 관한 사항(외부평가 기간)
+      description: 외부평가에 관한 사항(외부평가 기간)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 26
+      key: exevl_op
+      name: 외부평가에 관한 사항(외부평가 의견)
+      description: 외부평가에 관한 사항(외부평가 의견)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 27
+      key: extr_pp
+      name: 교환ㆍ이전 목적
+      description: 교환ㆍ이전 목적
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 28
+      key: extrsc_extrctrd
+      name: 교환ㆍ이전일정(교환ㆍ이전계약일)
+      description: 교환ㆍ이전일정(교환ㆍ이전계약일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 29
+      key: extrsc_shddstd
+      name: 교환ㆍ이전일정(주주확정기준일)
+      description: 교환ㆍ이전일정(주주확정기준일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 30
+      key: extrsc_shclspd_bgd
+      name: 교환ㆍ이전일정(주주명부 폐쇄기간(시작일))
+      description: 교환ㆍ이전일정(주주명부 폐쇄기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 31
+      key: extrsc_shclspd_edd
+      name: 교환ㆍ이전일정(주주명부 폐쇄기간(종료일))
+      description: 교환ㆍ이전일정(주주명부 폐쇄기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 32
+      key: extrsc_extrop_rcpd_bgd
+      name: 교환ㆍ이전일정(주식교환ㆍ이전 반대의사 통지접수기간(시작일))
+      description: 교환ㆍ이전일정(주식교환ㆍ이전 반대의사 통지접수기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 33
+      key: extrsc_extrop_rcpd_edd
+      name: 교환ㆍ이전일정(주식교환ㆍ이전 반대의사 통지접수기간(종료일))
+      description: 교환ㆍ이전일정(주식교환ㆍ이전 반대의사 통지접수기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 34
+      key: extrsc_gmtsck_prd
+      name: 교환ㆍ이전일정(주주총회 예정일자)
+      description: 교환ㆍ이전일정(주주총회 예정일자)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 35
+      key: extrsc_aprskh_expd_bgd
+      name: 교환ㆍ이전일정(주식매수청구권 행사기간(시작일))
+      description: 교환ㆍ이전일정(주식매수청구권 행사기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 36
+      key: extrsc_aprskh_expd_edd
+      name: 교환ㆍ이전일정(주식매수청구권 행사기간(종료일))
+      description: 교환ㆍ이전일정(주식매수청구권 행사기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 37
+      key: extrsc_osprpd_bgd
+      name: 교환ㆍ이전일정(구주권제출기간(시작일))
+      description: 교환ㆍ이전일정(구주권제출기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 38
+      key: extrsc_osprpd_edd
+      name: 교환ㆍ이전일정(구주권제출기간(종료일))
+      description: 교환ㆍ이전일정(구주권제출기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 39
+      key: extrsc_trspprpd
+      name: 교환ㆍ이전일정(매매거래정지예정기간)
+      description: |-
+        교환ㆍ이전일정(매매거래정지예정기간)
+
+        ① 2019년 12월 08일까지 사용됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 40
+      key: extrsc_trspprpd_bgd
+      name: 교환ㆍ이전일정(매매거래정지예정기간(시작일))
+      description: |-
+        교환ㆍ이전일정(매매거래정지예정기간(시작일))
+
+        ② 2019년 12월 09일부터 추가됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 41
+      key: extrsc_trspprpd_edd
+      name: 교환ㆍ이전일정(매매거래정지예정기간(종료일))
+      description: |-
+        교환ㆍ이전일정(매매거래정지예정기간(종료일))
+
+        ② 2019년 12월 09일부터 추가됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 42
+      key: extrsc_extrdt
+      name: 교환ㆍ이전일정(교환ㆍ이전일자)
+      description: 교환ㆍ이전일정(교환ㆍ이전일자)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 43
+      key: extrsc_nstkdlprd
+      name: 교환ㆍ이전일정(신주권교부예정일)
+      description: 교환ㆍ이전일정(신주권교부예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 44
+      key: extrsc_nstklstprd
+      name: 교환ㆍ이전일정(신주의 상장예정일)
+      description: 교환ㆍ이전일정(신주의 상장예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 45
+      key: atextr_cpcmpnm
+      name: 교환ㆍ이전 후 완전모회사명
+      description: 교환ㆍ이전 후 완전모회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 46
+      key: aprskh_plnprc
+      name: 주식매수청구권에 관한 사항(매수예정가격)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 47
+      key: aprskh_pym_plpd_mth
+      name: 주식매수청구권에 관한 사항(지급예정시기, 지급방법)
+      description: 주식매수청구권에 관한 사항(지급예정시기, 지급방법)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 48
+      key: aprskh_lmt
+      name: 주식매수청구권에 관한 사항(주식매수청구권 제한 관련 내용)
+      description: 주식매수청구권에 관한 사항(주식매수청구권 제한 관련 내용)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 49
+      key: aprskh_ctref
+      name: 주식매수청구권에 관한 사항(계약에 미치는 효력)
+      description: 주식매수청구권에 관한 사항(계약에 미치는 효력)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 50
+      key: bdlst_atn
+      name: 우회상장 해당 여부
+      description: 우회상장 해당 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 51
+      key: otcpr_bdlst_sf_atn
+      name: 타법인의 우회상장 요건 충족 여부
+      description: 타법인의 우회상장 요건 충족 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 52
+      key: bddd
+      name: 이사회결의일(결정일)
+      description: 이사회결의일(결정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 53
+      key: od_a_at_t
+      name: 사외이사참석여부(참석(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 54
+      key: od_a_at_b
+      name: 사외이사참석여부(불참(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 55
+      key: adt_a_atn
+      name: 감사(사외이사가 아닌 감사위원) 참석여부
+      description: 감사(사외이사가 아닌 감사위원) 참석여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 56
+      key: popt_ctr_atn
+      name: 풋옵션 등 계약 체결여부
+      description: 풋옵션 등 계약 체결여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 57
+      key: popt_ctr_cn
+      name: 계약내용
+      description: 계약내용
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 58
+      key: rs_sm_atn
+      name: 증권신고서 제출대상 여부
+      description: 증권신고서 제출대상 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 59
+      key: ex_sm_r
+      name: 제출을 면제받은 경우 그 사유
+      description: 제출을 면제받은 경우 그 사유
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

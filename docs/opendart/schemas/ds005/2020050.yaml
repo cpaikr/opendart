@@ -1,0 +1,947 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        corp_cls:
+          description: |-
+            법인구분
+
+            법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 법인구분
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: |-
+            회사명
+
+            공시대상회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        mg_mth:
+          description: 합병방법
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병방법
+        mg_stn:
+          description: 합병형태
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병형태
+        mg_pp:
+          description: 합병목적
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병목적
+        mg_rt:
+          description: 합병비율
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병비율
+        mg_rt_bs:
+          description: 합병비율 산출근거
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병비율 산출근거
+        exevl_atn:
+          description: 외부평가에 관한 사항(외부평가 여부)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(외부평가 여부)
+        exevl_bs_rs:
+          description: 외부평가에 관한 사항(근거 및 사유)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(근거 및 사유)
+        exevl_intn:
+          description: 외부평가에 관한 사항(외부평가기관의 명칭)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(외부평가기관의 명칭)
+        exevl_pd:
+          description: 외부평가에 관한 사항(외부평가 기간)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(외부평가 기간)
+        exevl_op:
+          description: 외부평가에 관한 사항(외부평가 의견)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 외부평가에 관한 사항(외부평가 의견)
+        mgnstk_ostk_cnt:
+          description: |-
+            합병신주의 종류와 수(주)(보통주식)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병신주의 종류와 수(주)(보통주식)
+        mgnstk_cstk_cnt:
+          description: |-
+            합병신주의 종류와 수(주)(종류주식)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병신주의 종류와 수(주)(종류주식)
+        mgptncmp_cmpnm:
+          description: 합병상대회사(회사명)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(회사명)
+        mgptncmp_mbsn:
+          description: 합병상대회사(주요사업)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(주요사업)
+        mgptncmp_rl_cmpn:
+          description: 합병상대회사(회사와의 관계)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(회사와의 관계)
+        rbsnfdtl_tast:
+          description: |-
+            합병상대회사(최근 사업연도 재무내용(원)(자산총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(최근 사업연도 재무내용(원)(자산총계))
+        rbsnfdtl_tdbt:
+          description: |-
+            합병상대회사(최근 사업연도 재무내용(원)(부채총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(최근 사업연도 재무내용(원)(부채총계))
+        rbsnfdtl_teqt:
+          description: |-
+            합병상대회사(최근 사업연도 재무내용(원)(자본총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(최근 사업연도 재무내용(원)(자본총계))
+        rbsnfdtl_cpt:
+          description: |-
+            합병상대회사(최근 사업연도 재무내용(원)(자본금))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(최근 사업연도 재무내용(원)(자본금))
+        rbsnfdtl_sl:
+          description: |-
+            합병상대회사(최근 사업연도 재무내용(원)(매출액))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(최근 사업연도 재무내용(원)(매출액))
+        rbsnfdtl_nic:
+          description: |-
+            합병상대회사(최근 사업연도 재무내용(원)(당기순이익))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(최근 사업연도 재무내용(원)(당기순이익))
+        eadtat_intn:
+          description: 합병상대회사(외부감사 여부(기관명))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(외부감사 여부(기관명))
+        eadtat_op:
+          description: 합병상대회사(외부감사 여부(감사의견))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병상대회사(외부감사 여부(감사의견))
+        nmgcmp_cmpnm:
+          description: 신설합병회사(회사명)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(회사명)
+        ffdtl_tast:
+          description: |-
+            신설합병회사(설립시 재무내용(원)(자산총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(설립시 재무내용(원)(자산총계))
+        ffdtl_tdbt:
+          description: |-
+            신설합병회사(설립시 재무내용(원)(부채총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(설립시 재무내용(원)(부채총계))
+        ffdtl_teqt:
+          description: |-
+            신설합병회사(설립시 재무내용(원)(자본총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(설립시 재무내용(원)(자본총계))
+        ffdtl_cpt:
+          description: |-
+            신설합병회사(설립시 재무내용(원)(자본금))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(설립시 재무내용(원)(자본금))
+        ffdtl_std:
+          description: 신설합병회사(설립시 재무내용(원)(현재기준))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(설립시 재무내용(원)(현재기준))
+        nmgcmp_nbsn_rsl:
+          description: |-
+            신설합병회사(신설사업부문 최근 사업연도 매출액(원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(신설사업부문 최근 사업연도 매출액(원))
+        nmgcmp_mbsn:
+          description: 신설합병회사(주요사업)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(주요사업)
+        nmgcmp_rlst_atn:
+          description: 신설합병회사(재상장신청 여부)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신설합병회사(재상장신청 여부)
+        mgsc_mgctrd:
+          description: 합병일정(합병계약일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(합병계약일)
+        mgsc_shddstd:
+          description: 합병일정(주주확정기준일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(주주확정기준일)
+        mgsc_shclspd_bgd:
+          description: 합병일정(주주명부 폐쇄기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(주주명부 폐쇄기간(시작일))
+        mgsc_shclspd_edd:
+          description: 합병일정(주주명부 폐쇄기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(주주명부 폐쇄기간(종료일))
+        mgsc_mgop_rcpd_bgd:
+          description: 합병일정(합병반대의사통지 접수기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(합병반대의사통지 접수기간(시작일))
+        mgsc_mgop_rcpd_edd:
+          description: 합병일정(합병반대의사통지 접수기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(합병반대의사통지 접수기간(종료일))
+        mgsc_gmtsck_prd:
+          description: 합병일정(주주총회예정일자)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(주주총회예정일자)
+        mgsc_aprskh_expd_bgd:
+          description: 합병일정(주식매수청구권 행사기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(주식매수청구권 행사기간(시작일))
+        mgsc_aprskh_expd_edd:
+          description: 합병일정(주식매수청구권 행사기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(주식매수청구권 행사기간(종료일))
+        mgsc_osprpd_bgd:
+          description: 합병일정(구주권 제출기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(구주권 제출기간(시작일))
+        mgsc_osprpd_edd:
+          description: 합병일정(구주권 제출기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(구주권 제출기간(종료일))
+        mgsc_trspprpd_bgd:
+          description: 합병일정(매매거래 정지예정기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(매매거래 정지예정기간(시작일))
+        mgsc_trspprpd_edd:
+          description: 합병일정(매매거래 정지예정기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(매매거래 정지예정기간(종료일))
+        mgsc_cdobprpd_bgd:
+          description: 합병일정(채권자이의 제출기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(채권자이의 제출기간(시작일))
+        mgsc_cdobprpd_edd:
+          description: 합병일정(채권자이의 제출기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(채권자이의 제출기간(종료일))
+        mgsc_mgdt:
+          description: 합병일정(합병기일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(합병기일)
+        mgsc_ergmd:
+          description: 합병일정(종료보고 총회일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(종료보고 총회일)
+        mgsc_mgrgsprd:
+          description: 합병일정(합병등기예정일자)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(합병등기예정일자)
+        mgsc_nstkdlprd:
+          description: 합병일정(신주권교부예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(신주권교부예정일)
+        mgsc_nstklstprd:
+          description: 합병일정(신주의 상장예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 합병일정(신주의 상장예정일)
+        bdlst_atn:
+          description: 우회상장 해당 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 우회상장 해당 여부
+        otcpr_bdlst_sf_atn:
+          description: 타법인의 우회상장 요건 충족여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 타법인의 우회상장 요건 충족여부
+        aprskh_plnprc:
+          description: |-
+            주식매수청구권에 관한 사항(매수예정가격)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 주식매수청구권에 관한 사항(매수예정가격)
+        aprskh_pym_plpd_mth:
+          description: 주식매수청구권에 관한 사항(지급예정시기, 지급방법)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 주식매수청구권에 관한 사항(지급예정시기, 지급방법)
+        aprskh_ctref:
+          description: 주식매수청구권에 관한 사항(계약에 미치는 효력)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 주식매수청구권에 관한 사항(계약에 미치는 효력)
+        bddd:
+          description: 이사회결의일(결정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 이사회결의일(결정일)
+        od_a_at_t:
+          description: 사외이사참석여부(참석(명))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사참석여부(참석(명))
+        od_a_at_b:
+          description: 사외이사참석여부(불참(명))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사참석여부(불참(명))
+        adt_a_atn:
+          description: 감사(사외이사가 아닌 감사위원) 참석여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감사(사외이사가 아닌 감사위원) 참석여부
+        popt_ctr_atn:
+          description: 풋옵션 등 계약 체결여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 풋옵션 등 계약 체결여부
+        popt_ctr_cn:
+          description: 계약내용
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 계약내용
+        rs_sm_atn:
+          description: 증권신고서 제출대상 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 증권신고서 제출대상 여부
+        ex_sm_r:
+          description: 제출을 면제받은 경우 그 사유
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 제출을 면제받은 경우 그 사유
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: mg_mth
+      name: 합병방법
+      description: 합병방법
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: mg_stn
+      name: 합병형태
+      description: 합병형태
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: mg_pp
+      name: 합병목적
+      description: 합병목적
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: mg_rt
+      name: 합병비율
+      description: 합병비율
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: mg_rt_bs
+      name: 합병비율 산출근거
+      description: 합병비율 산출근거
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: exevl_atn
+      name: 외부평가에 관한 사항(외부평가 여부)
+      description: 외부평가에 관한 사항(외부평가 여부)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: exevl_bs_rs
+      name: 외부평가에 관한 사항(근거 및 사유)
+      description: 외부평가에 관한 사항(근거 및 사유)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: exevl_intn
+      name: 외부평가에 관한 사항(외부평가기관의 명칭)
+      description: 외부평가에 관한 사항(외부평가기관의 명칭)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: exevl_pd
+      name: 외부평가에 관한 사항(외부평가 기간)
+      description: 외부평가에 관한 사항(외부평가 기간)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: exevl_op
+      name: 외부평가에 관한 사항(외부평가 의견)
+      description: 외부평가에 관한 사항(외부평가 의견)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: mgnstk_ostk_cnt
+      name: 합병신주의 종류와 수(주)(보통주식)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: mgnstk_cstk_cnt
+      name: 합병신주의 종류와 수(주)(종류주식)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: mgptncmp_cmpnm
+      name: 합병상대회사(회사명)
+      description: 합병상대회사(회사명)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: mgptncmp_mbsn
+      name: 합병상대회사(주요사업)
+      description: 합병상대회사(주요사업)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: mgptncmp_rl_cmpn
+      name: 합병상대회사(회사와의 관계)
+      description: 합병상대회사(회사와의 관계)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: rbsnfdtl_tast
+      name: 합병상대회사(최근 사업연도 재무내용(원)(자산총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 24
+      key: rbsnfdtl_tdbt
+      name: 합병상대회사(최근 사업연도 재무내용(원)(부채총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 25
+      key: rbsnfdtl_teqt
+      name: 합병상대회사(최근 사업연도 재무내용(원)(자본총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 26
+      key: rbsnfdtl_cpt
+      name: 합병상대회사(최근 사업연도 재무내용(원)(자본금))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 27
+      key: rbsnfdtl_sl
+      name: 합병상대회사(최근 사업연도 재무내용(원)(매출액))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 28
+      key: rbsnfdtl_nic
+      name: 합병상대회사(최근 사업연도 재무내용(원)(당기순이익))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 29
+      key: eadtat_intn
+      name: 합병상대회사(외부감사 여부(기관명))
+      description: 합병상대회사(외부감사 여부(기관명))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 30
+      key: eadtat_op
+      name: 합병상대회사(외부감사 여부(감사의견))
+      description: 합병상대회사(외부감사 여부(감사의견))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 31
+      key: nmgcmp_cmpnm
+      name: 신설합병회사(회사명)
+      description: 신설합병회사(회사명)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 32
+      key: ffdtl_tast
+      name: 신설합병회사(설립시 재무내용(원)(자산총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 33
+      key: ffdtl_tdbt
+      name: 신설합병회사(설립시 재무내용(원)(부채총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 34
+      key: ffdtl_teqt
+      name: 신설합병회사(설립시 재무내용(원)(자본총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 35
+      key: ffdtl_cpt
+      name: 신설합병회사(설립시 재무내용(원)(자본금))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 36
+      key: ffdtl_std
+      name: 신설합병회사(설립시 재무내용(원)(현재기준))
+      description: 신설합병회사(설립시 재무내용(원)(현재기준))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 37
+      key: nmgcmp_nbsn_rsl
+      name: 신설합병회사(신설사업부문 최근 사업연도 매출액(원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 38
+      key: nmgcmp_mbsn
+      name: 신설합병회사(주요사업)
+      description: 신설합병회사(주요사업)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 39
+      key: nmgcmp_rlst_atn
+      name: 신설합병회사(재상장신청 여부)
+      description: 신설합병회사(재상장신청 여부)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 40
+      key: mgsc_mgctrd
+      name: 합병일정(합병계약일)
+      description: 합병일정(합병계약일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 41
+      key: mgsc_shddstd
+      name: 합병일정(주주확정기준일)
+      description: 합병일정(주주확정기준일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 42
+      key: mgsc_shclspd_bgd
+      name: 합병일정(주주명부 폐쇄기간(시작일))
+      description: 합병일정(주주명부 폐쇄기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 43
+      key: mgsc_shclspd_edd
+      name: 합병일정(주주명부 폐쇄기간(종료일))
+      description: 합병일정(주주명부 폐쇄기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 44
+      key: mgsc_mgop_rcpd_bgd
+      name: 합병일정(합병반대의사통지 접수기간(시작일))
+      description: 합병일정(합병반대의사통지 접수기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 45
+      key: mgsc_mgop_rcpd_edd
+      name: 합병일정(합병반대의사통지 접수기간(종료일))
+      description: 합병일정(합병반대의사통지 접수기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 46
+      key: mgsc_gmtsck_prd
+      name: 합병일정(주주총회예정일자)
+      description: 합병일정(주주총회예정일자)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 47
+      key: mgsc_aprskh_expd_bgd
+      name: 합병일정(주식매수청구권 행사기간(시작일))
+      description: 합병일정(주식매수청구권 행사기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 48
+      key: mgsc_aprskh_expd_edd
+      name: 합병일정(주식매수청구권 행사기간(종료일))
+      description: 합병일정(주식매수청구권 행사기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 49
+      key: mgsc_osprpd_bgd
+      name: 합병일정(구주권 제출기간(시작일))
+      description: 합병일정(구주권 제출기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 50
+      key: mgsc_osprpd_edd
+      name: 합병일정(구주권 제출기간(종료일))
+      description: 합병일정(구주권 제출기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 51
+      key: mgsc_trspprpd_bgd
+      name: 합병일정(매매거래 정지예정기간(시작일))
+      description: 합병일정(매매거래 정지예정기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 52
+      key: mgsc_trspprpd_edd
+      name: 합병일정(매매거래 정지예정기간(종료일))
+      description: 합병일정(매매거래 정지예정기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 53
+      key: mgsc_cdobprpd_bgd
+      name: 합병일정(채권자이의 제출기간(시작일))
+      description: 합병일정(채권자이의 제출기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 54
+      key: mgsc_cdobprpd_edd
+      name: 합병일정(채권자이의 제출기간(종료일))
+      description: 합병일정(채권자이의 제출기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 55
+      key: mgsc_mgdt
+      name: 합병일정(합병기일)
+      description: 합병일정(합병기일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 56
+      key: mgsc_ergmd
+      name: 합병일정(종료보고 총회일)
+      description: 합병일정(종료보고 총회일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 57
+      key: mgsc_mgrgsprd
+      name: 합병일정(합병등기예정일자)
+      description: 합병일정(합병등기예정일자)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 58
+      key: mgsc_nstkdlprd
+      name: 합병일정(신주권교부예정일)
+      description: 합병일정(신주권교부예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 59
+      key: mgsc_nstklstprd
+      name: 합병일정(신주의 상장예정일)
+      description: 합병일정(신주의 상장예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 60
+      key: bdlst_atn
+      name: 우회상장 해당 여부
+      description: 우회상장 해당 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 61
+      key: otcpr_bdlst_sf_atn
+      name: 타법인의 우회상장 요건 충족여부
+      description: 타법인의 우회상장 요건 충족여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 62
+      key: aprskh_plnprc
+      name: 주식매수청구권에 관한 사항(매수예정가격)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 63
+      key: aprskh_pym_plpd_mth
+      name: 주식매수청구권에 관한 사항(지급예정시기, 지급방법)
+      description: 주식매수청구권에 관한 사항(지급예정시기, 지급방법)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 64
+      key: aprskh_ctref
+      name: 주식매수청구권에 관한 사항(계약에 미치는 효력)
+      description: 주식매수청구권에 관한 사항(계약에 미치는 효력)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 65
+      key: bddd
+      name: 이사회결의일(결정일)
+      description: 이사회결의일(결정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 66
+      key: od_a_at_t
+      name: 사외이사참석여부(참석(명))
+      description: 사외이사참석여부(참석(명))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 67
+      key: od_a_at_b
+      name: 사외이사참석여부(불참(명))
+      description: 사외이사참석여부(불참(명))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 68
+      key: adt_a_atn
+      name: 감사(사외이사가 아닌 감사위원) 참석여부
+      description: 감사(사외이사가 아닌 감사위원) 참석여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 69
+      key: popt_ctr_atn
+      name: 풋옵션 등 계약 체결여부
+      description: 풋옵션 등 계약 체결여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 70
+      key: popt_ctr_cn
+      name: 계약내용
+      description: 계약내용
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 71
+      key: rs_sm_atn
+      name: 증권신고서 제출대상 여부
+      description: 증권신고서 제출대상 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 72
+      key: ex_sm_r
+      name: 제출을 면제받은 경우 그 사유
+      description: 제출을 면제받은 경우 그 사유
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

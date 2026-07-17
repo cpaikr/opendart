@@ -1,0 +1,525 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        corp_cls:
+          description: |-
+            법인구분
+
+            법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 법인구분
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: |-
+            회사명
+
+            공시대상회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        bd_tm:
+          description: 사채의 종류(회차)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사채의 종류(회차)
+        bd_knd:
+          description: 사채의 종류(종류)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사채의 종류(종류)
+        bd_fta:
+          description: |-
+            사채의 권면(전자등록)총액 (원)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사채의 권면(전자등록)총액 (원)
+        ovis_fta:
+          description: |-
+            해외발행(권면(전자등록)총액)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 해외발행(권면(전자등록)총액)
+        ovis_fta_crn:
+          description: 해외발행(권면(전자등록)총액(통화단위))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 해외발행(권면(전자등록)총액(통화단위))
+        ovis_ster:
+          description: 해외발행(기준환율등)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 해외발행(기준환율등)
+        ovis_isar:
+          description: 해외발행(발행지역)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 해외발행(발행지역)
+        ovis_mktnm:
+          description: 해외발행(해외상장시 시장의 명칭)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 해외발행(해외상장시 시장의 명칭)
+        fdpp_fclt:
+          description: |-
+            자금조달의 목적(시설자금 (원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 자금조달의 목적(시설자금 (원))
+        fdpp_bsninh:
+          description: |-
+            자금조달의 목적(영업양수자금 (원))
+
+            9,999,999,999
+
+            ① 2019년 12월 9일부터 추가됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 자금조달의 목적(영업양수자금 (원))
+        fdpp_op:
+          description: |-
+            자금조달의 목적(운영자금 (원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 자금조달의 목적(운영자금 (원))
+        fdpp_dtrp:
+          description: |-
+            자금조달의 목적(채무상환자금 (원))
+
+            9,999,999,999
+
+            ① 2019년 12월 9일부터 추가됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 자금조달의 목적(채무상환자금 (원))
+        fdpp_ocsa:
+          description: |-
+            자금조달의 목적(타법인 증권 취득자금 (원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 자금조달의 목적(타법인 증권 취득자금 (원))
+        fdpp_etc:
+          description: |-
+            자금조달의 목적(기타자금 (원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 자금조달의 목적(기타자금 (원))
+        bd_intr_sf:
+          description: 사채의 이율(표면이자율 (%))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사채의 이율(표면이자율 (%))
+        bd_intr_ex:
+          description: 사채의 이율(만기이자율 (%))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사채의 이율(만기이자율 (%))
+        bd_mtd:
+          description: 사채만기일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사채만기일
+        dbtrs_sc:
+          description: 채무재조정에 관한 사항(채무재조정의 범위)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 채무재조정에 관한 사항(채무재조정의 범위)
+        sbd:
+          description: 청약일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 청약일
+        pymd:
+          description: 납입일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 납입일
+        rpmcmp:
+          description: 대표주관회사
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 대표주관회사
+        grint:
+          description: 보증기관
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 보증기관
+        bddd:
+          description: 이사회결의일(결정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 이사회결의일(결정일)
+        od_a_at_t:
+          description: |-
+            사외이사 참석여부(참석 (명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사 참석여부(참석 (명))
+        od_a_at_b:
+          description: |-
+            사외이사 참석여부(불참 (명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사 참석여부(불참 (명))
+        adt_a_atn:
+          description: 감사(감사위원) 참석여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감사(감사위원) 참석여부
+        rs_sm_atn:
+          description: 증권신고서 제출대상 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 증권신고서 제출대상 여부
+        ex_sm_r:
+          description: 제출을 면제받은 경우 그 사유
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 제출을 면제받은 경우 그 사유
+        ovis_ltdtl:
+          description: 당해 사채의 해외발행과 연계된 대차거래 내역
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 당해 사채의 해외발행과 연계된 대차거래 내역
+        ftc_stt_atn:
+          description: 공정거래위원회 신고대상 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 공정거래위원회 신고대상 여부
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: bd_tm
+      name: 사채의 종류(회차)
+      description: 사채의 종류(회차)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: bd_knd
+      name: 사채의 종류(종류)
+      description: 사채의 종류(종류)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: bd_fta
+      name: 사채의 권면(전자등록)총액 (원)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: ovis_fta
+      name: 해외발행(권면(전자등록)총액)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: ovis_fta_crn
+      name: 해외발행(권면(전자등록)총액(통화단위))
+      description: 해외발행(권면(전자등록)총액(통화단위))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: ovis_ster
+      name: 해외발행(기준환율등)
+      description: 해외발행(기준환율등)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: ovis_isar
+      name: 해외발행(발행지역)
+      description: 해외발행(발행지역)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: ovis_mktnm
+      name: 해외발행(해외상장시 시장의 명칭)
+      description: 해외발행(해외상장시 시장의 명칭)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: fdpp_fclt
+      name: 자금조달의 목적(시설자금 (원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: fdpp_bsninh
+      name: 자금조달의 목적(영업양수자금 (원))
+      description: |-
+        9,999,999,999
+
+        ① 2019년 12월 9일부터 추가됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: fdpp_op
+      name: 자금조달의 목적(운영자금 (원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: fdpp_dtrp
+      name: 자금조달의 목적(채무상환자금 (원))
+      description: |-
+        9,999,999,999
+
+        ① 2019년 12월 9일부터 추가됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: fdpp_ocsa
+      name: 자금조달의 목적(타법인 증권 취득자금 (원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: fdpp_etc
+      name: 자금조달의 목적(기타자금 (원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: bd_intr_sf
+      name: 사채의 이율(표면이자율 (%))
+      description: 사채의 이율(표면이자율 (%))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: bd_intr_ex
+      name: 사채의 이율(만기이자율 (%))
+      description: 사채의 이율(만기이자율 (%))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 24
+      key: bd_mtd
+      name: 사채만기일
+      description: 사채만기일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 25
+      key: dbtrs_sc
+      name: 채무재조정에 관한 사항(채무재조정의 범위)
+      description: 채무재조정에 관한 사항(채무재조정의 범위)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 26
+      key: sbd
+      name: 청약일
+      description: 청약일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 27
+      key: pymd
+      name: 납입일
+      description: 납입일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 28
+      key: rpmcmp
+      name: 대표주관회사
+      description: 대표주관회사
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 29
+      key: grint
+      name: 보증기관
+      description: 보증기관
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 30
+      key: bddd
+      name: 이사회결의일(결정일)
+      description: 이사회결의일(결정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 31
+      key: od_a_at_t
+      name: 사외이사 참석여부(참석 (명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 32
+      key: od_a_at_b
+      name: 사외이사 참석여부(불참 (명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 33
+      key: adt_a_atn
+      name: 감사(감사위원) 참석여부
+      description: 감사(감사위원) 참석여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 34
+      key: rs_sm_atn
+      name: 증권신고서 제출대상 여부
+      description: 증권신고서 제출대상 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 35
+      key: ex_sm_r
+      name: 제출을 면제받은 경우 그 사유
+      description: 제출을 면제받은 경우 그 사유
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 36
+      key: ovis_ltdtl
+      name: 당해 사채의 해외발행과 연계된 대차거래 내역
+      description: 당해 사채의 해외발행과 연계된 대차거래 내역
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 37
+      key: ftc_stt_atn
+      name: 공정거래위원회 신고대상 여부
+      description: 공정거래위원회 신고대상 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

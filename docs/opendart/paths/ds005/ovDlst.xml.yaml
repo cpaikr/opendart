@@ -1,0 +1,124 @@
+get:
+  operationId: get_ovDlst_xml
+  summary: 해외 증권시장 주권등 상장폐지 (XML)
+  description: 주요사항보고서(해외 증권시장 주권등 상장폐지) 내에 주요 정보를 제공합니다.
+  tags:
+    - DS005
+  externalDocs:
+    description: OpenDART 공식 개발가이드
+    url: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020032
+  security:
+    - crtfcKey: []
+  parameters:
+    - name: corp_code
+      in: query
+      required: true
+      description: |-
+        공시대상회사의 고유번호(8자리)
+        ※ 개발가이드 > 공시정보 > 고유번호 참고
+      schema:
+        type: string
+      x-opendart-korean-name: 고유번호
+      x-opendart-documented-type: STRING(8)
+      x-opendart-documented-required: Y
+    - name: bgn_de
+      in: query
+      required: true
+      description: |-
+        검색시작 접수일자(YYYYMMDD)
+        ※ 2015년 이후 부터 정보제공
+      schema:
+        type: string
+      x-opendart-korean-name: 시작일(최초접수일)
+      x-opendart-documented-type: STRING(8)
+      x-opendart-documented-required: Y
+    - name: end_de
+      in: query
+      required: true
+      description: |-
+        검색종료 접수일자(YYYYMMDD)
+        ※ 2015년 이후 부터 정보제공
+      schema:
+        type: string
+      x-opendart-korean-name: 종료일(최초접수일)
+      x-opendart-documented-type: STRING(8)
+      x-opendart-documented-required: Y
+  responses:
+    default:
+      description: 공식 가이드는 API 수준 status/message를 설명하지만 HTTP 상태 코드는 별도로 규정하지 않습니다.
+      content:
+        application/xml:
+          schema:
+            $ref: ../../schemas/ds005/2020032.yaml
+          x-opendart-content-type-status: inferred-from-documented-output-format
+      x-opendart-http-status: not-documented
+  x-opendart:
+    logicalOperationId: DS005-2020032
+    apiGroupCode: DS005
+    apiGroupName: 주요사항보고서 주요정보
+    apiId: "2020032"
+    apiName: 해외 증권시장 주권등 상장폐지
+    documentedPageHeading: 해외 증권시장 주권등 상장폐지 개발가이드
+    source:
+      guideUrl: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020032
+      groupUrl: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS005
+      checkedAt: 2026-07-17
+    documentedBasicInfo:
+      method: GET
+      requestUrl: https://opendart.fss.or.kr/api/ovDlst.xml
+      encoding: UTF-8
+      outputFormat: XML
+    documentedRequestArguments:
+      - key: crtfc_key
+        name: API 인증키
+        documentedType: STRING(40)
+        required: Y
+        description: 발급받은 인증키(40자리)
+      - key: corp_code
+        name: 고유번호
+        documentedType: STRING(8)
+        required: Y
+        description: |-
+          공시대상회사의 고유번호(8자리)
+          ※ 개발가이드 > 공시정보 > 고유번호 참고
+      - key: bgn_de
+        name: 시작일(최초접수일)
+        documentedType: STRING(8)
+        required: Y
+        description: |-
+          검색시작 접수일자(YYYYMMDD)
+          ※ 2015년 이후 부터 정보제공
+      - key: end_de
+        name: 종료일(최초접수일)
+        documentedType: STRING(8)
+        required: Y
+        description: |-
+          검색종료 접수일자(YYYYMMDD)
+          ※ 2015년 이후 부터 정보제공
+    sourceTableHeaders:
+      basicInfo:
+        - 메서드
+        - 요청URL
+        - 인코딩
+        - 출력포멧
+      requestArguments:
+        - 요청키
+        - 명칭
+        - 타입
+        - 필수여부
+        - 값설명
+      responseFields:
+        - 응답키
+        - 명칭
+        - 출력설명
+    referenceTables: []
+    sectionNotes:
+      - section: OpenAPI 테스트
+        text: OpenAPI 서비스의 요청인자에 값을 입력하고 검색버튼을 클릭하여 해당 서비스의 선택하신 응답을 확인해 볼 수 있습니다.
+    coverage:
+      status: probe-required
+      classification: not-assessed
+      acquisitionIdentity: not-documented
+      successfulEmptyCoverage: not-documented
+      partitionClosure: not-documented
+      historicalAvailability: not-documented

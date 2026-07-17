@@ -1,0 +1,90 @@
+get:
+  operationId: get_document_xml
+  summary: 공시서류원본파일 (Zip FILE (binary))
+  description: 공시보고서 원본파일을 제공합니다.
+  tags:
+    - DS001
+  externalDocs:
+    description: OpenDART 공식 개발가이드
+    url: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019003
+  security:
+    - crtfcKey: []
+  parameters:
+    - name: rcept_no
+      in: query
+      required: true
+      description: 접수번호
+      schema:
+        type: string
+      x-opendart-korean-name: 접수번호
+      x-opendart-documented-type: STRING(14)
+      x-opendart-documented-required: Y
+  responses:
+    default:
+      description: 공식 가이드는 성공 시 ZIP binary 출력을 설명하지만 HTTP 상태 및 오류 전송 형식은 규정하지 않습니다.
+      content:
+        application/zip:
+          schema:
+            type: string
+            format: binary
+          x-opendart-content-type-status: inferred-from-documented-output-format
+      x-opendart-http-status: not-documented
+      x-opendart-documented-response-schema:
+        component: DS001_2019003_Response
+        note: 응답 결과 표 또는 ZIP 내부 XML 필드 설명을 보존합니다. 성공 ZIP 자체의 구조를 뜻하지 않습니다.
+  x-opendart:
+    logicalOperationId: DS001-2019003
+    apiGroupCode: DS001
+    apiGroupName: 공시정보
+    apiId: "2019003"
+    apiName: 공시서류원본파일
+    documentedPageHeading: 공시서류원본파일 개발가이드
+    source:
+      guideUrl: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019003
+      groupUrl: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001
+      checkedAt: 2026-07-17
+    documentedBasicInfo:
+      method: GET
+      requestUrl: https://opendart.fss.or.kr/api/document.xml
+      encoding: UTF-8
+      outputFormat: Zip FILE (binary)
+    documentedRequestArguments:
+      - key: crtfc_key
+        name: API 인증키
+        documentedType: STRING(40)
+        required: Y
+        description: 발급받은 인증키(40자리)
+      - key: rcept_no
+        name: 접수번호
+        documentedType: STRING(14)
+        required: Y
+        description: 접수번호
+    sourceTableHeaders:
+      basicInfo:
+        - 메서드
+        - 요청URL
+        - 인코딩
+        - 출력포멧
+      requestArguments:
+        - 요청키
+        - 명칭
+        - 타입
+        - 필수여부
+        - 값설명
+      responseFields:
+        - 응답키
+        - 명칭
+        - 출력설명
+    referenceTables: []
+    sectionNotes:
+      - section: OpenAPI 테스트
+        text: |-
+          출력포멧이 Zip FILE (binary)인 경우 브라우저 테스트를 제공하지 않습니다.
+          ※ chrome, edge는 브라우저 특성상 zip파일이 아닌 xml파일로 다운로드 되므로, 확장자명을 zip으로 바꾸시면 정상적으로 확인하실 수 있습니다.
+    coverage:
+      status: probe-required
+      classification: not-assessed
+      acquisitionIdentity: not-documented
+      successfulEmptyCoverage: not-documented
+      partitionClosure: not-documented
+      historicalAvailability: not-documented

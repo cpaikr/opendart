@@ -1,0 +1,396 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        bsns_year:
+          description: |-
+            사업 연도
+
+            사업연도(4자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사업 연도
+        stock_code:
+          description: |-
+            종목 코드
+
+            상장회사의 종목코드(6자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 종목 코드
+        reprt_code:
+          description: |-
+            보고서 코드
+
+            1분기보고서 : 11013
+            반기보고서 : 11012
+            3분기보고서 : 11014
+            사업보고서 : 11011
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 보고서 코드
+        account_nm:
+          description: |-
+            계정명
+
+            ex) 자본총계
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 계정명
+        fs_div:
+          description: |-
+            개별/연결구분
+
+            OFS:재무제표, CFS:연결재무제표
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 개별/연결구분
+        fs_nm:
+          description: |-
+            개별/연결명
+
+            ex) 연결재무제표 또는 재무제표 출력
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 개별/연결명
+        sj_div:
+          description: |-
+            재무제표구분
+
+            BS:재무상태표, IS:손익계산서
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 재무제표구분
+        sj_nm:
+          description: |-
+            재무제표명
+
+            ex) 재무상태표 또는 손익계산서 출력
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 재무제표명
+        thstrm_nm:
+          description: |-
+            당기명
+
+            ex) 제 13 기 3분기말
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 당기명
+        thstrm_dt:
+          description: |-
+            당기일자
+
+            ex) 2018.09.30 현재
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 당기일자
+        thstrm_amount:
+          description: |-
+            당기금액
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 당기금액
+        thstrm_add_amount:
+          description: |-
+            당기누적금액
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 당기누적금액
+        frmtrm_nm:
+          description: |-
+            전기명
+
+            ex) 제 12 기말
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 전기명
+        frmtrm_dt:
+          description: |-
+            전기일자
+
+            ex) 2017.01.01 ~ 2017.12.31
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 전기일자
+        frmtrm_amount:
+          description: |-
+            전기금액
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 전기금액
+        frmtrm_add_amount:
+          description: |-
+            전기누적금액
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 전기누적금액
+        bfefrmtrm_nm:
+          description: |-
+            전전기명
+
+            ex) 제 11 기말(※ 사업보고서의 경우에만 출력)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 전전기명
+        bfefrmtrm_dt:
+          description: |-
+            전전기일자
+
+            ex) 2016.12.31 현재(※ 사업보고서의 경우에만 출력)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 전전기일자
+        bfefrmtrm_amount:
+          description: |-
+            전전기금액
+
+            9,999,999,999(※ 사업보고서의 경우에만 출력)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 전전기금액
+        ord:
+          description: 계정과목 정렬순서
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 계정과목 정렬순서
+        currency:
+          description: 통화 단위
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 통화 단위
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: bsns_year
+      name: 사업 연도
+      description: 사업연도(4자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: stock_code
+      name: 종목 코드
+      description: 상장회사의 종목코드(6자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: reprt_code
+      name: 보고서 코드
+      description: |-
+        1분기보고서 : 11013
+        반기보고서 : 11012
+        3분기보고서 : 11014
+        사업보고서 : 11011
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: account_nm
+      name: 계정명
+      description: ex) 자본총계
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: fs_div
+      name: 개별/연결구분
+      description: OFS:재무제표, CFS:연결재무제표
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: fs_nm
+      name: 개별/연결명
+      description: ex) 연결재무제표 또는 재무제표 출력
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: sj_div
+      name: 재무제표구분
+      description: BS:재무상태표, IS:손익계산서
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: sj_nm
+      name: 재무제표명
+      description: ex) 재무상태표 또는 손익계산서 출력
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: thstrm_nm
+      name: 당기명
+      description: ex) 제 13 기 3분기말
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: thstrm_dt
+      name: 당기일자
+      description: ex) 2018.09.30 현재
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: thstrm_amount
+      name: 당기금액
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: thstrm_add_amount
+      name: 당기누적금액
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: frmtrm_nm
+      name: 전기명
+      description: ex) 제 12 기말
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: frmtrm_dt
+      name: 전기일자
+      description: ex) 2017.01.01 ~ 2017.12.31
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: frmtrm_amount
+      name: 전기금액
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: frmtrm_add_amount
+      name: 전기누적금액
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: bfefrmtrm_nm
+      name: 전전기명
+      description: ex) 제 11 기말(※ 사업보고서의 경우에만 출력)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: bfefrmtrm_dt
+      name: 전전기일자
+      description: ex) 2016.12.31 현재(※ 사업보고서의 경우에만 출력)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: bfefrmtrm_amount
+      name: 전전기금액
+      description: 9,999,999,999(※ 사업보고서의 경우에만 출력)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 24
+      key: ord
+      name: 계정과목 정렬순서
+      description: 계정과목 정렬순서
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 25
+      key: currency
+      name: 통화 단위
+      description: 통화 단위
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

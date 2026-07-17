@@ -1,0 +1,701 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        corp_cls:
+          description: |-
+            법인구분
+
+            법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 법인구분
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: |-
+            회사명
+
+            공시대상회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        dv_mth:
+          description: 분할방법
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할방법
+        dv_impef:
+          description: 분할의 중요영향 및 효과
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할의 중요영향 및 효과
+        dv_rt:
+          description: 분할비율
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할비율
+        dv_trfbsnprt_cn:
+          description: 분할로 이전할 사업 및 재산의 내용
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할로 이전할 사업 및 재산의 내용
+        atdv_excmp_cmpnm:
+          description: 분할 후 존속회사(회사명)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(회사명)
+        atdvfdtl_tast:
+          description: |-
+            분할 후 존속회사(분할후 재무내용(원)(자산총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(분할후 재무내용(원)(자산총계))
+        atdvfdtl_tdbt:
+          description: |-
+            분할 후 존속회사(분할후 재무내용(원)(부채총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(분할후 재무내용(원)(부채총계))
+        atdvfdtl_teqt:
+          description: |-
+            분할 후 존속회사(분할후 재무내용(원)(자본총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(분할후 재무내용(원)(자본총계))
+        atdvfdtl_cpt:
+          description: |-
+            분할 후 존속회사(분할후 재무내용(원)(자본금))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(분할후 재무내용(원)(자본금))
+        atdvfdtl_std:
+          description: 분할 후 존속회사(분할후 재무내용(원)(현재기준))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(분할후 재무내용(원)(현재기준))
+        atdv_excmp_exbsn_rsl:
+          description: |-
+            분할 후 존속회사(존속사업부문 최근 사업연도매출액(원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(존속사업부문 최근 사업연도매출액(원))
+        atdv_excmp_mbsn:
+          description: 분할 후 존속회사(주요사업)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(주요사업)
+        atdv_excmp_atdv_lstmn_atn:
+          description: 분할 후 존속회사(분할 후 상장유지 여부)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할 후 존속회사(분할 후 상장유지 여부)
+        dvfcmp_cmpnm:
+          description: 분할설립회사(회사명)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(회사명)
+        ffdtl_tast:
+          description: |-
+            분할설립회사(설립시 재무내용(원)(자산총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(설립시 재무내용(원)(자산총계))
+        ffdtl_tdbt:
+          description: |-
+            분할설립회사(설립시 재무내용(원)(부채총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(설립시 재무내용(원)(부채총계))
+        ffdtl_teqt:
+          description: |-
+            분할설립회사(설립시 재무내용(원)(자본총계))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(설립시 재무내용(원)(자본총계))
+        ffdtl_cpt:
+          description: |-
+            분할설립회사(설립시 재무내용(원)(자본금))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(설립시 재무내용(원)(자본금))
+        ffdtl_std:
+          description: 분할설립회사(설립시 재무내용(원)(현재기준))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(설립시 재무내용(원)(현재기준))
+        dvfcmp_nbsn_rsl:
+          description: |-
+            분할설립회사(신설사업부문 최근 사업연도 매출액(원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(신설사업부문 최근 사업연도 매출액(원))
+        dvfcmp_mbsn:
+          description: 분할설립회사(주요사업)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(주요사업)
+        dvfcmp_rlst_atn:
+          description: 분할설립회사(재상장신청 여부)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할설립회사(재상장신청 여부)
+        abcr_crrt:
+          description: 감자에 관한 사항(감자비율(%))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(감자비율(%))
+        abcr_osprpd_bgd:
+          description: 감자에 관한 사항(구주권 제출기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(구주권 제출기간(시작일))
+        abcr_osprpd_edd:
+          description: 감자에 관한 사항(구주권 제출기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(구주권 제출기간(종료일))
+        abcr_trspprpd_bgd:
+          description: 감자에 관한 사항(매매거래정지 예정기간(시작일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(매매거래정지 예정기간(시작일))
+        abcr_trspprpd_edd:
+          description: 감자에 관한 사항(매매거래정지 예정기간(종료일))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(매매거래정지 예정기간(종료일))
+        abcr_nstkascnd:
+          description: 감자에 관한 사항(신주배정조건)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(신주배정조건)
+        abcr_shstkcnt_rt_at_rs:
+          description: 감자에 관한 사항(주주 주식수 비례여부 및 사유)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(주주 주식수 비례여부 및 사유)
+        abcr_nstkasstd:
+          description: 감자에 관한 사항(신주배정기준일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(신주배정기준일)
+        abcr_nstkdlprd:
+          description: 감자에 관한 사항(신주권교부예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(신주권교부예정일)
+        abcr_nstklstprd:
+          description: 감자에 관한 사항(신주의 상장예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자에 관한 사항(신주의 상장예정일)
+        gmtsck_prd:
+          description: 주주총회 예정일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 주주총회 예정일
+        cdobprpd_bgd:
+          description: 채권자 이의제출기간(시작일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 채권자 이의제출기간(시작일)
+        cdobprpd_edd:
+          description: 채권자 이의제출기간(종료일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 채권자 이의제출기간(종료일)
+        dvdt:
+          description: 분할기일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할기일
+        dvrgsprd:
+          description: 분할등기 예정일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 분할등기 예정일
+        bddd:
+          description: 이사회결의일(결정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 이사회결의일(결정일)
+        od_a_at_t:
+          description: |-
+            사외이사참석여부(참석(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사참석여부(참석(명))
+        od_a_at_b:
+          description: |-
+            사외이사참석여부(불참(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사참석여부(불참(명))
+        adt_a_atn:
+          description: 감사(사외이사가 아닌 감사위원) 참석여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감사(사외이사가 아닌 감사위원) 참석여부
+        popt_ctr_atn:
+          description: 풋옵션 등 계약 체결여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 풋옵션 등 계약 체결여부
+        popt_ctr_cn:
+          description: 계약내용
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 계약내용
+        rs_sm_atn:
+          description: 증권신고서 제출대상 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 증권신고서 제출대상 여부
+        ex_sm_r:
+          description: 제출을 면제받은 경우 그 사유
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 제출을 면제받은 경우 그 사유
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: dv_mth
+      name: 분할방법
+      description: 분할방법
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: dv_impef
+      name: 분할의 중요영향 및 효과
+      description: 분할의 중요영향 및 효과
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: dv_rt
+      name: 분할비율
+      description: 분할비율
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: dv_trfbsnprt_cn
+      name: 분할로 이전할 사업 및 재산의 내용
+      description: 분할로 이전할 사업 및 재산의 내용
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: atdv_excmp_cmpnm
+      name: 분할 후 존속회사(회사명)
+      description: 분할 후 존속회사(회사명)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: atdvfdtl_tast
+      name: 분할 후 존속회사(분할후 재무내용(원)(자산총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: atdvfdtl_tdbt
+      name: 분할 후 존속회사(분할후 재무내용(원)(부채총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: atdvfdtl_teqt
+      name: 분할 후 존속회사(분할후 재무내용(원)(자본총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: atdvfdtl_cpt
+      name: 분할 후 존속회사(분할후 재무내용(원)(자본금))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: atdvfdtl_std
+      name: 분할 후 존속회사(분할후 재무내용(원)(현재기준))
+      description: 분할 후 존속회사(분할후 재무내용(원)(현재기준))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: atdv_excmp_exbsn_rsl
+      name: 분할 후 존속회사(존속사업부문 최근 사업연도매출액(원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: atdv_excmp_mbsn
+      name: 분할 후 존속회사(주요사업)
+      description: 분할 후 존속회사(주요사업)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: atdv_excmp_atdv_lstmn_atn
+      name: 분할 후 존속회사(분할 후 상장유지 여부)
+      description: 분할 후 존속회사(분할 후 상장유지 여부)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: dvfcmp_cmpnm
+      name: 분할설립회사(회사명)
+      description: 분할설립회사(회사명)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: ffdtl_tast
+      name: 분할설립회사(설립시 재무내용(원)(자산총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: ffdtl_tdbt
+      name: 분할설립회사(설립시 재무내용(원)(부채총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 24
+      key: ffdtl_teqt
+      name: 분할설립회사(설립시 재무내용(원)(자본총계))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 25
+      key: ffdtl_cpt
+      name: 분할설립회사(설립시 재무내용(원)(자본금))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 26
+      key: ffdtl_std
+      name: 분할설립회사(설립시 재무내용(원)(현재기준))
+      description: 분할설립회사(설립시 재무내용(원)(현재기준))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 27
+      key: dvfcmp_nbsn_rsl
+      name: 분할설립회사(신설사업부문 최근 사업연도 매출액(원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 28
+      key: dvfcmp_mbsn
+      name: 분할설립회사(주요사업)
+      description: 분할설립회사(주요사업)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 29
+      key: dvfcmp_rlst_atn
+      name: 분할설립회사(재상장신청 여부)
+      description: 분할설립회사(재상장신청 여부)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 30
+      key: abcr_crrt
+      name: 감자에 관한 사항(감자비율(%))
+      description: 감자에 관한 사항(감자비율(%))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 31
+      key: abcr_osprpd_bgd
+      name: 감자에 관한 사항(구주권 제출기간(시작일))
+      description: 감자에 관한 사항(구주권 제출기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 32
+      key: abcr_osprpd_edd
+      name: 감자에 관한 사항(구주권 제출기간(종료일))
+      description: 감자에 관한 사항(구주권 제출기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 33
+      key: abcr_trspprpd_bgd
+      name: 감자에 관한 사항(매매거래정지 예정기간(시작일))
+      description: 감자에 관한 사항(매매거래정지 예정기간(시작일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 34
+      key: abcr_trspprpd_edd
+      name: 감자에 관한 사항(매매거래정지 예정기간(종료일))
+      description: 감자에 관한 사항(매매거래정지 예정기간(종료일))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 35
+      key: abcr_nstkascnd
+      name: 감자에 관한 사항(신주배정조건)
+      description: 감자에 관한 사항(신주배정조건)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 36
+      key: abcr_shstkcnt_rt_at_rs
+      name: 감자에 관한 사항(주주 주식수 비례여부 및 사유)
+      description: 감자에 관한 사항(주주 주식수 비례여부 및 사유)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 37
+      key: abcr_nstkasstd
+      name: 감자에 관한 사항(신주배정기준일)
+      description: 감자에 관한 사항(신주배정기준일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 38
+      key: abcr_nstkdlprd
+      name: 감자에 관한 사항(신주권교부예정일)
+      description: 감자에 관한 사항(신주권교부예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 39
+      key: abcr_nstklstprd
+      name: 감자에 관한 사항(신주의 상장예정일)
+      description: 감자에 관한 사항(신주의 상장예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 40
+      key: gmtsck_prd
+      name: 주주총회 예정일
+      description: 주주총회 예정일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 41
+      key: cdobprpd_bgd
+      name: 채권자 이의제출기간(시작일)
+      description: 채권자 이의제출기간(시작일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 42
+      key: cdobprpd_edd
+      name: 채권자 이의제출기간(종료일)
+      description: 채권자 이의제출기간(종료일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 43
+      key: dvdt
+      name: 분할기일
+      description: 분할기일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 44
+      key: dvrgsprd
+      name: 분할등기 예정일
+      description: 분할등기 예정일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 45
+      key: bddd
+      name: 이사회결의일(결정일)
+      description: 이사회결의일(결정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 46
+      key: od_a_at_t
+      name: 사외이사참석여부(참석(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 47
+      key: od_a_at_b
+      name: 사외이사참석여부(불참(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 48
+      key: adt_a_atn
+      name: 감사(사외이사가 아닌 감사위원) 참석여부
+      description: 감사(사외이사가 아닌 감사위원) 참석여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 49
+      key: popt_ctr_atn
+      name: 풋옵션 등 계약 체결여부
+      description: 풋옵션 등 계약 체결여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 50
+      key: popt_ctr_cn
+      name: 계약내용
+      description: 계약내용
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 51
+      key: rs_sm_atn
+      name: 증권신고서 제출대상 여부
+      description: 증권신고서 제출대상 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 52
+      key: ex_sm_r
+      name: 제출을 면제받은 경우 그 사유
+      description: 제출을 면제받은 경우 그 사유
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

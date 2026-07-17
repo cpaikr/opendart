@@ -1,0 +1,223 @@
+get:
+  operationId: get_xbrlTaxonomy_json
+  summary: XBRL택사노미재무제표양식 (JSON)
+  description: 금융감독원 회계포탈에서 제공하는 IFRS 기반 XBRL 재무제표 공시용 표준계정과목체계(계정과목) 을 제공합니다.
+  tags:
+    - DS003
+  externalDocs:
+    description: OpenDART 공식 개발가이드
+    url: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2020001
+  security:
+    - crtfcKey: []
+  parameters:
+    - name: sj_div
+      in: query
+      required: true
+      description: (※재무제표구분 참조)
+      schema:
+        type: string
+      x-opendart-korean-name: 재무제표구분
+      x-opendart-documented-type: STRING(5)
+      x-opendart-documented-required: Y
+  responses:
+    default:
+      description: 공식 가이드는 API 수준 status/message를 설명하지만 HTTP 상태 코드는 별도로 규정하지 않습니다.
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/ds003/2020001.yaml
+          x-opendart-content-type-status: inferred-from-documented-output-format
+      x-opendart-http-status: not-documented
+  x-opendart:
+    logicalOperationId: DS003-2020001
+    apiGroupCode: DS003
+    apiGroupName: 정기보고서 재무정보
+    apiId: "2020001"
+    apiName: XBRL택사노미재무제표양식
+    documentedPageHeading: XBRL택사노미재무제표양식 개발가이드
+    source:
+      guideUrl: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2020001
+      groupUrl: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS003
+      checkedAt: 2026-07-17
+    documentedBasicInfo:
+      method: GET
+      requestUrl: https://opendart.fss.or.kr/api/xbrlTaxonomy.json
+      encoding: UTF-8
+      outputFormat: JSON
+    documentedRequestArguments:
+      - key: crtfc_key
+        name: API 인증키
+        documentedType: STRING(40)
+        required: Y
+        description: 발급받은 인증키(40자리)
+      - key: sj_div
+        name: 재무제표구분
+        documentedType: STRING(5)
+        required: Y
+        description: (※재무제표구분 참조)
+    sourceTableHeaders:
+      basicInfo:
+        - 메서드
+        - 요청URL
+        - 인코딩
+        - 출력포멧
+      requestArguments:
+        - 요청키
+        - 명칭
+        - 타입
+        - 필수여부
+        - 값설명
+      responseFields:
+        - 응답키
+        - 명칭
+        - 출력설명
+    referenceTables:
+      - title: 재무제표구분
+        headers:
+          - 재무제표구분
+          - 재무제표명칭
+          - 개별/연결
+          - 표시방법
+          - 세전세후
+        rows:
+          - - BS1
+            - 재무상태표
+            - 연결
+            - 유동/비유동법
+            - ""
+          - - BS2
+            - 재무상태표
+            - 개별
+            - 유동/비유동법
+            - ""
+          - - BS3
+            - 재무상태표
+            - 연결
+            - 유동성배열법
+            - ""
+          - - BS4
+            - 재무상태표
+            - 개별
+            - 유동성배열법
+            - ""
+          - - IS1
+            - 별개의 손익계산서
+            - 연결
+            - 기능별분류
+            - ""
+          - - IS2
+            - 별개의 손익계산서
+            - 개별
+            - 기능별분류
+            - ""
+          - - IS3
+            - 별개의 손익계산서
+            - 연결
+            - 성격별분류
+            - ""
+          - - IS4
+            - 별개의 손익계산서
+            - 개별
+            - 성격별분류
+            - ""
+          - - CIS1
+            - 포괄손익계산서
+            - 연결
+            - 세후
+            - ""
+          - - CIS2
+            - 포괄손익계산서
+            - 개별
+            - 세후
+            - ""
+          - - CIS3
+            - 포괄손익계산서
+            - 연결
+            - 세전
+            - ""
+          - - CIS4
+            - 포괄손익계산서
+            - 개별
+            - 세전
+            - ""
+          - - DCIS1
+            - 단일 포괄손익계산서
+            - 연결
+            - 기능별분류
+            - 세후포괄손익
+          - - DCIS2
+            - 단일 포괄손익계산서
+            - 개별
+            - 기능별분류
+            - 세후포괄손익
+          - - DCIS3
+            - 단일 포괄손익계산서
+            - 연결
+            - 기능별분류
+            - 세전
+          - - DCIS4
+            - 단일 포괄손익계산서
+            - 개별
+            - 기능별분류
+            - 세전
+          - - DCIS5
+            - 단일 포괄손익계산서
+            - 연결
+            - 성격별분류
+            - 세후포괄손익
+          - - DCIS6
+            - 단일 포괄손익계산서
+            - 개별
+            - 성격별분류
+            - 세후포괄손익
+          - - DCIS7
+            - 단일 포괄손익계산서
+            - 연결
+            - 성격별분류
+            - 세전
+          - - DCIS8
+            - 단일 포괄손익계산서
+            - 개별
+            - 성격별분류
+            - 세전
+          - - CF1
+            - 현금흐름표
+            - 연결
+            - 직접법
+            - ""
+          - - CF2
+            - 현금흐름표
+            - 개별
+            - 직접법
+            - ""
+          - - CF3
+            - 현금흐름표
+            - 연결
+            - 간접법
+            - ""
+          - - CF4
+            - 현금흐름표
+            - 개별
+            - 간접법
+            - ""
+          - - SCE1
+            - 자본변동표
+            - 연결
+            - ""
+            - ""
+          - - SCE2
+            - 자본변동표
+            - 개별
+            - ""
+            - ""
+        normalization: none
+    sectionNotes:
+      - section: OpenAPI 테스트
+        text: OpenAPI 서비스의 요청인자에 값을 입력하고 검색버튼을 클릭하여 해당 서비스의 선택하신 응답을 확인해 볼 수 있습니다.
+    coverage:
+      status: probe-required
+      classification: not-assessed
+      acquisitionIdentity: not-documented
+      successfulEmptyCoverage: not-documented
+      partitionClosure: not-documented
+      historicalAvailability: not-documented

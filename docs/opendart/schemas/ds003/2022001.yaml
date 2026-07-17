@@ -1,0 +1,252 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        reprt_code:
+          description: |-
+            보고서 코드
+
+            1분기보고서 : 11013
+            반기보고서 : 11012
+            3분기보고서 : 11014
+            사업보고서 : 11011
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 보고서 코드
+        bsns_year:
+          description: |-
+            사업 연도
+
+            2023
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사업 연도
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        stock_code:
+          description: |-
+            종목 코드
+
+            상장회사의 종목코드(6자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 종목 코드
+        stlm_dt:
+          description: |-
+            결산기준일
+
+            YYYY-MM-DD
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 결산기준일
+        idx_cl_code:
+          description: |-
+            지표분류코드
+
+            수익성지표 : M210000
+            안정성지표 : M220000
+            성장성지표 : M230000
+            활동성지표 : M240000
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 지표분류코드
+        idx_cl_nm:
+          description: |-
+            지표분류명
+
+            수익성지표,안정성지표,성장성지표,활동성지표
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 지표분류명
+        idx_code:
+          description: |-
+            지표코드
+
+            ex) M211000
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 지표코드
+        idx_nm:
+          description: |-
+            지표명
+
+            ex) 영업이익률
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 지표명
+        idx_val:
+          description: |-
+            지표값
+
+            ex) 0.256
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 지표값
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics:
+    - code: list-child-shares-container-depth
+      key: reprt_code
+      sourceIndex: 4
+    - code: list-child-shares-container-depth
+      key: bsns_year
+      sourceIndex: 5
+    - code: list-child-shares-container-depth
+      key: corp_code
+      sourceIndex: 6
+    - code: list-child-shares-container-depth
+      key: stock_code
+      sourceIndex: 7
+    - code: list-child-shares-container-depth
+      key: stlm_dt
+      sourceIndex: 8
+    - code: list-child-shares-container-depth
+      key: idx_cl_code
+      sourceIndex: 9
+    - code: list-child-shares-container-depth
+      key: idx_cl_nm
+      sourceIndex: 10
+    - code: list-child-shares-container-depth
+      key: idx_code
+      sourceIndex: 11
+    - code: list-child-shares-container-depth
+      key: idx_nm
+      sourceIndex: 12
+    - code: list-child-shares-container-depth
+      key: idx_val
+      sourceIndex: 13
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: reprt_code
+      name: 보고서 코드
+      description: |-
+        1분기보고서 : 11013
+        반기보고서 : 11012
+        3분기보고서 : 11014
+        사업보고서 : 11011
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: bsns_year
+      name: 사업 연도
+      description: "2023"
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: stock_code
+      name: 종목 코드
+      description: 상장회사의 종목코드(6자리)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: stlm_dt
+      name: 결산기준일
+      description: YYYY-MM-DD
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: idx_cl_code
+      name: 지표분류코드
+      description: |-
+        수익성지표 : M210000
+        안정성지표 : M220000
+        성장성지표 : M230000
+        활동성지표 : M240000
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: idx_cl_nm
+      name: 지표분류명
+      description: 수익성지표,안정성지표,성장성지표,활동성지표
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: idx_code
+      name: 지표코드
+      description: ex) M211000
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: idx_nm
+      name: 지표명
+      description: ex) 영업이익률
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: idx_val
+      name: 지표값
+      description: ex) 0.256
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field

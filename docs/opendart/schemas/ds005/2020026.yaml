@@ -1,0 +1,590 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        corp_cls:
+          description: |-
+            법인구분
+
+            법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 법인구분
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: |-
+            회사명
+
+            공시대상회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        crstk_ostk_cnt:
+          description: |-
+            감자주식의 종류와 수(보통주식 (주))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자주식의 종류와 수(보통주식 (주))
+        crstk_estk_cnt:
+          description: |-
+            감자주식의 종류와 수(기타주식 (주))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자주식의 종류와 수(기타주식 (주))
+        fv_ps:
+          description: |-
+            1주당 액면가액 (원)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 1주당 액면가액 (원)
+        bfcr_cpt:
+          description: |-
+            감자전후 자본금(감자전 (원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자전후 자본금(감자전 (원))
+        atcr_cpt:
+          description: |-
+            감자전후 자본금(감자후 (원))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자전후 자본금(감자후 (원))
+        bfcr_tisstk_ostk:
+          description: |-
+            감자전후 발행주식수(보통주식 (주)(감자전 (원)))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자전후 발행주식수(보통주식 (주)(감자전 (원)))
+        atcr_tisstk_ostk:
+          description: |-
+            감자전후 발행주식수(보통주식 (주)(감자후 (원)))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자전후 발행주식수(보통주식 (주)(감자후 (원)))
+        bfcr_tisstk_estk:
+          description: |-
+            감자전후 발행주식수(기타주식 (주)(감자전 (원)))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자전후 발행주식수(기타주식 (주)(감자전 (원)))
+        atcr_tisstk_estk:
+          description: |-
+            감자전후 발행주식수(기타주식 (주)(감자후 (원)))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자전후 발행주식수(기타주식 (주)(감자후 (원)))
+        cr_rt_ostk:
+          description: 감자비율(보통주식 (%))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자비율(보통주식 (%))
+        cr_rt_estk:
+          description: 감자비율(기타주식 (%))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자비율(기타주식 (%))
+        cr_std:
+          description: 감자기준일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자기준일
+        cr_mth:
+          description: 감자방법
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자방법
+        cr_rs:
+          description: 감자사유
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자사유
+        crsc_gmtsck_prd:
+          description: 감자일정(주주총회 예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(주주총회 예정일)
+        crsc_trnmsppd:
+          description: 감자일정(명의개서정지기간)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(명의개서정지기간)
+        crsc_osprpd:
+          description: |-
+            감자일정(구주권 제출기간)
+
+            감자일정(구주권 제출기간)
+
+            ① 2019년 12월 8일까지 사용됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(구주권 제출기간)
+        crsc_trspprpd:
+          description: |-
+            감자일정(매매거래 정지예정기간)
+
+            감자일정(매매거래 정지예정기간)
+
+            ① 2019년 12월 8일까지 사용됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(매매거래 정지예정기간)
+        crsc_osprpd_bgd:
+          description: |-
+            감자일정(구주권 제출기간(시작일))
+
+            감자일정(구주권 제출기간(시작일))
+
+            ② 2019년 12월 9일부터 추가됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(구주권 제출기간(시작일))
+        crsc_osprpd_edd:
+          description: |-
+            감자일정(구주권 제출기간(종료일))
+
+            감자일정(구주권 제출기간(종료일))
+
+            ② 2019년 12월 9일부터 추가됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(구주권 제출기간(종료일))
+        crsc_trspprpd_bgd:
+          description: |-
+            감자일정(매매거래 정지예정기간(시작일))
+
+            감자일정(매매거래 정지예정기간(시작일))
+
+            ② 2019년 12월 9일부터 추가됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(매매거래 정지예정기간(시작일))
+        crsc_trspprpd_edd:
+          description: |-
+            감자일정(매매거래 정지예정기간(종료일))
+
+            감자일정(매매거래 정지예정기간(종료일))
+
+            ② 2019년 12월 9일부터 추가됨
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(매매거래 정지예정기간(종료일))
+        crsc_nstkdlprd:
+          description: 감자일정(신주권교부예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(신주권교부예정일)
+        crsc_nstklstprd:
+          description: 감자일정(신주상장예정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감자일정(신주상장예정일)
+        cdobprpd_bgd:
+          description: 채권자 이의제출기간(시작일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 채권자 이의제출기간(시작일)
+        cdobprpd_edd:
+          description: 채권자 이의제출기간(종료일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 채권자 이의제출기간(종료일)
+        ospr_nstkdl_pl:
+          description: 구주권제출 및 신주권교부장소
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 구주권제출 및 신주권교부장소
+        bddd:
+          description: 이사회결의일(결정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 이사회결의일(결정일)
+        od_a_at_t:
+          description: |-
+            사외이사 참석여부(참석(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사 참석여부(참석(명))
+        od_a_at_b:
+          description: |-
+            사외이사 참석여부(불참(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사 참석여부(불참(명))
+        adt_a_atn:
+          description: 감사(감사위원) 참석여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감사(감사위원) 참석여부
+        ftc_stt_atn:
+          description: 공정거래위원회 신고대상 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 공정거래위원회 신고대상 여부
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: crstk_ostk_cnt
+      name: 감자주식의 종류와 수(보통주식 (주))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: crstk_estk_cnt
+      name: 감자주식의 종류와 수(기타주식 (주))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: fv_ps
+      name: 1주당 액면가액 (원)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: bfcr_cpt
+      name: 감자전후 자본금(감자전 (원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: atcr_cpt
+      name: 감자전후 자본금(감자후 (원))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: bfcr_tisstk_ostk
+      name: 감자전후 발행주식수(보통주식 (주)(감자전 (원)))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: atcr_tisstk_ostk
+      name: 감자전후 발행주식수(보통주식 (주)(감자후 (원)))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: bfcr_tisstk_estk
+      name: 감자전후 발행주식수(기타주식 (주)(감자전 (원)))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: atcr_tisstk_estk
+      name: 감자전후 발행주식수(기타주식 (주)(감자후 (원)))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: cr_rt_ostk
+      name: 감자비율(보통주식 (%))
+      description: 감자비율(보통주식 (%))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: cr_rt_estk
+      name: 감자비율(기타주식 (%))
+      description: 감자비율(기타주식 (%))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: cr_std
+      name: 감자기준일
+      description: 감자기준일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: cr_mth
+      name: 감자방법
+      description: 감자방법
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: cr_rs
+      name: 감자사유
+      description: 감자사유
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: crsc_gmtsck_prd
+      name: 감자일정(주주총회 예정일)
+      description: 감자일정(주주총회 예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: crsc_trnmsppd
+      name: 감자일정(명의개서정지기간)
+      description: 감자일정(명의개서정지기간)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 24
+      key: crsc_osprpd
+      name: 감자일정(구주권 제출기간)
+      description: |-
+        감자일정(구주권 제출기간)
+
+        ① 2019년 12월 8일까지 사용됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 25
+      key: crsc_trspprpd
+      name: 감자일정(매매거래 정지예정기간)
+      description: |-
+        감자일정(매매거래 정지예정기간)
+
+        ① 2019년 12월 8일까지 사용됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 26
+      key: crsc_osprpd_bgd
+      name: 감자일정(구주권 제출기간(시작일))
+      description: |-
+        감자일정(구주권 제출기간(시작일))
+
+        ② 2019년 12월 9일부터 추가됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 27
+      key: crsc_osprpd_edd
+      name: 감자일정(구주권 제출기간(종료일))
+      description: |-
+        감자일정(구주권 제출기간(종료일))
+
+        ② 2019년 12월 9일부터 추가됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 28
+      key: crsc_trspprpd_bgd
+      name: 감자일정(매매거래 정지예정기간(시작일))
+      description: |-
+        감자일정(매매거래 정지예정기간(시작일))
+
+        ② 2019년 12월 9일부터 추가됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 29
+      key: crsc_trspprpd_edd
+      name: 감자일정(매매거래 정지예정기간(종료일))
+      description: |-
+        감자일정(매매거래 정지예정기간(종료일))
+
+        ② 2019년 12월 9일부터 추가됨
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 30
+      key: crsc_nstkdlprd
+      name: 감자일정(신주권교부예정일)
+      description: 감자일정(신주권교부예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 31
+      key: crsc_nstklstprd
+      name: 감자일정(신주상장예정일)
+      description: 감자일정(신주상장예정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 32
+      key: cdobprpd_bgd
+      name: 채권자 이의제출기간(시작일)
+      description: 채권자 이의제출기간(시작일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 33
+      key: cdobprpd_edd
+      name: 채권자 이의제출기간(종료일)
+      description: 채권자 이의제출기간(종료일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 34
+      key: ospr_nstkdl_pl
+      name: 구주권제출 및 신주권교부장소
+      description: 구주권제출 및 신주권교부장소
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 35
+      key: bddd
+      name: 이사회결의일(결정일)
+      description: 이사회결의일(결정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 36
+      key: od_a_at_t
+      name: 사외이사 참석여부(참석(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 37
+      key: od_a_at_b
+      name: 사외이사 참석여부(불참(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 38
+      key: adt_a_atn
+      name: 감사(감사위원) 참석여부
+      description: 감사(감사위원) 참석여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 39
+      key: ftc_stt_atn
+      name: 공정거래위원회 신고대상 여부
+      description: 공정거래위원회 신고대상 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

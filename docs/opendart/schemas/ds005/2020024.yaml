@@ -1,0 +1,332 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        corp_cls:
+          description: |-
+            법인구분
+
+            법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 법인구분
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: |-
+            회사명
+
+            공시대상회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        nstk_ostk_cnt:
+          description: |-
+            신주의 종류와 수(보통주식 (주))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신주의 종류와 수(보통주식 (주))
+        nstk_estk_cnt:
+          description: |-
+            신주의 종류와 수(기타주식 (주))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신주의 종류와 수(기타주식 (주))
+        fv_ps:
+          description: |-
+            1주당 액면가액 (원)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 1주당 액면가액 (원)
+        bfic_tisstk_ostk:
+          description: |-
+            증자전 발행주식총수 (주)(보통주식 (주))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 증자전 발행주식총수 (주)(보통주식 (주))
+        bfic_tisstk_estk:
+          description: |-
+            증자전 발행주식총수 (주)(기타주식 (주))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 증자전 발행주식총수 (주)(기타주식 (주))
+        nstk_asstd:
+          description: 신주배정기준일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신주배정기준일
+        nstk_ascnt_ps_ostk:
+          description: |-
+            1주당 신주배정 주식수(보통주식 (주))
+
+            9,999,999,999.9x (소수점 최대 20자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 1주당 신주배정 주식수(보통주식 (주))
+        nstk_ascnt_ps_estk:
+          description: |-
+            1주당 신주배정 주식수(기타주식 (주))
+
+            9,999,999,999.9x (소수점 최대 20자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 1주당 신주배정 주식수(기타주식 (주))
+        nstk_dividrk:
+          description: 신주의 배당기산일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신주의 배당기산일
+        nstk_dlprd:
+          description: 신주권교부예정일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신주권교부예정일
+        nstk_lstprd:
+          description: 신주의 상장 예정일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 신주의 상장 예정일
+        bddd:
+          description: 이사회결의일(결정일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 이사회결의일(결정일)
+        od_a_at_t:
+          description: |-
+            사외이사 참석여부(참석(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사 참석여부(참석(명))
+        od_a_at_b:
+          description: |-
+            사외이사 참석여부(불참(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사 참석여부(불참(명))
+        adt_a_atn:
+          description: 감사(감사위원)참석 여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감사(감사위원)참석 여부
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: nstk_ostk_cnt
+      name: 신주의 종류와 수(보통주식 (주))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: nstk_estk_cnt
+      name: 신주의 종류와 수(기타주식 (주))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: fv_ps
+      name: 1주당 액면가액 (원)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: bfic_tisstk_ostk
+      name: 증자전 발행주식총수 (주)(보통주식 (주))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: bfic_tisstk_estk
+      name: 증자전 발행주식총수 (주)(기타주식 (주))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: nstk_asstd
+      name: 신주배정기준일
+      description: 신주배정기준일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: nstk_ascnt_ps_ostk
+      name: 1주당 신주배정 주식수(보통주식 (주))
+      description: 9,999,999,999.9x (소수점 최대 20자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: nstk_ascnt_ps_estk
+      name: 1주당 신주배정 주식수(기타주식 (주))
+      description: 9,999,999,999.9x (소수점 최대 20자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: nstk_dividrk
+      name: 신주의 배당기산일
+      description: 신주의 배당기산일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: nstk_dlprd
+      name: 신주권교부예정일
+      description: 신주권교부예정일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: nstk_lstprd
+      name: 신주의 상장 예정일
+      description: 신주의 상장 예정일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: bddd
+      name: 이사회결의일(결정일)
+      description: 이사회결의일(결정일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: od_a_at_t
+      name: 사외이사 참석여부(참석(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: od_a_at_b
+      name: 사외이사 참석여부(불참(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: adt_a_atn
+      name: 감사(감사위원)참석 여부
+      description: 감사(감사위원)참석 여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

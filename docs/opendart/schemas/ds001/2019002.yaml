@@ -1,0 +1,246 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  corp_name:
+    description: |-
+      정식명칭
+
+      정식회사명칭
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 정식명칭
+  corp_name_eng:
+    description: |-
+      영문명칭
+
+      영문정식회사명칭
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 영문명칭
+  stock_name:
+    description: 종목명(상장사) 또는 약식명칭(기타법인)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 종목명(상장사) 또는 약식명칭(기타법인)
+  stock_code:
+    description: |-
+      상장회사인 경우 주식의 종목코드
+
+      상장회사의 종목코드(6자리)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 상장회사인 경우 주식의 종목코드
+  ceo_nm:
+    description: 대표자명
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 대표자명
+  corp_cls:
+    description: |-
+      법인구분
+
+      법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 법인구분
+  jurir_no:
+    description: 법인등록번호
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 법인등록번호
+  bizr_no:
+    description: 사업자등록번호
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 사업자등록번호
+  adres:
+    description: 주소
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 주소
+  hm_url:
+    description: 홈페이지
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 홈페이지
+  ir_url:
+    description: IR홈페이지
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: IR홈페이지
+  phn_no:
+    description: 전화번호
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 전화번호
+  fax_no:
+    description: 팩스번호
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 팩스번호
+  induty_code:
+    description: 업종코드
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 업종코드
+  est_dt:
+    description: 설립일(YYYYMMDD)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 설립일(YYYYMMDD)
+  acc_mt:
+    description: 결산월(MM)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 결산월(MM)
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: 응답인자
+      description: 응답인자
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: corp_name
+      name: 정식명칭
+      description: 정식회사명칭
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 4
+      key: corp_name_eng
+      name: 영문명칭
+      description: 영문정식회사명칭
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: stock_name
+      name: 종목명(상장사) 또는 약식명칭(기타법인)
+      description: 종목명(상장사) 또는 약식명칭(기타법인)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: stock_code
+      name: 상장회사인 경우 주식의 종목코드
+      description: 상장회사의 종목코드(6자리)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: ceo_nm
+      name: 대표자명
+      description: 대표자명
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: jurir_no
+      name: 법인등록번호
+      description: 법인등록번호
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: bizr_no
+      name: 사업자등록번호
+      description: 사업자등록번호
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: adres
+      name: 주소
+      description: 주소
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: hm_url
+      name: 홈페이지
+      description: 홈페이지
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: ir_url
+      name: IR홈페이지
+      description: IR홈페이지
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: phn_no
+      name: 전화번호
+      description: 전화번호
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: fax_no
+      name: 팩스번호
+      description: 팩스번호
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: induty_code
+      name: 업종코드
+      description: 업종코드
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: est_dt
+      name: 설립일(YYYYMMDD)
+      description: 설립일(YYYYMMDD)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: acc_mt
+      name: 결산월(MM)
+      description: 결산월(MM)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field

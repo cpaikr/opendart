@@ -1,0 +1,918 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  group:
+    type: array
+    items:
+      type: object
+      properties:
+        title:
+          description: |-
+            그룹명칭
+
+            일반사항
+
+            그룹명칭
+
+            증권의종류
+
+            그룹명칭
+
+            인수인정보
+
+            그룹명칭
+
+            자금의사용목적
+
+            그룹명칭
+
+            매출인에관한사항
+
+            그룹명칭
+
+            일반청약자환매청구권
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 그룹명칭
+        list:
+          type: array
+          items:
+            type: object
+            properties:
+              rcept_no:
+                description: |-
+                  접수번호
+
+                  접수번호(14자리)
+
+                  ※ 공시뷰어 연결에 이용예시
+                  - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 접수번호
+              corp_cls:
+                description: |-
+                  법인구분
+
+                  법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 법인구분
+              corp_code:
+                description: |-
+                  고유번호
+
+                  공시대상회사의 고유번호(8자리)
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 고유번호
+              corp_name:
+                description: |-
+                  회사명
+
+                  공시대상회사명
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 회사명
+              sbd:
+                description: 청약기일
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 청약기일
+              pymd:
+                description: 납입기일
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 납입기일
+              sband:
+                description: 청약공고일
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 청약공고일
+              asand:
+                description: 배정공고일
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 배정공고일
+              asstd:
+                description: 배정기준일
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 배정기준일
+              exstk:
+                description: 신주인수권에 관한 사항(행사대상증권)
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 신주인수권에 관한 사항(행사대상증권)
+              exprc:
+                description: |-
+                  신주인수권에 관한 사항(행사가격)
+
+                  9,999,999,999
+
+                  행사가격
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 신주인수권에 관한 사항(행사가격)
+              expd:
+                description: |-
+                  신주인수권에 관한 사항(행사기간)
+
+                  행사기간
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 신주인수권에 관한 사항(행사기간)
+              rpt_rcpn:
+                description: 주요사항보고서(접수번호)
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 주요사항보고서(접수번호)
+              stksen:
+                description: 증권의종류
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 증권의종류
+              stkcnt:
+                description: |-
+                  증권수량
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 증권수량
+              fv:
+                description: |-
+                  액면가액
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 액면가액
+              slprc:
+                description: |-
+                  모집(매출)가액
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 모집(매출)가액
+              slta:
+                description: |-
+                  모집(매출)총액
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 모집(매출)총액
+              slmthn:
+                description: 모집(매출)방법
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 모집(매출)방법
+              actsen:
+                description: 인수인구분
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 인수인구분
+              actnmn:
+                description: 인수인명
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 인수인명
+              udtcnt:
+                description: |-
+                  인수수량
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 인수수량
+              udtamt:
+                description: |-
+                  인수금액
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 인수금액
+              udtprc:
+                description: 인수대가
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 인수대가
+              udtmth:
+                description: 인수방법
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 인수방법
+              se:
+                description: 구분
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 구분
+              amt:
+                description: |-
+                  금액
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 금액
+              hdr:
+                description: 보유자
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 보유자
+              rl_cmp:
+                description: 회사와의관계
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 회사와의관계
+              bfsl_hdstk:
+                description: |-
+                  매출전보유증권수
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 매출전보유증권수
+              slstk:
+                description: |-
+                  매출증권수
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 매출증권수
+              atsl_hdstk:
+                description: |-
+                  매출후보유증권수
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 매출후보유증권수
+              grtrs:
+                description: 부여사유
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 부여사유
+              exavivr:
+                description: 행사가능 투자자
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 행사가능 투자자
+              grtcnt:
+                description: |-
+                  부여수량
+
+                  9,999,999,999
+                x-opendart-documented-type: not-specified
+                x-opendart-korean-name: 부여수량
+            additionalProperties: true
+          description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+          x-opendart-normalization: source-derived-unverified
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics:
+    - code: result-source-icon-is-not-container
+      sourceIndex: 0
+      sourceIconClass: iconFile
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: group
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: title
+      name: 그룹명칭
+      description: 일반사항
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: list
+      name: ""
+      description: ""
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 6
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: sbd
+      name: 청약기일
+      description: 청약기일
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: pymd
+      name: 납입기일
+      description: 납입기일
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: sband
+      name: 청약공고일
+      description: 청약공고일
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: asand
+      name: 배정공고일
+      description: 배정공고일
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: asstd
+      name: 배정기준일
+      description: 배정기준일
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: exstk
+      name: 신주인수권에 관한 사항(행사대상증권)
+      description: 신주인수권에 관한 사항(행사대상증권)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: exprc
+      name: 신주인수권에 관한 사항(행사가격)
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: expd
+      name: 신주인수권에 관한 사항(행사기간)
+      description: 신주인수권에 관한 사항(행사기간)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: rpt_rcpn
+      name: 주요사항보고서(접수번호)
+      description: 주요사항보고서(접수번호)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: group
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 20
+      key: title
+      name: 그룹명칭
+      description: 증권의종류
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: list
+      name: ""
+      description: ""
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 22
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 24
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 25
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 26
+      key: stksen
+      name: 증권의종류
+      description: 증권의종류
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 27
+      key: stkcnt
+      name: 증권수량
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 28
+      key: fv
+      name: 액면가액
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 29
+      key: slprc
+      name: 모집(매출)가액
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 30
+      key: slta
+      name: 모집(매출)총액
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 31
+      key: slmthn
+      name: 모집(매출)방법
+      description: 모집(매출)방법
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 32
+      key: group
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 33
+      key: title
+      name: 그룹명칭
+      description: 인수인정보
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 34
+      key: list
+      name: ""
+      description: ""
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 35
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 36
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 37
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 38
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 39
+      key: actsen
+      name: 인수인구분
+      description: 인수인구분
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 40
+      key: actnmn
+      name: 인수인명
+      description: 인수인명
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 41
+      key: stksen
+      name: 증권의종류
+      description: 증권의종류
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 42
+      key: udtcnt
+      name: 인수수량
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 43
+      key: udtamt
+      name: 인수금액
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 44
+      key: udtprc
+      name: 인수대가
+      description: 인수대가
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 45
+      key: udtmth
+      name: 인수방법
+      description: 인수방법
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 46
+      key: group
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 47
+      key: title
+      name: 그룹명칭
+      description: 자금의사용목적
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 48
+      key: list
+      name: ""
+      description: ""
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 49
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 50
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 51
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 52
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 53
+      key: se
+      name: 구분
+      description: 구분
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 54
+      key: amt
+      name: 금액
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 55
+      key: group
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 56
+      key: title
+      name: 그룹명칭
+      description: 매출인에관한사항
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 57
+      key: list
+      name: ""
+      description: ""
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 58
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 59
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 60
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 61
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 62
+      key: hdr
+      name: 보유자
+      description: 보유자
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 63
+      key: rl_cmp
+      name: 회사와의관계
+      description: 회사와의관계
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 64
+      key: bfsl_hdstk
+      name: 매출전보유증권수
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 65
+      key: slstk
+      name: 매출증권수
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 66
+      key: atsl_hdstk
+      name: 매출후보유증권수
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 67
+      key: group
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 68
+      key: title
+      name: 그룹명칭
+      description: 일반청약자환매청구권
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 69
+      key: list
+      name: ""
+      description: ""
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 70
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 71
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 72
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 73
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 74
+      key: grtrs
+      name: 부여사유
+      description: 부여사유
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 75
+      key: exavivr
+      name: 행사가능 투자자
+      description: 행사가능 투자자
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 76
+      key: grtcnt
+      name: 부여수량
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 77
+      key: expd
+      name: 행사기간
+      description: 행사기간
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 78
+      key: exprc
+      name: 행사가격
+      description: 9,999,999,999
+      depth: 3
+      sourceIndentClass: mgl60
+      sourceIconClass: iconFile
+      sourceKind: field

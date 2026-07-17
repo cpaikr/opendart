@@ -1,0 +1,461 @@
+type: object
+properties:
+  status:
+    $ref: ../../components/schemas.yaml#/OpenDartStatus
+  message:
+    description: |-
+      에러 및 정보 메시지
+
+      (※메시지 설명 참조)
+    x-opendart-documented-type: not-specified
+    x-opendart-korean-name: 에러 및 정보 메시지
+  list:
+    type: array
+    items:
+      type: object
+      properties:
+        rcept_no:
+          description: |-
+            접수번호
+
+            접수번호(14자리)
+
+            ※ 공시뷰어 연결에 이용예시
+            - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 접수번호
+        corp_cls:
+          description: |-
+            법인구분
+
+            법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 법인구분
+        corp_code:
+          description: |-
+            고유번호
+
+            공시대상회사의 고유번호(8자리)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 고유번호
+        corp_name:
+          description: |-
+            회사명
+
+            공시대상회사명
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 회사명
+        aqpln_stk_ostk:
+          description: |-
+            취득예정주식(주)(보통주식)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득예정주식(주)(보통주식)
+        aqpln_stk_estk:
+          description: |-
+            취득예정주식(주)(기타주식)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득예정주식(주)(기타주식)
+        aqpln_prc_ostk:
+          description: |-
+            취득예정금액(원)(보통주식)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득예정금액(원)(보통주식)
+        aqpln_prc_estk:
+          description: |-
+            취득예정금액(원)(기타주식)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득예정금액(원)(기타주식)
+        aqexpd_bgd:
+          description: 취득예상기간(시작일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득예상기간(시작일)
+        aqexpd_edd:
+          description: 취득예상기간(종료일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득예상기간(종료일)
+        hdexpd_bgd:
+          description: 보유예상기간(시작일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 보유예상기간(시작일)
+        hdexpd_edd:
+          description: 보유예상기간(종료일)
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 보유예상기간(종료일)
+        aq_pp:
+          description: 취득목적
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득목적
+        aq_mth:
+          description: 취득방법
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득방법
+        cs_iv_bk:
+          description: 위탁투자중개업자
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 위탁투자중개업자
+        aq_wtn_div_ostk:
+          description: |-
+            취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(보통주식))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(보통주식))
+        aq_wtn_div_ostk_rt:
+          description: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(비율(%)))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(비율(%)))
+        aq_wtn_div_estk:
+          description: |-
+            취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(기타주식))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(기타주식))
+        aq_wtn_div_estk_rt:
+          description: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(비율(%)))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(비율(%)))
+        eaq_ostk:
+          description: |-
+            취득 전 자기주식 보유현황(기타취득(주)(보통주식))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득 전 자기주식 보유현황(기타취득(주)(보통주식))
+        eaq_ostk_rt:
+          description: 취득 전 자기주식 보유현황(기타취득(주)(비율(%)))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득 전 자기주식 보유현황(기타취득(주)(비율(%)))
+        eaq_estk:
+          description: |-
+            취득 전 자기주식 보유현황(기타취득(주)(기타주식))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득 전 자기주식 보유현황(기타취득(주)(기타주식))
+        eaq_estk_rt:
+          description: 취득 전 자기주식 보유현황(기타취득(주)(비율(%)))
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득 전 자기주식 보유현황(기타취득(주)(비율(%)))
+        aq_dd:
+          description: 취득결정일
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 취득결정일
+        od_a_at_t:
+          description: |-
+            사외이사참석여부(참석(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사참석여부(참석(명))
+        od_a_at_b:
+          description: |-
+            사외이사참석여부(불참(명))
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 사외이사참석여부(불참(명))
+        adt_a_atn:
+          description: 감사(사외이사가 아닌 감사위원)참석여부
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 감사(사외이사가 아닌 감사위원)참석여부
+        d1_prodlm_ostk:
+          description: |-
+            1일 매수 주문수량 한도(보통주식)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 1일 매수 주문수량 한도(보통주식)
+        d1_prodlm_estk:
+          description: |-
+            1일 매수 주문수량 한도(기타주식)
+
+            9,999,999,999
+          x-opendart-documented-type: not-specified
+          x-opendart-korean-name: 1일 매수 주문수량 한도(기타주식)
+      additionalProperties: true
+    description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    x-opendart-normalization: source-derived-unverified
+additionalProperties: true
+description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result
+  diagnostics: []
+  responseFields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: message
+      name: 에러 및 정보 메시지
+      description: (※메시지 설명 참조)
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 3
+      key: list
+      name: ""
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 4
+      key: rcept_no
+      name: 접수번호
+      description: |-
+        접수번호(14자리)
+
+        ※ 공시뷰어 연결에 이용예시
+        - PC용 : https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 5
+      key: corp_cls
+      name: 법인구분
+      description: "법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)"
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 6
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호(8자리)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 7
+      key: corp_name
+      name: 회사명
+      description: 공시대상회사명
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 8
+      key: aqpln_stk_ostk
+      name: 취득예정주식(주)(보통주식)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 9
+      key: aqpln_stk_estk
+      name: 취득예정주식(주)(기타주식)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 10
+      key: aqpln_prc_ostk
+      name: 취득예정금액(원)(보통주식)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 11
+      key: aqpln_prc_estk
+      name: 취득예정금액(원)(기타주식)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 12
+      key: aqexpd_bgd
+      name: 취득예상기간(시작일)
+      description: 취득예상기간(시작일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 13
+      key: aqexpd_edd
+      name: 취득예상기간(종료일)
+      description: 취득예상기간(종료일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 14
+      key: hdexpd_bgd
+      name: 보유예상기간(시작일)
+      description: 보유예상기간(시작일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 15
+      key: hdexpd_edd
+      name: 보유예상기간(종료일)
+      description: 보유예상기간(종료일)
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 16
+      key: aq_pp
+      name: 취득목적
+      description: 취득목적
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 17
+      key: aq_mth
+      name: 취득방법
+      description: 취득방법
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 18
+      key: cs_iv_bk
+      name: 위탁투자중개업자
+      description: 위탁투자중개업자
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 19
+      key: aq_wtn_div_ostk
+      name: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(보통주식))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 20
+      key: aq_wtn_div_ostk_rt
+      name: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(비율(%)))
+      description: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(비율(%)))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 21
+      key: aq_wtn_div_estk
+      name: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(기타주식))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 22
+      key: aq_wtn_div_estk_rt
+      name: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(비율(%)))
+      description: 취득 전 자기주식 보유현황(배당가능이익 범위 내 취득(주)(비율(%)))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 23
+      key: eaq_ostk
+      name: 취득 전 자기주식 보유현황(기타취득(주)(보통주식))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 24
+      key: eaq_ostk_rt
+      name: 취득 전 자기주식 보유현황(기타취득(주)(비율(%)))
+      description: 취득 전 자기주식 보유현황(기타취득(주)(비율(%)))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 25
+      key: eaq_estk
+      name: 취득 전 자기주식 보유현황(기타취득(주)(기타주식))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 26
+      key: eaq_estk_rt
+      name: 취득 전 자기주식 보유현황(기타취득(주)(비율(%)))
+      description: 취득 전 자기주식 보유현황(기타취득(주)(비율(%)))
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 27
+      key: aq_dd
+      name: 취득결정일
+      description: 취득결정일
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 28
+      key: od_a_at_t
+      name: 사외이사참석여부(참석(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 29
+      key: od_a_at_b
+      name: 사외이사참석여부(불참(명))
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 30
+      key: adt_a_atn
+      name: 감사(사외이사가 아닌 감사위원)참석여부
+      description: 감사(사외이사가 아닌 감사위원)참석여부
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 31
+      key: d1_prodlm_ostk
+      name: 1일 매수 주문수량 한도(보통주식)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 32
+      key: d1_prodlm_estk
+      name: 1일 매수 주문수량 한도(기타주식)
+      description: 9,999,999,999
+      depth: 2
+      sourceIndentClass: mgl40
+      sourceIconClass: iconFile
+      sourceKind: field

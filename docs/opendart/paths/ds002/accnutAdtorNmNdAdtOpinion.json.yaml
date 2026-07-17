@@ -1,0 +1,128 @@
+get:
+  operationId: get_accnutAdtorNmNdAdtOpinion_json
+  summary: 회계감사인의 명칭 및 감사의견 (JSON)
+  description: 정기보고서(사업, 분기, 반기보고서) 내에 회계감사인의 명칭 및 감사의견을 제공합니다.
+  tags:
+    - DS002
+  externalDocs:
+    description: OpenDART 공식 개발가이드
+    url: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020009
+  security:
+    - crtfcKey: []
+  parameters:
+    - name: corp_code
+      in: query
+      required: true
+      description: |-
+        공시대상회사의 고유번호(8자리)
+        ※ 개발가이드 > 공시정보 > 고유번호 참고
+      schema:
+        type: string
+      x-opendart-korean-name: 고유번호
+      x-opendart-documented-type: STRING(8)
+      x-opendart-documented-required: Y
+    - name: bsns_year
+      in: query
+      required: true
+      description: |-
+        사업연도(4자리)
+        ※ 2015년 이후 부터 정보제공
+      schema:
+        type: string
+      x-opendart-korean-name: 사업연도
+      x-opendart-documented-type: STRING(1)
+      x-opendart-documented-required: Y
+    - name: reprt_code
+      in: query
+      required: true
+      description: |-
+        1분기보고서 : 11013
+        반기보고서 : 11012
+        3분기보고서 : 11014
+        사업보고서 : 11011
+      schema:
+        type: string
+      x-opendart-korean-name: 보고서 코드
+      x-opendart-documented-type: STRING(5)
+      x-opendart-documented-required: Y
+  responses:
+    default:
+      description: 공식 가이드는 API 수준 status/message를 설명하지만 HTTP 상태 코드는 별도로 규정하지 않습니다.
+      content:
+        application/json:
+          schema:
+            $ref: ../../schemas/ds002/2020009.yaml
+          x-opendart-content-type-status: inferred-from-documented-output-format
+      x-opendart-http-status: not-documented
+  x-opendart:
+    logicalOperationId: DS002-2020009
+    apiGroupCode: DS002
+    apiGroupName: 정기보고서 주요정보
+    apiId: "2020009"
+    apiName: 회계감사인의 명칭 및 감사의견
+    documentedPageHeading: 회계감사인의 명칭 및 감사의견 개발가이드
+    source:
+      guideUrl: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020009
+      groupUrl: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS002
+      checkedAt: 2026-07-17
+    documentedBasicInfo:
+      method: GET
+      requestUrl: https://opendart.fss.or.kr/api/accnutAdtorNmNdAdtOpinion.json
+      encoding: UTF-8
+      outputFormat: JSON
+    documentedRequestArguments:
+      - key: crtfc_key
+        name: API 인증키
+        documentedType: STRING(40)
+        required: Y
+        description: 발급받은 인증키(40자리)
+      - key: corp_code
+        name: 고유번호
+        documentedType: STRING(8)
+        required: Y
+        description: |-
+          공시대상회사의 고유번호(8자리)
+          ※ 개발가이드 > 공시정보 > 고유번호 참고
+      - key: bsns_year
+        name: 사업연도
+        documentedType: STRING(1)
+        required: Y
+        description: |-
+          사업연도(4자리)
+          ※ 2015년 이후 부터 정보제공
+      - key: reprt_code
+        name: 보고서 코드
+        documentedType: STRING(5)
+        required: Y
+        description: |-
+          1분기보고서 : 11013
+          반기보고서 : 11012
+          3분기보고서 : 11014
+          사업보고서 : 11011
+    sourceTableHeaders:
+      basicInfo:
+        - 메서드
+        - 요청URL
+        - 인코딩
+        - 출력포멧
+      requestArguments:
+        - 요청키
+        - 명칭
+        - 타입
+        - 필수여부
+        - 값설명
+      responseFields:
+        - 응답키
+        - 명칭
+        - 출력설명
+    referenceTables: []
+    sectionNotes:
+      - section: OpenAPI 테스트
+        text: OpenAPI 서비스의 요청인자에 값을 입력하고 검색버튼을 클릭하여 해당 서비스의 선택하신 응답을 확인해 볼 수 있습니다.
+    coverage:
+      status: probe-required
+      classification: not-assessed
+      acquisitionIdentity: not-documented
+      successfulEmptyCoverage: not-documented
+      partitionClosure: not-documented
+      historicalAvailability: not-documented
