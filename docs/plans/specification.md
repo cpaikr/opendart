@@ -3,7 +3,7 @@
 ## Objective
 
 Create a source-backed OpenAPI 3.2 specification for every endpoint published
-in the six OpenDART development-guide groups. Preserve all endpoint information
+in the OpenDART development guide. Preserve all endpoint information
 shown by the official guide while keeping crawler-specific analysis explicit and
 separate from documented source facts.
 
@@ -14,7 +14,8 @@ separate from documented source facts.
   [`dartdb` specification contract](https://github.com/cpaikr/dartdb/blob/81093c36f0c68ae6aefa36bc0af5a66c403e0c52/docs/research/opendart-spec-contract.md).
   This repository owns the external-source contract and does not mirror that
   application-specific document.
-- The initial inventory is 85 logical endpoints across `DS001` through `DS006`.
+- The canonical inventory is the generated root document and its path
+  references; prose does not duplicate its volatile totals.
 - Interactive test controls, page chrome, commented-out content, and transient
   API results are outside the persisted specification, except test-form values
   that are necessary to establish an otherwise undocumented request encoding.
@@ -44,30 +45,30 @@ separate from documented source facts.
   response field without correcting either source value.
 - Complete refreshes must pass catalog validation and strict OpenAPI lint in a
   staging tree before publication.
+- Repository-owned extraction, generation, validation, drift, and live-test
+  tooling will converge on one repository-internal Go CLI. This does not make
+  the tooling a supported application or package; see the accepted
+  [Go decision](../decisions/0001-go-repository-tooling.md).
 
 ## Current state
 
-- The specification, generator, offline validation, and reusable probe now live
-  in a standalone filtered-history repository with root-level package commands.
-- The official guide was checked on 2026-07-17 and all six groups were
-  extracted: 85 logical endpoints and 167 physical request paths.
-- The generated catalog preserves 337 request-argument rows, 2,383
-  response-field rows, 13 shared message codes, and endpoint-specific reference
-  tables.
-- The canonical multi-file OpenAPI 3.2.0 description and portable bundle both
-  pass the repository catalog checker and strict Redocly validation.
+- The source-backed specification and initial extraction contract are complete.
+  The canonical inventory and snapshot identity live in `openapi/openapi.yaml`.
+- The generated multi-file OpenAPI 3.2 description and portable bundle pass the
+  repository catalog, lint, reference, and freshness checks.
 - Response schemas retain the guide's `result` XML root independently of
   generated component names.
-- Guide tables and notes are complete. Remaining undocumented wire behavior,
-  quota semantics, response scalar types, and coverage-planning claims remain
-  empirical work and are explicitly marked `probe-required` rather than
-  inferred.
-- All three ZIP endpoints model both documented ZIP success and the observed
-  HTTP 200 XML status-`010` error representation.
-- Known request-length, request-cardinality, and response-label contradictions
-  are machine-readable. Both multi-company `corp_code` parameters preserve the
-  request-table contradiction while exposing the guide-supported array
-  contract. Authenticated success verification remains pending.
+- Guide tables, notes, source diagnostics, and endpoint-specific reference
+  tables are preserved. Undocumented wire behavior remains `probe-required`
+  rather than inferred.
+- Binary operations model documented ZIP success and the observed XML API-error
+  representation as separate media types.
+- Known request and response contradictions are machine-readable. The
+  multi-company `corp_code` parameters expose the guide-supported array wire
+  contract while retaining the conflicting request-table declaration.
+- Node.js still implements repository tooling. Its replacement is planned in
+  [`go-tooling-migration.md`](go-tooling-migration.md); this completed source
+  contract is not the migration tracker.
 
 ## Work
 
@@ -84,57 +85,38 @@ separate from documented source facts.
 - [x] Validate complete and partial refresh staging trees before publication.
 - [x] Resolve multi-company array serialization from the official test examples
       and message `021`, and add a credential-safe authenticated probe.
-- [ ] Run the authenticated multi-company probe and persist its sanitized
-      observation in the specification metadata.
+- [x] Move remaining guide-drift and authenticated observation work into
+      separate plans with independent permission and issue boundaries.
 
 ## Validation
 
-- `npm run sync:opendart -- --checked-at 2026-07-17` regenerated the complete
-  catalog from the official guide.
-- Node syntax checks passed for the sync, catalog-check, and bundle-freshness
-  tooling scripts.
-- `npm run verify:opendart` passed the catalog checker, strict lint of the
-  multi-file entry point, byte-for-byte bundle freshness checking, and strict
-  lint of the bundle.
-- Refresh ownership guards preserve an unmarked bundle, and invalid calendar
-  dates are rejected before source requests begin.
-- Catalog validation rejects missing, altered, or symlinked ownership markers
-  before publication.
-- A complete live refresh passed catalog and Redocly validation before
-  publication; a one-endpoint `--only` refresh passed structural-only catalog
-  validation and strict lint before publication.
-- Verified totals: 85 logical endpoints, 167 physical paths, 337 request
-  arguments, 2,383 response rows, and 13 message codes.
-- A complete 2026-07-17 refresh extracted both official multi-company test
-  examples and message `021`, passed staged catalog/OpenAPI validation, and
-  published the array contract.
-- Eight offline probe tests cover canonical, repeated-key, and single-value URL
-  serialization; JSON/XML identity extraction; malformed XML; unexpected
-  canonical identities; and non-distinct single-company baselines.
-- Four offline synchronization tests cover the trusted guide URL boundary,
-  endpoint identity validation, path-like and duplicate query rejection, and
-  curated response-field contradictions.
-  A missing `OPENDART_API_KEY` is rejected before any request. The live
-  authenticated matrix has not run because the key is not present in this
-  process environment.
-- After repository extraction, `npm ci --ignore-scripts` and
-  `npm run verify:opendart` passed from the repository root with the portable
-  bundle unchanged at SHA-256
-  `f622a6a849207523fd1f675c7b681fa65fd0c019b4066b61009d863b13081f3f`.
+- A complete guide refresh passed staged catalog and OpenAPI validation before
+  atomic publication; partial refresh behavior is covered separately.
+- Repository verification checks source-table preservation, inventory and
+  representation invariants, local references, ownership markers, strict lint,
+  and byte-for-byte bundle freshness.
+- Refresh tests cover trusted guide URLs, endpoint identities, invalid dates,
+  rejected query shapes, curated contradictions, staging ownership, and
+  rollback behavior.
+- Probe tests cover supported query serialization, JSON/XML identity parsing,
+  malformed responses, comparison failures, missing credentials, and sanitized
+  output without making live requests.
+- The targeted authenticated matrix has not run. It is subsumed by the complete
+  physical-operation conformance plan rather than remaining a specification
+  completion gate.
 
 ## Related plans
 
-- [Repository maintenance automation](maintenance-automation.md) covers future
-  offline CI, public-guide drift detection, artifacts, and issue handling.
-- [Credentialed probe automation](credentialed-probes.md) keeps secret-bearing
-  workflows behind a separate security review and implementation boundary.
+- [Go tooling migration](go-tooling-migration.md) replaces the current Node.js
+  implementation without changing the product boundary.
+- [Public-guide semantic drift](guide-drift.md) covers credential-free guide
+  comparison, artifacts, and its deduplicated issue.
+- [Credentialed live conformance](live-conformance.md) covers every physical API
+  operation behind a separate security and issue boundary.
 
 ## Next action
 
-Complete the security review in
-[credentialed-probes.md](credentialed-probes.md) before running
-`npm run probe:opendart-multi-company` with `OPENDART_API_KEY`. After a
-supervised sanitized result is accepted, update the four physical parameters'
-verification state in a separate reviewed commit. Continue quota, throttling,
-successful-emptiness, response-type, enumerability, acquisition, closure, and
-historical-coverage probes only as separately planned work.
+The source-contract plan is complete. Begin with the compatibility gate in
+[`go-tooling-migration.md`](go-tooling-migration.md), then implement public-guide
+drift and complete live conformance as separate consumers. Any empirical fact
+promoted into specification metadata still requires a separate reviewed change.

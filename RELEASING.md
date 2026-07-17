@@ -28,6 +28,11 @@ do not match individual files at the repository root. Root-file-only changes
 must therefore use a non-releasable commit type, and reviewers must reject any
 release proposal whose bundle has no material change.
 
+The Go tooling migration is non-releasable unless it also changes the bundle's
+meaning. When `cmd/`, `internal/`, or test-fixture directories are introduced,
+add them to Release Please's repository-only exclusions. Root `go.mod` and
+`go.sum` changes still rely on a non-releasable commit type and this review gate.
+
 While the project is below `1.0.0`:
 
 | Impact | Examples | Commit input | Version impact |
