@@ -31,3 +31,26 @@ OpenDartStatus:
       요청 제한을 초과하였습니다.
       일반적으로는 20,000건 이상의 요청에 대하여 이 에러 메시지가 발생되나, 요청 제한이 다르게 설정된 경우에는 이에 준하여 발생됩니다.
     "021": 조회 가능한 회사 개수가 초과하였습니다.(최대 100건)
+OpenDartXmlError:
+  type: object
+  properties:
+    status:
+      $ref: "#/OpenDartStatus"
+    message:
+      type: string
+  required:
+    - status
+    - message
+  additionalProperties: true
+  xml:
+    nodeType: element
+    name: result
+  description: ZIP 다운로드 API에서 실측된 XML API 오류 응답입니다.
+  x-opendart:
+    schemaStatus: empirically-observed
+    observation:
+      observedAt: 2026-07-17
+      requestCondition: invalid-40-character-api-key
+      httpStatus: 200
+      contentTypeHeader: application/xml;charset=UTF-8
+      apiStatus: "010"

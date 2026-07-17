@@ -1,6 +1,6 @@
 # OpenDART API Specification
 
-This directory contains a source-backed OpenAPI 3.1.2 description of every API
+This directory contains a source-backed OpenAPI 3.2.0 description of every API
 operation published in the six official OpenDART development-guide groups.
 
 ## Inventory
@@ -22,13 +22,16 @@ request table, reference tables, and verification date under `x-opendart`.
 - [`openapi.yaml`](openapi.yaml) is the canonical multi-file entry point.
 - `paths/` contains one Path Item fragment per physical request URL.
 - `schemas/` contains one conservative response schema per logical endpoint.
-- `components/schemas.yaml` contains the shared status-code definition.
+- `components/schemas.yaml` contains the shared status-code and observed XML-error
+  definitions.
 - [`generated/openapi.bundle.yaml`](generated/openapi.bundle.yaml) is the
   portable single-file bundle for external tools.
 - [`redocly.yaml`](redocly.yaml) contains strict linting rules.
 
 The fragments and bundle are generated from the official guide. Do not edit
 them by hand; update the extractor or its source-normalization rules instead.
+OpenAPI 3.2 is canonical. If a downstream generator only supports 3.1, produce
+a separate compatibility artifact rather than changing these source files.
 
 ## Source fidelity
 
@@ -36,17 +39,37 @@ OpenDART documents response keys and descriptions but does not document their
 types. The normalized schemas therefore leave scalar types open. The raw source
 rows, indentation classes, icon classes, source order, and normalization
 diagnostics are retained under each schema's `x-opendart` extension.
+Known contradictions inside the official guide are preserved next to the
+affected parameter or response property under
+`x-opendart-source-diagnostics`; neither source value is silently corrected.
 
-Request arguments are modeled as query strings, matching the guide's
+The guide records `result` as the response root. Schemas retain that as the XML
+root name so bundled component names do not alter XML serialization. The XML
+metadata remains a logical mapping of the guide table, not an XSD or wire-level
+validation claim.
+
+Request arguments are generally modeled as query strings, matching the guide's
 `STRING(n)` declarations. Their exact documented type, required flag, and
 description are retained, but narrative lengths, enums, defaults, ranges, and
 date shapes are not promoted to validators. That would require interpreting
 prose and could make a source-backed contract stricter than OpenDART itself.
 
+The two multi-company operations are the deliberate exception. Although their
+request tables describe `corp_code` as one `STRING(8)`, each official test form
+supplies two comma-separated company codes, and message `021` states a maximum
+of 100 companies. The app-facing parameter is therefore an array with one to
+100 items, `style: form`, and `explode: false`. This produces
+`corp_code=CODE1,CODE2`; the conflicting table declaration and exact guide
+examples remain under `x-opendart` metadata. Authenticated success verification
+is still marked `pending` until the live probe below returns both companies for
+both endpoints and both response formats.
+
 The guide also does not specify HTTP status-code behavior or literal response
 `Content-Type` headers. Operations use a `default` response, and media types are
 marked as inferred from the documented output format. These are not presented
-as verified wire-level facts.
+as verified wire-level facts. The exception is the empirically observed XML
+error representation on all three ZIP endpoints; its observation metadata
+remains separate from guide-sourced facts.
 
 Coverage, acquisition identity, successful-empty semantics, partition closure,
 and historical availability remain `probe-required` until empirical evidence is
@@ -61,11 +84,16 @@ available. This keeps documented facts distinct from collection analysis.
 The guide labels each as `Zip FILE (binary)`. It warns that Chrome and Edge may
 save the download with an `.xml` extension and instructs users to rename it to
 `.zip`. Only `corpCode.xml` documents fields inside the archived XML file.
+Raw ZIP bodies use the OpenAPI 3.2 representation: the `application/zip` media
+type with an unconstrained schema. Calls made with an invalid 40-character API
+key on 2026-07-17 returned HTTP 200, `application/xml;charset=UTF-8`, and API
+status `010`; that XML error is modeled as a second media type on the same
+catch-all response.
 
 ## Refresh and validation
 
 The tooling is isolated from future application technology under
-`tools/openapi/`:
+`tools/openapi/`. It requires Node.js `>=22.12.0` or `20.19.x`, with npm `>=10`:
 
 ```sh
 cd tools/openapi
@@ -75,9 +103,24 @@ npm run bundle:opendart
 npm run verify:opendart
 ```
 
+To verify multi-company serialization with a real key, expose it only through
+the process environment and run:
+
+```sh
+npm run probe:opendart-multi-company
+```
+
+The probe reads `OPENDART_API_KEY`, makes ten sequential requests, and emits a
+sanitized JSON observation. It tests the canonical comma-separated form and a
+repeated-query-key control across both endpoints and JSON/XML. Two single-company
+baselines map the first endpoint's `corp_code` inputs to its `stock_code` response
+identities. The probe never prints the key, an authenticated URL, or a complete
+response body, and it performs no automatic retries.
+
 The repository-owned catalog check verifies inventory counts, group coverage,
 physical representations, normalized-parameter parity, schema ownership,
 provenance, source-table totals, local references, and orphaned fragments.
-Redocly then validates both the multi-file description and its bundled form;
-verification also proves the committed bundle matches a fresh build without
-rewriting it.
+Refresh runs the catalog check and strict Redocly lint against a staging tree
+before publishing a complete catalog. Redocly also validates the committed
+multi-file description and bundle; verification proves the bundle matches a
+fresh build without rewriting it.

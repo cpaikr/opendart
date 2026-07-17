@@ -2,7 +2,7 @@
 
 ## Objective
 
-Create a source-backed OpenAPI 3.1 specification for every endpoint published
+Create a source-backed OpenAPI 3.2 specification for every endpoint published
 in the six OpenDART development-guide groups. Preserve all endpoint information
 shown by the official guide while keeping crawler-specific analysis explicit and
 separate from documented source facts.
@@ -14,11 +14,14 @@ separate from documented source facts.
   [`docs/research/opendart-spec-contract.md`](../research/opendart-spec-contract.md).
 - The initial inventory is 85 logical endpoints across `DS001` through `DS006`.
 - Interactive test controls, page chrome, commented-out content, and transient
-  API results are outside the persisted specification.
+  API results are outside the persisted specification, except test-form values
+  that are necessary to establish an otherwise undocumented request encoding.
 
 ## Decisions
 
-- OpenAPI 3.1 is the canonical format; generated prose is secondary.
+- OpenAPI 3.2 is the canonical format; generated prose is secondary. If a
+  downstream SDK generator still requires 3.1, generate a compatibility
+  artifact instead of weakening the canonical contract.
 - Physical JSON, XML, and download URLs remain distinct OpenAPI paths.
 - Exact Korean source descriptions are retained.
 - Source provenance and operational coverage fields use `x-opendart` extensions.
@@ -26,8 +29,19 @@ separate from documented source facts.
 - Request prose is preserved without promoting narrative constraints to
   machine validators; unambiguous constraints can be curated separately if a
   code-generation contract is later required.
+- The specification is an executable contract for applications. The two
+  multi-company `corp_code` parameters are arrays because the official test
+  forms demonstrate comma-separated values; `style: form` and `explode: false`
+  encode that wire form. Message `021` supplies the 100-company maximum.
 - Repeated parameters, schemas, and message codes are shared with `$ref` where
   doing so does not erase endpoint-specific requirements or source wording.
+- ZIP success bodies use the canonical raw-binary representation. Empirically
+  observed XML API errors remain a second media type on the same catch-all
+  response, with observation metadata distinct from guide facts.
+- Curated guide contradictions are attached to the affected parameter or
+  response field without correcting either source value.
+- Complete refreshes must pass catalog validation and strict OpenAPI lint in a
+  staging tree before publication.
 
 ## Current state
 
@@ -36,11 +50,20 @@ separate from documented source facts.
 - The generated catalog preserves 337 request-argument rows, 2,383
   response-field rows, 13 shared message codes, and endpoint-specific reference
   tables.
-- The canonical multi-file OpenAPI 3.1.2 description and portable bundle both
+- The canonical multi-file OpenAPI 3.2.0 description and portable bundle both
   pass the repository catalog checker and strict Redocly validation.
-- Guide-documented contracts are complete. Wire behavior, quota semantics,
-  response scalar types, and coverage-planning claims remain empirical work and
-  are explicitly marked `probe-required` rather than inferred.
+- Response schemas retain the guide's `result` XML root independently of
+  generated component names.
+- Guide tables and notes are complete. Remaining undocumented wire behavior,
+  quota semantics, response scalar types, and coverage-planning claims remain
+  empirical work and are explicitly marked `probe-required` rather than
+  inferred.
+- All three ZIP endpoints model both documented ZIP success and the observed
+  HTTP 200 XML status-`010` error representation.
+- Known request-length, request-cardinality, and response-label contradictions
+  are machine-readable. Both multi-company `corp_code` parameters preserve the
+  request-table contradiction while exposing the guide-supported array
+  contract. Authenticated success verification remains pending.
 
 ## Work
 
@@ -52,6 +75,13 @@ separate from documented source facts.
       preservation.
 - [x] Review the generated specification against the handoff contract and record
       remaining empirical probes.
+- [x] Adopt OpenAPI 3.2 raw-binary and XML element semantics.
+- [x] Model observed ZIP XML errors and curate known source contradictions.
+- [x] Validate complete and partial refresh staging trees before publication.
+- [x] Resolve multi-company array serialization from the official test examples
+      and message `021`, and add a credential-safe authenticated probe.
+- [ ] Run the authenticated multi-company probe and persist its sanitized
+      observation in the specification metadata.
 
 ## Validation
 
@@ -62,11 +92,29 @@ separate from documented source facts.
 - `npm run verify:opendart` passed the catalog checker, strict lint of the
   multi-file entry point, byte-for-byte bundle freshness checking, and strict
   lint of the bundle.
+- Refresh ownership guards preserve an unmarked bundle, and invalid calendar
+  dates are rejected before source requests begin.
+- Catalog validation rejects missing, altered, or symlinked ownership markers
+  before publication.
+- A complete live refresh passed catalog and Redocly validation before
+  publication; a one-endpoint `--only` refresh passed structural-only catalog
+  validation and strict lint before publication.
 - Verified totals: 85 logical endpoints, 167 physical paths, 337 request
   arguments, 2,383 response rows, and 13 message codes.
+- A complete 2026-07-17 refresh extracted both official multi-company test
+  examples and message `021`, passed staged catalog/OpenAPI validation, and
+  published the array contract.
+- Eight offline probe tests cover canonical, repeated-key, and single-value URL
+  serialization; JSON/XML identity extraction; malformed XML; unexpected
+  canonical identities; and non-distinct single-company baselines.
+  A missing `OPENDART_API_KEY` is rejected before any request. The live
+  authenticated matrix has not run because the key is not present in this
+  process environment.
 
 ## Next action
 
-Run the empirical probe program for quota and throttling behavior, HTTP status
-and content-type behavior, successful-empty semantics, response scalar types,
-enumerability, acquisition identity, closure evidence, and historical coverage.
+Run `npm run probe:opendart-multi-company` with `OPENDART_API_KEY` available,
+then promote the four physical parameters from authenticated verification
+`pending` to the sanitized observed result. Afterward continue quota,
+throttling, successful-emptiness, response-type, enumerability, acquisition,
+closure, and historical-coverage probes.

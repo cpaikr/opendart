@@ -32,6 +32,15 @@ get:
       x-opendart-korean-name: 사업연도
       x-opendart-documented-type: STRING(1)
       x-opendart-documented-required: Y
+      x-opendart-source-diagnostics:
+        - code: documented-length-conflict
+          severity: warning
+          message: 공식 가이드의 타입 길이와 값 설명의 자리수가 서로 다릅니다.
+          evidence:
+            documentedType: STRING(1)
+            description: |-
+              사업연도(4자리)
+              ※ 2015년 이후 부터 정보제공
     - name: reprt_code
       in: query
       required: true

@@ -1,20 +1,39 @@
-import { lstat, mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { basename, dirname, join, parse as parsePath, relative, resolve, sep } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import { parseArgs } from "node:util";
+import { parseArgs, promisify } from "node:util";
 
 import { load } from "cheerio";
 import { stringify } from "yaml";
 
 const GUIDE_ORIGIN = "https://opendart.fss.or.kr";
 const API_SERVER = `${GUIDE_ORIGIN}/api`;
+const OPENAPI_VERSION = "3.2.0";
 const DEFAULT_OUTPUT = fileURLToPath(
   new URL("../../docs/opendart", import.meta.url),
 );
 const REPOSITORY_ROOT = fileURLToPath(new URL("../../", import.meta.url));
+const CHECK_SCRIPT = fileURLToPath(new URL("./check-opendart.mjs", import.meta.url));
+const REDOCLY_CLI = fileURLToPath(
+  new URL("./node_modules/@redocly/cli/bin/cli.js", import.meta.url),
+);
+const REDOCLY_CONFIG = fileURLToPath(
+  new URL("../../docs/opendart/redocly.yaml", import.meta.url),
+);
 const OUTPUT_MARKER = ".opendart-spec-output";
+const OUTPUT_MARKER_CONTENT = "dartdb-opendart-spec-v1\n";
 const MANAGED_OUTPUTS = [
   "paths",
   "schemas",
@@ -22,6 +41,16 @@ const MANAGED_OUTPUTS = [
   "openapi.yaml",
   OUTPUT_MARKER,
 ];
+const INVALIDATED_OUTPUTS = ["generated/openapi.bundle.yaml"];
+const MULTI_COMPANY_OPERATIONS = new Set(["DS003-2019017", "DS003-2022002"]);
+const ZIP_ERROR_OBSERVATION = {
+  observedAt: "2026-07-17",
+  requestCondition: "invalid-40-character-api-key",
+  httpStatus: 200,
+  contentTypeHeader: "application/xml;charset=UTF-8",
+  apiStatus: "010",
+};
+const execFileAsync = promisify(execFile);
 
 const GROUPS = [
   { code: "DS001", name: "공시정보", expectedCount: 4 },
@@ -75,7 +104,7 @@ function parseOptions() {
     strict: true,
   });
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(values["checked-at"])) {
+  if (!validCalendarDate(values["checked-at"])) {
     throw new SourceError("--checked-at must use YYYY-MM-DD", {
       value: values["checked-at"],
     });
@@ -92,6 +121,30 @@ function parseOptions() {
     checkedAt: values["checked-at"],
     only,
   };
+}
+
+function validCalendarDate(value) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysByMonth = [
+    31,
+    leapYear ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ];
+  return month >= 1 && month <= 12 && day >= 1 && day <= daysByMonth[month - 1];
 }
 
 async function fetchHtml(url) {
@@ -301,6 +354,16 @@ function messageCodes($, messageTable) {
     });
 }
 
+function guideTestRequestArguments($) {
+  return $("#testTable input[type='hidden'][name]")
+    .toArray()
+    .map((input) => ({
+      key: $(input).attr("name"),
+      value: $(input).attr("value") || "",
+    }))
+    .filter((argument) => argument.key && argument.key !== "crtfc_key");
+}
+
 function sectionNotes($) {
   return $(".DGCont")
     .toArray()
@@ -454,6 +517,7 @@ async function extractEndpoint(endpoint) {
       requestArguments: requests.headers,
       responseFields: response.headers,
     },
+    guideTestRequestArguments: guideTestRequestArguments($),
     messageCodes: messageCodes($, messageNode),
   };
 }
@@ -467,6 +531,129 @@ function sourceDescription(row) {
   if (row.name) parts.push(row.name);
   if (row.description && row.description !== row.name) parts.push(row.description);
   return parts.join("\n\n") || undefined;
+}
+
+function parameterSourceDiagnostics(endpoint, argument) {
+  const diagnostics = [];
+  if (
+    argument.key === "bsns_year" &&
+    argument.documentedType === "STRING(1)" &&
+    argument.description.includes("4자리")
+  ) {
+    diagnostics.push({
+      code: "documented-length-conflict",
+      severity: "warning",
+      message: "공식 가이드의 타입 길이와 값 설명의 자리수가 서로 다릅니다.",
+      evidence: {
+        documentedType: argument.documentedType,
+        description: argument.description,
+      },
+    });
+  }
+  if (endpoint.logicalOperationId === "DS003-2019019" && argument.key === "rcept_no") {
+    diagnostics.push({
+      code: "inconsistent-length-across-endpoints",
+      severity: "warning",
+      message: "동일한 접수번호 요청키의 공식 가이드 타입 길이가 엔드포인트마다 다릅니다.",
+      evidence: [
+        {
+          logicalOperationId: endpoint.logicalOperationId,
+          documentedType: argument.documentedType,
+        },
+        {
+          logicalOperationId: "DS001-2019003",
+          documentedType: "STRING(14)",
+        },
+      ],
+    });
+  }
+  if (MULTI_COMPANY_OPERATIONS.has(endpoint.logicalOperationId) && argument.key === "corp_code") {
+    diagnostics.push({
+      code: "request-cardinality-conflict",
+      severity: "warning",
+      message: "공식 가이드는 복수회사 조회를 설명하지만 요청 인자는 단일 STRING(8)로 표기합니다.",
+      evidence: {
+        documentedType: argument.documentedType,
+        endpointDescription: endpoint.description,
+      },
+      handling: "modeled-from-guide-test-example",
+    });
+  }
+  return diagnostics;
+}
+
+function responseFieldSourceDiagnostics(endpoint, rows) {
+  if (endpoint.logicalOperationId !== "DS001-2019001") return [];
+  const row = rows.find(
+    (candidate) =>
+      candidate.key === "total_count" &&
+      candidate.name === "총 건수" &&
+      candidate.description === "총 페이지 수",
+  );
+  if (!row) return [];
+  return [
+    {
+      code: "field-name-description-conflict",
+      severity: "warning",
+      message: "공식 가이드의 필드 명칭과 출력 설명이 서로 다른 의미를 가리킵니다.",
+      evidence: {
+        name: row.name,
+        description: row.description,
+      },
+    },
+  ];
+}
+
+function parameterSerialization(endpoint, argument) {
+  if (!MULTI_COMPANY_OPERATIONS.has(endpoint.logicalOperationId) || argument.key !== "corp_code") {
+    return undefined;
+  }
+
+  const example = endpoint.guideTestRequestArguments.find(
+    (candidate) => candidate.key === "corp_code",
+  );
+  const values = example?.value.split(",").filter(Boolean) || [];
+  if (
+    values.length < 2 ||
+    values.some((value) => !/^\d{8}$/.test(value)) ||
+    example.value !== values.join(",")
+  ) {
+    throw new SourceError("Multi-company guide example is missing or malformed", {
+      logicalOperationId: endpoint.logicalOperationId,
+      sourceUrl: endpoint.sourceUrl,
+      value: example?.value,
+    });
+  }
+
+  const maximumMessage = endpoint.messageCodes.find((row) => row.code === "021");
+  const maximumItems = Number(maximumMessage?.description.match(/최대\s*(\d+)건/)?.[1]);
+  if (!Number.isInteger(maximumItems) || maximumItems < 1) {
+    throw new SourceError("Multi-company maximum is missing from message 021", {
+      logicalOperationId: endpoint.logicalOperationId,
+      sourceUrl: endpoint.sourceUrl,
+      message: maximumMessage?.description,
+    });
+  }
+
+  return {
+    status: "guide-example-supported",
+    wireFormat: "comma-separated",
+    delimiter: ",",
+    guideEvidence: {
+      source: "official-guide-test-form",
+      serializedValue: example.value,
+      values,
+      maximumItems: {
+        value: maximumItems,
+        source: "official-guide-message-code",
+        messageCode: maximumMessage.code,
+        description: maximumMessage.description,
+      },
+    },
+    authenticatedVerification: {
+      status: "pending",
+    },
+  };
 }
 
 function normalizedResponseSchema(endpoint) {
@@ -541,11 +728,15 @@ function normalizedResponseSchema(endpoint) {
         };
       } else {
         const descriptions = [...new Set(child.rows.map(sourceDescription).filter(Boolean))];
+        const sourceDiagnostics = responseFieldSourceDiagnostics(endpoint, child.rows);
         properties[child.key] = {
           ...(descriptions.length ? { description: descriptions.join("\n\n") } : {}),
           "x-opendart-documented-type": "not-specified",
           ...(child.rows[0]?.name
             ? { "x-opendart-korean-name": child.rows[0].name }
+            : {}),
+          ...(sourceDiagnostics.length
+            ? { "x-opendart-source-diagnostics": sourceDiagnostics }
             : {}),
         };
       }
@@ -559,6 +750,7 @@ function normalizedResponseSchema(endpoint) {
 
   return {
     ...objectSchema(effectiveRoot),
+    ...(resultNode ? { xml: { nodeType: "element", name: resultNode.key } } : {}),
     description:
       "공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.",
     "x-opendart": {
@@ -573,16 +765,43 @@ function normalizedResponseSchema(endpoint) {
 function parameterObjects(endpoint) {
   return endpoint.requestArguments
     .filter((argument) => argument.key !== "crtfc_key")
-    .map((argument) => ({
-      name: argument.key,
-      in: "query",
-      required: argument.required === "Y",
-      description: argument.description || argument.name,
-      schema: { type: "string" },
-      "x-opendart-korean-name": argument.name,
-      "x-opendart-documented-type": argument.documentedType,
-      "x-opendart-documented-required": argument.required,
-    }));
+    .map((argument) => {
+      const sourceDiagnostics = parameterSourceDiagnostics(endpoint, argument);
+      const serialization = parameterSerialization(endpoint, argument);
+      return {
+        name: argument.key,
+        in: "query",
+        required: argument.required === "Y",
+        ...(serialization ? { style: "form", explode: false } : {}),
+        description: argument.description || argument.name,
+        schema: serialization
+          ? {
+              type: "array",
+              minItems: 1,
+              maxItems: serialization.guideEvidence.maximumItems.value,
+              items: { type: "string" },
+            }
+          : { type: "string" },
+        ...(serialization
+          ? {
+              examples: {
+                officialGuide: {
+                  summary: "공식 개발가이드 테스트 예시",
+                  dataValue: [...serialization.guideEvidence.values],
+                  serializedValue: `corp_code=${serialization.guideEvidence.serializedValue}`,
+                },
+              },
+            }
+          : {}),
+        "x-opendart-korean-name": argument.name,
+        "x-opendart-documented-type": argument.documentedType,
+        "x-opendart-documented-required": argument.required,
+        ...(sourceDiagnostics.length
+          ? { "x-opendart-source-diagnostics": sourceDiagnostics }
+          : {}),
+        ...(serialization ? { "x-opendart-serialization": serialization } : {}),
+      };
+    });
 }
 
 function outputMediaType(outputFormat) {
@@ -601,19 +820,22 @@ function operationIdFor(url) {
   return `get_${basename(new URL(url).pathname).replace(/[^A-Za-z0-9]+/g, "_")}`;
 }
 
-function pathFragment(endpoint, basicRow, pathFile, schemaFile, checkedAt) {
+function pathFragment(endpoint, basicRow, pathFile, schemaFile, componentsFile, checkedAt) {
   const binary = basicRow.outputFormat === "Zip FILE (binary)";
   const mediaType = outputMediaType(basicRow.outputFormat);
   const schemaComponent = `${endpoint.apiGroupCode}_${endpoint.apiId}_Response`;
   const schemaRef = relativeRef(pathFile, schemaFile);
+  const xmlErrorRef = `${relativeRef(pathFile, componentsFile)}#/OpenDartXmlError`;
   const responseContent = binary
     ? {
         [mediaType]: {
-          schema: {
-            type: "string",
-            format: "binary",
-          },
+          schema: {},
           "x-opendart-content-type-status": "inferred-from-documented-output-format",
+        },
+        "application/xml": {
+          schema: { "$ref": xmlErrorRef },
+          "x-opendart-content-type-status": "empirically-observed-error-response",
+          "x-opendart-observation": ZIP_ERROR_OBSERVATION,
         },
       }
     : {
@@ -638,7 +860,7 @@ function pathFragment(endpoint, basicRow, pathFile, schemaFile, checkedAt) {
       responses: {
         default: {
           description: binary
-            ? "공식 가이드는 성공 시 ZIP binary 출력을 설명하지만 HTTP 상태 및 오류 전송 형식은 규정하지 않습니다."
+            ? "공식 가이드는 성공 시 ZIP binary 출력을 설명합니다. 무효한 40자리 키를 사용한 실측에서는 동일 응답이 HTTP 200의 XML API 오류를 반환했습니다."
             : "공식 가이드는 API 수준 status/message를 설명하지만 HTTP 상태 코드는 별도로 규정하지 않습니다.",
           content: responseContent,
           "x-opendart-http-status": "not-documented",
@@ -692,6 +914,21 @@ function commonSchemas(messageCodeRows) {
         messageCodeRows.map((row) => [row.code, row.description]),
       ),
     },
+    OpenDartXmlError: {
+      type: "object",
+      properties: {
+        status: { "$ref": "#/OpenDartStatus" },
+        message: { type: "string" },
+      },
+      required: ["status", "message"],
+      additionalProperties: true,
+      xml: { nodeType: "element", name: "result" },
+      description: "ZIP 다운로드 API에서 실측된 XML API 오류 응답입니다.",
+      "x-opendart": {
+        schemaStatus: "empirically-observed",
+        observation: ZIP_ERROR_OBSERVATION,
+      },
+    },
   };
 }
 
@@ -722,20 +959,69 @@ function assertSafeOutput(output) {
   }
 }
 
+async function assertSafePhysicalOutput(output) {
+  const physicalOutput = await realpath(output);
+  const blocked = new Set(
+    await Promise.all(
+      [parsePath(output).root, homedir(), tmpdir(), REPOSITORY_ROOT].map((path) =>
+        realpath(path),
+      ),
+    ),
+  );
+  if (blocked.has(physicalOutput)) {
+    throw new SourceError("Refusing to publish into a broad physical directory", {
+      output,
+      physicalOutput,
+    });
+  }
+}
+
 async function publishGenerated(staging, output) {
   assertSafeOutput(output);
   await mkdir(output, { recursive: true });
+  await assertSafePhysicalOutput(output);
+
+  const outputStat = await lstat(output);
+  if (!outputStat.isDirectory() || outputStat.isSymbolicLink()) {
+    throw new SourceError("Refusing to publish through a non-directory or symlink", {
+      output,
+    });
+  }
+
+  const generatedDirectory = join(output, "generated");
+  if (await exists(generatedDirectory)) {
+    const generatedStat = await lstat(generatedDirectory);
+    if (!generatedStat.isDirectory() || generatedStat.isSymbolicLink()) {
+      throw new SourceError("Refusing to invalidate a bundle through an unsafe path", {
+        output,
+        path: generatedDirectory,
+      });
+    }
+  }
 
   const existingManaged = [];
-  for (const name of MANAGED_OUTPUTS) {
+  for (const name of [...MANAGED_OUTPUTS, ...INVALIDATED_OUTPUTS]) {
     if (await exists(join(output, name))) existingManaged.push(name);
   }
-  if (existingManaged.length && !(await exists(join(output, OUTPUT_MARKER)))) {
-    throw new SourceError("Refusing to replace an unmarked output directory", {
-      output,
-      existingManaged,
-      requiredMarker: OUTPUT_MARKER,
-    });
+  if (existingManaged.length) {
+    const markerPath = join(output, OUTPUT_MARKER);
+    let markerStat;
+    try {
+      markerStat = await lstat(markerPath);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    const markerValid =
+      markerStat?.isFile() &&
+      !markerStat.isSymbolicLink() &&
+      (await readFile(markerPath, "utf8")) === OUTPUT_MARKER_CONTENT;
+    if (!markerValid) {
+      throw new SourceError("Refusing to replace an unowned output directory", {
+        output,
+        existingManaged,
+        requiredMarker: OUTPUT_MARKER,
+      });
+    }
   }
 
   const backup = await mkdtemp(join(dirname(output), ".opendart-backup-"));
@@ -790,6 +1076,7 @@ async function generate(endpoints, options) {
   const seenOperationIds = new Set();
   const schemaFiles = new Map();
   const rootFile = join(output, "openapi.yaml");
+  const componentsFile = join(output, "components", "schemas.yaml");
 
   for (const endpoint of endpoints) {
     const groupDir = endpoint.apiGroupCode.toLowerCase();
@@ -827,7 +1114,14 @@ async function generate(endpoints, options) {
       const pathFile = join(output, "paths", groupDir, `${basename(url.pathname)}.yaml`);
       await writeYaml(
         pathFile,
-        pathFragment(endpoint, basicRow, pathFile, schemaFile, options.checkedAt),
+        pathFragment(
+          endpoint,
+          basicRow,
+          pathFile,
+          schemaFile,
+          componentsFile,
+          options.checkedAt,
+        ),
       );
       paths[pathKey] = {
         "$ref": relativeRef(rootFile, pathFile),
@@ -836,7 +1130,6 @@ async function generate(endpoints, options) {
   }
 
   const codes = endpoints[0]?.messageCodes || [];
-  const componentsFile = join(output, "components", "schemas.yaml");
   await writeYaml(componentsFile, commonSchemas(codes));
 
   const groupCounts = Object.fromEntries(
@@ -851,7 +1144,7 @@ async function generate(endpoints, options) {
   );
 
   const root = {
-    openapi: "3.1.2",
+    openapi: OPENAPI_VERSION,
     info: {
       title: "OpenDART API",
       version: options.checkedAt,
@@ -887,6 +1180,9 @@ async function generate(endpoints, options) {
       schemas: {
         OpenDartStatus: {
           "$ref": `${relativeRef(rootFile, componentsFile)}#/OpenDartStatus`,
+        },
+        OpenDartXmlError: {
+          "$ref": `${relativeRef(rootFile, componentsFile)}#/OpenDartXmlError`,
         },
         ...Object.fromEntries(
           endpoints
@@ -931,8 +1227,43 @@ async function generate(endpoints, options) {
   };
 
   await writeYaml(rootFile, root);
-  await writeFile(join(output, OUTPUT_MARKER), "dartdb-opendart-spec-v1\n", "utf8");
+  await writeFile(join(output, OUTPUT_MARKER), OUTPUT_MARKER_CONTENT, "utf8");
   return { physicalPaths: seenPaths.size, schemaFiles: schemaFiles.size };
+}
+
+async function runStagingValidator(name, script, arguments_) {
+  try {
+    await execFileAsync(process.execPath, [script, ...arguments_], {
+      encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
+    });
+  } catch (error) {
+    throw new SourceError(`Staged ${name} validation failed`, {
+      exitCode: error.code,
+      signal: error.signal,
+      stdout: error.stdout,
+      stderr: error.stderr,
+    });
+  }
+}
+
+async function validateStaging(staging, { requireCompleteCatalog }) {
+  const rootFile = join(staging, "openapi.yaml");
+  await runStagingValidator("catalog", CHECK_SCRIPT, [
+    "--root",
+    rootFile,
+    ...(!requireCompleteCatalog ? ["--structural-only"] : []),
+  ]);
+  await runStagingValidator("OpenAPI", REDOCLY_CLI, [
+    "lint",
+    rootFile,
+    "--config",
+    REDOCLY_CONFIG,
+    "--lint-config",
+    "error",
+    "--max-problems",
+    "1000",
+  ]);
 }
 
 async function main() {
@@ -989,6 +1320,7 @@ async function main() {
   let generated;
   try {
     generated = await generate(endpoints, { ...options, output: staging });
+    await validateStaging(staging, { requireCompleteCatalog: !options.only.size });
     await publishGenerated(staging, options.output);
   } finally {
     await rm(staging, { recursive: true, force: true });

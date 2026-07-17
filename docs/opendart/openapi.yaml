@@ -1,4 +1,4 @@
-openapi: 3.1.2
+openapi: 3.2.0
 info:
   title: OpenDART API
   version: 2026-07-17
@@ -389,6 +389,8 @@ components:
   schemas:
     OpenDartStatus:
       $ref: ./components/schemas.yaml#/OpenDartStatus
+    OpenDartXmlError:
+      $ref: ./components/schemas.yaml#/OpenDartXmlError
     DS001_2019003_Response:
       $ref: ./schemas/ds001/2019003.yaml
     DS001_2019018_Response:

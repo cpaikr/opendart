@@ -10,6 +10,9 @@ properties:
     x-opendart-documented-type: not-specified
     x-opendart-korean-name: 에러 및 정보 메시지
 additionalProperties: true
+xml:
+  nodeType: element
+  name: result
 description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 x-opendart:
   schemaStatus: source-derived-unverified

@@ -21,6 +21,15 @@ get:
       x-opendart-korean-name: 접수번호
       x-opendart-documented-type: STRING(8)
       x-opendart-documented-required: Y
+      x-opendart-source-diagnostics:
+        - code: inconsistent-length-across-endpoints
+          severity: warning
+          message: 동일한 접수번호 요청키의 공식 가이드 타입 길이가 엔드포인트마다 다릅니다.
+          evidence:
+            - logicalOperationId: DS003-2019019
+              documentedType: STRING(8)
+            - logicalOperationId: DS001-2019003
+              documentedType: STRING(14)
     - name: reprt_code
       in: query
       required: true
@@ -36,13 +45,21 @@ get:
       x-opendart-documented-required: Y
   responses:
     default:
-      description: 공식 가이드는 성공 시 ZIP binary 출력을 설명하지만 HTTP 상태 및 오류 전송 형식은 규정하지 않습니다.
+      description: 공식 가이드는 성공 시 ZIP binary 출력을 설명합니다. 무효한 40자리 키를 사용한 실측에서는 동일 응답이 HTTP 200의 XML API 오류를 반환했습니다.
       content:
         application/zip:
-          schema:
-            type: string
-            format: binary
+          schema: {}
           x-opendart-content-type-status: inferred-from-documented-output-format
+        application/xml:
+          schema:
+            $ref: ../../components/schemas.yaml#/OpenDartXmlError
+          x-opendart-content-type-status: empirically-observed-error-response
+          x-opendart-observation:
+            observedAt: 2026-07-17
+            requestCondition: invalid-40-character-api-key
+            httpStatus: 200
+            contentTypeHeader: application/xml;charset=UTF-8
+            apiStatus: "010"
       x-opendart-http-status: not-documented
       x-opendart-documented-response-schema:
         component: DS003_2019019_Response

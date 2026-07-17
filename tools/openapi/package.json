@@ -2,18 +2,25 @@
   "name": "dartdb-openapi-tools",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0 || >=20.19.0 <21.0.0",
+    "npm": ">=10"
+  },
   "scripts": {
     "sync:opendart": "node sync-opendart.mjs",
+    "probe:opendart-multi-company": "node probe-multi-company.mjs",
+    "test:opendart-probe": "node --test probe-multi-company.test.mjs",
     "check:opendart": "node check-opendart.mjs",
     "lint:opendart": "redocly lint ../../docs/opendart/openapi.yaml --config ../../docs/opendart/redocly.yaml --lint-config error --max-problems 1000",
     "bundle:opendart": "redocly bundle ../../docs/opendart/openapi.yaml --config ../../docs/opendart/redocly.yaml --output ../../docs/opendart/generated/openapi.bundle.yaml --component-renaming-conflicts-severity error",
     "check:opendart-bundle": "node check-opendart-bundle.mjs",
     "lint:opendart-bundle": "redocly lint ../../docs/opendart/generated/openapi.bundle.yaml --config ../../docs/opendart/redocly.yaml --lint-config error --max-problems 1000",
-    "verify:opendart": "npm run check:opendart && npm run lint:opendart && npm run check:opendart-bundle && npm run lint:opendart-bundle"
+    "verify:opendart": "npm run test:opendart-probe && npm run check:opendart && npm run lint:opendart && npm run check:opendart-bundle && npm run lint:opendart-bundle"
   },
   "devDependencies": {
     "@redocly/cli": "2.39.0",
     "cheerio": "1.2.0",
+    "saxes": "6.0.0",
     "yaml": "2.9.0"
   }
 }

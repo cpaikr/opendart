@@ -15,14 +15,54 @@ get:
     - name: corp_code
       in: query
       required: true
+      style: form
+      explode: false
       description: |-
         공시대상회사의 고유번호(8자리)
         ※ 개발가이드 > 공시정보 > 고유번호 참고
       schema:
-        type: string
+        type: array
+        minItems: 1
+        maxItems: 100
+        items:
+          type: string
+      examples:
+        officialGuide:
+          summary: 공식 개발가이드 테스트 예시
+          dataValue:
+            - "00334624"
+            - "00126380"
+          serializedValue: corp_code=00334624,00126380
       x-opendart-korean-name: 고유번호
       x-opendart-documented-type: STRING(8)
       x-opendart-documented-required: Y
+      x-opendart-source-diagnostics:
+        - code: request-cardinality-conflict
+          severity: warning
+          message: 공식 가이드는 복수회사 조회를 설명하지만 요청 인자는 단일 STRING(8)로 표기합니다.
+          evidence:
+            documentedType: STRING(8)
+            endpointDescription: |-
+              상장법인(유가증권, 코스닥) 및 주요 비상장법인(사업보고서 제출대상 & IFRS 적용)이 제출한 정기보고서 내에 XBRL재무제표의 주요계정과목(재무상태표, 손익계산서)을 제공합니다.
+              (대상법인 복수조회 복수조회 가능)
+          handling: modeled-from-guide-test-example
+      x-opendart-serialization:
+        status: guide-example-supported
+        wireFormat: comma-separated
+        delimiter: ","
+        guideEvidence:
+          source: official-guide-test-form
+          serializedValue: 00334624,00126380
+          values:
+            - "00334624"
+            - "00126380"
+          maximumItems:
+            value: 100
+            source: official-guide-message-code
+            messageCode: "021"
+            description: 조회 가능한 회사 개수가 초과하였습니다.(최대 100건)
+        authenticatedVerification:
+          status: pending
     - name: bsns_year
       in: query
       required: true

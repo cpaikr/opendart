@@ -1,5 +1,6 @@
-import { readFile, readdir } from "node:fs/promises";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { realpathSync } from "node:fs";
+import { lstat, readFile, readdir } from "node:fs/promises";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
@@ -8,6 +9,39 @@ import { parseDocument } from "yaml";
 const DEFAULT_ROOT = fileURLToPath(
   new URL("../../docs/opendart/openapi.yaml", import.meta.url),
 );
+const OPENAPI_VERSION = "3.2.0";
+const MULTI_COMPANY_OPERATIONS = new Set(["DS003-2019017", "DS003-2022002"]);
+const MULTI_COMPANY_GUIDE_EVIDENCE = {
+  "DS003-2019017": {
+    serializedValue: "00334624,00126380",
+    values: ["00334624", "00126380"],
+  },
+  "DS003-2022002": {
+    serializedValue: "00164742,00159023",
+    values: ["00164742", "00159023"],
+  },
+};
+const MULTI_COMPANY_MAXIMUM = {
+  value: 100,
+  source: "official-guide-message-code",
+  messageCode: "021",
+  description: "조회 가능한 회사 개수가 초과하였습니다.(최대 100건)",
+};
+const ZIP_ERROR_OBSERVATION = {
+  observedAt: "2026-07-17",
+  requestCondition: "invalid-40-character-api-key",
+  httpStatus: 200,
+  contentTypeHeader: "application/xml;charset=UTF-8",
+  apiStatus: "010",
+};
+const TOTAL_COUNT_SOURCE_DIAGNOSTICS = [
+  {
+    code: "field-name-description-conflict",
+    severity: "warning",
+    message: "공식 가이드의 필드 명칭과 출력 설명이 서로 다른 의미를 가리킵니다.",
+    evidence: { name: "총 건수", description: "총 페이지 수" },
+  },
+];
 
 const EXPECTED = {
   logicalEndpoints: 85,
@@ -43,10 +77,16 @@ function assert(condition, message, context = {}) {
 
 function options() {
   const { values } = parseArgs({
-    options: { root: { type: "string", default: DEFAULT_ROOT } },
+    options: {
+      root: { type: "string", default: DEFAULT_ROOT },
+      "structural-only": { type: "boolean", default: false },
+    },
     strict: true,
   });
-  return { root: resolve(values.root) };
+  return {
+    root: resolve(values.root),
+    structuralOnly: values["structural-only"],
+  };
 }
 
 async function yamlFile(file) {
@@ -74,11 +114,36 @@ async function filesBelow(directory) {
   return result.sort();
 }
 
-function refFile(fromFile, ref) {
+function refFile(fromFile, ref, rootDir) {
   assert(typeof ref === "string", "$ref must be a string", { fromFile, ref });
-  assert(!/^https?:/i.test(ref), "Remote $ref is forbidden", { fromFile, ref });
+  assert(!/^[A-Za-z][A-Za-z0-9+.-]*:/.test(ref), "URI-scheme $ref is forbidden", {
+    fromFile,
+    ref,
+  });
   const [filePart] = ref.split("#", 1);
-  return filePart ? resolve(dirname(fromFile), filePart) : fromFile;
+  assert(
+    !filePart?.startsWith("//") && !isAbsolute(filePart || ""),
+    "Absolute $ref is forbidden",
+    { fromFile, ref },
+  );
+  const target = filePart ? resolve(dirname(fromFile), filePart) : fromFile;
+  const fromRoot = relative(rootDir, target);
+  assert(
+    fromRoot !== ".." && !fromRoot.startsWith(`..${sep}`) && !isAbsolute(fromRoot),
+    "$ref escapes the OpenDART specification directory",
+    { fromFile, ref, rootDir, target },
+  );
+  const physicalRoot = realpathSync(rootDir);
+  const physicalTarget = realpathSync(target);
+  const physicalFromRoot = relative(physicalRoot, physicalTarget);
+  assert(
+    physicalFromRoot !== ".." &&
+      !physicalFromRoot.startsWith(`..${sep}`) &&
+      !isAbsolute(physicalFromRoot),
+    "$ref resolves outside the OpenDART specification directory",
+    { fromFile, ref, rootDir, target, physicalRoot, physicalTarget },
+  );
+  return target;
 }
 
 function allRefs(value, pointer = "#", refs = []) {
@@ -94,6 +159,18 @@ function allRefs(value, pointer = "#", refs = []) {
   return refs;
 }
 
+function extensionValues(value, key, values = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item) => extensionValues(item, key, values));
+  } else if (value && typeof value === "object") {
+    for (const [childKey, child] of Object.entries(value)) {
+      if (childKey === key) values.push(child);
+      extensionValues(child, key, values);
+    }
+  }
+  return values;
+}
+
 function normalizedPath(path) {
   return path.split(sep).join("/");
 }
@@ -102,19 +179,113 @@ function sameValue(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function normalizedParameters(documentedArguments) {
+function parameterSourceDiagnostics(logicalOperationId, endpointDescription, argument) {
+  const diagnostics = [];
+  if (
+    argument.key === "bsns_year" &&
+    argument.documentedType === "STRING(1)" &&
+    argument.description.includes("4자리")
+  ) {
+    diagnostics.push({
+      code: "documented-length-conflict",
+      severity: "warning",
+      message: "공식 가이드의 타입 길이와 값 설명의 자리수가 서로 다릅니다.",
+      evidence: {
+        documentedType: argument.documentedType,
+        description: argument.description,
+      },
+    });
+  }
+  if (logicalOperationId === "DS003-2019019" && argument.key === "rcept_no") {
+    diagnostics.push({
+      code: "inconsistent-length-across-endpoints",
+      severity: "warning",
+      message: "동일한 접수번호 요청키의 공식 가이드 타입 길이가 엔드포인트마다 다릅니다.",
+      evidence: [
+        { logicalOperationId, documentedType: argument.documentedType },
+        { logicalOperationId: "DS001-2019003", documentedType: "STRING(14)" },
+      ],
+    });
+  }
+  if (MULTI_COMPANY_OPERATIONS.has(logicalOperationId) && argument.key === "corp_code") {
+    diagnostics.push({
+      code: "request-cardinality-conflict",
+      severity: "warning",
+      message: "공식 가이드는 복수회사 조회를 설명하지만 요청 인자는 단일 STRING(8)로 표기합니다.",
+      evidence: {
+        documentedType: argument.documentedType,
+        endpointDescription,
+      },
+      handling: "modeled-from-guide-test-example",
+    });
+  }
+  return diagnostics;
+}
+
+function parameterSerialization(logicalOperationId, argument) {
+  if (!MULTI_COMPANY_OPERATIONS.has(logicalOperationId) || argument.key !== "corp_code") {
+    return undefined;
+  }
+  const evidence = MULTI_COMPANY_GUIDE_EVIDENCE[logicalOperationId];
+  return {
+    status: "guide-example-supported",
+    wireFormat: "comma-separated",
+    delimiter: ",",
+    guideEvidence: {
+      source: "official-guide-test-form",
+      ...evidence,
+      maximumItems: MULTI_COMPANY_MAXIMUM,
+    },
+    authenticatedVerification: {
+      status: "pending",
+    },
+  };
+}
+
+function normalizedParameters(logicalOperationId, endpointDescription, documentedArguments) {
   return documentedArguments
     .filter((argument) => argument.key !== "crtfc_key")
-    .map((argument) => ({
-      name: argument.key,
-      in: "query",
-      required: argument.required === "Y",
-      description: argument.description || argument.name,
-      schema: { type: "string" },
-      "x-opendart-korean-name": argument.name,
-      "x-opendart-documented-type": argument.documentedType,
-      "x-opendart-documented-required": argument.required,
-    }));
+    .map((argument) => {
+      const sourceDiagnostics = parameterSourceDiagnostics(
+        logicalOperationId,
+        endpointDescription,
+        argument,
+      );
+      const serialization = parameterSerialization(logicalOperationId, argument);
+      return {
+        name: argument.key,
+        in: "query",
+        required: argument.required === "Y",
+        ...(serialization ? { style: "form", explode: false } : {}),
+        description: argument.description || argument.name,
+        schema: serialization
+          ? {
+              type: "array",
+              minItems: 1,
+              maxItems: serialization.guideEvidence.maximumItems.value,
+              items: { type: "string" },
+            }
+          : { type: "string" },
+        ...(serialization
+          ? {
+              examples: {
+                officialGuide: {
+                  summary: "공식 개발가이드 테스트 예시",
+                  dataValue: serialization.guideEvidence.values,
+                  serializedValue: `corp_code=${serialization.guideEvidence.serializedValue}`,
+                },
+              },
+            }
+          : {}),
+        "x-opendart-korean-name": argument.name,
+        "x-opendart-documented-type": argument.documentedType,
+        "x-opendart-documented-required": argument.required,
+        ...(sourceDiagnostics.length
+          ? { "x-opendart-source-diagnostics": sourceDiagnostics }
+          : {}),
+        ...(serialization ? { "x-opendart-serialization": serialization } : {}),
+      };
+    });
 }
 
 function mediaTypeFor(outputFormat) {
@@ -125,16 +296,51 @@ function mediaTypeFor(outputFormat) {
 }
 
 async function main() {
-  const { root: rootFile } = options();
+  const { root: rootFile, structuralOnly } = options();
   const rootDir = dirname(rootFile);
+  const markerFile = join(rootDir, ".opendart-spec-output");
+  let markerStat;
+  let markerContent;
+  try {
+    markerStat = await lstat(markerFile);
+    markerContent = await readFile(markerFile, "utf8");
+  } catch (error) {
+    throw new CatalogError("Generated-output ownership marker is missing", {
+      markerFile,
+      cause: error.message,
+    });
+  }
+  assert(
+    markerStat.isFile() && !markerStat.isSymbolicLink(),
+    "Generated-output marker must be a regular non-symlink file",
+    { markerFile },
+  );
+  assert(markerContent === "dartdb-opendart-spec-v1\n", "Generated-output marker changed", {
+    markerFile,
+  });
   const { value: root } = await yamlFile(rootFile);
 
-  assert(root.openapi === "3.1.2", "Unexpected OpenAPI version", {
+  assert(root.openapi === OPENAPI_VERSION, "Unexpected OpenAPI version", {
     actual: root.openapi,
   });
   assert(root.paths && typeof root.paths === "object", "Root paths object is missing");
+  const catalogMetadata = root["x-opendart"];
+  const catalogCheckedAt = catalogMetadata?.source?.checkedAt;
   assert(
-    Object.keys(root.paths).length === EXPECTED.physicalPaths,
+    typeof catalogCheckedAt === "string" && root.info?.version === catalogCheckedAt,
+    "Catalog version and source check date differ",
+    { infoVersion: root.info?.version, catalogCheckedAt },
+  );
+  assert(
+    catalogMetadata?.inventory?.physicalPathCount === Object.keys(root.paths).length,
+    "Root inventory path count differs from the paths object",
+    {
+      inventory: catalogMetadata?.inventory?.physicalPathCount,
+      actual: Object.keys(root.paths).length,
+    },
+  );
+  assert(
+    structuralOnly || Object.keys(root.paths).length === EXPECTED.physicalPaths,
     "Physical path count is incomplete",
     { expected: EXPECTED.physicalPaths, actual: Object.keys(root.paths).length },
   );
@@ -144,13 +350,16 @@ async function main() {
   const referencedPathFiles = new Set();
   const referencedSchemaFiles = new Set();
   const parsedFiles = new Map([[rootFile, root]]);
+  let parameterSourceDiagnosticCount = 0;
+  let multiCompanySerializationCount = 0;
+  let pendingSerializationVerificationCount = 0;
 
   for (const [pathKey, pathReference] of Object.entries(root.paths)) {
     assert(Object.keys(pathReference).length === 1 && pathReference.$ref, "Path entry must contain one local $ref", {
       pathKey,
       pathReference,
     });
-    const pathFile = refFile(rootFile, pathReference.$ref);
+    const pathFile = refFile(rootFile, pathReference.$ref, rootDir);
     referencedPathFiles.add(pathFile);
     const { value: pathItem, text } = await yamlFile(pathFile);
     parsedFiles.set(pathFile, pathItem);
@@ -171,6 +380,21 @@ async function main() {
       pathKey,
       pathFile,
     });
+    assert(
+      source.source.checkedAt === catalogCheckedAt,
+      "Operation source check date differs from the catalog",
+      { pathKey, expected: catalogCheckedAt, actual: source.source.checkedAt },
+    );
+    assert(
+      source.logicalOperationId === `${source.apiGroupCode}-${source.apiId}`,
+      "Logical operation identity differs from its group and API ID",
+      {
+        pathKey,
+        logicalOperationId: source.logicalOperationId,
+        apiGroupCode: source.apiGroupCode,
+        apiId: source.apiId,
+      },
+    );
     assert(!operationIds.has(operation.operationId), "operationId is duplicated", {
       operationId: operation.operationId,
       pathKey,
@@ -190,10 +414,31 @@ async function main() {
     assert(documented?.method === "GET", "Documented method changed", { pathKey, documented });
     assert(documented?.encoding === "UTF-8", "Documented encoding changed", { pathKey, documented });
     assert(
-      sameValue(operation.parameters || [], normalizedParameters(source.documentedRequestArguments || [])),
+      sameValue(
+        operation.parameters || [],
+        normalizedParameters(
+          source.logicalOperationId,
+          operation.description,
+          source.documentedRequestArguments || [],
+        ),
+      ),
       "OpenAPI parameters differ from the documented request arguments",
       { pathKey, pathFile },
     );
+    parameterSourceDiagnosticCount += (operation.parameters || []).reduce(
+      (count, parameter) =>
+        count + (parameter["x-opendart-source-diagnostics"]?.length || 0),
+      0,
+    );
+    multiCompanySerializationCount += (operation.parameters || []).filter(
+      (parameter) =>
+        parameter["x-opendart-serialization"]?.status === "guide-example-supported",
+    ).length;
+    pendingSerializationVerificationCount += (operation.parameters || []).filter(
+      (parameter) =>
+        parameter["x-opendart-serialization"]?.authenticatedVerification?.status ===
+        "pending",
+    ).length;
     assert(
       sameValue(operation.security, [{ crtfcKey: [] }]),
       "Operation security does not use the documented query authentication key",
@@ -213,10 +458,14 @@ async function main() {
 
     const mediaType = mediaTypeFor(documented.outputFormat);
     const response = operation.responses?.default;
+    const expectedMediaTypes =
+      documented.outputFormat === "Zip FILE (binary)"
+        ? [mediaType, "application/xml"]
+        : [mediaType];
     assert(
-      response && sameValue(Object.keys(response.content || {}), [mediaType]),
+      response && sameValue(Object.keys(response.content || {}), expectedMediaTypes),
       "Response media type differs from the documented output format",
-      { pathKey, expected: mediaType, actual: Object.keys(response?.content || {}) },
+      { pathKey, expected: expectedMediaTypes, actual: Object.keys(response?.content || {}) },
     );
     const responseSchema = response.content[mediaType].schema;
     const expectedSchemaFile = resolve(
@@ -227,9 +476,24 @@ async function main() {
     );
     if (documented.outputFormat === "Zip FILE (binary)") {
       assert(
-        sameValue(responseSchema, { type: "string", format: "binary" }),
-        "ZIP response is missing its raw-binary schema",
+        sameValue(responseSchema, {}),
+        "ZIP response does not use the canonical raw-binary schema",
         { pathKey, responseSchema },
+      );
+      const xmlError = response.content["application/xml"];
+      assert(
+        xmlError.schema?.$ref?.endsWith("#/OpenDartXmlError") &&
+          refFile(pathFile, xmlError.schema.$ref, rootDir) ===
+            resolve(rootDir, "components", "schemas.yaml"),
+        "ZIP XML error response does not use the shared empirical schema",
+        { pathKey, schema: xmlError.schema },
+      );
+      assert(
+        xmlError["x-opendart-content-type-status"] ===
+          "empirically-observed-error-response" &&
+          sameValue(xmlError["x-opendart-observation"], ZIP_ERROR_OBSERVATION),
+        "ZIP XML error observation is missing or changed",
+        { pathKey, xmlError },
       );
       assert(
         response["x-opendart-documented-response-schema"]?.component ===
@@ -242,12 +506,14 @@ async function main() {
         pathKey,
       });
       assert(
-        refFile(pathFile, responseSchema.$ref) === expectedSchemaFile,
+        refFile(pathFile, responseSchema.$ref, rootDir) === expectedSchemaFile,
         "Operation points to another endpoint's response schema",
         {
           pathKey,
           expected: normalizedPath(relative(rootDir, expectedSchemaFile)),
-          actual: normalizedPath(relative(rootDir, refFile(pathFile, responseSchema.$ref))),
+          actual: normalizedPath(
+            relative(rootDir, refFile(pathFile, responseSchema.$ref, rootDir)),
+          ),
         },
       );
     }
@@ -285,16 +551,36 @@ async function main() {
         file: pathFile,
         ...ref,
       });
-      const target = refFile(pathFile, ref.value);
+      const target = refFile(pathFile, ref.value, rootDir);
       if (target.startsWith(`${join(rootDir, "schemas")}${sep}`)) {
         referencedSchemaFiles.add(target);
       }
     }
   }
 
-  assert(logical.size === EXPECTED.logicalEndpoints, "Logical endpoint count is incomplete", {
+  assert(
+    catalogMetadata.inventory.logicalEndpointCount === logical.size,
+    "Root inventory logical count differs from operations",
+    {
+      inventory: catalogMetadata.inventory.logicalEndpointCount,
+      actual: logical.size,
+    },
+  );
+  assert(structuralOnly || logical.size === EXPECTED.logicalEndpoints, "Logical endpoint count is incomplete", {
     expected: EXPECTED.logicalEndpoints,
     actual: logical.size,
+  });
+  assert(structuralOnly || parameterSourceDiagnosticCount === 37, "Request source-diagnostic count changed", {
+    expected: 37,
+    actual: parameterSourceDiagnosticCount,
+  });
+  assert(structuralOnly || multiCompanySerializationCount === 4, "Multi-company serialization count changed", {
+    expected: 4,
+    actual: multiCompanySerializationCount,
+  });
+  assert(structuralOnly || pendingSerializationVerificationCount === 4, "Pending multi-company verification count changed", {
+    expected: 4,
+    actual: pendingSerializationVerificationCount,
   });
 
   const groupCounts = Object.fromEntries(Object.keys(EXPECTED.groupCounts).map((group) => [group, 0]));
@@ -330,26 +616,38 @@ async function main() {
       });
     }
   }
-  assert(sameValue(groupCounts, EXPECTED.groupCounts), "API group counts changed", {
+  assert(
+    sameValue(groupCounts, catalogMetadata.inventory.groupCounts),
+    "Root inventory group counts differ from operations",
+    { inventory: catalogMetadata.inventory.groupCounts, actual: groupCounts },
+  );
+  assert(structuralOnly || sameValue(groupCounts, EXPECTED.groupCounts), "API group counts changed", {
     expected: EXPECTED.groupCounts,
     actual: groupCounts,
   });
-  assert(requestArgumentCount === EXPECTED.requestArguments, "Request argument total changed", {
+  assert(structuralOnly || requestArgumentCount === EXPECTED.requestArguments, "Request argument total changed", {
     expected: EXPECTED.requestArguments,
     actual: requestArgumentCount,
   });
 
   const schemas = root.components?.schemas;
   assert(schemas?.OpenDartStatus?.$ref, "Shared status schema is missing");
-  const endpointSchemaEntries = Object.entries(schemas).filter(([name]) => name !== "OpenDartStatus");
-  assert(endpointSchemaEntries.length === 3, "Binary endpoint schema component count changed", {
-    expected: 3,
+  assert(schemas?.OpenDartXmlError?.$ref, "Shared XML error schema is missing");
+  const sharedSchemaNames = new Set(["OpenDartStatus", "OpenDartXmlError"]);
+  const endpointSchemaEntries = Object.entries(schemas).filter(
+    ([name]) => !sharedSchemaNames.has(name),
+  );
+  const binaryOperationCount = [...logical.values()].filter((operation) =>
+    operation.formats.has("Zip FILE (binary)"),
+  ).length;
+  assert(endpointSchemaEntries.length === binaryOperationCount, "Binary endpoint schema component count changed", {
+    expected: binaryOperationCount,
     actual: endpointSchemaEntries.length,
   });
 
   for (const [name, schemaReference] of endpointSchemaEntries) {
     assert(schemaReference.$ref, "Endpoint schema component must use a local $ref", { name });
-    const schemaFile = refFile(rootFile, schemaReference.$ref);
+    const schemaFile = refFile(rootFile, schemaReference.$ref, rootDir);
     const identity = name.match(/^(DS\d{3})_(\d+)_Response$/);
     assert(identity, "Binary endpoint schema component has an unexpected name", { name });
     const expectedSchemaFile = resolve(
@@ -365,12 +663,14 @@ async function main() {
     });
     referencedSchemaFiles.add(schemaFile);
   }
-  assert(referencedSchemaFiles.size === EXPECTED.logicalEndpoints, "Endpoint schema reference coverage is incomplete", {
-    expected: EXPECTED.logicalEndpoints,
+  assert(referencedSchemaFiles.size === logical.size, "Endpoint schema reference coverage is incomplete", {
+    expected: logical.size,
     actual: referencedSchemaFiles.size,
   });
 
   let responseFieldCount = 0;
+  let responseSourceDiagnosticCount = 0;
+  const totalCountSchema = resolve(rootDir, "schemas", "ds001", "2019001.yaml");
   for (const schemaFile of [...referencedSchemaFiles].sort()) {
     const { value: schema } = await yamlFile(schemaFile);
     parsedFiles.set(schemaFile, schema);
@@ -386,13 +686,60 @@ async function main() {
       });
     });
     responseFieldCount += fields.length;
+    const sourceRoots = fields.filter((field) => field.depth === 0);
+    assert(
+      sourceRoots.length === 1 && sourceRoots[0].key === "result",
+      "Documented response root changed",
+      { schemaFile, sourceRoots },
+    );
+    assert(
+      schema["x-opendart"].sourceRootKey === sourceRoots[0].key &&
+        schema.xml?.name === sourceRoots[0].key &&
+        schema.xml?.nodeType === "element",
+      "Response schema XML root does not match its documented source root",
+      {
+        schemaFile,
+        expected: sourceRoots[0].key,
+        sourceRootKey: schema["x-opendart"].sourceRootKey,
+        xmlName: schema.xml?.name,
+        xmlNodeType: schema.xml?.nodeType,
+      },
+    );
+    const sourceDiagnostics = extensionValues(schema, "x-opendart-source-diagnostics");
+    if (schemaFile === totalCountSchema) {
+      assert(
+        sourceDiagnostics.length === 1 &&
+          sameValue(sourceDiagnostics[0], TOTAL_COUNT_SOURCE_DIAGNOSTICS),
+        "The total_count source contradiction is not preserved",
+        { schemaFile, sourceDiagnostics },
+      );
+    } else {
+      assert(sourceDiagnostics.length === 0, "Unexpected response source diagnostic", {
+        schemaFile,
+        sourceDiagnostics,
+      });
+    }
+    responseSourceDiagnosticCount += sourceDiagnostics.reduce(
+      (count, diagnostics) => count + diagnostics.length,
+      0,
+    );
   }
-  assert(responseFieldCount === EXPECTED.responseFields, "Response field total changed", {
+  assert(structuralOnly || responseFieldCount === EXPECTED.responseFields, "Response field total changed", {
     expected: EXPECTED.responseFields,
     actual: responseFieldCount,
   });
+  const expectedResponseSourceDiagnosticCount = referencedSchemaFiles.has(totalCountSchema) ? 1 : 0;
+  assert(responseSourceDiagnosticCount === expectedResponseSourceDiagnosticCount, "Response source-diagnostic count changed", {
+    expected: expectedResponseSourceDiagnosticCount,
+    actual: responseSourceDiagnosticCount,
+  });
 
-  const statusFile = refFile(rootFile, schemas.OpenDartStatus.$ref);
+  const statusFile = refFile(rootFile, schemas.OpenDartStatus.$ref, rootDir);
+  assert(
+    schemas.OpenDartXmlError.$ref.endsWith("#/OpenDartXmlError") &&
+      refFile(rootFile, schemas.OpenDartXmlError.$ref, rootDir) === statusFile,
+    "Shared XML error component points to an unexpected schema",
+  );
   const { value: sharedSchemas } = await yamlFile(statusFile);
   parsedFiles.set(statusFile, sharedSchemas);
   const status = sharedSchemas.OpenDartStatus;
@@ -403,6 +750,25 @@ async function main() {
   assert(
     Object.keys(status["x-opendart-code-descriptions"] || {}).length === EXPECTED.messageCodes,
     "Message-code descriptions are incomplete",
+  );
+  assert(
+    sameValue(sharedSchemas.OpenDartXmlError, {
+      type: "object",
+      properties: {
+        status: { "$ref": "#/OpenDartStatus" },
+        message: { type: "string" },
+      },
+      required: ["status", "message"],
+      additionalProperties: true,
+      xml: { nodeType: "element", name: "result" },
+      description: "ZIP 다운로드 API에서 실측된 XML API 오류 응답입니다.",
+      "x-opendart": {
+        schemaStatus: "empirically-observed",
+        observation: ZIP_ERROR_OBSERVATION,
+      },
+    }),
+    "Shared XML error schema changed",
+    { actual: sharedSchemas.OpenDartXmlError },
   );
 
   const actualPathFiles = new Set(
@@ -422,7 +788,7 @@ async function main() {
 
   for (const [file, value] of parsedFiles) {
     for (const ref of allRefs(value)) {
-      assert(!/^https?:/i.test(ref.value), "Remote $ref is forbidden", { file, ...ref });
+      refFile(file, ref.value, rootDir);
     }
   }
 

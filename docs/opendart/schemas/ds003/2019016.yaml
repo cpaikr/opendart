@@ -172,6 +172,9 @@ properties:
     description: 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
     x-opendart-normalization: source-derived-unverified
 additionalProperties: true
+xml:
+  nodeType: element
+  name: result
 description: 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 x-opendart:
   schemaStatus: source-derived-unverified
