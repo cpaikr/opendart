@@ -140,9 +140,9 @@ those guide pages; committed fragments are reviewed artifacts, not independent
 claims about undocumented wire behavior.
 
 The portable bundle is the release interface. Release Please owns semantic
-versioning, `CHANGELOG.md`, `version.txt`, tags, and GitHub Releases from
-Conventional Commit history. Do not edit those generated release files or move
-published tags manually; merge a Release Please pull request instead.
+versioning, `CHANGELOG.md`, the release manifest, tags, and GitHub Releases
+from Conventional Commit history. Do not edit those generated release files or
+move published tags manually; merge a Release Please pull request instead.
 
 Each release is validated before publication. The workflow creates a draft,
 attaches `openapi.bundle.yaml` plus `openapi.bundle.yaml.sha256`, and only then
