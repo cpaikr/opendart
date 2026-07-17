@@ -12,7 +12,7 @@ import {
 import { homedir, tmpdir } from "node:os";
 import { basename, dirname, join, parse as parsePath, relative, resolve, sep } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs, promisify } from "node:util";
 
 import { load } from "cheerio";
@@ -76,6 +76,24 @@ const STANDARD_CAPTIONS = new Set([
   "OpenAPI 테스트",
   "메시지 설명",
 ]);
+const GUIDE_FETCH_PATHS = new Set(["/guide/main.do", "/guide/detail.do"]);
+const RESPONSE_FIELD_CONFLICTS = new Map([
+  [
+    "DS001-2019001:total_count",
+    { name: "총 건수", description: "총 페이지 수" },
+  ],
+  [
+    "DS002-2019011:rgllbr_co",
+    { name: "정규직 수", description: "상근, 비상근" },
+  ],
+  [
+    "DS002-2019011:rgllbr_abacpt_labrr_co",
+    {
+      name: "정규직 단시간 근로자 수",
+      description: "대표이사, 이사, 사외이사 등",
+    },
+  ],
+]);
 
 class SourceError extends Error {
   constructor(message, context = {}) {
@@ -83,6 +101,52 @@ class SourceError extends Error {
     this.name = "SourceError";
     this.context = context;
   }
+}
+
+function trustedGuideUrl(value, expectedPath = null) {
+  let url;
+  try {
+    url = new URL(value, GUIDE_ORIGIN);
+  } catch {
+    throw new SourceError("OpenDART guide URL is invalid", { value });
+  }
+
+  const pathAllowed = expectedPath
+    ? url.pathname === expectedPath
+    : GUIDE_FETCH_PATHS.has(url.pathname);
+  if (
+    url.origin !== GUIDE_ORIGIN ||
+    url.username ||
+    url.password ||
+    url.hash ||
+    !pathAllowed
+  ) {
+    throw new SourceError("OpenDART guide URL is outside the trusted guide surface", {
+      url: url.toString(),
+      expectedPath,
+    });
+  }
+  return url;
+}
+
+function endpointIdentityFromLink(href, expectedGroupCode) {
+  const sourceUrl = trustedGuideUrl(href, "/guide/detail.do");
+  const groupCodes = sourceUrl.searchParams.getAll("apiGrpCd");
+  const apiIds = sourceUrl.searchParams.getAll("apiId");
+  const apiGroupCode = groupCodes[0];
+  const apiId = apiIds[0];
+  if (
+    groupCodes.length !== 1 ||
+    apiIds.length !== 1 ||
+    apiGroupCode !== expectedGroupCode ||
+    !/^\d+$/.test(apiId || "")
+  ) {
+    throw new SourceError("Endpoint link identity does not match its group", {
+      group: expectedGroupCode,
+      sourceUrl: sourceUrl.toString(),
+    });
+  }
+  return { sourceUrl, apiGroupCode, apiId };
 }
 
 function checkedAtInSeoul() {
@@ -148,16 +212,17 @@ function validCalendarDate(value) {
 }
 
 async function fetchHtml(url) {
+  const trustedUrl = trustedGuideUrl(url);
   let lastError;
 
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
-      const response = await fetch(url, {
+      const response = await fetch(trustedUrl, {
         headers: {
           Accept: "text/html,application/xhtml+xml",
           "User-Agent": "dartdb-opendart-spec/1.0",
         },
-        redirect: "follow",
+        redirect: "error",
         signal: AbortSignal.timeout(30_000),
       });
 
@@ -167,7 +232,7 @@ async function fetchHtml(url) {
 
       const retryable = response.status === 429 || response.status >= 500;
       const error = new SourceError("OpenDART guide request failed", {
-        url,
+        url: trustedUrl.toString(),
         status: response.status,
         attempt,
       });
@@ -182,7 +247,7 @@ async function fetchHtml(url) {
   }
 
   throw new SourceError("OpenDART guide request failed after retries", {
-    url,
+    url: trustedUrl.toString(),
     cause: lastError?.message,
   });
 }
@@ -387,15 +452,10 @@ async function groupInventory(group) {
     const cells = $(row).children("td").toArray();
     if (cells.length < 3) return;
 
-    const sourceUrl = new URL(link.attr("href"), GUIDE_ORIGIN);
-    const apiGroupCode = sourceUrl.searchParams.get("apiGrpCd");
-    const apiId = sourceUrl.searchParams.get("apiId");
-    if (apiGroupCode !== group.code || !apiId) {
-      throw new SourceError("Endpoint link identity does not match its group", {
-        group: group.code,
-        sourceUrl: sourceUrl.toString(),
-      });
-    }
+    const { sourceUrl, apiGroupCode, apiId } = endpointIdentityFromLink(
+      link.attr("href"),
+      group.code,
+    );
 
     endpoints.push({
       apiGroupCode,
@@ -583,25 +643,20 @@ function parameterSourceDiagnostics(endpoint, argument) {
 }
 
 function responseFieldSourceDiagnostics(endpoint, rows) {
-  if (endpoint.logicalOperationId !== "DS001-2019001") return [];
-  const row = rows.find(
-    (candidate) =>
-      candidate.key === "total_count" &&
-      candidate.name === "총 건수" &&
-      candidate.description === "총 페이지 수",
-  );
-  if (!row) return [];
-  return [
-    {
+  return rows.flatMap((row) => {
+    const evidence = RESPONSE_FIELD_CONFLICTS.get(
+      `${endpoint.logicalOperationId}:${row.key}`,
+    );
+    if (!evidence || row.name !== evidence.name || row.description !== evidence.description) {
+      return [];
+    }
+    return [{
       code: "field-name-description-conflict",
       severity: "warning",
       message: "공식 가이드의 필드 명칭과 출력 설명이 서로 다른 의미를 가리킵니다.",
-      evidence: {
-        name: row.name,
-        description: row.description,
-      },
-    },
-  ];
+      evidence,
+    }];
+  });
 }
 
 function parameterSerialization(endpoint, argument) {
@@ -1079,6 +1134,12 @@ async function generate(endpoints, options) {
   const componentsFile = join(output, "components", "schemas.yaml");
 
   for (const endpoint of endpoints) {
+    if (!/^DS\d{3}$/.test(endpoint.apiGroupCode) || !/^\d+$/.test(endpoint.apiId)) {
+      throw new SourceError("Refusing to generate files for an invalid endpoint identity", {
+        apiGroupCode: endpoint.apiGroupCode,
+        apiId: endpoint.apiId,
+      });
+    }
     const groupDir = endpoint.apiGroupCode.toLowerCase();
     const schemaFile = join(output, "schemas", groupDir, `${endpoint.apiId}.yaml`);
     schemaFiles.set(endpoint.logicalOperationId, schemaFile);
@@ -1340,11 +1401,20 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  const detail = error instanceof SourceError ? { message: error.message, ...error.context } : {
-    message: error.message,
-    stack: error.stack,
-  };
-  process.stderr.write(`${JSON.stringify(detail, null, 2)}\n`);
-  process.exitCode = 1;
-});
+export {
+  SourceError,
+  endpointIdentityFromLink,
+  responseFieldSourceDiagnostics,
+  trustedGuideUrl,
+};
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    const detail = error instanceof SourceError ? { message: error.message, ...error.context } : {
+      message: error.message,
+      stack: error.stack,
+    };
+    process.stderr.write(`${JSON.stringify(detail, null, 2)}\n`);
+    process.exitCode = 1;
+  });
+}

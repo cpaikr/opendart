@@ -107,6 +107,9 @@ separate from documented source facts.
 - Eight offline probe tests cover canonical, repeated-key, and single-value URL
   serialization; JSON/XML identity extraction; malformed XML; unexpected
   canonical identities; and non-distinct single-company baselines.
+- Four offline synchronization tests cover the trusted guide URL boundary,
+  endpoint identity validation, path-like and duplicate query rejection, and
+  curated response-field contradictions.
   A missing `OPENDART_API_KEY` is rejected before any request. The live
   authenticated matrix has not run because the key is not present in this
   process environment.

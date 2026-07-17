@@ -42,6 +42,31 @@ const TOTAL_COUNT_SOURCE_DIAGNOSTICS = [
     evidence: { name: "총 건수", description: "총 페이지 수" },
   },
 ];
+const EMPLOYEE_COUNT_SOURCE_DIAGNOSTICS = [
+  [
+    {
+      code: "field-name-description-conflict",
+      severity: "warning",
+      message: "공식 가이드의 필드 명칭과 출력 설명이 서로 다른 의미를 가리킵니다.",
+      evidence: { name: "정규직 수", description: "상근, 비상근" },
+    },
+  ],
+  [
+    {
+      code: "field-name-description-conflict",
+      severity: "warning",
+      message: "공식 가이드의 필드 명칭과 출력 설명이 서로 다른 의미를 가리킵니다.",
+      evidence: {
+        name: "정규직 단시간 근로자 수",
+        description: "대표이사, 이사, 사외이사 등",
+      },
+    },
+  ],
+];
+const EXPECTED_RESPONSE_SOURCE_DIAGNOSTICS = {
+  "schemas/ds001/2019001.yaml": [TOTAL_COUNT_SOURCE_DIAGNOSTICS],
+  "schemas/ds002/2019011.yaml": EMPLOYEE_COUNT_SOURCE_DIAGNOSTICS,
+};
 
 const EXPECTED = {
   logicalEndpoints: 85,
@@ -670,7 +695,7 @@ async function main() {
 
   let responseFieldCount = 0;
   let responseSourceDiagnosticCount = 0;
-  const totalCountSchema = resolve(rootDir, "schemas", "ds001", "2019001.yaml");
+  let expectedResponseSourceDiagnosticCount = 0;
   for (const schemaFile of [...referencedSchemaFiles].sort()) {
     const { value: schema } = await yamlFile(schemaFile);
     parsedFiles.set(schemaFile, schema);
@@ -706,19 +731,18 @@ async function main() {
       },
     );
     const sourceDiagnostics = extensionValues(schema, "x-opendart-source-diagnostics");
-    if (schemaFile === totalCountSchema) {
-      assert(
-        sourceDiagnostics.length === 1 &&
-          sameValue(sourceDiagnostics[0], TOTAL_COUNT_SOURCE_DIAGNOSTICS),
-        "The total_count source contradiction is not preserved",
-        { schemaFile, sourceDiagnostics },
-      );
-    } else {
-      assert(sourceDiagnostics.length === 0, "Unexpected response source diagnostic", {
-        schemaFile,
-        sourceDiagnostics,
-      });
-    }
+    const relativeSchemaFile = normalizedPath(relative(rootDir, schemaFile));
+    const expectedSourceDiagnostics =
+      EXPECTED_RESPONSE_SOURCE_DIAGNOSTICS[relativeSchemaFile] || [];
+    assert(
+      sameValue(sourceDiagnostics, expectedSourceDiagnostics),
+      "Response source diagnostics differ from the curated contradictions",
+      { schemaFile, expectedSourceDiagnostics, sourceDiagnostics },
+    );
+    expectedResponseSourceDiagnosticCount += expectedSourceDiagnostics.reduce(
+      (count, diagnostics) => count + diagnostics.length,
+      0,
+    );
     responseSourceDiagnosticCount += sourceDiagnostics.reduce(
       (count, diagnostics) => count + diagnostics.length,
       0,
@@ -728,7 +752,6 @@ async function main() {
     expected: EXPECTED.responseFields,
     actual: responseFieldCount,
   });
-  const expectedResponseSourceDiagnosticCount = referencedSchemaFiles.has(totalCountSchema) ? 1 : 0;
   assert(responseSourceDiagnosticCount === expectedResponseSourceDiagnosticCount, "Response source-diagnostic count changed", {
     expected: expectedResponseSourceDiagnosticCount,
     actual: responseSourceDiagnosticCount,

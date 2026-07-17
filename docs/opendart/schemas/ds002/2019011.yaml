@@ -72,6 +72,13 @@ properties:
             상근, 비상근
           x-opendart-documented-type: not-specified
           x-opendart-korean-name: 정규직 수
+          x-opendart-source-diagnostics:
+            - code: field-name-description-conflict
+              severity: warning
+              message: 공식 가이드의 필드 명칭과 출력 설명이 서로 다른 의미를 가리킵니다.
+              evidence:
+                name: 정규직 수
+                description: 상근, 비상근
         rgllbr_abacpt_labrr_co:
           description: |-
             정규직 단시간 근로자 수
@@ -79,6 +86,13 @@ properties:
             대표이사, 이사, 사외이사 등
           x-opendart-documented-type: not-specified
           x-opendart-korean-name: 정규직 단시간 근로자 수
+          x-opendart-source-diagnostics:
+            - code: field-name-description-conflict
+              severity: warning
+              message: 공식 가이드의 필드 명칭과 출력 설명이 서로 다른 의미를 가리킵니다.
+              evidence:
+                name: 정규직 단시간 근로자 수
+                description: 대표이사, 이사, 사외이사 등
         cnttk_co:
           description: |-
             계약직 수
