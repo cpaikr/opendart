@@ -32,6 +32,12 @@ The Go tooling migration is non-releasable unless it also changes the bundle's
 meaning. When `cmd/`, `internal/`, or test-fixture directories are introduced,
 add them to Release Please's repository-only exclusions. Root `go.mod` and
 `go.sum` changes still rely on a non-releasable commit type and this review gate.
+Grouped dependency-update pull requests follow the same rule.
+
+The migration may include one explicitly reviewed formatting-only bundle
+cutover after semantic equivalence is demonstrated. That cutover is
+non-releasable by itself; afterward, the accepted output becomes the
+byte-for-byte freshness golden.
 
 While the project is below `1.0.0`:
 

@@ -28,7 +28,8 @@ under `x-opendart`. The current source snapshot date is recorded in
   XML-error definitions.
 - [`openapi/generated/openapi.bundle.yaml`](openapi/generated/openapi.bundle.yaml)
   is the stable, portable consumer artifact.
-- [`openapi/redocly.yaml`](openapi/redocly.yaml) contains strict linting rules.
+- [`openapi/redocly.yaml`](openapi/redocly.yaml) contains the current
+  transitional linting rules.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) maps the repository boundaries, flows,
   and security invariants.
 - [`docs/decisions/0001-go-repository-tooling.md`](docs/decisions/0001-go-repository-tooling.md)
@@ -125,6 +126,17 @@ and CLI for source refresh, verification, semantic drift detection, and live
 conformance. It is repository infrastructure, not a supported package. See the
 [migration plan](docs/plans/go-tooling-migration.md).
 
+The confirmed target uses the current stable Go toolchain, standard-library
+CLI/HTTP/logging/encoding primitives, goquery for guide HTML, and libopenapi
+behind one internal OpenAPI boundary. Live tests use OpenAPI for operation and
+schema behavior plus typed Go cases for public inputs and endpoint-specific
+meaning. Arazzo, Overlay, and general application frameworks are deferred.
+Redocly remains only during parity comparison; the completed repository-owned
+CLI toolchain is Go-only and may use Vacuum plus tested Go checks for equal or
+stronger lint coverage. The
+[Go ADR](docs/decisions/0001-go-repository-tooling.md) records the dependency
+and compatibility policy.
+
 To verify multi-company serialization with a real key, expose it only through
 the process environment and run:
 
@@ -141,9 +153,10 @@ response body, and it performs no automatic retries.
 
 This targeted probe is transitional. The planned Go runner derives every
 physical operation from the canonical OpenAPI document, executes the complete
-matrix weekly with committed public inputs, and requires representation and
-endpoint-specific content assertions. It does not partition the matrix. See
-the [live conformance plan](docs/plans/live-conformance.md).
+matrix weekly with committed public inputs plus narrowly budgeted discovery
+where stable values are impractical, and requires representation and
+endpoint-specific content assertions. It does not partition the matrix. See the
+[live conformance plan](docs/plans/live-conformance.md).
 
 The repository-owned catalog check verifies inventory counts, group coverage,
 physical representations, normalized-parameter parity, schema ownership,
@@ -151,7 +164,9 @@ provenance, source-table totals, local references, and orphaned fragments.
 Refresh runs the catalog check and strict Redocly lint against a staging tree
 before publishing a complete catalog. Redocly also validates the committed
 multi-file description and bundle; verification proves the bundle matches a
-fresh build without rewriting it.
+fresh build without rewriting it. During the Go migration, one reviewed
+formatting-only bundle cutover is allowed after semantic equivalence is proven;
+the replacement output then becomes the deterministic freshness golden.
 
 ## Provenance and releases
 
@@ -186,4 +201,8 @@ reports.
 The probe makes ten sequential requests without automatic retries and emits
 only a sanitized JSON observation. The future complete live runner preserves
 the same boundary: the secret-bearing job remains read-only, and a separate job
-may create or update only a sanitized, deduplicated conformance issue.
+may create or update only a sanitized, deduplicated conformance issue. If setup
+or runner launch fails before a valid report exists, that job may render only a
+fixed workflow-failure notice from trusted Actions metadata. Raw responses are
+never persisted. After a reported failure recovers, automation adds one
+recovery comment but leaves issue closure to a maintainer.

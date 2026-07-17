@@ -44,11 +44,14 @@ separate from documented source facts.
 - Curated guide contradictions are attached to the affected parameter or
   response field without correcting either source value.
 - Complete refreshes must pass catalog validation and strict OpenAPI lint in a
-  staging tree before publication.
+  staging tree before publication. The lint implementation may change during
+  the Go-only tooling migration, but its coverage may not weaken.
 - Repository-owned extraction, generation, validation, drift, and live-test
   tooling will converge on one repository-internal Go CLI. This does not make
   the tooling a supported application or package; see the accepted
   [Go decision](../decisions/0001-go-repository-tooling.md).
+- Live test inputs and empirical assertions remain typed repository test policy,
+  not additions to the guide-sourced OpenAPI document.
 
 ## Current state
 
