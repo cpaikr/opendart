@@ -32,6 +32,10 @@ request table, reference tables, and verification date under `x-opendart`.
 - [`openapi/redocly.yaml`](openapi/redocly.yaml) contains strict linting rules.
 - [`docs/plans/specification.md`](docs/plans/specification.md) records completed
   source-contract work and the pending authenticated probe.
+- [`docs/plans/maintenance-automation.md`](docs/plans/maintenance-automation.md)
+  plans future credential-free CI and public-guide drift monitoring.
+- [`docs/plans/credentialed-probes.md`](docs/plans/credentialed-probes.md)
+  keeps secret-bearing probe automation behind a separate security boundary.
 
 The fragments and bundle are generated from the official guide. Do not edit
 them by hand; update the extractor or its source-normalization rules instead.

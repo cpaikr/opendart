@@ -122,10 +122,19 @@ separate from documented source facts.
   bundle unchanged at SHA-256
   `f622a6a849207523fd1f675c7b681fa65fd0c019b4066b61009d863b13081f3f`.
 
+## Related plans
+
+- [Repository maintenance automation](maintenance-automation.md) covers future
+  offline CI, public-guide drift detection, artifacts, and issue handling.
+- [Credentialed probe automation](credentialed-probes.md) keeps secret-bearing
+  workflows behind a separate security review and implementation boundary.
+
 ## Next action
 
-Run `npm run probe:opendart-multi-company` with `OPENDART_API_KEY` available,
-then promote the four physical parameters from authenticated verification
-`pending` to the sanitized observed result. Afterward continue quota,
-throttling, successful-emptiness, response-type, enumerability, acquisition,
-closure, and historical-coverage probes.
+Complete the security review in
+[credentialed-probes.md](credentialed-probes.md) before running
+`npm run probe:opendart-multi-company` with `OPENDART_API_KEY`. After a
+supervised sanitized result is accepted, update the four physical parameters'
+verification state in a separate reviewed commit. Continue quota, throttling,
+successful-emptiness, response-type, enumerability, acquisition, closure, and
+historical-coverage probes only as separately planned work.
