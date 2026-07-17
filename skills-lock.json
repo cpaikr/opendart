@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "skills": {
+    "release-please-release": {
+      "source": "sjunepark/agent-scripts",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/release-please-release/SKILL.md",
+      "computedHash": "871c841ce3bcdf9b61430301cf3396e0d7e256956ebf2f13d5796f6af3e1b1f4"
+    }
+  }
+}
