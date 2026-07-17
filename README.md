@@ -143,6 +143,10 @@ The portable bundle is the release interface. Release Please owns semantic
 versioning, `CHANGELOG.md`, the release manifest, tags, and GitHub Releases
 from Conventional Commit history. Do not edit those generated release files or
 move published tags manually; merge a Release Please pull request instead.
+The Git tag versions this repository's bundle; `info.version` remains the
+upstream guide snapshot date and does not claim that OpenDART itself follows
+SemVer. [`RELEASING.md`](RELEASING.md) defines the manual compatibility policy,
+pre-1.0 behavior, commit inputs, and release review gate.
 
 Each release is validated before publication. The workflow creates a draft,
 attaches `openapi.bundle.yaml` plus `openapi.bundle.yaml.sha256`, and only then

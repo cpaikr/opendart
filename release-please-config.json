@@ -9,6 +9,15 @@
       "include-v-in-tag": true,
       "include-v-in-release-name": true,
       "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "exclude-paths": [
+        ".agents",
+        ".codex",
+        ".github",
+        "docs",
+        "scripts"
+      ],
       "draft": true,
       "force-tag-creation": true
     }

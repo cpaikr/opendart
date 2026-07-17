@@ -5,12 +5,14 @@ import test from "node:test";
 import { parse } from "yaml";
 
 const workflowPath = new URL("../.github/workflows/release-please.yml", import.meta.url);
+const verifyWorkflowPath = new URL("../.github/workflows/verify.yml", import.meta.url);
 const configPath = new URL("../release-please-config.json", import.meta.url);
 const manifestPath = new URL("../.release-please-manifest.json", import.meta.url);
 
 async function readReleaseFiles() {
-  const [workflowSource, configSource, manifestSource] = await Promise.all([
+  const [workflowSource, verifyWorkflowSource, configSource, manifestSource] = await Promise.all([
     readFile(workflowPath, "utf8"),
+    readFile(verifyWorkflowPath, "utf8"),
     readFile(configPath, "utf8"),
     readFile(manifestPath, "utf8"),
   ]);
@@ -18,6 +20,8 @@ async function readReleaseFiles() {
   return {
     workflowSource,
     workflow: parse(workflowSource),
+    verifyWorkflowSource,
+    verifyWorkflow: parse(verifyWorkflowSource),
     config: JSON.parse(configSource),
     manifest: JSON.parse(manifestSource),
   };
@@ -34,31 +38,57 @@ test("configures one simple root release with a SemVer manifest", async () => {
   assert.equal(config.packages["."]["package-name"], "opendart-spec");
   assert.equal(config.packages["."]["include-component-in-tag"], false);
   assert.equal(config.packages["."]["include-v-in-tag"], true);
+  assert.equal(config.packages["."]["bump-minor-pre-major"], true);
+  assert.equal(config.packages["."]["bump-patch-for-minor-pre-major"], true);
+  assert.deepEqual(config.packages["."]["exclude-paths"], [
+    ".agents",
+    ".codex",
+    ".github",
+    "docs",
+    "scripts",
+  ]);
   assert.equal(config.packages["."].draft, true);
   assert.equal(config.packages["."]["force-tag-creation"], true);
 });
 
-test("pins release actions and validates before creating a release", async () => {
-  const { workflow, workflowSource } = await readReleaseFiles();
-  const job = workflow.jobs["release-please"];
-  const uses = job.steps.filter((step) => step.uses).map((step) => step.uses);
-  const verifyIndex = job.steps.findIndex((step) => step.run === "npm run verify:opendart");
-  const draftIndex = job.steps.findIndex((step) => step.id === "draft");
-  const releaseIndex = job.steps.findIndex((step) => step.id === "release");
+test("runs read-only verification before granting release permissions", async () => {
+  const { workflow, workflowSource, verifyWorkflow, verifyWorkflowSource } =
+    await readReleaseFiles();
+  const verifyCall = workflow.jobs.verify;
+  const releaseJob = workflow.jobs["release-please"];
+  const releaseUses = releaseJob.steps.filter((step) => step.uses).map((step) => step.uses);
+  const verifyUses = verifyWorkflow.jobs.verify.steps
+    .filter((step) => step.uses)
+    .map((step) => step.uses);
+  const draftIndex = releaseJob.steps.findIndex((step) => step.id === "draft");
+  const releaseIndex = releaseJob.steps.findIndex((step) => step.id === "release");
+  const releaseStep = releaseJob.steps[releaseIndex];
 
   assert.deepEqual(workflow.on.push.branches, ["main"]);
   assert.equal(Object.hasOwn(workflow.on, "workflow_dispatch"), false);
   assert.equal(workflow.concurrency.group, "release-please");
-  assert.deepEqual(workflow.permissions, {
+  assert.deepEqual(workflow.permissions, {});
+  assert.equal(verifyCall.uses, "./.github/workflows/verify.yml");
+  assert.deepEqual(verifyCall.permissions, { contents: "read" });
+  assert.equal(releaseJob.needs, "verify");
+  assert.deepEqual(releaseJob.permissions, {
     contents: "write",
     issues: "write",
     "pull-requests": "write",
   });
-  assert.ok(uses.every((value) => /@[0-9a-f]{40}$/.test(value)));
-  assert.ok(verifyIndex >= 0 && verifyIndex < draftIndex && draftIndex < releaseIndex);
-  assert.match(job.steps[draftIndex].run, /gh release view/);
-  assert.match(job.steps[releaseIndex].if, /recovering != 'true'/);
-  assert.doesNotMatch(workflowSource, /npm publish|--clobber/);
+  assert.deepEqual(verifyWorkflow.permissions, { contents: "read" });
+  assert.ok(Object.hasOwn(verifyWorkflow.on, "pull_request"));
+  assert.ok(Object.hasOwn(verifyWorkflow.on, "workflow_call"));
+  assert.ok(Object.hasOwn(verifyWorkflow.on, "workflow_dispatch"));
+  assert.ok(
+    verifyWorkflow.jobs.verify.steps.some((step) => step.run === "npm run verify:opendart"),
+  );
+  assert.ok([...releaseUses, ...verifyUses].every((value) => /@[0-9a-f]{40}$/.test(value)));
+  assert.ok(draftIndex >= 0 && draftIndex < releaseIndex);
+  assert.match(releaseJob.steps[draftIndex].run, /gh release view/);
+  assert.match(releaseStep.if, /recovering != 'true'/);
+  assert.equal(releaseStep.with.token, "${{ secrets.GITHUB_TOKEN }}");
+  assert.doesNotMatch(`${workflowSource}\n${verifyWorkflowSource}`, /npm publish|--clobber/);
 });
 
 test("uploads only the versioned bundle and its checksum after release", async () => {
