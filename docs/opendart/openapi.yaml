@@ -1,0 +1,418 @@
+openapi: 3.1.2
+info:
+  title: OpenDART API
+  version: 2026-07-17
+  summary: 금융감독원 OpenDART 공식 개발가이드 기반 API 명세
+  description: 공식 OpenDART 개발가이드에서 추출한 소스 기반 명세입니다. HTTP 상태, 응답 필드 타입, 완전성 및 수집 의미처럼 가이드가 규정하지 않는 동작은 추정하지 않고 x-opendart에 명시합니다.
+externalDocs:
+  description: OpenDART 개발가이드
+  url: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001
+servers:
+  - url: https://opendart.fss.or.kr/api
+    description: OpenDART production API
+tags:
+  - name: DS001
+    description: 공시정보
+    externalDocs:
+      description: 공시정보 개발가이드
+      url: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001
+  - name: DS002
+    description: 정기보고서 주요정보
+    externalDocs:
+      description: 정기보고서 주요정보 개발가이드
+      url: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS002
+  - name: DS003
+    description: 정기보고서 재무정보
+    externalDocs:
+      description: 정기보고서 재무정보 개발가이드
+      url: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS003
+  - name: DS004
+    description: 지분공시 종합정보
+    externalDocs:
+      description: 지분공시 종합정보 개발가이드
+      url: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS004
+  - name: DS005
+    description: 주요사항보고서 주요정보
+    externalDocs:
+      description: 주요사항보고서 주요정보 개발가이드
+      url: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS005
+  - name: DS006
+    description: 증권신고서 주요정보
+    externalDocs:
+      description: 증권신고서 주요정보 개발가이드
+      url: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS006
+security:
+  - crtfcKey: []
+paths:
+  /accnutAdtorNmNdAdtOpinion.json:
+    $ref: ./paths/ds002/accnutAdtorNmNdAdtOpinion.json.yaml
+  /accnutAdtorNmNdAdtOpinion.xml:
+    $ref: ./paths/ds002/accnutAdtorNmNdAdtOpinion.xml.yaml
+  /accnutAdtorNonAdtServcCnclsSttus.json:
+    $ref: ./paths/ds002/accnutAdtorNonAdtServcCnclsSttus.json.yaml
+  /accnutAdtorNonAdtServcCnclsSttus.xml:
+    $ref: ./paths/ds002/accnutAdtorNonAdtServcCnclsSttus.xml.yaml
+  /adtServcCnclsSttus.json:
+    $ref: ./paths/ds002/adtServcCnclsSttus.json.yaml
+  /adtServcCnclsSttus.xml:
+    $ref: ./paths/ds002/adtServcCnclsSttus.xml.yaml
+  /alotMatter.json:
+    $ref: ./paths/ds002/alotMatter.json.yaml
+  /alotMatter.xml:
+    $ref: ./paths/ds002/alotMatter.xml.yaml
+  /astInhtrfEtcPtbkOpt.json:
+    $ref: ./paths/ds005/astInhtrfEtcPtbkOpt.json.yaml
+  /astInhtrfEtcPtbkOpt.xml:
+    $ref: ./paths/ds005/astInhtrfEtcPtbkOpt.xml.yaml
+  /bdRs.json:
+    $ref: ./paths/ds006/bdRs.json.yaml
+  /bdRs.xml:
+    $ref: ./paths/ds006/bdRs.xml.yaml
+  /bdwtIsDecsn.json:
+    $ref: ./paths/ds005/bdwtIsDecsn.json.yaml
+  /bdwtIsDecsn.xml:
+    $ref: ./paths/ds005/bdwtIsDecsn.xml.yaml
+  /bnkMngtPcbg.json:
+    $ref: ./paths/ds005/bnkMngtPcbg.json.yaml
+  /bnkMngtPcbg.xml:
+    $ref: ./paths/ds005/bnkMngtPcbg.xml.yaml
+  /bnkMngtPcsp.json:
+    $ref: ./paths/ds005/bnkMngtPcsp.json.yaml
+  /bnkMngtPcsp.xml:
+    $ref: ./paths/ds005/bnkMngtPcsp.xml.yaml
+  /bsnInhDecsn.json:
+    $ref: ./paths/ds005/bsnInhDecsn.json.yaml
+  /bsnInhDecsn.xml:
+    $ref: ./paths/ds005/bsnInhDecsn.xml.yaml
+  /bsnSp.json:
+    $ref: ./paths/ds005/bsnSp.json.yaml
+  /bsnSp.xml:
+    $ref: ./paths/ds005/bsnSp.xml.yaml
+  /bsnTrfDecsn.json:
+    $ref: ./paths/ds005/bsnTrfDecsn.json.yaml
+  /bsnTrfDecsn.xml:
+    $ref: ./paths/ds005/bsnTrfDecsn.xml.yaml
+  /cmpDvDecsn.json:
+    $ref: ./paths/ds005/cmpDvDecsn.json.yaml
+  /cmpDvDecsn.xml:
+    $ref: ./paths/ds005/cmpDvDecsn.xml.yaml
+  /cmpDvmgDecsn.json:
+    $ref: ./paths/ds005/cmpDvmgDecsn.json.yaml
+  /cmpDvmgDecsn.xml:
+    $ref: ./paths/ds005/cmpDvmgDecsn.xml.yaml
+  /cmpMgDecsn.json:
+    $ref: ./paths/ds005/cmpMgDecsn.json.yaml
+  /cmpMgDecsn.xml:
+    $ref: ./paths/ds005/cmpMgDecsn.xml.yaml
+  /cndlCaplScritsNrdmpBlce.json:
+    $ref: ./paths/ds002/cndlCaplScritsNrdmpBlce.json.yaml
+  /cndlCaplScritsNrdmpBlce.xml:
+    $ref: ./paths/ds002/cndlCaplScritsNrdmpBlce.xml.yaml
+  /company.json:
+    $ref: ./paths/ds001/company.json.yaml
+  /company.xml:
+    $ref: ./paths/ds001/company.xml.yaml
+  /corpCode.xml:
+    $ref: ./paths/ds001/corpCode.xml.yaml
+  /cprndNrdmpBlce.json:
+    $ref: ./paths/ds002/cprndNrdmpBlce.json.yaml
+  /cprndNrdmpBlce.xml:
+    $ref: ./paths/ds002/cprndNrdmpBlce.xml.yaml
+  /crDecsn.json:
+    $ref: ./paths/ds005/crDecsn.json.yaml
+  /crDecsn.xml:
+    $ref: ./paths/ds005/crDecsn.xml.yaml
+  /ctrcvsBgrq.json:
+    $ref: ./paths/ds005/ctrcvsBgrq.json.yaml
+  /ctrcvsBgrq.xml:
+    $ref: ./paths/ds005/ctrcvsBgrq.xml.yaml
+  /cvbdIsDecsn.json:
+    $ref: ./paths/ds005/cvbdIsDecsn.json.yaml
+  /cvbdIsDecsn.xml:
+    $ref: ./paths/ds005/cvbdIsDecsn.xml.yaml
+  /detScritsIsuAcmslt.json:
+    $ref: ./paths/ds002/detScritsIsuAcmslt.json.yaml
+  /detScritsIsuAcmslt.xml:
+    $ref: ./paths/ds002/detScritsIsuAcmslt.xml.yaml
+  /dfOcr.json:
+    $ref: ./paths/ds005/dfOcr.json.yaml
+  /dfOcr.xml:
+    $ref: ./paths/ds005/dfOcr.xml.yaml
+  /document.xml:
+    $ref: ./paths/ds001/document.xml.yaml
+  /drctrAdtAllMendngSttusGmtsckConfmAmount.json:
+    $ref: ./paths/ds002/drctrAdtAllMendngSttusGmtsckConfmAmount.json.yaml
+  /drctrAdtAllMendngSttusGmtsckConfmAmount.xml:
+    $ref: ./paths/ds002/drctrAdtAllMendngSttusGmtsckConfmAmount.xml.yaml
+  /drctrAdtAllMendngSttusMendngPymntamtTyCl.json:
+    $ref: ./paths/ds002/drctrAdtAllMendngSttusMendngPymntamtTyCl.json.yaml
+  /drctrAdtAllMendngSttusMendngPymntamtTyCl.xml:
+    $ref: ./paths/ds002/drctrAdtAllMendngSttusMendngPymntamtTyCl.xml.yaml
+  /dsRsOcr.json:
+    $ref: ./paths/ds005/dsRsOcr.json.yaml
+  /dsRsOcr.xml:
+    $ref: ./paths/ds005/dsRsOcr.xml.yaml
+  /dvRs.json:
+    $ref: ./paths/ds006/dvRs.json.yaml
+  /dvRs.xml:
+    $ref: ./paths/ds006/dvRs.xml.yaml
+  /elestock.json:
+    $ref: ./paths/ds004/elestock.json.yaml
+  /elestock.xml:
+    $ref: ./paths/ds004/elestock.xml.yaml
+  /empSttus.json:
+    $ref: ./paths/ds002/empSttus.json.yaml
+  /empSttus.xml:
+    $ref: ./paths/ds002/empSttus.xml.yaml
+  /entrprsBilScritsNrdmpBlce.json:
+    $ref: ./paths/ds002/entrprsBilScritsNrdmpBlce.json.yaml
+  /entrprsBilScritsNrdmpBlce.xml:
+    $ref: ./paths/ds002/entrprsBilScritsNrdmpBlce.xml.yaml
+  /estkRs.json:
+    $ref: ./paths/ds006/estkRs.json.yaml
+  /estkRs.xml:
+    $ref: ./paths/ds006/estkRs.xml.yaml
+  /exbdIsDecsn.json:
+    $ref: ./paths/ds005/exbdIsDecsn.json.yaml
+  /exbdIsDecsn.xml:
+    $ref: ./paths/ds005/exbdIsDecsn.xml.yaml
+  /exctvSttus.json:
+    $ref: ./paths/ds002/exctvSttus.json.yaml
+  /exctvSttus.xml:
+    $ref: ./paths/ds002/exctvSttus.xml.yaml
+  /extrRs.json:
+    $ref: ./paths/ds006/extrRs.json.yaml
+  /extrRs.xml:
+    $ref: ./paths/ds006/extrRs.xml.yaml
+  /fnlttCmpnyIndx.json:
+    $ref: ./paths/ds003/fnlttCmpnyIndx.json.yaml
+  /fnlttCmpnyIndx.xml:
+    $ref: ./paths/ds003/fnlttCmpnyIndx.xml.yaml
+  /fnlttMultiAcnt.json:
+    $ref: ./paths/ds003/fnlttMultiAcnt.json.yaml
+  /fnlttMultiAcnt.xml:
+    $ref: ./paths/ds003/fnlttMultiAcnt.xml.yaml
+  /fnlttSinglAcnt.json:
+    $ref: ./paths/ds003/fnlttSinglAcnt.json.yaml
+  /fnlttSinglAcnt.xml:
+    $ref: ./paths/ds003/fnlttSinglAcnt.xml.yaml
+  /fnlttSinglAcntAll.json:
+    $ref: ./paths/ds003/fnlttSinglAcntAll.json.yaml
+  /fnlttSinglAcntAll.xml:
+    $ref: ./paths/ds003/fnlttSinglAcntAll.xml.yaml
+  /fnlttSinglIndx.json:
+    $ref: ./paths/ds003/fnlttSinglIndx.json.yaml
+  /fnlttSinglIndx.xml:
+    $ref: ./paths/ds003/fnlttSinglIndx.xml.yaml
+  /fnlttXbrl.xml:
+    $ref: ./paths/ds003/fnlttXbrl.xml.yaml
+  /fricDecsn.json:
+    $ref: ./paths/ds005/fricDecsn.json.yaml
+  /fricDecsn.xml:
+    $ref: ./paths/ds005/fricDecsn.xml.yaml
+  /hmvAuditAllSttus.json:
+    $ref: ./paths/ds002/hmvAuditAllSttus.json.yaml
+  /hmvAuditAllSttus.xml:
+    $ref: ./paths/ds002/hmvAuditAllSttus.xml.yaml
+  /hmvAuditIndvdlBySttus.json:
+    $ref: ./paths/ds002/hmvAuditIndvdlBySttus.json.yaml
+  /hmvAuditIndvdlBySttus.xml:
+    $ref: ./paths/ds002/hmvAuditIndvdlBySttus.xml.yaml
+  /hmvAuditIndvdlBySttusV2.json:
+    $ref: ./paths/ds002/hmvAuditIndvdlBySttusV2.json.yaml
+  /hmvAuditIndvdlBySttusV2.xml:
+    $ref: ./paths/ds002/hmvAuditIndvdlBySttusV2.xml.yaml
+  /hyslrChgSttus.json:
+    $ref: ./paths/ds002/hyslrChgSttus.json.yaml
+  /hyslrChgSttus.xml:
+    $ref: ./paths/ds002/hyslrChgSttus.xml.yaml
+  /hyslrSttus.json:
+    $ref: ./paths/ds002/hyslrSttus.json.yaml
+  /hyslrSttus.xml:
+    $ref: ./paths/ds002/hyslrSttus.xml.yaml
+  /indvdlByPay.json:
+    $ref: ./paths/ds002/indvdlByPay.json.yaml
+  /indvdlByPay.xml:
+    $ref: ./paths/ds002/indvdlByPay.xml.yaml
+  /indvdlByPayV2.json:
+    $ref: ./paths/ds002/indvdlByPayV2.json.yaml
+  /indvdlByPayV2.xml:
+    $ref: ./paths/ds002/indvdlByPayV2.xml.yaml
+  /irdsSttus.json:
+    $ref: ./paths/ds002/irdsSttus.json.yaml
+  /irdsSttus.xml:
+    $ref: ./paths/ds002/irdsSttus.xml.yaml
+  /list.json:
+    $ref: ./paths/ds001/list.json.yaml
+  /list.xml:
+    $ref: ./paths/ds001/list.xml.yaml
+  /lwstLg.json:
+    $ref: ./paths/ds005/lwstLg.json.yaml
+  /lwstLg.xml:
+    $ref: ./paths/ds005/lwstLg.xml.yaml
+  /majorstock.json:
+    $ref: ./paths/ds004/majorstock.json.yaml
+  /majorstock.xml:
+    $ref: ./paths/ds004/majorstock.xml.yaml
+  /mgRs.json:
+    $ref: ./paths/ds006/mgRs.json.yaml
+  /mgRs.xml:
+    $ref: ./paths/ds006/mgRs.xml.yaml
+  /mrhlSttus.json:
+    $ref: ./paths/ds002/mrhlSttus.json.yaml
+  /mrhlSttus.xml:
+    $ref: ./paths/ds002/mrhlSttus.xml.yaml
+  /newCaplScritsNrdmpBlce.json:
+    $ref: ./paths/ds002/newCaplScritsNrdmpBlce.json.yaml
+  /newCaplScritsNrdmpBlce.xml:
+    $ref: ./paths/ds002/newCaplScritsNrdmpBlce.xml.yaml
+  /otcprStkInvscrInhDecsn.json:
+    $ref: ./paths/ds005/otcprStkInvscrInhDecsn.json.yaml
+  /otcprStkInvscrInhDecsn.xml:
+    $ref: ./paths/ds005/otcprStkInvscrInhDecsn.xml.yaml
+  /otcprStkInvscrTrfDecsn.json:
+    $ref: ./paths/ds005/otcprStkInvscrTrfDecsn.json.yaml
+  /otcprStkInvscrTrfDecsn.xml:
+    $ref: ./paths/ds005/otcprStkInvscrTrfDecsn.xml.yaml
+  /otrCprInvstmntSttus.json:
+    $ref: ./paths/ds002/otrCprInvstmntSttus.json.yaml
+  /otrCprInvstmntSttus.xml:
+    $ref: ./paths/ds002/otrCprInvstmntSttus.xml.yaml
+  /outcmpnyDrctrNdChangeSttus.json:
+    $ref: ./paths/ds002/outcmpnyDrctrNdChangeSttus.json.yaml
+  /outcmpnyDrctrNdChangeSttus.xml:
+    $ref: ./paths/ds002/outcmpnyDrctrNdChangeSttus.xml.yaml
+  /ovDlst.json:
+    $ref: ./paths/ds005/ovDlst.json.yaml
+  /ovDlst.xml:
+    $ref: ./paths/ds005/ovDlst.xml.yaml
+  /ovDlstDecsn.json:
+    $ref: ./paths/ds005/ovDlstDecsn.json.yaml
+  /ovDlstDecsn.xml:
+    $ref: ./paths/ds005/ovDlstDecsn.xml.yaml
+  /ovLst.json:
+    $ref: ./paths/ds005/ovLst.json.yaml
+  /ovLst.xml:
+    $ref: ./paths/ds005/ovLst.xml.yaml
+  /ovLstDecsn.json:
+    $ref: ./paths/ds005/ovLstDecsn.json.yaml
+  /ovLstDecsn.xml:
+    $ref: ./paths/ds005/ovLstDecsn.xml.yaml
+  /pifricDecsn.json:
+    $ref: ./paths/ds005/pifricDecsn.json.yaml
+  /pifricDecsn.xml:
+    $ref: ./paths/ds005/pifricDecsn.xml.yaml
+  /piicDecsn.json:
+    $ref: ./paths/ds005/piicDecsn.json.yaml
+  /piicDecsn.xml:
+    $ref: ./paths/ds005/piicDecsn.xml.yaml
+  /prvsrpCptalUseDtls.json:
+    $ref: ./paths/ds002/prvsrpCptalUseDtls.json.yaml
+  /prvsrpCptalUseDtls.xml:
+    $ref: ./paths/ds002/prvsrpCptalUseDtls.xml.yaml
+  /pssrpCptalUseDtls.json:
+    $ref: ./paths/ds002/pssrpCptalUseDtls.json.yaml
+  /pssrpCptalUseDtls.xml:
+    $ref: ./paths/ds002/pssrpCptalUseDtls.xml.yaml
+  /srtpdPsndbtNrdmpBlce.json:
+    $ref: ./paths/ds002/srtpdPsndbtNrdmpBlce.json.yaml
+  /srtpdPsndbtNrdmpBlce.xml:
+    $ref: ./paths/ds002/srtpdPsndbtNrdmpBlce.xml.yaml
+  /stkdpRs.json:
+    $ref: ./paths/ds006/stkdpRs.json.yaml
+  /stkdpRs.xml:
+    $ref: ./paths/ds006/stkdpRs.xml.yaml
+  /stkExtrDecsn.json:
+    $ref: ./paths/ds005/stkExtrDecsn.json.yaml
+  /stkExtrDecsn.xml:
+    $ref: ./paths/ds005/stkExtrDecsn.xml.yaml
+  /stkrtbdInhDecsn.json:
+    $ref: ./paths/ds005/stkrtbdInhDecsn.json.yaml
+  /stkrtbdInhDecsn.xml:
+    $ref: ./paths/ds005/stkrtbdInhDecsn.xml.yaml
+  /stkrtbdTrfDecsn.json:
+    $ref: ./paths/ds005/stkrtbdTrfDecsn.json.yaml
+  /stkrtbdTrfDecsn.xml:
+    $ref: ./paths/ds005/stkrtbdTrfDecsn.xml.yaml
+  /stockTotqySttus.json:
+    $ref: ./paths/ds002/stockTotqySttus.json.yaml
+  /stockTotqySttus.xml:
+    $ref: ./paths/ds002/stockTotqySttus.xml.yaml
+  /tesstkAcqsDspsSttus.json:
+    $ref: ./paths/ds002/tesstkAcqsDspsSttus.json.yaml
+  /tesstkAcqsDspsSttus.xml:
+    $ref: ./paths/ds002/tesstkAcqsDspsSttus.xml.yaml
+  /tgastInhDecsn.json:
+    $ref: ./paths/ds005/tgastInhDecsn.json.yaml
+  /tgastInhDecsn.xml:
+    $ref: ./paths/ds005/tgastInhDecsn.xml.yaml
+  /tgastTrfDecsn.json:
+    $ref: ./paths/ds005/tgastTrfDecsn.json.yaml
+  /tgastTrfDecsn.xml:
+    $ref: ./paths/ds005/tgastTrfDecsn.xml.yaml
+  /tsstkAqDecsn.json:
+    $ref: ./paths/ds005/tsstkAqDecsn.json.yaml
+  /tsstkAqDecsn.xml:
+    $ref: ./paths/ds005/tsstkAqDecsn.xml.yaml
+  /tsstkAqTrctrCcDecsn.json:
+    $ref: ./paths/ds005/tsstkAqTrctrCcDecsn.json.yaml
+  /tsstkAqTrctrCcDecsn.xml:
+    $ref: ./paths/ds005/tsstkAqTrctrCcDecsn.xml.yaml
+  /tsstkAqTrctrCnsDecsn.json:
+    $ref: ./paths/ds005/tsstkAqTrctrCnsDecsn.json.yaml
+  /tsstkAqTrctrCnsDecsn.xml:
+    $ref: ./paths/ds005/tsstkAqTrctrCnsDecsn.xml.yaml
+  /tsstkDpDecsn.json:
+    $ref: ./paths/ds005/tsstkDpDecsn.json.yaml
+  /tsstkDpDecsn.xml:
+    $ref: ./paths/ds005/tsstkDpDecsn.xml.yaml
+  /unrstExctvMendngSttus.json:
+    $ref: ./paths/ds002/unrstExctvMendngSttus.json.yaml
+  /unrstExctvMendngSttus.xml:
+    $ref: ./paths/ds002/unrstExctvMendngSttus.xml.yaml
+  /wdCocobdIsDecsn.json:
+    $ref: ./paths/ds005/wdCocobdIsDecsn.json.yaml
+  /wdCocobdIsDecsn.xml:
+    $ref: ./paths/ds005/wdCocobdIsDecsn.xml.yaml
+  /xbrlTaxonomy.json:
+    $ref: ./paths/ds003/xbrlTaxonomy.json.yaml
+  /xbrlTaxonomy.xml:
+    $ref: ./paths/ds003/xbrlTaxonomy.xml.yaml
+components:
+  securitySchemes:
+    crtfcKey:
+      type: apiKey
+      in: query
+      name: crtfc_key
+      description: OpenDART에서 발급받은 40자리 API 인증키
+      x-opendart-documented-type: STRING(40)
+  schemas:
+    OpenDartStatus:
+      $ref: ./components/schemas.yaml#/OpenDartStatus
+    DS001_2019003_Response:
+      $ref: ./schemas/ds001/2019003.yaml
+    DS001_2019018_Response:
+      $ref: ./schemas/ds001/2019018.yaml
+    DS003_2019019_Response:
+      $ref: ./schemas/ds003/2019019.yaml
+x-opendart:
+  source:
+    origin: https://opendart.fss.or.kr
+    checkedAt: 2026-07-17
+  inventory:
+    logicalEndpointCount: 85
+    physicalPathCount: 167
+    groupCounts:
+      DS001: 4
+      DS002: 30
+      DS003: 7
+      DS004: 2
+      DS005: 36
+      DS006: 6
+  extractionPolicy:
+    sourceLanguage: ko
+    excluded:
+      - site chrome
+      - interactive test controls and transient results
+      - commented-out API sample sections
+    responseSchema: Source hierarchy is normalized conservatively; raw rows, indentation, icons, and diagnostics are retained on every schema.
