@@ -22,7 +22,7 @@ OpenDART guide
     -> verified GitHub release assets
 
 OpenDART API + local API key
-    -> focused multi-company probe
+    -> focused multi-company or auditor-evidence probe
     -> sanitized observation on stdout
 ```
 
@@ -31,7 +31,7 @@ verification does not refresh from OpenDART, and release automation publishes
 only the committed bundle after the offline gate passes.
 
 Guide synchronization, offline repository verification, and the focused live
-probe are owned by `cmd/opendart-tool`, the single internal Go CLI.
+probes are owned by `cmd/opendart-tool`, the single internal Go CLI.
 `internal/openapi` isolates the selected OpenAPI libraries behind
 repository-owned types and owns confined references, strict linting,
 deterministic bundling, freshness, semantic comparison, and response
@@ -63,8 +63,9 @@ explicitly from the committed multi-file description.
 CI runs `go vet ./...`, `go test -race ./...`, and
 `go run ./cmd/opendart-tool verify --repository-root .`. The verifier checks
 catalog invariants, strict lint for the multi-file source and bundle,
+the committed auditor-evidence manifest's strict sanitized schema,
 release/workflow policy, and byte-for-byte Go bundle freshness. It does not
-rewrite the committed artifact or contact OpenDART.
+rewrite a committed artifact or contact OpenDART.
 
 `.github/workflows/verify.yml` runs that gate for pull requests, reusable
 workflow calls, and manual dispatches with read-only repository permission.
@@ -74,13 +75,35 @@ It attaches the bundle and checksum before publishing the immutable release.
 
 ### Focused live probe
 
-`go run ./cmd/opendart-tool probe-multi-company` uses `OPENDART_API_KEY` from
-the process environment to test the two documented multi-company operations
+`varlock run -- go run ./cmd/opendart-tool probe-multi-company` validates and
+injects `OPENDART_API_KEY` from an ignored local override according to the
+committed `.env.schema`. The Go command still receives the credential only from
+its process environment. It tests the two documented multi-company operations
 across JSON and XML, using the canonical comma-separated encoding and a
 repeated-key control. Requests are sequential and have no retry. Responses are
 bounded, parsed, validated against the committed OpenAPI representation, and
 discarded. The probe emits a sanitized JSON observation, does not change the
 specification, and has no scheduled GitHub workflow.
+
+`varlock run -- go run ./cmd/opendart-tool probe-auditor-evidence` uses the same
+credential boundary and a separate fixed, bounded request matrix. It records
+only allowlisted request coordinates, response summaries, archive hashes, and
+semantic assertions needed by the external-auditor guide. Raw bodies,
+authenticated URLs, and arbitrary headers or error text are excluded. Its
+reviewed output is durable empirical evidence, not an input to canonical
+specification generation. JSON responses pass the committed OpenAPI validator.
+Document responses are accepted only after a positive ZIP signature and then
+parsed under probe-specific entry and expansion bounds without extracting
+source-controlled member paths; this empirical adapter also accommodates the
+observed non-contract media type and CP949-compatible content.
+
+`internal/liveprobe` confines the live-only HTTP policy shared by both probes.
+OpenDART currently requires a TLS 1.2 RSA key-exchange suite that modern Go does
+not enable by default. The probe client adds only the required AES-GCM suite
+to Go's secure suite set; this compatibility path lacks forward secrecy and
+must not be reused by released SDK or general application transport. Ambient
+HTTP proxies are disabled because authenticated query parameters must go only
+to the fixed OpenDART origin.
 
 ## Code map
 
@@ -98,9 +121,15 @@ specification, and has no scheduled GitHub workflow.
   `internal/releaseguard` owns release and workflow policy.
 - `internal/multicompanyprobe` owns the fixed credentialed probe, including its
   request, assertion, pacing, response-bound, and sanitized-report policy.
+- `internal/auditorprobe` owns the fixed external-auditor evidence matrix,
+  bounded disclosure/document inspection, and sanitized evidence schema.
+- `internal/liveprobe` owns the shared one-attempt HTTP transport and its
+  upstream-confined TLS compatibility exception.
 - `.github/workflows/verify.yml` is the credential-free repository gate.
   `.github/workflows/release-please.yml`, `release-please-config.json`, and
   `.release-please-manifest.json` own release automation.
+- `.env.schema` is the committed Varlock contract for local credentialed
+  commands. Secret values remain in ignored, locally encrypted overrides.
 - `README.md` documents the artifacts and current commands. `RELEASING.md`
   defines compatibility classification and the manual release review gate.
 
@@ -119,9 +148,9 @@ specification, and has no scheduled GitHub workflow.
 - Offline verification makes no OpenDART request and requires no API key.
 - Third-party OpenAPI types do not cross `internal/openapi`; reference loading
   is local-only and physically confined to the selected specification tree.
-- The focused probe receives its key only from `OPENDART_API_KEY`; its output
-  never contains the key, an authenticated URL, or an unrestricted response
-  body.
+- Focused probes receive their key only from `OPENDART_API_KEY`; the local
+  workflow validates and injects it through Varlock, and probe output never
+  contains the key, an authenticated URL, or an unrestricted response body.
 - Release automation cannot publish until the read-only verification job
   succeeds.
 - No current automation modifies the specification from guide drift or live API
@@ -133,4 +162,7 @@ specification, and has no scheduled GitHub workflow.
 migration of repository-owned tooling from Node.js to one internal Go CLI. The
 [guide-drift](docs/plans/guide-drift.md) and
 [live-conformance](docs/plans/live-conformance.md) plans define future work not
-yet part of the current runtime.
+yet part of the current runtime. The [Rust SDK plan](docs/plans/rust-sdk/README.md)
+proposes an explicit future product-boundary change while retaining Go as
+private repository tooling; no SDK is part of the current system until that
+decision and implementation are completed.

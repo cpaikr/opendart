@@ -5,7 +5,6 @@ package multicompanyprobe
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -20,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cpaikr/opendart/internal/liveprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 )
 
@@ -163,20 +163,7 @@ func Run(ctx context.Context, repositoryRoot string) (Report, error) {
 }
 
 func newHTTPClient() *http.Client {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	// net/http may transparently replay idempotent requests when a reused
-	// connection fails. A fresh HTTP/1 connection per observation makes the
-	// probe's one-attempt policy a transport invariant as well as a runner rule.
-	transport.DisableKeepAlives = true
-	transport.ForceAttemptHTTP2 = false
-	transport.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
-	return &http.Client{
-		Transport: transport,
-		Timeout:   requestTimeout,
-		CheckRedirect: func(*http.Request, []*http.Request) error {
-			return errors.New("redirects are not allowed")
-		},
-	}
+	return liveprobe.NewSequentialHTTPClient(requestTimeout)
 }
 
 func run(ctx context.Context, deps dependencies) (Report, error) {

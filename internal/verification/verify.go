@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cpaikr/opendart/internal/auditorprobe"
 	"github.com/cpaikr/opendart/internal/guide"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/releaseguard"
@@ -15,6 +16,7 @@ const (
 	phaseSourceLint      = "source-lint"
 	phaseBundleLint      = "bundle-lint"
 	phaseBundleFreshness = "bundle-freshness"
+	phaseAuditorEvidence = "auditor-evidence"
 	phaseReleaseGuard    = "release-guard"
 )
 
@@ -23,6 +25,7 @@ var passedPhases = []string{
 	phaseSourceLint,
 	phaseBundleFreshness,
 	phaseBundleLint,
+	phaseAuditorEvidence,
 	phaseReleaseGuard,
 }
 
@@ -80,6 +83,7 @@ type dependencies struct {
 	validateCatalog func(guide.CatalogOptions) (guide.CatalogReport, error)
 	lint            func(string) ([]openapispec.LintDiagnostic, error)
 	checkFresh      func(string, string) error
+	checkEvidence   func(string) error
 	checkRelease    func(string) error
 }
 
@@ -90,6 +94,7 @@ func Verify(repositoryRoot string) (Report, error) {
 		validateCatalog: guide.ValidateCatalog,
 		lint:            openapispec.Lint,
 		checkFresh:      openapispec.CheckBundleFresh,
+		checkEvidence:   auditorprobe.ValidateEvidenceFile,
 		checkRelease:    releaseguard.Check,
 	})
 }
@@ -104,6 +109,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	}
 	source := filepath.Join(absoluteRoot, "openapi", "openapi.yaml")
 	bundle := filepath.Join(absoluteRoot, "openapi", "generated", "openapi.bundle.yaml")
+	auditorEvidence := filepath.Join(absoluteRoot, "docs", "api", "evidence", "auditor-2026-07-18.json")
 
 	catalog, err := deps.validateCatalog(guide.CatalogOptions{Root: source})
 	if err != nil {
@@ -124,6 +130,9 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	}
 	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
 		return Report{}, err
+	}
+	if err := deps.checkEvidence(auditorEvidence); err != nil {
+		return Report{}, failure(phaseAuditorEvidence, auditorEvidence, "sanitized-evidence-manifest", err)
 	}
 	if err := deps.checkRelease(absoluteRoot); err != nil {
 		artifact, rule := "release configuration", "release-policy"

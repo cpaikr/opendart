@@ -2,8 +2,10 @@
 .env
 .env.*
 !.env.example
+!.env.schema
 
 # Local reports and transient OpenDART output
+/.tmp/pr-feedback/
 artifacts/
 coverage/
 .opendart-stage-*

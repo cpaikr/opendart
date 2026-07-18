@@ -80,8 +80,8 @@ go run ./cmd/opendart-tool verify --repository-root .
 validated staging and owned-output publication, then invalidates the old
 bundle. `bundle` deterministically rebuilds the portable artifact. CI owns Go
 vetting and race-enabled tests separately; `verify` checks catalog and confined
-references, strict linting, release/workflow guards, and byte-for-byte bundle
-freshness.
+references, strict linting, the sanitized auditor-evidence manifest,
+release/workflow guards, and byte-for-byte bundle freshness.
 
 Generated OpenAPI files are reviewed artifacts. Do not edit them by hand; change
 the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is
@@ -90,18 +90,26 @@ artifact rather than changing the source contract.
 
 ## Credentialed probe
 
-Refresh and verification require no OpenDART API key. The only currently
-implemented credentialed command is the targeted multi-company probe:
+Refresh and verification require no OpenDART API key. Credentialed commands are
+focused probes with fixed request matrices:
 
 ```sh
-go run ./cmd/opendart-tool probe-multi-company
+varlock run -- go run ./cmd/opendart-tool probe-multi-company
+varlock run -- go run ./cmd/opendart-tool probe-auditor-evidence
 ```
 
-Pass `OPENDART_API_KEY` only through the process environment. Do not commit it,
-put it in command arguments, or capture authenticated URLs or raw response
-bodies. The probe runs sequentially without automatic retries and emits a
-sanitized JSON observation; it does not print the key or persist response
-bodies.
+Install the standalone Varlock CLI with `brew install dmno-dev/tap/varlock`.
+The committed `.env.schema` marks `OPENDART_API_KEY` as required and sensitive;
+put the local value in the ignored `.env.local`, then run
+`varlock encrypt --file .env.local` if it is plaintext. Varlock validates and
+injects the key into the child process without putting it in command arguments.
+The Go command still reads only `OPENDART_API_KEY` from its process environment.
+
+Do not commit the local override or capture authenticated URLs or raw response
+bodies. The probes run sequentially without automatic retries and emit
+sanitized JSON observations; they do not print the key or persist response
+bodies. The auditor probe is the reproducible source for the committed,
+sanitized [auditor evidence manifest](docs/api/evidence/auditor-2026-07-18.json).
 
 The planned full live-conformance runner is not implemented. Its intended
 credential, reporting, and evidence boundaries are tracked in the
@@ -137,3 +145,9 @@ API.
 - The [guide-drift plan](docs/plans/guide-drift.md) and
   [live-conformance plan](docs/plans/live-conformance.md) track remaining
   maintenance and empirical work.
+- The [external-auditor retrieval guide](docs/api/auditor.md) separates the
+  canonical endpoint contracts from a layered, empirically informed lookup
+  strategy.
+- The [Rust SDK plan](docs/plans/rust-sdk/README.md) proposes a future public
+  crate derived from the canonical contract. It does not describe a currently
+  published runtime package.

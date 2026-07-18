@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cpaikr/opendart/internal/auditorprobe"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
@@ -48,10 +49,72 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "probe-multi-company"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "probe-multi-company", "probe-auditor-evidence"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
+	}
+}
+
+func TestRunProbeAuditorEvidence(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	report := auditorprobe.Report{SchemaVersion: 1, RequestBudget: auditorprobe.RequestBudget{Maximum: 60, Used: 24}}
+	code := runProbeAuditorEvidenceWith(context.Background(), nil, &stdout, &stderr, "/repository", func(_ context.Context, root string) (auditorprobe.Report, error) {
+		if root != "/repository" {
+			t.Fatalf("root = %q", root)
+		}
+		return report, nil
+	})
+	if code != 0 || stderr.Len() != 0 {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+	var actual auditorprobe.Report
+	if err := json.Unmarshal(stdout.Bytes(), &actual); err != nil {
+		t.Fatal(err)
+	}
+	if actual.SchemaVersion != 1 || actual.RequestBudget.Used != 24 {
+		t.Fatalf("report = %#v", actual)
+	}
+}
+
+func TestRunProbeAuditorEvidenceEmitsSanitizedDiagnostic(t *testing.T) {
+	var stderr bytes.Buffer
+	request := &auditorprobe.RequestCoordinate{Endpoint: "document", ReceiptNumber: "20240101000001"}
+	code := runProbeAuditorEvidenceWith(context.Background(), nil, &bytes.Buffer{}, &stderr, "/repository", func(context.Context, string) (auditorprobe.Report, error) {
+		return auditorprobe.Report{}, &auditorprobe.Error{Message: "document inspection failed", Request: request}
+	})
+	if code != 1 {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+	var diagnostic struct {
+		Error   string                          `json:"error"`
+		Message string                          `json:"message"`
+		Request *auditorprobe.RequestCoordinate `json:"request"`
+	}
+	if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostic.Error != "ProbeError" || diagnostic.Message != "document inspection failed" || diagnostic.Request == nil || diagnostic.Request.Endpoint != "document" {
+		t.Fatalf("diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestRunProbeAuditorEvidenceRejectsArgumentsAndHidesUnexpectedErrors(t *testing.T) {
+	var stderr bytes.Buffer
+	runner := func(context.Context, string) (auditorprobe.Report, error) {
+		t.Fatal("runner should not be called for positional arguments")
+		return auditorprobe.Report{}, nil
+	}
+	if code := runProbeAuditorEvidenceWith(context.Background(), []string{"unexpected"}, &bytes.Buffer{}, &stderr, "/repository", runner); code != 2 || !strings.Contains(stderr.String(), "does not accept positional arguments") {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+
+	stderr.Reset()
+	if code := runProbeAuditorEvidenceWith(context.Background(), nil, &bytes.Buffer{}, &stderr, "/repository", func(context.Context, string) (auditorprobe.Report, error) {
+		return auditorprobe.Report{}, errors.New("unexpected secret and authenticated URL")
+	}); code != 1 || strings.Contains(stderr.String(), "unexpected secret") || !strings.Contains(stderr.String(), "Unexpected auditor evidence probe failure") {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
 	}
 }
 

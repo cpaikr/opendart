@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cpaikr/opendart/internal/auditorprobe"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
@@ -42,6 +43,8 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runVerify(args[1:], stdout, stderr)
 	case "probe-multi-company":
 		return runProbeMultiCompany(ctx, args[1:], stdout, stderr)
+	case "probe-auditor-evidence":
+		return runProbeAuditorEvidence(ctx, args[1:], stdout, stderr)
 	case "help", "-h", "--help":
 		if err := usage(stdout); err != nil {
 			return 1
@@ -329,6 +332,58 @@ func runProbeMultiCompanyWith(ctx context.Context, args []string, stdout, stderr
 	return 0
 }
 
+type probeAuditorEvidenceRunner func(context.Context, string) (auditorprobe.Report, error)
+
+func runProbeAuditorEvidence(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		return writeCommandError(stderr, "probe-auditor-evidence", fmt.Errorf("read working directory: %w", err), 1)
+	}
+	repositoryRoot, err := findRepositoryRoot(workingDirectory)
+	if err != nil {
+		return writeCommandError(stderr, "probe-auditor-evidence", err, 1)
+	}
+	return runProbeAuditorEvidenceWith(ctx, args, stdout, stderr, repositoryRoot, auditorprobe.Run)
+}
+
+func runProbeAuditorEvidenceWith(ctx context.Context, args []string, stdout, stderr io.Writer, repositoryRoot string, runner probeAuditorEvidenceRunner) int {
+	flags := flag.NewFlagSet("probe-auditor-evidence", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("probe-auditor-evidence", flags, stderr); code != 0 {
+		return code
+	}
+	report, err := runner(ctx, repositoryRoot)
+	if err != nil {
+		var probeError *auditorprobe.Error
+		if errors.As(err, &probeError) {
+			diagnostic := struct {
+				Error   string                          `json:"error"`
+				Message string                          `json:"message"`
+				Request *auditorprobe.RequestCoordinate `json:"request,omitempty"`
+			}{Error: "ProbeError", Message: probeError.Message, Request: probeError.Request}
+			if encodeErr := writeJSON(stderr, diagnostic); encodeErr != nil {
+				return 1
+			}
+			return 1
+		}
+		diagnostic := struct {
+			Error   string `json:"error"`
+			Message string `json:"message"`
+		}{Error: "ProbeError", Message: "Unexpected auditor evidence probe failure"}
+		if encodeErr := writeJSON(stderr, diagnostic); encodeErr != nil {
+			return 1
+		}
+		return 1
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write probe-auditor-evidence report", err, 1)
+	}
+	return 0
+}
+
 func usage(output io.Writer) error {
 	for _, line := range []string{
 		"usage: opendart-tool <command> [options]",
@@ -339,6 +394,7 @@ func usage(output io.Writer) error {
 		"  bundle         write the portable OpenAPI bundle",
 		"  verify         run credential-free repository verification",
 		"  probe-multi-company  run the focused credentialed serialization probe",
+		"  probe-auditor-evidence  emit the focused sanitized auditor evidence manifest",
 	} {
 		if _, err := fmt.Fprintln(output, line); err != nil {
 			return err
