@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -82,5 +83,28 @@ func TestSyncDoesNotPublishAfterValidationFailure(t *testing.T) {
 	}
 	if _, err := os.Stat(output); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("output was published: %v", err)
+	}
+}
+
+func TestSyncRejectsBroadOutputBeforeAcquisition(t *testing.T) {
+	root := t.TempDir()
+	acquired := false
+	dependencies := syncDependencies{
+		fetcher: inertFetcher{},
+		acquire: func(context.Context, Fetcher, []string) ([]Endpoint, error) {
+			acquired = true
+			return nil, nil
+		},
+		generate: Generate,
+		validate: validateStaging,
+		publish:  publishGenerated,
+		runner:   &recordingRunner{},
+	}
+	_, err := syncWithDependencies(context.Background(), SyncOptions{RepositoryRoot: root, Output: root, CheckedAt: "2026-07-17"}, dependencies)
+	if err == nil || !strings.Contains(err.Error(), "broad directory") {
+		t.Fatalf("error = %v", err)
+	}
+	if acquired {
+		t.Fatal("acquisition ran for a broad output target")
 	}
 }

@@ -53,6 +53,9 @@ func syncWithDependencies(ctx context.Context, options SyncOptions, dependencies
 	if dependencies.fetcher == nil || dependencies.acquire == nil || dependencies.generate == nil || dependencies.validate == nil || dependencies.publish == nil || dependencies.runner == nil {
 		return SyncReport{}, errors.New("guide sync dependencies are incomplete")
 	}
+	if err := assertSafeOutput(options.Output, options.RepositoryRoot); err != nil {
+		return SyncReport{}, fmt.Errorf("validate guide sync output: %w", err)
+	}
 	endpoints, err := dependencies.acquire(ctx, dependencies.fetcher, options.Only)
 	if err != nil {
 		return SyncReport{}, fmt.Errorf("acquire official guide: %w", err)
