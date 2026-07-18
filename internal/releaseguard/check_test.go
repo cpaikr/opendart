@@ -406,6 +406,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: yarn verify",
 			invariant: "excludes JavaScript or Node package tooling",
 		},
+		{
+			name: "verify JavaScript script", artifact: verifyWorkflowArtifact,
+			old: "      - name: Set up Go", replacement: "      - name: Run repository script\n        run: ./scripts/check.mjs\n\n      - name: Set up Go",
+			invariant: "uses only approved Go verification steps",
+		},
+		{
+			name: "verify local action", artifact: verifyWorkflowArtifact,
+			old: "      - name: Set up Go", replacement: "      - name: Run local action\n        uses: ./actions/check\n\n      - name: Set up Go",
+			invariant: "uses only approved Go verification steps",
+		},
 	}
 
 	for _, test := range tests {

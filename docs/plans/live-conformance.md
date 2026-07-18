@@ -20,9 +20,8 @@ credential-free [guide drift](guide-drift.md).
 - Lasting Go tests cover OpenAPI loading, semantic comparison, response routing
   and validation, and representative JSON, XML, and ZIP fixtures. Operation
   enumeration, request validation, and the shared HTTP safety and reporting
-  foundations remain future work in the
-  [Go tooling migration](go-tooling-migration.md). The focused Go probe is the
-  only implemented credentialed command until the general runner replaces it.
+  foundations remain future work in this plan. The focused Go probe is the only
+  implemented credentialed command until the general runner replaces it.
 - The completed [Go-only cleanup](go-only-tooling-cleanup.md) does not claim
   completion of the general runner or introduce scheduled credentialed
   automation.

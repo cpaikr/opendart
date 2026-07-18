@@ -628,8 +628,8 @@ func (l *documentLinter) lintUnusedComponents() {
 			}
 			used := counts[alias] > 0
 			if target != "" {
-				// Redocly registers a named $ref component at its resolved target;
-				// the alias itself is therefore not treated as an orphan.
+				// A named $ref component is live when its resolved target is used;
+				// the alias itself need not appear in another reference.
 				used = used || counts[target] > 0
 			}
 			if category == "securitySchemes" {
