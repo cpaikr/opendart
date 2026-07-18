@@ -2,11 +2,15 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	guidesync "github.com/cpaikr/opendart/internal/guide"
 )
 
 func TestRunRejectsUnknownCommand(t *testing.T) {
@@ -77,6 +81,26 @@ func TestRunCompatibility(t *testing.T) {
 func TestRunReportsOutputFailure(t *testing.T) {
 	if code := Run([]string{"help"}, failingWriter{}, &bytes.Buffer{}); code != 1 {
 		t.Fatalf("Run() code = %d, want 1", code)
+	}
+}
+
+func TestRunSyncEmitsReport(t *testing.T) {
+	repository := t.TempDir()
+	var received guidesync.SyncOptions
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runSyncWith(context.Background(), []string{"--checked-at", "2026-07-18"}, &stdout, &stderr, repository, time.Now(), func(_ context.Context, options guidesync.SyncOptions) (guidesync.SyncReport, error) {
+		received = options
+		return guidesync.SyncReport{Output: options.Output, CheckedAt: options.CheckedAt, LogicalEndpoints: 85}, nil
+	})
+	if code != 0 {
+		t.Fatalf("runSyncWith() code = %d, stderr = %q", code, stderr.String())
+	}
+	if received.CheckedAt != "2026-07-18" || received.Output != filepath.Join(repository, "openapi") {
+		t.Fatalf("options = %#v", received)
+	}
+	if !strings.Contains(stdout.String(), `"logicalEndpoints": 85`) {
+		t.Fatalf("stdout = %q", stdout.String())
 	}
 }
 

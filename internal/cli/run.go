@@ -1,15 +1,24 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"os"
+	"time"
 
+	guidesync "github.com/cpaikr/opendart/internal/guide"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 )
 
 func Run(args []string, stdout, stderr io.Writer) int {
+	return RunContext(context.Background(), args, stdout, stderr)
+}
+
+func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		if err := usage(stderr); err != nil {
 			return 1
@@ -18,6 +27,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 
 	switch args[0] {
+	case "sync":
+		return runSync(ctx, args[1:], stdout, stderr)
 	case "compatibility":
 		return runCompatibility(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
@@ -34,6 +45,63 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		}
 		return 2
 	}
+}
+
+func runSync(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		return writeCommandError(stderr, "sync", fmt.Errorf("read working directory: %w", err), 1)
+	}
+	repositoryRoot, err := findRepositoryRoot(workingDirectory)
+	if err != nil {
+		return writeCommandError(stderr, "sync", err, 1)
+	}
+	return runSyncWith(ctx, args, stdout, stderr, repositoryRoot, time.Now(), guidesync.Sync)
+}
+
+type syncRunner func(context.Context, guidesync.SyncOptions) (guidesync.SyncReport, error)
+
+func runSyncWith(ctx context.Context, args []string, stdout, stderr io.Writer, repositoryRoot string, now time.Time, runner syncRunner) int {
+	options, err := parseSyncCLIOptions(args, repositoryRoot, now, stderr)
+	if err != nil {
+		return writeCommandError(stderr, "sync", err, 2)
+	}
+	report, err := runner(ctx, guidesync.SyncOptions{
+		RepositoryRoot: options.RepositoryRoot,
+		Output:         options.Output,
+		CheckedAt:      options.CheckedAt,
+		Only:           options.Only,
+		ParityBaseline: options.ParityBaseline,
+	})
+	if err != nil {
+		var sourceError *guidesync.SourceError
+		if errors.As(err, &sourceError) && len(sourceError.Context) > 0 {
+			diagnostic := map[string]any{"message": err.Error()}
+			for key, value := range sourceError.Context {
+				diagnostic[key] = value
+			}
+			encoder := json.NewEncoder(stderr)
+			encoder.SetIndent("", "  ")
+			if writeErr := encoder.Encode(diagnostic); writeErr != nil {
+				return 1
+			}
+			return 1
+		}
+		return writeCommandError(stderr, "sync", err, 1)
+	}
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(report); err != nil {
+		return writeCommandError(stderr, "write sync report", err, 1)
+	}
+	return 0
+}
+
+func writeCommandError(output io.Writer, command string, err error, code int) int {
+	if _, writeErr := fmt.Fprintf(output, "%s: %v\n", command, err); writeErr != nil {
+		return 1
+	}
+	return code
 }
 
 func runCompatibility(args []string, stdout, stderr io.Writer) int {
@@ -73,6 +141,7 @@ func usage(output io.Writer) error {
 	for _, line := range []string{
 		"usage: opendart-tool <command> [options]",
 		"commands:",
+		"  sync           synchronize the official guide into OpenAPI source",
 		"  compatibility  run the temporary OpenAPI migration gate",
 	} {
 		if _, err := fmt.Fprintln(output, line); err != nil {
