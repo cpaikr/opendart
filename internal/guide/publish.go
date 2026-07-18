@@ -17,6 +17,64 @@ var managedOutputs = []string{"paths", "schemas", "components", "openapi.yaml", 
 
 type publishHook func(phase, name string) error
 
+// ValidateSyncTarget rejects broad outputs and keeps partial refreshes away
+// from the canonical complete tree, including aliases through symlinked
+// parents whose leaf does not exist yet.
+func ValidateSyncTarget(repositoryRoot, output string, partial bool) error {
+	if err := assertSafeOutput(output, repositoryRoot); err != nil {
+		return err
+	}
+	if !partial {
+		return nil
+	}
+	canonical, err := samePhysicalPath(output, filepath.Join(repositoryRoot, "openapi"))
+	if err != nil {
+		return fmt.Errorf("compare partial output with canonical output: %w", err)
+	}
+	if canonical {
+		return errors.New("--only requires a non-canonical --output directory")
+	}
+	return nil
+}
+
+func samePhysicalPath(left, right string) (bool, error) {
+	if filepath.Clean(left) == filepath.Clean(right) {
+		return true, nil
+	}
+	physicalLeft, leftErr := physicalPathAllowMissing(left)
+	physicalRight, rightErr := physicalPathAllowMissing(right)
+	if leftErr != nil {
+		return false, leftErr
+	}
+	if rightErr != nil {
+		return false, rightErr
+	}
+	return filepath.Clean(physicalLeft) == filepath.Clean(physicalRight), nil
+}
+
+func physicalPathAllowMissing(value string) (string, error) {
+	current := filepath.Clean(value)
+	var missing []string
+	for {
+		physical, err := filepath.EvalSymlinks(current)
+		if err == nil {
+			for index := len(missing) - 1; index >= 0; index-- {
+				physical = filepath.Join(physical, missing[index])
+			}
+			return filepath.Clean(physical), nil
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return "", err
+		}
+		missing = append(missing, filepath.Base(current))
+		current = parent
+	}
+}
+
 func publishGenerated(staging, output, repositoryRoot string) error {
 	return publishGeneratedWithHook(staging, output, repositoryRoot, nil)
 }
@@ -46,18 +104,31 @@ func publishGeneratedWithHook(staging, output, repositoryRoot string, hook publi
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("inspect generated bundle directory: %w", err)
 	}
+	if err := validateOutputMarker(staging); err != nil {
+		return fmt.Errorf("refusing to publish staging with an invalid ownership marker: %w", err)
+	}
 
 	existing, err := existingManagedOutputs(output)
 	if err != nil {
 		return err
 	}
 	if len(existing) > 0 {
-		marker, markerErr := os.ReadFile(filepath.Join(output, OutputMarker))
-		markerInfo, infoErr := os.Lstat(filepath.Join(output, OutputMarker))
-		if markerErr != nil || infoErr != nil || !markerInfo.Mode().IsRegular() || markerInfo.Mode()&os.ModeSymlink != 0 || string(marker) != OutputMarkerContent {
+		if err := validateOutputMarker(output); err != nil {
 			return fmt.Errorf("refusing to replace an unowned output directory containing %v", existing)
 		}
 	}
+	markerCreated := !slices.Contains(existing, OutputMarker)
+	if markerCreated {
+		if err := os.WriteFile(filepath.Join(output, OutputMarker), []byte(OutputMarkerContent), 0o644); err != nil {
+			return fmt.Errorf("establish generated-output ownership marker: %w", err)
+		}
+	}
+	removeCreatedMarker := markerCreated
+	defer func() {
+		if removeCreatedMarker {
+			_ = os.Remove(filepath.Join(output, OutputMarker))
+		}
+	}()
 
 	backup, err := os.MkdirTemp(filepath.Dir(output), ".opendart-backup-")
 	if err != nil {
@@ -85,6 +156,7 @@ func publishGeneratedWithHook(staging, output, repositoryRoot string, hook publi
 			}
 		}
 		if len(rollbackErrors) > 0 {
+			removeCreatedMarker = false
 			return fmt.Errorf("publishing failed and rollback is incomplete; backup retained at %s: %w", backup, errors.Join(append([]error{publishErr}, rollbackErrors...)...))
 		}
 		cleanupBackup = true
@@ -92,6 +164,9 @@ func publishGeneratedWithHook(staging, output, repositoryRoot string, hook publi
 	}
 
 	for _, name := range managedOutputs {
+		if name == OutputMarker {
+			continue
+		}
 		target := filepath.Join(output, name)
 		if _, err := os.Lstat(target); errors.Is(err, os.ErrNotExist) {
 			continue
@@ -104,6 +179,9 @@ func publishGeneratedWithHook(staging, output, repositoryRoot string, hook publi
 		movedOld = append(movedOld, name)
 	}
 	for _, name := range managedOutputs {
+		if name == OutputMarker {
+			continue
+		}
 		source := filepath.Join(staging, name)
 		if _, err := os.Lstat(source); errors.Is(err, os.ErrNotExist) {
 			continue
@@ -124,6 +202,23 @@ func publishGeneratedWithHook(staging, output, repositoryRoot string, hook publi
 		return rollback(fmt.Errorf("invalidate generated bundle: %w", err))
 	}
 	cleanupBackup = true
+	removeCreatedMarker = false
+	return nil
+}
+
+func validateOutputMarker(directory string) error {
+	marker := filepath.Join(directory, OutputMarker)
+	info, err := os.Lstat(marker)
+	if err != nil {
+		return err
+	}
+	content, err := os.ReadFile(marker)
+	if err != nil {
+		return err
+	}
+	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || string(content) != OutputMarkerContent {
+		return errors.New("generated-output ownership marker is invalid")
+	}
 	return nil
 }
 

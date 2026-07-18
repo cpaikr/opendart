@@ -108,3 +108,28 @@ func TestSyncRejectsBroadOutputBeforeAcquisition(t *testing.T) {
 		t.Fatal("acquisition ran for a broad output target")
 	}
 }
+
+func TestSyncRejectsPartialCanonicalOutputBeforeAcquisition(t *testing.T) {
+	root := t.TempDir()
+	acquired := false
+	dependencies := syncDependencies{
+		fetcher: inertFetcher{},
+		acquire: func(context.Context, Fetcher, []string) ([]Endpoint, error) {
+			acquired = true
+			return nil, nil
+		},
+		generate: Generate,
+		validate: validateStaging,
+		publish:  publishGenerated,
+		runner:   &recordingRunner{},
+	}
+	_, err := syncWithDependencies(context.Background(), SyncOptions{
+		RepositoryRoot: root, Output: filepath.Join(root, "openapi"), CheckedAt: "2026-07-17", Only: []string{"DS001-2019001"},
+	}, dependencies)
+	if err == nil || !strings.Contains(err.Error(), "non-canonical") {
+		t.Fatalf("error = %v", err)
+	}
+	if acquired {
+		t.Fatal("acquisition ran for a partial canonical output target")
+	}
+}

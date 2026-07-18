@@ -49,9 +49,12 @@ tree before publishing it.
 
 Publication replaces the managed entries through a sequence of filesystem
 renames and attempts rollback when publication fails. It is not an atomic
-directory swap. Existing managed output is replaced only when its ownership
-marker is valid. A successful refresh removes the prior portable bundle, which
-must then be regenerated explicitly from the committed multi-file description.
+directory swap because the output also contains unmanaged configuration and
+release artifacts. Existing managed output is replaced only when its ownership
+marker is valid, and that marker remains present throughout publication so an
+interrupted run remains owned and repairable by the next refresh. A successful
+refresh removes the prior portable bundle, which must then be regenerated
+explicitly from the committed multi-file description.
 
 ### Verify and release
 

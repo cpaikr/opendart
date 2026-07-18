@@ -63,6 +63,21 @@ func TestPublishGeneratedRefusesOutputSymlink(t *testing.T) {
 	assertFileContent(t, filepath.Join(physicalOutput, "openapi.yaml"), "old")
 }
 
+func TestPublishGeneratedRefusesInvalidStagingMarker(t *testing.T) {
+	root := t.TempDir()
+	output := filepath.Join(root, "openapi")
+	staging := filepath.Join(root, "stage")
+	writeManagedFixture(t, output, "old")
+	writeManagedFixture(t, staging, "new")
+	if err := os.WriteFile(filepath.Join(staging, OutputMarker), []byte("invalid\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := publishGenerated(staging, output, filepath.Join(root, "repository")); err == nil {
+		t.Fatal("invalid staging marker was accepted")
+	}
+	assertFileContent(t, filepath.Join(output, "openapi.yaml"), "old")
+}
+
 func TestPublishGeneratedRollsBackFailure(t *testing.T) {
 	root := t.TempDir()
 	output := filepath.Join(root, "openapi")
@@ -81,6 +96,27 @@ func TestPublishGeneratedRollsBackFailure(t *testing.T) {
 	}
 	assertFileContent(t, filepath.Join(output, "openapi.yaml"), "old")
 	assertFileContent(t, filepath.Join(output, OutputMarker), OutputMarkerContent)
+}
+
+func TestPublishGeneratedKeepsOwnershipMarkerDuringReplacement(t *testing.T) {
+	root := t.TempDir()
+	output := filepath.Join(root, "openapi")
+	staging := filepath.Join(root, "stage")
+	writeManagedFixture(t, staging, "new")
+	observed := false
+	err := publishGeneratedWithHook(staging, output, filepath.Join(root, "repository"), func(phase, name string) error {
+		if phase == "before-new" && name == "paths" {
+			assertFileContent(t, filepath.Join(output, OutputMarker), OutputMarkerContent)
+			observed = true
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !observed {
+		t.Fatal("publication hook did not observe the ownership marker")
+	}
 }
 
 func TestPublishGeneratedRollsBackBundleInvalidationFailure(t *testing.T) {

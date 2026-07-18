@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	guidesync "github.com/cpaikr/opendart/internal/guide"
 )
 
 type syncCLIOptions struct {
@@ -56,18 +58,8 @@ func parseSyncCLIOptions(args []string, repositoryRoot string, now time.Time, st
 	if err != nil {
 		return syncCLIOptions{}, fmt.Errorf("resolve --output: %w", err)
 	}
-	absoluteCanonical, err := filepath.Abs(canonicalOutput)
-	if err != nil {
-		return syncCLIOptions{}, fmt.Errorf("resolve canonical output: %w", err)
-	}
-	if len(only) > 0 {
-		canonical, err := samePhysicalPath(absoluteOutput, absoluteCanonical)
-		if err != nil {
-			return syncCLIOptions{}, fmt.Errorf("compare --output with canonical output: %w", err)
-		}
-		if canonical {
-			return syncCLIOptions{}, errors.New("--only requires a non-canonical --output directory")
-		}
+	if err := guidesync.ValidateSyncTarget(repositoryRoot, absoluteOutput, len(only) > 0); err != nil {
+		return syncCLIOptions{}, err
 	}
 	return syncCLIOptions{
 		RepositoryRoot: repositoryRoot,
@@ -76,44 +68,6 @@ func parseSyncCLIOptions(args []string, repositoryRoot string, now time.Time, st
 		Only:           deduplicateStrings(only),
 		ParityBaseline: *parityBaseline,
 	}, nil
-}
-
-func samePhysicalPath(left, right string) (bool, error) {
-	if filepath.Clean(left) == filepath.Clean(right) {
-		return true, nil
-	}
-	physicalLeft, leftErr := physicalPathAllowMissing(left)
-	physicalRight, rightErr := physicalPathAllowMissing(right)
-	if leftErr != nil {
-		return false, leftErr
-	}
-	if rightErr != nil {
-		return false, rightErr
-	}
-	return filepath.Clean(physicalLeft) == filepath.Clean(physicalRight), nil
-}
-
-func physicalPathAllowMissing(value string) (string, error) {
-	current := filepath.Clean(value)
-	var missing []string
-	for {
-		physical, err := filepath.EvalSymlinks(current)
-		if err == nil {
-			for index := len(missing) - 1; index >= 0; index-- {
-				physical = filepath.Join(physical, missing[index])
-			}
-			return filepath.Clean(physical), nil
-		}
-		if !errors.Is(err, os.ErrNotExist) {
-			return "", err
-		}
-		parent := filepath.Dir(current)
-		if parent == current {
-			return "", err
-		}
-		missing = append(missing, filepath.Base(current))
-		current = parent
-	}
 }
 
 func checkedAtInSeoul(now time.Time) (string, error) {
