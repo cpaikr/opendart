@@ -85,15 +85,15 @@ func boundedStagingValue(value string) string {
 }
 
 func compareStaged(staging, baseline string) error {
+	if err := validateOutputMarker(staging); err != nil {
+		return fmt.Errorf("staged ownership marker is invalid: %w", err)
+	}
 	comparison, err := openapispec.Compare(filepath.Join(staging, "openapi.yaml"), filepath.Join(baseline, "openapi.yaml"))
 	if err != nil {
 		return fmt.Errorf("compare staged OpenAPI with accepted artifact: %w", err)
 	}
 	if comparison.TotalChanges != 0 {
 		return fmt.Errorf("staged OpenAPI differs semantically from accepted artifact at %s", firstChangeLocation(comparison))
-	}
-	if err := validateOutputMarker(staging); err != nil {
-		return fmt.Errorf("staged ownership marker is invalid: %w", err)
 	}
 	return nil
 }

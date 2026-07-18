@@ -71,7 +71,6 @@ func TestBoundedStagingErrorPreservesCause(t *testing.T) {
 
 func TestCompareStagedRejectsMarkerSymlinkBeforeReadingTarget(t *testing.T) {
 	stagedRoot := copyCatalogTree(t)
-	baselineRoot := copyCatalogTree(t)
 	marker := filepath.Join(filepath.Dir(stagedRoot), OutputMarker)
 	if err := os.Remove(marker); err != nil {
 		t.Fatal(err)
@@ -80,7 +79,8 @@ func TestCompareStagedRejectsMarkerSymlinkBeforeReadingTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := compareStaged(filepath.Dir(stagedRoot), filepath.Dir(baselineRoot))
+	// A missing baseline proves marker validation happens before semantic comparison.
+	err := compareStaged(filepath.Dir(stagedRoot), filepath.Join(t.TempDir(), "missing-baseline"))
 	if err == nil || !strings.Contains(err.Error(), "staged ownership marker is invalid") || strings.Contains(err.Error(), "no such file") {
 		t.Fatalf("comparison error = %v", err)
 	}
