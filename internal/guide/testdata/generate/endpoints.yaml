@@ -37,7 +37,7 @@
       name: 보고서 코드
       documentedType: STRING(5)
       required: Y
-      description: 보고서 코드(11011: 사업보고서)
+      description: "보고서 코드(11011: 사업보고서)"
   responsefields:
     - sourceIndex: 0
       key: result

@@ -48,6 +48,7 @@ func TestTrustedGuideURL(t *testing.T) {
 		"/guide/main.do",
 		"/guide/main.do?apiGrpCd=DS001&apiGrpCd=DS001",
 		"/guide/main.do?apiGrpCd=DS001&crtfc_key=secret",
+		"/guide/main.do?apiGrpCd=DS001&crtfc_key=secret;ignored=x",
 		"/guide/detail.do?apiGrpCd=DS001",
 		"/guide/detail.do?apiGrpCd=DS001&apiId=2019001&view=full",
 		"/guide/detail.do?apiGrpCd=DS001&apiId=2019001&apiId=2019001",
@@ -79,19 +80,24 @@ func TestNormalizeGuideTextPreservesOneBlankLine(t *testing.T) {
 
 func TestTrustedGuideURLRedactsRejectedCredentials(t *testing.T) {
 	t.Parallel()
-	_, err := trustedGuideURL("https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001&crtfc_key=private", "")
-	var source *SourceError
-	if !errors.As(err, &source) {
-		t.Fatalf("error = %v", err)
-	}
-	diagnostic := fmt.Sprintf("%v", source.Context)
-	for _, secret := range []string{"crtfc_key", "private"} {
-		if strings.Contains(diagnostic, secret) {
-			t.Fatalf("diagnostic %q contains %q", diagnostic, secret)
+	for _, value := range []string{
+		"https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001&crtfc_key=private",
+		"https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001&crtfc_key=private;ignored=x",
+	} {
+		_, err := trustedGuideURL(value, "")
+		var source *SourceError
+		if !errors.As(err, &source) {
+			t.Fatalf("trustedGuideURL(%q) error = %v", value, err)
 		}
-	}
-	if source.Context["path"] != "/guide/main.do" {
-		t.Fatalf("context = %#v", source.Context)
+		diagnostic := fmt.Sprintf("%v", source.Context)
+		for _, secret := range []string{"crtfc_key", "private"} {
+			if strings.Contains(diagnostic, secret) {
+				t.Fatalf("diagnostic %q contains %q", diagnostic, secret)
+			}
+		}
+		if source.Context["path"] != "/guide/main.do" {
+			t.Fatalf("context = %#v", source.Context)
+		}
 	}
 }
 

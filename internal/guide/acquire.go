@@ -370,7 +370,12 @@ func trustedGuideURL(value, expectedPath string) (*url.URL, error) {
 			"scheme": resolved.Scheme, "host": resolved.Hostname(), "path": resolved.Path, "expectedPath": expectedPath,
 		}, nil)
 	}
-	query := resolved.Query()
+	query, err := url.ParseQuery(resolved.RawQuery)
+	if err != nil {
+		return nil, sourceError("OpenDART guide URL query is invalid", map[string]any{
+			"path": resolved.Path, "expectedPath": expectedPath,
+		}, err)
+	}
 	requiredKeys := map[string]struct{}{"apiGrpCd": {}}
 	if resolved.Path == "/guide/detail.do" {
 		requiredKeys["apiId"] = struct{}{}

@@ -40,8 +40,11 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) [][]str
 			}
 			for consumeSpan() {
 			}
+			if column >= maximumColumnSpan {
+				break
+			}
 			value := cellText(cell)
-			columnSpan := min(positiveAttribute(cell, "colspan"), maximumColumnSpan)
+			columnSpan := min(positiveAttribute(cell, "colspan"), maximumColumnSpan-column)
 			rowSpan := rowSpanAttribute(cell, len(rows)-rowIndex)
 			for offset := 0; offset < columnSpan; offset++ {
 				row = setCell(row, column+offset, value)

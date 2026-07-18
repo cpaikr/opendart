@@ -90,7 +90,11 @@ func TestValidateOutputMarkerRejectsSymlinkBeforeReadingTarget(t *testing.T) {
 
 func TestSamePhysicalPathNormalizesRelativeAndAbsolutePaths(t *testing.T) {
 	absolute := filepath.Join(t.TempDir(), "missing", "openapi")
-	relative, err := filepath.Rel(".", absolute)
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	relative, err := filepath.Rel(workingDirectory, absolute)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +110,11 @@ func TestSamePhysicalPathNormalizesRelativeAndAbsolutePaths(t *testing.T) {
 func TestValidateSyncTargetRejectsRelativeCanonicalOutput(t *testing.T) {
 	repositoryRoot := t.TempDir()
 	absoluteOutput := filepath.Join(repositoryRoot, "openapi")
-	relativeOutput, err := filepath.Rel(".", absoluteOutput)
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	relativeOutput, err := filepath.Rel(workingDirectory, absoluteOutput)
 	if err != nil {
 		t.Fatal(err)
 	}
