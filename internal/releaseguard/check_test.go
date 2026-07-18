@@ -87,7 +87,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "exclusions", artifact: configArtifact,
-			old: `"scripts"`, replacement: `"scripts", "openapi"`,
+			old: `"internal"`, replacement: `"internal", "scripts"`,
 			invariant: "root package exclude-paths",
 		},
 		{

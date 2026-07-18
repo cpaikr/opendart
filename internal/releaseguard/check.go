@@ -209,7 +209,7 @@ func checkReleaseConfiguration(configSource, manifestSource []byte) error {
 	}
 	expectedExclusions := []any{
 		".agents", ".codex", ".github", "ARCHITECTURE.md", "cmd", "docs",
-		"go.mod", "go.sum", "internal", "scripts",
+		"go.mod", "go.sum", "internal",
 	}
 	if err := require(configArtifact, "root package exclude-paths", reflect.DeepEqual(root["exclude-paths"], expectedExclusions), "exact repository-only exclusions are required"); err != nil {
 		return err
