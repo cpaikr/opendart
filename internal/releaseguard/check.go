@@ -20,7 +20,18 @@ const (
 	verifyWorkflowArtifact  = ".github/workflows/verify.yml"
 	configArtifact          = "release-please-config.json"
 	manifestArtifact        = ".release-please-manifest.json"
+	releasePleaseAction     = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
 
+	draftRecoveryScript = `version="$(jq -r '.["."]' .release-please-manifest.json)"
+tag_name="v${version}"
+release="$(gh release view "${tag_name}" --json isDraft,targetCommitish 2>/dev/null || true)"
+if test -n "${release}" && test "$(jq -r .isDraft <<<"${release}")" = true; then
+  echo "recovering=true" >> "${GITHUB_OUTPUT}"
+  echo "tag_name=${tag_name}" >> "${GITHUB_OUTPUT}"
+  echo "sha=$(jq -r .targetCommitish <<<"${release}")" >> "${GITHUB_OUTPUT}"
+else
+  echo "recovering=false" >> "${GITHUB_OUTPUT}"
+fi`
 	prepareReleaseAssetsScript = `mkdir release-assets
 cp openapi/generated/openapi.bundle.yaml release-assets/openapi.bundle.yaml
 cd release-assets
@@ -385,16 +396,17 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err := require(releaseWorkflowArtifact, "detects drafts before Release Please", draftIndex < releaseIndex, ""); err != nil {
 		return err
 	}
-	for _, fragment := range []string{"gh release view", "isDraft", "targetCommitish", "recovering=true", "recovering=false", "tag_name=", "sha="} {
-		if !strings.Contains(draft.Run, fragment) {
-			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "draft recovery records " + fragment}
-		}
+	if !exactScript(draft.Run, draftRecoveryScript) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "draft recovery uses the canonical script"}
 	}
 	if !exactWorkflowExpression(releaseStep.If, "steps.draft.outputs.recovering != 'true'") {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "Release Please is skipped during recovery"}
 	}
-	if releaseStep.With["token"] != "${{ secrets.GITHUB_TOKEN }}" {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "Release Please uses GITHUB_TOKEN"}
+	if releaseStep.Uses != releasePleaseAction || releaseStep.Run != "" {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uses the approved pinned Release Please action"}
+	}
+	if !reflect.DeepEqual(releaseStep.With, map[string]any{"token": "${{ secrets.GITHUB_TOKEN }}"}) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "Release Please uses GITHUB_TOKEN as its only input"}
 	}
 
 	releasedCheckoutIndex, releasedCheckout, err := stepByName(releaseJob.Steps, "Check out released commit")

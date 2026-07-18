@@ -211,6 +211,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "third-party step action is pinned",
 		},
 		{
+			name: "approved release action", artifact: releaseWorkflowArtifact,
+			old: "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7", replacement: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+			invariant: "uses the approved pinned Release Please action",
+		},
+		{
+			name: "release action cannot run a script", artifact: releaseWorkflowArtifact,
+			old: "        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5", replacement: "        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5\n        run: echo unexpected",
+			invariant: "uses the approved pinned Release Please action",
+		},
+		{
 			name: "release checkout credentials", artifact: releaseWorkflowArtifact,
 			old: "persist-credentials: false", replacement: "persist-credentials: true",
 			invariant: "checkout disables persisted credentials",
@@ -223,7 +233,12 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "draft detection", artifact: releaseWorkflowArtifact,
 			old: "gh release view", replacement: "gh release inspect",
-			invariant: "draft recovery records gh release view",
+			invariant: "draft recovery uses the canonical script",
+		},
+		{
+			name: "draft recovery appended command", artifact: releaseWorkflowArtifact,
+			old: "          fi\n\n      - name: Run Release Please", replacement: "          fi\n          echo unexpected\n\n      - name: Run Release Please",
+			invariant: "draft recovery uses the canonical script",
 		},
 		{
 			name: "release recovery skip", artifact: releaseWorkflowArtifact,
@@ -249,6 +264,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "release token", artifact: releaseWorkflowArtifact,
 			old: "token: ${{ secrets.GITHUB_TOKEN }}", replacement: "token: ${{ secrets.OTHER_TOKEN }}",
 			invariant: "Release Please uses GITHUB_TOKEN",
+		},
+		{
+			name: "release action extra input", artifact: releaseWorkflowArtifact,
+			old: "token: ${{ secrets.GITHUB_TOKEN }}", replacement: "token: ${{ secrets.GITHUB_TOKEN }}\n          fork: false",
+			invariant: "Release Please uses GITHUB_TOKEN as its only input",
 		},
 		{
 			name: "released commit checkout", artifact: releaseWorkflowArtifact,
