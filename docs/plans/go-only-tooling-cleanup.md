@@ -16,17 +16,17 @@ guide-drift automation or the general
 
 - The Go CLI owns guide synchronization, catalog and reference validation,
   strict linting, deterministic bundling and freshness, offline verification,
-  release/workflow guards, and an additive focused multi-company probe.
+  release/workflow guards, and the focused multi-company probe.
 - The Go probe preserves the existing ten-request sequence, OpenAPI-backed
   response checks, endpoint assertions, pacing, one-attempt HTTP policy, and
   allowlisted report, with bounded response bodies and offline HTTP coverage.
-- `scripts/probe-multi-company.mjs` remains the operational probe only until
-  the second delivery slice cuts current entry points over to Go.
-- `package.json` is both the probe dependency manifest and a command alias
-  layer over the Go CLI. The remaining Node and Redocly scripts are dormant
-  migration scaffolding.
-- Credential-free CI still installs Node.js and npm dependencies only to run
-  the focused probe tests.
+- Current documentation and credential-free CI invoke the Go toolchain
+  directly. The workflow requires Go vet, race-enabled tests, and the canonical
+  repository verifier without contacting OpenDART or reading a credential.
+- Repository-owned Node.js, npm, JavaScript, and Redocly surfaces and the
+  migration-only compatibility command and fixtures are removed. Lasting
+  document, comparison, lint, response, archive, and guide-table coverage
+  remains under current Go interfaces.
 
 ## Decisions
 
@@ -95,7 +95,7 @@ go run ./cmd/opendart-tool verify --repository-root .
 - Port the offline behavior, pacing, and sanitization tests. Keep the Node probe
   only long enough to compare the two implementations during this slice.
 
-### 2. Cut local and CI entry points over to Go
+### 2. **Complete.** Cut local and CI entry points over to Go
 
 - Replace npm commands in current documentation and workflows with direct Go
   commands.
@@ -107,7 +107,7 @@ go run ./cmd/opendart-tool verify --repository-root .
 - Keep the release workflow's permission, ordering, action-pinning, recovery,
   and immutable-asset invariants unchanged.
 
-### 3. Remove the superseded toolchain
+### 3. **Complete.** Remove the superseded toolchain
 
 - Delete `package.json`, `package-lock.json`, all repository-owned JavaScript
   tooling and tests, and `openapi/redocly.yaml`.
@@ -120,7 +120,7 @@ go run ./cmd/opendart-tool verify --repository-root .
   only when equivalent current coverage exists. Do not remove OpenAPI
   `nodeType` XML metadata; it is unrelated to Node.js.
 
-### 4. Close the migration state
+### 4. **Complete.** Close the migration state
 
 - Update current architecture, usage, release, migration, and live-conformance
   documentation to describe the Go-only operational state.
@@ -131,9 +131,10 @@ go run ./cmd/opendart-tool verify --repository-root .
 
 ## Next action
 
-Land the additive probe slice into `dev`. Then start the second slice from that
-merged state, cut current documentation and CI directly to Go, and remove the
-superseded Node/npm/Redocly and temporary compatibility surfaces.
+This cleanup is complete. Future work starts only through the dedicated
+[guide-drift](guide-drift.md) or [live-conformance](live-conformance.md) plan;
+credential configuration, notifier automation, and production promotion remain
+outside this completed migration.
 
 ## Acceptance criteria
 
@@ -190,3 +191,10 @@ matrix, credential or notifier configuration, or promotion from `dev` to
   OpenAPI response checks, and passed both the original Node 22.12.0 tests and
   the Go race-enabled suite. No credential was available for an optional live
   comparison; the cutover and deletion slice remains next.
+- 2026-07-18: Completed the direct-Go cutover and deletion slice. Credential-free
+  CI and current documentation now invoke Go directly; the release guard rejects
+  JavaScript tooling in verification; repository-owned Node/npm/Redocly files
+  and migration-only compatibility scaffolding are gone; and current Go tests
+  retain the lasting contract and acquisition coverage. Guide drift, general
+  live conformance, credential/notifier setup, and `dev` promotion remain
+  separate work.

@@ -35,8 +35,9 @@ probe are owned by `cmd/opendart-tool`, the single internal Go CLI.
 `internal/openapi` isolates the selected OpenAPI libraries behind
 repository-owned types and owns confined references, strict linting,
 deterministic bundling, freshness, semantic comparison, and response
-validation. Superseded Node and Redocly files are dormant pending deletion;
-their former checks were run once as non-authoritative cutover evidence.
+validation. Repository-owned tooling is Go-only; former Node and Redocly checks
+remain only as historical cutover evidence in the accepted decision record and
+completed plans.
 
 ## Runtime flows
 
@@ -126,11 +127,10 @@ specification, and has no scheduled GitHub workflow.
 - No current automation modifies the specification from guide drift or live API
   observations. Specification changes remain reviewed repository changes.
 
-## Migration direction
+## Evolution
 
-[ADR 0001](docs/decisions/0001-go-repository-tooling.md) governs the migration
-of repository-owned tooling from Node.js to one internal Go CLI. The remaining
-[migration](docs/plans/go-tooling-migration.md),
-[guide-drift](docs/plans/guide-drift.md), and
-[live-conformance](docs/plans/live-conformance.md) plans define work not yet
-part of the current runtime.
+[ADR 0001](docs/decisions/0001-go-repository-tooling.md) records the completed
+migration of repository-owned tooling from Node.js to one internal Go CLI. The
+[guide-drift](docs/plans/guide-drift.md) and
+[live-conformance](docs/plans/live-conformance.md) plans define future work not
+yet part of the current runtime.

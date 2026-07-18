@@ -133,7 +133,7 @@ API.
   and security invariants.
 - The [Go tooling ADR](docs/decisions/0001-go-repository-tooling.md) records the
   accepted direction; the [migration plan](docs/plans/go-tooling-migration.md)
-  tracks work that is not yet implemented.
+  records the completed repository-tooling migration.
 - The [guide-drift plan](docs/plans/guide-drift.md) and
   [live-conformance plan](docs/plans/live-conformance.md) track remaining
   maintenance and empirical work.
