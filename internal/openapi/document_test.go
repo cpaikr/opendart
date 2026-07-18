@@ -185,9 +185,13 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 		wantError   bool
 	}{
 		{name: "valid JSON", path: "/company.json", contentType: "application/json", fixture: "company.valid.json"},
-		{name: "invalid JSON", path: "/company.json", contentType: "application/json", fixture: "company.invalid.json", wantError: true},
+		{name: "JSON status pattern", path: "/company.json", contentType: "application/json", fixture: "company.invalid.json", wantError: true},
+		{name: "JSON required property", path: "/company.json", contentType: "application/json", fixture: "company.missing.json", wantError: true},
+		{name: "JSON additional property", path: "/company.json", contentType: "application/json", fixture: "company.additional.json", wantError: true},
 		{name: "valid XML", path: "/company.xml", contentType: "application/xml", fixture: "company.valid.xml"},
-		{name: "invalid XML", path: "/company.xml", contentType: "application/xml", fixture: "company.invalid.xml", wantError: true},
+		{name: "XML status pattern", path: "/company.xml", contentType: "application/xml", fixture: "company.invalid.xml", wantError: true},
+		{name: "XML required property", path: "/company.xml", contentType: "application/xml", fixture: "company.missing.xml", wantError: true},
+		{name: "XML additional property", path: "/company.xml", contentType: "application/xml", fixture: "company.additional.xml", wantError: true},
 		{name: "valid XML API error", path: "/document.xml", contentType: "application/xml", fixture: "error.valid.xml"},
 	}
 	for _, test := range tests {
@@ -200,7 +204,7 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 			if (err != nil) != test.wantError {
 				t.Fatalf("ValidateResponse() error = %v, wantError %v", err, test.wantError)
 			}
-			if err != nil && (strings.Contains(err.Error(), "not-a-status") || strings.Contains(err.Error(), "sentinel-property")) {
+			if err != nil && (strings.Contains(err.Error(), "not-a-status") || strings.Contains(err.Error(), "sentinel-property") || strings.Contains(err.Error(), "private")) {
 				t.Fatalf("validation error exposed response data: %v", err)
 			}
 		})
@@ -208,6 +212,12 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 	wrongRoot := []byte("<sentinel-root><status>000</status><corp_name>company</corp_name></sentinel-root>")
 	if err := document.ValidateResponse("GET", "/company.xml", "application/xml; charset=UTF-8", 200, wrongRoot); err == nil || !strings.Contains(err.Error(), "does not match") || strings.Contains(err.Error(), "sentinel-root") {
 		t.Fatalf("wrong XML root error = %v", err)
+	}
+	validTemplatedXML := []byte("<result><status>000</status><corp_name>company</corp_name></result>")
+	for _, method := range []string{"PUT", "PATCH"} {
+		if err := document.ValidateResponse(method, "/companies/00126380.xml", "application/xml; charset=UTF-8", 200, validTemplatedXML); err != nil {
+			t.Fatalf("valid templated %s XML: %v", method, err)
+		}
 	}
 
 	validZIP := zipFixture(t, "document.xml", []byte("<document><rcept_no>1</rcept_no></document>"))

@@ -3,6 +3,7 @@ package openapi
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -23,6 +24,7 @@ import (
 	validator "github.com/pb33f/libopenapi-validator"
 	validatorconfig "github.com/pb33f/libopenapi-validator/config"
 	validatorerrors "github.com/pb33f/libopenapi-validator/errors"
+	validatorpaths "github.com/pb33f/libopenapi-validator/paths"
 	"github.com/pb33f/libopenapi/bundler"
 	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/high/v3"
@@ -180,14 +182,19 @@ func (d *Document) ValidateResponse(method, path, contentType string, status int
 		return errors.New("validate response: Content-Type is malformed")
 	}
 	contentType = strings.ToLower(mediaType)
+	request, err := http.NewRequestWithContext(context.Background(), method, "https://opendart.invalid"+path, nil)
+	if err != nil {
+		return fmt.Errorf("build validation request: %w", err)
+	}
+	operation := d.responseOperation(request)
 	if contentType == "application/zip" {
-		if !d.declaresResponseMedia(method, path, status, contentType) {
+		if d.responseMedia(operation, status, contentType) == nil {
 			return fmt.Errorf("%s %s response %d does not declare %s", method, path, status, contentType)
 		}
 		return validateZIP(body)
 	}
 	if contentType == "application/xml" {
-		expectedRoot := d.expectedXMLRoot(method, path, status)
+		expectedRoot := d.expectedXMLRoot(operation, status)
 		if expectedRoot != "" {
 			if err := validateXMLRoot(body, expectedRoot); err != nil {
 				return fmt.Errorf("validate %s %s response representation: %w", method, path, err)
@@ -195,10 +202,6 @@ func (d *Document) ValidateResponse(method, path, contentType string, status int
 		}
 	}
 
-	request, err := http.NewRequest(method, "https://opendart.invalid"+path, nil)
-	if err != nil {
-		return fmt.Errorf("build validation request: %w", err)
-	}
 	response := &http.Response{
 		StatusCode: status,
 		Header:     http.Header{"Content-Type": []string{contentType}},
@@ -211,27 +214,18 @@ func (d *Document) ValidateResponse(method, path, contentType string, status int
 	return validationError(fmt.Sprintf("%s %s response", method, path), validationErrors)
 }
 
-func (d *Document) declaresResponseMedia(method, path string, status int, contentType string) bool {
-	return d.responseMedia(method, path, status, contentType) != nil
-}
-
-func (d *Document) responseMedia(method, path string, status int, contentType string) *v3.MediaType {
+func (d *Document) responseOperation(request *http.Request) *v3.Operation {
 	if d.model.Model.Paths == nil || d.model.Model.Paths.PathItems == nil {
 		return nil
 	}
-	pathItem := d.model.Model.Paths.PathItems.GetOrZero(path)
-	if pathItem == nil {
+	pathItem, validationErrors, _ := validatorpaths.FindPath(request, &d.model.Model, nil)
+	if pathItem == nil || len(validationErrors) != 0 {
 		return nil
 	}
-	var operation *v3.Operation
-	switch strings.ToUpper(method) {
-	case http.MethodGet:
-		operation = pathItem.Get
-	case http.MethodPost:
-		operation = pathItem.Post
-	default:
-		return nil
-	}
+	return pathItem.GetOperations().GetOrZero(strings.ToLower(request.Method))
+}
+
+func (d *Document) responseMedia(operation *v3.Operation, status int, contentType string) *v3.MediaType {
 	if operation == nil || operation.Responses == nil {
 		return nil
 	}
@@ -245,8 +239,8 @@ func (d *Document) responseMedia(method, path string, status int, contentType st
 	return response.Content.GetOrZero(contentType)
 }
 
-func (d *Document) expectedXMLRoot(method, path string, status int) string {
-	media := d.responseMedia(method, path, status, "application/xml")
+func (d *Document) expectedXMLRoot(operation *v3.Operation, status int) string {
+	media := d.responseMedia(operation, status, "application/xml")
 	if media == nil || media.Schema == nil {
 		return ""
 	}

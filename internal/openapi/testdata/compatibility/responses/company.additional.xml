@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <result>
-  <status>not-a-status</status>
+  <status>000</status>
   <corp_name>company</corp_name>
+  <sentinel-property>private</sentinel-property>
 </result>

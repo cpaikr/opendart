@@ -7,6 +7,8 @@ paths:
     $ref: ./paths/company.json.yaml
   /company.xml:
     $ref: ./paths/company.xml.yaml
+  /companies/{corp_code}.xml:
+    $ref: ./paths/company-template.xml.yaml
   /document.xml:
     $ref: ./paths/document.xml.yaml
 components:
