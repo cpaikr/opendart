@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	maxCompatibilityArchiveEntries = 64
-	maxCompatibilityArchiveBytes   = 8 << 20
+	maxArchiveEntries = 64
+	maxArchiveBytes   = 8 << 20
 )
 
 // Document is the repository-owned OpenAPI boundary. Third-party model and
@@ -57,16 +57,6 @@ type ChangeDetail struct {
 	Location string `json:"location"`
 	Original string `json:"original,omitempty"`
 	New      string `json:"new,omitempty"`
-}
-
-type CompatibilityReport struct {
-	Root                    string `json:"root"`
-	OpenAPI                 string `json:"openapi"`
-	DocumentValid           bool   `json:"documentValid"`
-	RenderDeterministic     bool   `json:"renderDeterministic"`
-	BundleDeterministic     bool   `json:"bundleDeterministic"`
-	BundleSemanticChanges   int    `json:"bundleSemanticChanges"`
-	BaselineSemanticChanges int    `json:"baselineSemanticChanges"`
 }
 
 func Load(root string) (*Document, error) {
@@ -237,24 +227,12 @@ func (d *Document) expectedXMLRoot(operation *v3.Operation, status int) string {
 }
 
 func Compare(leftRoot, rightRoot string) (Comparison, error) {
-	return compareWithComponents(leftRoot, rightRoot, nil)
-}
-
-func compareBundleBaseline(sourceRoot, bundleRoot string) (Comparison, error) {
-	components, err := declaredComponents(sourceRoot)
-	if err != nil {
-		return Comparison{}, err
-	}
-	return compareWithComponents(sourceRoot, bundleRoot, components)
-}
-
-func compareWithComponents(leftRoot, rightRoot string, components map[string]map[string]bool) (Comparison, error) {
-	left, err := canonicalComparisonDocument(leftRoot, components)
+	left, err := canonicalComparisonDocument(leftRoot)
 	if err != nil {
 		return Comparison{}, fmt.Errorf("load original: %w", err)
 	}
 	defer left.document.Release()
-	right, err := canonicalComparisonDocument(rightRoot, components)
+	right, err := canonicalComparisonDocument(rightRoot)
 	if err != nil {
 		return Comparison{}, fmt.Errorf("load updated: %w", err)
 	}
@@ -273,97 +251,12 @@ func compareWithComponents(leftRoot, rightRoot string, components map[string]map
 	return comparison, nil
 }
 
-func RunCompatibilityGate(root, baseline string) (CompatibilityReport, error) {
-	document, err := Load(root)
-	if err != nil {
-		return CompatibilityReport{}, err
-	}
-	defer document.Close()
-	if document.Version() != "3.2.0" {
-		return CompatibilityReport{}, fmt.Errorf("%s uses OpenAPI %s, want 3.2.0", root, document.Version())
-	}
-	if err := document.LintCompatibility(); err != nil {
-		return CompatibilityReport{}, err
-	}
-
-	renderedA, err := document.Render()
-	if err != nil {
-		return CompatibilityReport{}, err
-	}
-	renderedB, err := document.Render()
-	if err != nil {
-		return CompatibilityReport{}, err
-	}
-	if !bytes.Equal(renderedA, renderedB) {
-		return CompatibilityReport{}, errors.New("OpenAPI rendering is nondeterministic")
-	}
-	bundleA, err := document.Bundle()
-	if err != nil {
-		return CompatibilityReport{}, err
-	}
-	bundleB, err := document.Bundle()
-	if err != nil {
-		return CompatibilityReport{}, err
-	}
-	if !bytes.Equal(bundleA, bundleB) {
-		return CompatibilityReport{}, errors.New("OpenAPI bundling is nondeterministic")
-	}
-
-	temporaryDirectory, err := os.MkdirTemp("", "opendart-go-bundle-")
-	if err != nil {
-		return CompatibilityReport{}, fmt.Errorf("create bundle comparison directory: %w", err)
-	}
-	defer os.RemoveAll(temporaryDirectory)
-	bundlePath := filepath.Join(temporaryDirectory, "openapi.bundle.yaml")
-	if err := os.WriteFile(bundlePath, bundleA, 0o600); err != nil {
-		return CompatibilityReport{}, fmt.Errorf("write temporary bundle: %w", err)
-	}
-	bundleComparison, err := compareBundleBaseline(root, bundlePath)
-	if err != nil {
-		return CompatibilityReport{}, err
-	}
-	if bundleComparison.TotalChanges != 0 {
-		return CompatibilityReport{}, fmt.Errorf("Go bundle changed OpenAPI meaning: %s", comparisonSummary(bundleComparison))
-	}
-
-	report := CompatibilityReport{
-		Root:                  document.root,
-		OpenAPI:               document.Version(),
-		DocumentValid:         true,
-		RenderDeterministic:   true,
-		BundleDeterministic:   true,
-		BundleSemanticChanges: bundleComparison.TotalChanges,
-	}
-	if baseline != "" {
-		baselineComparison, err := compareBundleBaseline(root, baseline)
-		if err != nil {
-			return CompatibilityReport{}, err
-		}
-		report.BaselineSemanticChanges = baselineComparison.TotalChanges
-		if baselineComparison.TotalChanges != 0 {
-			return CompatibilityReport{}, fmt.Errorf("accepted baseline differs semantically: %s", comparisonSummary(baselineComparison))
-		}
-	}
-	return report, nil
-}
-
-func comparisonSummary(comparison Comparison) string {
-	details := make([]string, 0, min(5, len(comparison.Details)))
-	for _, detail := range comparison.Details[:min(5, len(comparison.Details))] {
-		details = append(details, fmt.Sprintf("%s: %s -> %s", detail.Location, detail.Original, detail.New))
-	}
-	if len(details) == 0 {
-		return fmt.Sprintf("%d changes", comparison.TotalChanges)
-	}
-	return fmt.Sprintf("%d changes (%s)", comparison.TotalChanges, strings.Join(details, "; "))
-}
-
 type canonicalDocument struct {
 	document libopenapi.Document
 	value    any
 }
 
-func canonicalComparisonDocument(root string, components map[string]map[string]bool) (canonicalDocument, error) {
+func canonicalComparisonDocument(root string) (canonicalDocument, error) {
 	document, err := Load(root)
 	if err != nil {
 		return canonicalDocument{}, err
@@ -378,9 +271,6 @@ func canonicalComparisonDocument(root string, components map[string]map[string]b
 		return canonicalDocument{}, fmt.Errorf("decode canonical bundle for %s: %w", root, err)
 	}
 	semanticValue = normalizeOpenAPIValue(semanticValue)
-	if components != nil {
-		filterComponents(semanticValue, components)
-	}
 	canonicalJSON, err := json.Marshal(semanticValue)
 	if err != nil {
 		return canonicalDocument{}, fmt.Errorf("encode canonical bundle for %s: %w", root, err)
@@ -488,59 +378,6 @@ func escapeJSONPointer(value string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(value, "~", "~0"), "/", "~1")
 }
 
-func declaredComponents(root string) (map[string]map[string]bool, error) {
-	source, err := os.ReadFile(root)
-	if err != nil {
-		return nil, fmt.Errorf("read component inventory from %s: %w", root, err)
-	}
-	var document map[string]any
-	if err := yaml.Unmarshal(source, &document); err != nil {
-		return nil, fmt.Errorf("parse component inventory from %s: %w", root, err)
-	}
-	inventory := make(map[string]map[string]bool)
-	componentObject, _ := document["components"].(map[string]any)
-	for category, value := range componentObject {
-		entries, ok := value.(map[string]any)
-		if !ok {
-			continue
-		}
-		inventory[category] = make(map[string]bool, len(entries))
-		for name := range entries {
-			inventory[category][name] = true
-		}
-	}
-	return inventory, nil
-}
-
-func filterComponents(value any, inventory map[string]map[string]bool) {
-	document, ok := value.(map[string]any)
-	if !ok {
-		return
-	}
-	componentObject, ok := document["components"].(map[string]any)
-	if !ok {
-		return
-	}
-	for category, value := range componentObject {
-		entries, ok := value.(map[string]any)
-		if !ok {
-			continue
-		}
-		allowed := inventory[category]
-		for name := range entries {
-			if !allowed[name] {
-				delete(entries, name)
-			}
-		}
-		if len(entries) == 0 && len(allowed) == 0 {
-			delete(componentObject, category)
-		}
-	}
-	if len(componentObject) == 0 {
-		delete(document, "components")
-	}
-}
-
 func normalizeOpenAPIValue(value any) any {
 	switch typed := value.(type) {
 	case time.Time:
@@ -631,8 +468,8 @@ func validateZIP(body []byte) error {
 	if len(reader.File) == 0 {
 		return errors.New("validate ZIP response: archive is empty")
 	}
-	if len(reader.File) > maxCompatibilityArchiveEntries {
-		return fmt.Errorf("validate ZIP response: archive has %d entries, limit is %d", len(reader.File), maxCompatibilityArchiveEntries)
+	if len(reader.File) > maxArchiveEntries {
+		return fmt.Errorf("validate ZIP response: archive has %d entries, limit is %d", len(reader.File), maxArchiveEntries)
 	}
 	var totalBytes uint64
 	foundXML := false
@@ -646,15 +483,15 @@ func validateZIP(body []byte) error {
 		if file.FileInfo().IsDir() {
 			continue
 		}
-		if file.UncompressedSize64 > uint64(maxCompatibilityArchiveBytes)-totalBytes {
-			return fmt.Errorf("validate ZIP response: expanded archive exceeds %d bytes", maxCompatibilityArchiveBytes)
+		if file.UncompressedSize64 > uint64(maxArchiveBytes)-totalBytes {
+			return fmt.Errorf("validate ZIP response: expanded archive exceeds %d bytes", maxArchiveBytes)
 		}
 		totalBytes += file.UncompressedSize64
 		entry, err := file.Open()
 		if err != nil {
 			return fmt.Errorf("validate ZIP response: entry %d cannot be opened", index)
 		}
-		remaining := maxCompatibilityArchiveBytes - int(totalBytes-file.UncompressedSize64)
+		remaining := maxArchiveBytes - int(totalBytes-file.UncompressedSize64)
 		data, readErr := io.ReadAll(io.LimitReader(entry, int64(remaining)+1))
 		closeErr := entry.Close()
 		if readErr != nil {
@@ -664,7 +501,7 @@ func validateZIP(body []byte) error {
 			return fmt.Errorf("validate ZIP response: entry %d cannot be closed", index)
 		}
 		if len(data) > remaining {
-			return fmt.Errorf("validate ZIP response: expanded archive exceeds %d bytes", maxCompatibilityArchiveBytes)
+			return fmt.Errorf("validate ZIP response: expanded archive exceeds %d bytes", maxArchiveBytes)
 		}
 		switch strings.ToLower(filepath.Ext(file.Name)) {
 		case ".xml", ".xbrl":

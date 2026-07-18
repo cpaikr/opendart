@@ -77,33 +77,6 @@ func (d *Document) Lint() ([]LintDiagnostic, error) {
 	return linter.diagnostics, nil
 }
 
-// LintCompatibility remains the narrow work-1 compatibility check until the
-// compatibility command is retired by the integrated verifier.
-func (d *Document) LintCompatibility() error {
-	if err := d.ValidateDocument(); err != nil {
-		return err
-	}
-	if d.model.Model.Paths == nil || d.model.Model.Paths.PathItems == nil {
-		return nil
-	}
-	for pathName, pathItem := range d.model.Model.Paths.PathItems.FromOldest() {
-		for method, operation := range pathItem.GetOperations().FromOldest() {
-			if operation == nil || operation.Responses == nil {
-				continue
-			}
-			for code, response := range operation.Responses.Codes.FromOldest() {
-				if response != nil && response.Description == "" {
-					return fmt.Errorf("lint OpenAPI document %s: %s %s response %s has no description", d.root, method, pathName, code)
-				}
-			}
-			if response := operation.Responses.Default; response != nil && response.Description == "" {
-				return fmt.Errorf("lint OpenAPI document %s: %s %s default response has no description", d.root, method, pathName)
-			}
-		}
-	}
-	return nil
-}
-
 type documentLinter struct {
 	artifact         string
 	document         *v3.Document

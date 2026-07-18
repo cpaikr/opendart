@@ -13,7 +13,7 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
-func TestCompatibilityFixturePreservesOpenAPIFeatures(t *testing.T) {
+func TestDocumentFixturePreservesOpenAPIFeatures(t *testing.T) {
 	root := fixturePath(t, "openapi.yaml")
 	document, err := Load(root)
 	if err != nil {
@@ -79,20 +79,6 @@ func TestCompatibilityFixturePreservesOpenAPIFeatures(t *testing.T) {
 	}
 }
 
-func TestRepresentativeLintFixtureIsRejected(t *testing.T) {
-	root := filepath.Join("testdata", "lint", "missing-response-description.yaml")
-	document, err := Load(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer document.Close()
-	if err := document.LintCompatibility(); err == nil {
-		t.Fatal("invalid lint fixture passed document validation")
-	} else if !strings.Contains(err.Error(), root) {
-		t.Fatalf("lint diagnostic does not identify artifact: %v", err)
-	}
-}
-
 func TestSemanticComparisonIgnoresFormattingAndDetectsContractChanges(t *testing.T) {
 	root := fixturePath(t, "openapi.yaml")
 	temporaryRoot := copyFixture(t)
@@ -102,8 +88,8 @@ func TestSemanticComparisonIgnoresFormattingAndDetectsContractChanges(t *testing
 		t.Fatal(err)
 	}
 	source = bytes.Replace(source,
-		[]byte("info:\n  title: OpenDART compatibility fixture\n  version: 1.0.0"),
-		[]byte("info:\n  version: 1.0.0\n  title: OpenDART compatibility fixture"), 1)
+		[]byte("info:\n  title: OpenDART document fixture\n  version: 1.0.0"),
+		[]byte("info:\n  version: 1.0.0\n  title: OpenDART document fixture"), 1)
 	if err := os.WriteFile(formatted, source, 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -133,74 +119,6 @@ func TestSemanticComparisonIgnoresFormattingAndDetectsContractChanges(t *testing
 		}
 		assertChangeLocation(t, comparison, "/x-opendart/schemaStatus")
 	})
-}
-
-func TestCompatibilityGateIgnoresGeneratedComponentsWhenSourceHasNone(t *testing.T) {
-	directory := t.TempDir()
-	root := filepath.Join(directory, "openapi.yaml")
-	pathItem := filepath.Join(directory, "company.yaml")
-	if err := os.WriteFile(pathItem, []byte(`get:
-  operationId: get_company
-  summary: Get a company
-  responses:
-    default:
-      description: Company response
-`), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(root, []byte(`openapi: 3.2.0
-info:
-  title: No root components
-  version: 1.0.0
-paths:
-  /company:
-    $ref: ./company.yaml
-`), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	report, err := RunCompatibilityGate(root, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if report.BundleSemanticChanges != 0 {
-		t.Fatalf("bundle semantic changes = %d", report.BundleSemanticChanges)
-	}
-}
-
-func TestBundleBaselineComparisonKeepsReferencedAndDeclaredSchemas(t *testing.T) {
-	root := fixturePath(t, "openapi.yaml")
-	bundlePath := generatedComponentBundle(t, false)
-	comparison, err := compareBundleBaseline(root, bundlePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if comparison.TotalChanges != 0 {
-		t.Fatalf("equivalent generated-component bundle = %+v", comparison)
-	}
-
-	mutatedBundlePath := generatedComponentBundle(t, true)
-	comparison, err = compareBundleBaseline(root, mutatedBundlePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertChangeLocation(t, comparison, "/paths/~1company.json/get/responses/200/content/application~1json/schema/properties/corp_name/minLength")
-
-	operationMutation := generatedComponentBundle(t, false)
-	replaceInFile(t, operationMutation, "get_company_json_fixture", "get_company_json_changed")
-	comparison, err = compareBundleBaseline(root, operationMutation)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertChangeLocation(t, comparison, "/paths/~1company.json/get/operationId")
-
-	sharedMutation := generatedComponentBundle(t, false)
-	replaceInFile(t, sharedMutation, "schemaStatus: empirically-observed", "schemaStatus: changed-status")
-	comparison, err = compareBundleBaseline(root, sharedMutation)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertChangeLocation(t, comparison, "/components/schemas/OpenDartError/x-opendart/schemaStatus")
 }
 
 func TestRepresentativeResponseValidation(t *testing.T) {
@@ -290,13 +208,13 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 		t.Fatal("ZIP with malformed XML passed validation")
 	}
 	manyEntries := make(map[string][]byte)
-	for index := 0; index <= maxCompatibilityArchiveEntries; index++ {
+	for index := 0; index <= maxArchiveEntries; index++ {
 		manyEntries[fmt.Sprintf("%d.xml", index)] = []byte("<document/>")
 	}
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, zipEntries(t, manyEntries)); err == nil {
 		t.Fatal("ZIP entry limit was not enforced")
 	}
-	oversizedZIP := zipFixture(t, "document.xml", bytes.Repeat([]byte(" "), maxCompatibilityArchiveBytes+1))
+	oversizedZIP := zipFixture(t, "document.xml", bytes.Repeat([]byte(" "), maxArchiveBytes+1))
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, oversizedZIP); err == nil {
 		t.Fatal("ZIP expansion limit was not enforced")
 	}
@@ -362,7 +280,7 @@ func TestLoadRejectsUnresolvedReferenceFragment(t *testing.T) {
 
 func fixturePath(t *testing.T, elements ...string) string {
 	t.Helper()
-	parts := append([]string{"testdata", "compatibility"}, elements...)
+	parts := append([]string{"testdata", "document"}, elements...)
 	return filepath.Join(parts...)
 }
 
@@ -446,42 +364,6 @@ func assertChangeLocation(t *testing.T, comparison Comparison, suffix string) {
 		}
 	}
 	t.Fatalf("comparison does not contain location suffix %q: %+v", suffix, comparison)
-}
-
-func generatedComponentBundle(t *testing.T, mutate bool) string {
-	t.Helper()
-	document, err := Load(fixturePath(t, "openapi.yaml"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer document.Close()
-	bundled, err := document.bundle(true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var value map[string]any
-	if err := yaml.Unmarshal(bundled, &value); err != nil {
-		t.Fatal(err)
-	}
-	content := nestedMap(t, value, "paths", "/company.json", "get", "responses", "200", "content", "application/json")
-	schema := nestedMap(t, content, "schema")
-	if mutate {
-		corpName := nestedMap(t, schema, "properties", "corp_name")
-		corpName["minLength"] = 2
-	}
-	components := nestedMap(t, value, "components")
-	schemas := nestedMap(t, components, "schemas")
-	schemas["GeneratedCompany"] = schema
-	content["schema"] = map[string]any{"$ref": "#/components/schemas/GeneratedCompany"}
-	output, err := yaml.Marshal(value)
-	if err != nil {
-		t.Fatal(err)
-	}
-	path := filepath.Join(t.TempDir(), "openapi.bundle.yaml")
-	if err := os.WriteFile(path, output, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	return path
 }
 
 func nestedMap(t *testing.T, root map[string]any, keys ...string) map[string]any {

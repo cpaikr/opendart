@@ -60,8 +60,12 @@ func TestGenerateDeterministicGuideContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer document.Close()
-	if err := document.LintCompatibility(); err != nil {
+	lintDiagnostics, err := document.Lint()
+	if err != nil {
 		t.Fatal(err)
+	}
+	if len(lintDiagnostics) != 0 {
+		t.Fatalf("generated document lint diagnostics = %#v", lintDiagnostics)
 	}
 
 	root := readGeneratedMap(t, filepath.Join(left, "openapi.yaml"))
