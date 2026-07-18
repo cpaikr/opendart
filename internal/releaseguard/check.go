@@ -209,7 +209,7 @@ func checkReleaseConfiguration(configSource, manifestSource []byte) error {
 	}
 	expectedExclusions := []any{
 		".agents", ".codex", ".github", "ARCHITECTURE.md", "cmd", "docs",
-		"go.mod", "go.sum", "internal", "scripts",
+		"go.mod", "go.sum", "internal",
 	}
 	if err := require(configArtifact, "root package exclude-paths", reflect.DeepEqual(root["exclude-paths"], expectedExclusions), "exact repository-only exclusions are required"); err != nil {
 		return err
@@ -413,6 +413,7 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		{name: "GitHub token", pattern: regexp.MustCompile(`(?i)\bgithub\s*(?:\.\s*token\b|\[\s*['"]token['"]\s*\])`)},
 		{name: "OpenDART API key", pattern: regexp.MustCompile(`OPENDART_API_KEY`)},
 		{name: "guide synchronization", pattern: regexp.MustCompile(`sync:opendart|opendart-tool\s+sync|scripts/sync-opendart`)},
+		{name: "JavaScript or Node package tooling", pattern: regexp.MustCompile(`(?i)(?:actions/setup-node@|\b(?:node|nodejs|npm|npx|corepack|yarn|pnpm|bun|deno)\b)`)},
 		{name: "package publication", pattern: regexp.MustCompile(`npm publish`)},
 		{name: "release asset replacement", pattern: regexp.MustCompile(`--clobber`)},
 	} {
@@ -420,13 +421,46 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "credential-free verification excludes " + forbidden.name}
 		}
 	}
-	foundCommand := false
+	requiredCommands := []struct {
+		command   string
+		invariant string
+	}{
+		{command: "go vet ./...", invariant: "runs Go vet"},
+		{command: "go test -race ./...", invariant: "runs race-enabled Go tests"},
+		{command: "go run ./cmd/opendart-tool verify --repository-root .", invariant: "runs the canonical repository verification command"},
+	}
+	requiredActions := []struct {
+		action    string
+		invariant string
+	}{
+		{action: "actions/checkout", invariant: "checks out the repository"},
+		{action: "actions/setup-go", invariant: "sets up Go"},
+	}
+	if len(job.Steps) != len(requiredCommands)+len(requiredActions) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only approved Go verification steps"}
+	}
+	foundCommands := make(map[string]bool, len(requiredCommands))
+	foundActions := make(map[string]bool, len(requiredActions))
+	unapprovedStep := ""
 	for _, step := range job.Steps {
-		if step.Run == "npm run verify:opendart" {
-			if !defaultStepExecution(step) {
-				return &Error{Artifact: verifyWorkflowArtifact, Invariant: "canonical verification uses default execution controls"}
+		approved := false
+		for _, required := range requiredCommands {
+			if step.Run == required.command {
+				approved = step.Uses == ""
+				if !defaultStepExecution(step) {
+					return &Error{Artifact: verifyWorkflowArtifact, Invariant: required.invariant + " with default execution controls"}
+				}
+				foundCommands[step.Run] = true
 			}
-			foundCommand = true
+		}
+		for _, required := range requiredActions {
+			if strings.HasPrefix(step.Uses, required.action+"@") {
+				approved = step.Run == ""
+				foundActions[required.action] = true
+			}
+		}
+		if !approved {
+			unapprovedStep = step.Name
 		}
 		if step.ContinueOnError {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification step failures stop the job", Detail: "step " + step.Name}
@@ -435,8 +469,18 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default run settings", Detail: "step " + step.Name}
 		}
 	}
-	if !foundCommand {
-		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "runs the canonical repository verification command"}
+	for _, required := range requiredCommands {
+		if !foundCommands[required.command] {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: required.invariant}
+		}
+	}
+	for _, required := range requiredActions {
+		if !foundActions[required.action] {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: required.invariant}
+		}
+	}
+	if unapprovedStep != "" {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only approved Go verification steps", Detail: "step " + unapprovedStep}
 	}
 	if err := checkActionPins(verifyWorkflowArtifact, verify); err != nil {
 		return err

@@ -87,7 +87,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "exclusions", artifact: configArtifact,
-			old: `"scripts"`, replacement: `"scripts", "openapi"`,
+			old: `"internal"`, replacement: `"internal", "scripts"`,
 			invariant: "root package exclude-paths",
 		},
 		{
@@ -298,8 +298,18 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "canonical verify command", artifact: verifyWorkflowArtifact,
-			old: "npm run verify:opendart", replacement: "npm test",
+			old: "go run ./cmd/opendart-tool verify --repository-root .", replacement: "go run ./cmd/opendart-tool lint --root openapi/openapi.yaml",
 			invariant: "runs the canonical repository verification command",
+		},
+		{
+			name: "Go vet command", artifact: verifyWorkflowArtifact,
+			old: "go vet ./...", replacement: "go vet ./cmd/...",
+			invariant: "runs Go vet",
+		},
+		{
+			name: "race-enabled Go tests", artifact: verifyWorkflowArtifact,
+			old: "go test -race ./...", replacement: "go test ./...",
+			invariant: "runs race-enabled Go tests",
 		},
 		{
 			name: "verify job condition bypass", artifact: verifyWorkflowArtifact,
@@ -319,12 +329,12 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "canonical verify step condition bypass", artifact: verifyWorkflowArtifact,
 			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        if: always()\n        run:",
-			invariant: "canonical verification uses default execution controls",
+			invariant: "runs the canonical repository verification command",
 		},
 		{
 			name: "verify step continue-on-error bypass", artifact: verifyWorkflowArtifact,
 			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        continue-on-error: true\n        run:",
-			invariant: "canonical verification uses default execution controls",
+			invariant: "runs the canonical repository verification command",
 		},
 		{
 			name: "verify step shell bypass", artifact: verifyWorkflowArtifact,
@@ -348,33 +358,63 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "verify secrets", artifact: verifyWorkflowArtifact,
-			old: "run: npm run verify:opendart", replacement: "env:\n          TOKEN: ${{ secrets.GITHUB_TOKEN }}\n        run: npm run verify:opendart",
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          TOKEN: ${{ secrets.GITHUB_TOKEN }}\n        run: go run ./cmd/opendart-tool verify --repository-root .",
 			invariant: "excludes GitHub secrets",
 		},
 		{
 			name: "verify secrets bracket access", artifact: verifyWorkflowArtifact,
-			old: "run: npm run verify:opendart", replacement: "env:\n          TOKEN: ${{ secrets['GITHUB_TOKEN'] }}\n        run: npm run verify:opendart",
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          TOKEN: ${{ secrets['GITHUB_TOKEN'] }}\n        run: go run ./cmd/opendart-tool verify --repository-root .",
 			invariant: "excludes GitHub secrets",
 		},
 		{
 			name: "verify github token property access", artifact: verifyWorkflowArtifact,
-			old: "run: npm run verify:opendart", replacement: "env:\n          TOKEN: ${{ github.token }}\n        run: npm run verify:opendart",
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          TOKEN: ${{ github.token }}\n        run: go run ./cmd/opendart-tool verify --repository-root .",
 			invariant: "excludes GitHub token",
 		},
 		{
 			name: "verify github token index access", artifact: verifyWorkflowArtifact,
-			old: "run: npm run verify:opendart", replacement: "env:\n          TOKEN: ${{ github[\"token\"] }}\n        run: npm run verify:opendart",
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          TOKEN: ${{ github[\"token\"] }}\n        run: go run ./cmd/opendart-tool verify --repository-root .",
 			invariant: "excludes GitHub token",
 		},
 		{
 			name: "verify API key", artifact: verifyWorkflowArtifact,
-			old: "run: npm run verify:opendart", replacement: "env:\n          OPENDART_API_KEY: unsafe\n        run: npm run verify:opendart",
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          OPENDART_API_KEY: unsafe\n        run: go run ./cmd/opendart-tool verify --repository-root .",
 			invariant: "excludes OpenDART API key",
 		},
 		{
 			name: "verify sync", artifact: verifyWorkflowArtifact,
-			old: "run: npm run verify:opendart", replacement: "run: npm run verify:opendart && npm run sync:opendart",
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: go run ./cmd/opendart-tool verify --repository-root . && go run ./cmd/opendart-tool sync",
 			invariant: "excludes guide synchronization",
+		},
+		{
+			name: "verify Node setup", artifact: verifyWorkflowArtifact,
+			old: "      - name: Set up Go", replacement: "      - name: Set up Node.js\n        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020\n\n      - name: Set up Go",
+			invariant: "excludes JavaScript or Node package tooling",
+		},
+		{
+			name: "verify npm command", artifact: verifyWorkflowArtifact,
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: npm run verify:opendart",
+			invariant: "excludes JavaScript or Node package tooling",
+		},
+		{
+			name: "verify nodejs command", artifact: verifyWorkflowArtifact,
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: nodejs scripts/verify.js",
+			invariant: "excludes JavaScript or Node package tooling",
+		},
+		{
+			name: "verify alternate package manager", artifact: verifyWorkflowArtifact,
+			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: yarn verify",
+			invariant: "excludes JavaScript or Node package tooling",
+		},
+		{
+			name: "verify JavaScript script", artifact: verifyWorkflowArtifact,
+			old: "      - name: Set up Go", replacement: "      - name: Run repository script\n        run: ./scripts/check.mjs\n\n      - name: Set up Go",
+			invariant: "uses only approved Go verification steps",
+		},
+		{
+			name: "verify local action", artifact: verifyWorkflowArtifact,
+			old: "      - name: Set up Go", replacement: "      - name: Run local action\n        uses: ./actions/check\n\n      - name: Set up Go",
+			invariant: "uses only approved Go verification steps",
 		},
 	}
 

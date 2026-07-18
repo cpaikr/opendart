@@ -14,25 +14,19 @@ language decision is recorded in
   staged validation orchestration, guarded publication, rollback, catalog and
   reference checks, strict linting, deterministic bundling and freshness, and
   release/workflow guards. Canonical synchronization and offline verification
-  have cut over once.
-- The focused multi-company probe is implemented in the Go CLI with offline
-  HTTP coverage. Node.js remains the operational entry point only until the
-  final command and CI cutover; the superseded Node and Redocly verification
-  paths remain dormant and do not run in the current verification gate.
+  have cut over once. The focused multi-company probe is implemented there with
+  offline HTTP coverage and direct operational entry points.
 - Pull-request, manual, and release verification use the credential-free Go
-  repository verifier. During cutover, the accepted multi-file OpenAPI 3.2
-  contract and Go bundle also passed the former Node catalog and Redocly lint
-  checks plus semantic parity checks without OpenDART credentials. Those
-  non-authoritative checks are retained as migration evidence, not automation;
-  the former Redocly byte-freshness check rejects the approved Go formatting.
+  toolchain directly. The accepted multi-file OpenAPI 3.2 contract and Go bundle
+  passed the former Node and Redocly checks as one-time cutover evidence; those
+  implementations and temporary compatibility scaffolding are now removed.
 - [Guide drift](guide-drift.md) and [live conformance](live-conformance.md) are
   committed follow-on work. They depend on the Go OpenAPI foundation and a
   future shared reporting implementation, while retaining separate network,
   credential, and issue boundaries.
-- The approved [Go-only cleanup](go-only-tooling-cleanup.md) is the
-  authoritative remaining migration slice. Its additive focused-probe port is
-  complete; only direct-Go command and CI cutover and deletion of the
-  superseded Node/npm/Redocly surface remain.
+- The [Go-only cleanup](go-only-tooling-cleanup.md) and this migration are
+  complete. Future drift and live-conformance work remains intentionally
+  separate and does not reopen the tooling migration.
 
 ## Constraints
 
@@ -76,13 +70,13 @@ tooling-migration completion prerequisite.
 3. **Complete.** Port catalog and reference checks, lint coverage, bundling,
    freshness, and workflow and release guards. Switch local documentation and
    credential-free CI after parity is demonstrated.
-4. **Partially complete.** The [Go-only cleanup](go-only-tooling-cleanup.md)
-   added the focused probe behind a narrow Go interface. Cut local and CI entry
-   points over to direct Go commands and remove repository-owned Node.js, npm,
-   and Redocly.
-5. After the tooling migration is complete, add shared report and HTTP safety
-   seams through the drift or general live-conformance work when another
-   implemented consumer makes them concrete.
+4. **Complete.** The [Go-only cleanup](go-only-tooling-cleanup.md) added the
+   focused probe behind a narrow Go interface, cut local and CI entry points
+   over to direct Go commands, and removed repository-owned Node.js, npm,
+   Redocly, and temporary compatibility surfaces.
+5. **Deferred follow-on.** Add shared report and HTTP safety seams through the
+   drift or general live-conformance work only when another implemented
+   consumer makes them concrete.
 
 ## Acceptance criteria
 
@@ -102,10 +96,10 @@ tooling-migration completion prerequisite.
 
 ## Next action
 
-Complete the [Go-only cleanup](go-only-tooling-cleanup.md) by cutting local and
-CI entry points directly to Go and deleting the superseded Node/npm/Redocly and
-temporary compatibility surfaces. Stop before scheduled guide drift or the
-general live-conformance runner.
+The repository-tooling migration is complete. When explicitly started, proceed
+through either the [guide-drift](guide-drift.md) or
+[live-conformance](live-conformance.md) plan. Do not treat credential, notifier,
+schedule, or production-promotion work as implicit migration follow-up.
 
 ## Progress log
 
@@ -127,5 +121,9 @@ general live-conformance runner.
   Go bundle has zero semantic changes from the accepted contract; the former
   Node catalog and Redocly lint checks passed as one-time cutover evidence,
   while the obsolete Redocly byte check is intentionally superseded. Local and
-  credential-free CI commands now use only the Go verifier. Ordered work 4 and
-  5 remain unstarted.
+  credential-free CI commands now use only the Go verifier.
+- 2026-07-18: Completed ordered work 4 through the Go-only cleanup. Ported the
+  focused probe, cut documentation and CI directly to Go, removed the Node/npm/
+  Redocly dependency graph and duplicate implementations, and retired temporary
+  compatibility adapters while retaining lasting Go coverage. Ordered work 5
+  remains a deferred follow-on owned by the drift or live-conformance plans.

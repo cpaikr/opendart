@@ -29,6 +29,18 @@ func TestRunRejectsUnknownCommand(t *testing.T) {
 	}
 }
 
+func TestRunRejectsRetiredCompatibilityCommand(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	if code := Run([]string{"compatibility"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("Run() code = %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), `unknown command "compatibility"`) {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
 func TestRunPrintsHelp(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -36,7 +48,7 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "probe-multi-company", "compatibility"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "probe-multi-company"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
@@ -115,47 +127,6 @@ func TestRunProbeMultiCompanyReportsOutputFailure(t *testing.T) {
 	})
 	if code != 1 || !strings.Contains(stderr.String(), "write probe-multi-company report") {
 		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
-	}
-}
-
-func TestRunCompatibility(t *testing.T) {
-	root := filepath.Join("..", "openapi", "testdata", "compatibility", "openapi.yaml")
-	t.Run("success", func(t *testing.T) {
-		var stdout bytes.Buffer
-		var stderr bytes.Buffer
-		if code := Run([]string{"compatibility", "--root", root, "--baseline", root}, &stdout, &stderr); code != 0 {
-			t.Fatalf("Run() code = %d, stderr = %q", code, stderr.String())
-		}
-		var report struct {
-			DocumentValid           bool `json:"documentValid"`
-			BundleSemanticChanges   int  `json:"bundleSemanticChanges"`
-			BaselineSemanticChanges int  `json:"baselineSemanticChanges"`
-		}
-		if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
-			t.Fatalf("decode report: %v", err)
-		}
-		if !report.DocumentValid || report.BundleSemanticChanges != 0 || report.BaselineSemanticChanges != 0 {
-			t.Fatalf("report = %+v", report)
-		}
-	})
-
-	for _, test := range []struct {
-		name string
-		args []string
-	}{
-		{name: "invalid root", args: []string{"compatibility", "--root", "missing-openapi.yaml"}},
-		{name: "invalid baseline", args: []string{"compatibility", "--root", root, "--baseline", "missing-bundle.yaml"}},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			var stdout bytes.Buffer
-			var stderr bytes.Buffer
-			if code := Run(test.args, &stdout, &stderr); code != 1 {
-				t.Fatalf("Run() code = %d, stderr = %q", code, stderr.String())
-			}
-			if !strings.Contains(stderr.String(), "compatibility:") {
-				t.Fatalf("stderr = %q", stderr.String())
-			}
-		})
 	}
 }
 

@@ -64,23 +64,24 @@ collection analysis.
 
 ## Refresh and verify
 
-The repository tooling requires the Go version declared in `go.mod`. Node.js
-`>=22.12.0` or `20.19.x` and npm `>=10` remain temporarily required only for
-the focused multi-company probe and its offline tests:
+The repository tooling requires only the Go version declared in `go.mod`:
 
 ```sh
-npm ci --ignore-scripts
-npm run sync:opendart -- --checked-at YYYY-MM-DD
-npm run bundle:opendart
-npm run verify:opendart
+go run ./cmd/opendart-tool sync --checked-at YYYY-MM-DD
+go run ./cmd/opendart-tool bundle \
+  --root openapi/openapi.yaml \
+  --output openapi/generated/openapi.bundle.yaml
+go vet ./...
+go test -race ./...
+go run ./cmd/opendart-tool verify --repository-root .
 ```
 
-`sync:opendart` runs the internal Go CLI, refreshes the canonical files from the
-public guide through in-process validated staging and owned-output publication,
-and invalidates the old bundle. `bundle:opendart` deterministically rebuilds the
-portable artifact. `verify:opendart` runs the focused probe's offline tests, Go
-tests, catalog and confined-reference checks, strict linting, release/workflow
-guards, and a byte-for-byte bundle freshness check.
+`sync` refreshes the canonical files from the public guide through in-process
+validated staging and owned-output publication, then invalidates the old
+bundle. `bundle` deterministically rebuilds the portable artifact. CI owns Go
+vetting and race-enabled tests separately; `verify` checks catalog and confined
+references, strict linting, release/workflow guards, and byte-for-byte bundle
+freshness.
 
 Generated OpenAPI files are reviewed artifacts. Do not edit them by hand; change
 the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is
@@ -93,7 +94,7 @@ Refresh and verification require no OpenDART API key. The only currently
 implemented credentialed command is the targeted multi-company probe:
 
 ```sh
-npm run probe:opendart-multi-company
+go run ./cmd/opendart-tool probe-multi-company
 ```
 
 Pass `OPENDART_API_KEY` only through the process environment. Do not commit it,
@@ -132,7 +133,7 @@ API.
   and security invariants.
 - The [Go tooling ADR](docs/decisions/0001-go-repository-tooling.md) records the
   accepted direction; the [migration plan](docs/plans/go-tooling-migration.md)
-  tracks work that is not yet implemented.
+  records the completed repository-tooling migration.
 - The [guide-drift plan](docs/plans/guide-drift.md) and
   [live-conformance plan](docs/plans/live-conformance.md) track remaining
   maintenance and empirical work.
