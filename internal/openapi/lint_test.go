@@ -163,6 +163,47 @@ func TestStrictLintRequiredWithoutProperties(t *testing.T) {
 	assertLintRuleAt(t, diagnostics, "no-required-schema-properties-undefined", "/components/schemas/MissingProperties/required")
 }
 
+func TestStrictLintValidatesDataValueExamples(t *testing.T) {
+	tests := []struct {
+		name        string
+		old         string
+		replacement string
+		rule        string
+	}{
+		{
+			name: "parameter",
+			old:  "          schema:\n            type: string\n      responses:",
+			replacement: "          schema:\n            type: string\n          examples:\n" +
+				"            invalid:\n              dataValue: 1\n      responses:",
+			rule: "no-invalid-parameter-examples",
+		},
+		{
+			name: "media type",
+			old:  "              schema:\n                $ref: '#/components/schemas/Thing'",
+			replacement: "              schema:\n                $ref: '#/components/schemas/Thing'\n" +
+				"              examples:\n                invalid:\n                  dataValue: {id: 1}",
+			rule: "no-invalid-media-type-examples",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			source := strings.Replace(strictLintFixture, test.old, test.replacement, 1)
+			diagnostics := lintFixtureSource(t, source)
+			assertLintRuleAt(t, diagnostics, test.rule, "/examples/invalid/dataValue")
+			valid := strings.Replace(source, "dataValue: 1", "dataValue: one", 1)
+			valid = strings.Replace(valid, "dataValue: {id: 1}", "dataValue: {id: one}", 1)
+			assertNoLintRule(t, lintFixtureSource(t, valid), test.rule)
+		})
+	}
+}
+
+func TestStrictLintAllowsOperationQuerystringOverride(t *testing.T) {
+	source := strings.Replace(strictLintFixture, "  /things/{id}:\n    get:", "  /things/{id}:\n    parameters:\n      - name: raw\n        in: querystring\n        content:\n          application/x-www-form-urlencoded:\n            schema: {type: string}\n    get:", 1)
+	source = strings.Replace(source, "          schema:\n            type: string\n      responses:", "          schema:\n            type: string\n        - name: raw\n          in: querystring\n          content:\n            application/x-www-form-urlencoded:\n              schema: {type: string}\n      responses:", 1)
+	diagnostics := lintFixtureSource(t, source)
+	assertNoLintRule(t, diagnostics, "querystring-parameters")
+}
+
 func TestStrictLintTraversesNonPathOperations(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -208,6 +249,14 @@ func TestStrictLintVisitsReusedPathItemReferenceOnce(t *testing.T) {
 	source := strings.Replace(strictLintFixture, "paths:\n", "paths:\n  /shared-one:\n    $ref: '#/components/pathItems/Shared'\n  /shared-two:\n    $ref: '#/components/pathItems/Shared'\n", 1)
 	source = strings.Replace(source, "components:\n", "components:\n  pathItems:\n    Shared:\n      get:\n        operationId: getShared\n        summary: Get shared\n        responses:\n          '200': {description: OK}\n", 1)
 	diagnostics := lintFixtureSource(t, source)
+	assertNoLintRule(t, diagnostics, "operation-operationId-unique")
+}
+
+func TestStrictLintValidatesEachPathUsingReusedPathItem(t *testing.T) {
+	source := strings.Replace(strictLintFixture, "paths:\n", "paths:\n  /shared:\n    $ref: '#/components/pathItems/Shared'\n  /shared/{id}:\n    $ref: '#/components/pathItems/Shared'\n", 1)
+	source = strings.Replace(source, "components:\n", "components:\n  pathItems:\n    Shared:\n      get:\n        operationId: getShared\n        summary: Get shared\n        responses:\n          '200': {description: OK}\n", 1)
+	diagnostics := lintFixtureSource(t, source)
+	assertLintRuleAt(t, diagnostics, "path-parameters-defined", "/paths/~1shared~1{id}/get/parameters")
 	assertNoLintRule(t, diagnostics, "operation-operationId-unique")
 }
 
@@ -260,6 +309,24 @@ func TestStrictLintComposedRequiredDiscriminator(t *testing.T) {
 	source := strings.Replace(strictLintFixture, "      properties:\n        id:", "      discriminator: {propertyName: kind}\n      allOf:\n        - type: object\n          required: [kind]\n      properties:\n        kind: {type: string}\n        id:", 1)
 	diagnostics := lintFixtureSource(t, source)
 	assertNoLintRule(t, diagnostics, "discriminator-defaultMapping")
+}
+
+func TestStrictLintRejectsInvalidExplicitDiscriminatorMapping(t *testing.T) {
+	source := strings.Replace(strictLintFixture, "      properties:\n        id:", "      discriminator:\n        propertyName: id\n        mapping:\n          'missing/type': '#/components/schemas/Missing'\n      properties:\n        id:", 1)
+	diagnostics := lintFixtureSource(t, source)
+	assertLintRuleAt(t, diagnostics, "no-invalid-schema-discriminator", "/discriminator/mapping/missing~1type")
+
+	valid := strings.Replace(source, "#/components/schemas/Missing", "#/components/schemas/Thing", 1)
+	assertNoLintRule(t, lintFixtureSource(t, valid), "no-invalid-schema-discriminator")
+}
+
+func TestStrictLintCyclicCompositionDoesNotProveDiscriminatorRequired(t *testing.T) {
+	source := strings.Replace(strictLintFixture, "      required: [id]\n      properties:", "      required: [id]\n      discriminator: {propertyName: kind}\n      allOf:\n        - $ref: '#/components/schemas/Thing'\n      properties:\n        kind: {type: string}", 1)
+	diagnostics := lintFixtureSource(t, source)
+	assertLintRule(t, diagnostics, "discriminator-defaultMapping")
+
+	valid := strings.Replace(source, "      allOf:\n        - $ref: '#/components/schemas/Thing'", "      allOf:\n        - $ref: '#/components/schemas/Thing'\n        - type: object\n          required: [kind]", 1)
+	assertNoLintRule(t, lintFixtureSource(t, valid), "discriminator-defaultMapping")
 }
 
 func TestStrictLintCountsWebhookSecurityUsage(t *testing.T) {

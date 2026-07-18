@@ -121,6 +121,69 @@ func TestSemanticComparisonIgnoresFormattingAndDetectsContractChanges(t *testing
 	})
 }
 
+func TestSemanticComparisonTreatsSetValuedArraysAsUnordered(t *testing.T) {
+	tests := []struct {
+		name  string
+		old   string
+		left  string
+		right string
+	}{
+		{name: "required", old: "required: [id]", left: "required: [id, name]", right: "required: [name, id]"},
+		{name: "enum", old: "enum: [one]", left: "enum: [one, two]", right: "enum: [two, one]"},
+		{name: "operation tags", old: "tags: [things]", left: "tags: [things, other]", right: "tags: [other, things]"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			left := strings.Replace(strictLintFixture, test.old, test.left, 1)
+			right := strings.Replace(strictLintFixture, test.old, test.right, 1)
+			if left == strictLintFixture || right == strictLintFixture {
+				t.Fatalf("fixture does not contain %q", test.old)
+			}
+			comparison := compareDocumentSources(t, left, right)
+			if comparison.TotalChanges != 0 {
+				t.Fatalf("reorder-only comparison = %+v", comparison)
+			}
+		})
+	}
+}
+
+func TestSemanticComparisonPreservesOrderedArrays(t *testing.T) {
+	old := "servers:\n  - url: https://api.invalid\n    description: Production"
+	left := strings.Replace(strictLintFixture, old, old+"\n  - url: https://backup.invalid\n    description: Backup", 1)
+	right := strings.Replace(strictLintFixture, old, "servers:\n  - url: https://backup.invalid\n    description: Backup\n  - url: https://api.invalid\n    description: Production", 1)
+	comparison := compareDocumentSources(t, left, right)
+	if comparison.TotalChanges == 0 {
+		t.Fatal("server reorder was ignored")
+	}
+}
+
+func TestSemanticComparisonPreservesExtensionArrayOrder(t *testing.T) {
+	left := strictLintFixture + "x-ordering:\n  enum: [one, two]\n"
+	right := strictLintFixture + "x-ordering:\n  enum: [two, one]\n"
+	comparison := compareDocumentSources(t, left, right)
+	if comparison.TotalChanges == 0 {
+		t.Fatal("extension array reorder was ignored")
+	}
+}
+
+func compareDocumentSources(t *testing.T, left, right string) Comparison {
+	t.Helper()
+	directory := t.TempDir()
+	leftRoot := filepath.Join(directory, "left.yaml")
+	rightRoot := filepath.Join(directory, "right.yaml")
+	if err := os.WriteFile(leftRoot, []byte(left), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(rightRoot, []byte(right), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	comparison, err := Compare(leftRoot, rightRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return comparison
+}
+
 func TestRepresentativeResponseValidation(t *testing.T) {
 	document, err := Load(fixturePath(t, "openapi.yaml"))
 	if err != nil {

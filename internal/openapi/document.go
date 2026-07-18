@@ -379,6 +379,10 @@ func escapeJSONPointer(value string) string {
 }
 
 func normalizeOpenAPIValue(value any) any {
+	return normalizeOpenAPIValueAt(value, "#", false)
+}
+
+func normalizeOpenAPIValueAt(value any, location string, inExtension bool) any {
 	switch typed := value.(type) {
 	case time.Time:
 		if typed.Hour() == 0 && typed.Minute() == 0 && typed.Second() == 0 && typed.Nanosecond() == 0 {
@@ -387,17 +391,48 @@ func normalizeOpenAPIValue(value any) any {
 		return typed.Format(time.RFC3339Nano)
 	case map[string]any:
 		for key, child := range typed {
-			typed[key] = normalizeOpenAPIValue(child)
+			childLocation := location + "/" + escapeJSONPointer(key)
+			typed[key] = normalizeOpenAPIValueAt(child, childLocation, inExtension || strings.HasPrefix(strings.ToLower(key), "x-"))
 		}
 		return typed
 	case []any:
 		for index, child := range typed {
-			typed[index] = normalizeOpenAPIValue(child)
+			typed[index] = normalizeOpenAPIValueAt(child, fmt.Sprintf("%s/%d", location, index), inExtension)
+		}
+		if !inExtension && isSetValuedOpenAPIArray(location) {
+			sort.SliceStable(typed, func(i, j int) bool {
+				return canonicalOpenAPIValueKey(typed[i]) < canonicalOpenAPIValueKey(typed[j])
+			})
 		}
 		return typed
 	default:
 		return value
 	}
+}
+
+func isSetValuedOpenAPIArray(location string) bool {
+	segments := strings.Split(location, "/")
+	last := segments[len(segments)-1]
+	if last == "required" || last == "enum" {
+		return true
+	}
+	if last != "tags" || len(segments) < 2 {
+		return false
+	}
+	parent := segments[len(segments)-2]
+	switch strings.ToLower(parent) {
+	case "get", "put", "post", "delete", "options", "head", "patch", "trace", "query":
+		return true
+	}
+	return len(segments) >= 3 && segments[len(segments)-3] == "additionalOperations"
+}
+
+func canonicalOpenAPIValueKey(value any) string {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Sprintf("%T:%v", value, value)
+	}
+	return string(encoded)
 }
 
 func loadModel(root string, files []string) (libopenapi.Document, *libopenapi.DocumentModel[v3.Document], error) {

@@ -106,7 +106,7 @@ func (l *documentLinter) lint() {
 	if l.document.Webhooks != nil {
 		for name, pathItem := range l.document.Webhooks.FromOldest() {
 			location := "/webhooks/" + escapeJSONPointer(name)
-			l.lintPathItemOperations("webhook "+name, location, "", pathItem, securitySchemes)
+			l.lintPathItemOperations("webhook "+name, location, pathItem, securitySchemes)
 		}
 	}
 	if l.document.Components != nil {
@@ -119,7 +119,7 @@ func (l *documentLinter) lint() {
 		if l.document.Components.PathItems != nil {
 			for name, pathItem := range l.document.Components.PathItems.FromOldest() {
 				location := "/components/pathItems/" + escapeJSONPointer(name)
-				l.lintPathItemOperations("path item component "+name, location, "", pathItem, securitySchemes)
+				l.lintPathItemOperations("path item component "+name, location, pathItem, securitySchemes)
 			}
 		}
 	}
@@ -211,10 +211,20 @@ func (l *documentLinter) lintPath(pathName string, item *v3.PathItem, securitySc
 	if item == nil {
 		return
 	}
-	l.lintPathItemOperations(pathName, location, pathName, item, securitySchemes)
+	l.lintPathItemPathParameters(pathName, location, pathName, item)
+	l.lintPathItemOperations(pathName, location, item, securitySchemes)
 }
 
-func (l *documentLinter) lintPathItemOperations(identityPrefix, location, pathName string, item *v3.PathItem, securitySchemes map[string]bool) {
+func (l *documentLinter) lintPathItemPathParameters(identityPrefix, location, pathName string, item *v3.PathItem) {
+	for method, operation := range item.GetOperations().FromOldest() {
+		if operation != nil {
+			identity := strings.ToUpper(method) + " " + identityPrefix
+			l.lintPathParameters(identity, location+"/"+strings.ToLower(method), pathName, item.Parameters, operation.Parameters)
+		}
+	}
+}
+
+func (l *documentLinter) lintPathItemOperations(identityPrefix, location string, item *v3.PathItem, securitySchemes map[string]bool) {
 	if item == nil || l.markPathItemVisited(item) {
 		return
 	}
@@ -223,7 +233,7 @@ func (l *documentLinter) lintPathItemOperations(identityPrefix, location, pathNa
 	for method, operation := range item.GetOperations().FromOldest() {
 		if operation != nil {
 			identity := strings.ToUpper(method) + " " + identityPrefix
-			l.lintOperation(identity, location+"/"+strings.ToLower(method), pathName, item.Parameters, operation, securitySchemes)
+			l.lintOperation(identity, location+"/"+strings.ToLower(method), item.Parameters, operation, securitySchemes)
 		}
 	}
 }
@@ -251,7 +261,7 @@ func (l *documentLinter) markPathItemVisited(item *v3.PathItem) bool {
 	return false
 }
 
-func (l *documentLinter) lintOperation(identity, location, pathName string, inherited []*v3.Parameter, operation *v3.Operation, securitySchemes map[string]bool) {
+func (l *documentLinter) lintOperation(identity, location string, inherited []*v3.Parameter, operation *v3.Operation, securitySchemes map[string]bool) {
 	if strings.TrimSpace(operation.OperationId) == "" {
 		l.add("operation-operationId", identity, location, "operationId is required")
 	} else {
@@ -276,9 +286,6 @@ func (l *documentLinter) lintOperation(identity, location, pathName string, inhe
 	l.lintSecurity(location+"/security", operation.Security, securitySchemes)
 	l.lintParameterList(identity, location+"/parameters", operation.Parameters)
 	l.lintQuerystringParameters(identity, location+"/parameters", inherited, operation.Parameters)
-	if pathName != "" {
-		l.lintPathParameters(identity, location, pathName, inherited, operation.Parameters)
-	}
 	l.lintResponses(identity, location+"/responses", operation.Responses)
 	if operation.RequestBody != nil {
 		l.lintContent(identity, location+"/requestBody/content", operation.RequestBody.Content)
@@ -297,7 +304,7 @@ func (l *documentLinter) lintCallback(identityPrefix, location string, callback 
 	}
 	for expression, pathItem := range callback.Expression.FromOldest() {
 		expressionLocation := location + "/" + escapeJSONPointer(expression)
-		l.lintPathItemOperations(identityPrefix+" "+expression, expressionLocation, "", pathItem, securitySchemes)
+		l.lintPathItemOperations(identityPrefix+" "+expression, expressionLocation, pathItem, securitySchemes)
 	}
 }
 
@@ -323,6 +330,7 @@ func (l *documentLinter) lintParameterList(operation, location string, parameter
 					if example != nil {
 						l.lintExampleObject(operation, fmt.Sprintf("%s/%d/examples/%s", location, index, escapeJSONPointer(name)), example)
 						l.lintExample(operation, fmt.Sprintf("%s/%d/examples/%s", location, index, escapeJSONPointer(name)), example.Value, parameter.Schema, "no-invalid-parameter-examples")
+						l.lintExample(operation, fmt.Sprintf("%s/%d/examples/%s/dataValue", location, index, escapeJSONPointer(name)), example.DataValue, parameter.Schema, "no-invalid-parameter-examples")
 					}
 				}
 			}
@@ -334,11 +342,14 @@ func (l *documentLinter) lintParameterList(operation, location string, parameter
 }
 
 func (l *documentLinter) lintQuerystringParameters(operation, location string, inherited, parameters []*v3.Parameter) {
-	query, querystring := false, 0
+	effective := make(map[string]*v3.Parameter, len(inherited)+len(parameters))
 	for _, parameter := range append(append([]*v3.Parameter(nil), inherited...), parameters...) {
-		if parameter == nil {
-			continue
+		if parameter != nil {
+			effective[parameter.In+"\x00"+parameter.Name] = parameter
 		}
+	}
+	query, querystring := false, 0
+	for _, parameter := range effective {
 		switch parameter.In {
 		case "query":
 			query = true
@@ -425,6 +436,7 @@ func (l *documentLinter) lintContent(operation, location string, content *libord
 					if example != nil {
 						l.lintExampleObject(operation, mediaLocation+"/examples/"+escapeJSONPointer(exampleName), example)
 						l.lintExample(operation, mediaLocation+"/examples/"+escapeJSONPointer(exampleName), example.Value, media.Schema, "no-invalid-media-type-examples")
+						l.lintExample(operation, mediaLocation+"/examples/"+escapeJSONPointer(exampleName)+"/dataValue", example.DataValue, media.Schema, "no-invalid-media-type-examples")
 					}
 				}
 			}
@@ -838,6 +850,13 @@ func (l *documentLinter) lintSchema(operation, location string, proxy *base.Sche
 		if mapping := schema.Discriminator.DefaultMapping; mapping != "" && !l.validDiscriminatorMapping(mapping) {
 			l.add("discriminator-defaultMapping", operation, location+"/discriminator/defaultMapping", "defaultMapping does not identify a declared schema")
 		}
+		if schema.Discriminator.Mapping != nil {
+			for name, mapping := range schema.Discriminator.Mapping.FromOldest() {
+				if !l.validDiscriminatorMapping(mapping) {
+					l.add("no-invalid-schema-discriminator", operation, location+"/discriminator/mapping/"+escapeJSONPointer(name), "discriminator mapping does not identify a declared schema")
+				}
+			}
+		}
 	}
 	for _, child := range schemaChildProxies(schema) {
 		l.lintSchema(operation, location+child.location, child.proxy)
@@ -846,7 +865,7 @@ func (l *documentLinter) lintSchema(operation, location string, proxy *base.Sche
 
 func discriminatorPropertyRequired(schema *base.Schema, property string, visited map[*base.Schema]bool) bool {
 	if schema == nil || visited[schema] {
-		return true
+		return false
 	}
 	visited[schema] = true
 	defer delete(visited, schema)
