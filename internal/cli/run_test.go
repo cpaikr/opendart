@@ -104,6 +104,27 @@ func TestRunSyncEmitsReport(t *testing.T) {
 	}
 }
 
+func TestRunSyncEmitsNestedSourceContext(t *testing.T) {
+	repository := t.TempDir()
+	inner := &guidesync.SourceError{Message: "request failed", Context: map[string]any{"status": 503, "attempt": 3}}
+	outer := &guidesync.SourceError{Message: "group failed", Context: map[string]any{"group": "DS002"}, Cause: inner}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runSyncWith(context.Background(), []string{"--checked-at", "2026-07-18"}, &stdout, &stderr, repository, time.Now(), func(context.Context, guidesync.SyncOptions) (guidesync.SyncReport, error) {
+		return guidesync.SyncReport{}, outer
+	})
+	if code != 1 {
+		t.Fatalf("code = %d", code)
+	}
+	var diagnostic map[string]any
+	if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostic["group"] != "DS002" || diagnostic["status"] != float64(503) || diagnostic["attempt"] != float64(3) {
+		t.Fatalf("diagnostic = %#v", diagnostic)
+	}
+}
+
 type failingWriter struct{}
 
 func (failingWriter) Write([]byte) (int, error) {

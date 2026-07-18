@@ -75,10 +75,14 @@ func runSyncWith(ctx context.Context, args []string, stdout, stderr io.Writer, r
 	})
 	if err != nil {
 		var sourceError *guidesync.SourceError
-		if errors.As(err, &sourceError) && len(sourceError.Context) > 0 {
+		if errors.As(err, &sourceError) {
 			diagnostic := map[string]any{"message": err.Error()}
-			for key, value := range sourceError.Context {
-				diagnostic[key] = value
+			for current := err; current != nil; current = errors.Unwrap(current) {
+				if source, ok := current.(*guidesync.SourceError); ok {
+					for key, value := range source.Context {
+						diagnostic[key] = value
+					}
+				}
 			}
 			encoder := json.NewEncoder(stderr)
 			encoder.SetIndent("", "  ")
