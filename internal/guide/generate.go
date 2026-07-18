@@ -468,6 +468,9 @@ func parameterSerialization(endpoint Endpoint, argument RequestArgument) (map[st
 func parameterObjects(endpoint Endpoint) ([]any, error) {
 	parameters := make([]any, 0, len(endpoint.RequestArguments))
 	for _, argument := range endpoint.RequestArguments {
+		if argument.Required != "Y" && argument.Required != "N" {
+			return nil, endpointError(endpoint, "request argument %q has unknown requiredness %q", argument.Key, argument.Required)
+		}
 		if argument.Key == "crtfc_key" {
 			continue
 		}

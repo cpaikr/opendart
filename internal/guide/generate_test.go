@@ -182,6 +182,11 @@ func TestGenerateRejectsUnsafeOrConflictingInput(t *testing.T) {
 			want: "message-code tables differ",
 		},
 		{
+			name: "request requiredness",
+			edit: func(endpoints []Endpoint) { endpoints[0].RequestArguments[0].Required = "maybe" },
+			want: "unknown requiredness",
+		},
+		{
 			name: "multi-company example",
 			edit: func(endpoints []Endpoint) { endpoints[0].GuideTestRequestArguments[0].Value = "00334624" },
 			want: "multi-company guide example is missing or malformed",
