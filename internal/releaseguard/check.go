@@ -1,6 +1,7 @@
 package releaseguard
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +20,28 @@ const (
 	verifyWorkflowArtifact  = ".github/workflows/verify.yml"
 	configArtifact          = "release-please-config.json"
 	manifestArtifact        = ".release-please-manifest.json"
+
+	prepareReleaseAssetsScript = `mkdir release-assets
+cp openapi/generated/openapi.bundle.yaml release-assets/openapi.bundle.yaml
+cd release-assets
+sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256`
+	uploadReleaseAssetsScript = `for asset_path in \
+  release-assets/openapi.bundle.yaml \
+  release-assets/openapi.bundle.yaml.sha256
+do
+  asset_name="${asset_path##*/}"
+  if gh release view "${TAG_NAME}" --json assets --jq '.assets[].name' | grep -Fqx "${asset_name}"; then
+    mkdir -p existing-assets
+    gh release download "${TAG_NAME}" --pattern "${asset_name}" --dir existing-assets
+    if ! cmp -s "${asset_path}" "existing-assets/${asset_name}"; then
+      echo "existing release asset differs: ${asset_name}" >&2
+      exit 1
+    fi
+  else
+    gh release upload "${TAG_NAME}" "${asset_path}"
+  fi
+done`
+	publishReleaseScript = `gh release edit "${TAG_NAME}" --draft=false --latest`
 )
 
 var (
@@ -85,6 +108,7 @@ func Check(repositoryRoot string) error {
 }
 
 type workflow struct {
+	Name        string                 `yaml:"name"`
 	On          map[string]any         `yaml:"on"`
 	Permissions map[string]string      `yaml:"permissions"`
 	Concurrency workflowConcurrency    `yaml:"concurrency"`
@@ -112,20 +136,23 @@ type workflowJob struct {
 	ContinueOnError bool              `yaml:"continue-on-error"`
 	Defaults        workflowDefaults  `yaml:"defaults"`
 	Permissions     map[string]string `yaml:"permissions"`
+	RunsOn          string            `yaml:"runs-on"`
+	TimeoutMinutes  int               `yaml:"timeout-minutes"`
 	Uses            string            `yaml:"uses"`
 	Steps           []workflowStep    `yaml:"steps"`
 }
 
 type workflowStep struct {
-	Name             string         `yaml:"name"`
-	ID               string         `yaml:"id"`
-	If               string         `yaml:"if"`
-	ContinueOnError  bool           `yaml:"continue-on-error"`
-	Shell            string         `yaml:"shell"`
-	WorkingDirectory string         `yaml:"working-directory"`
-	Uses             string         `yaml:"uses"`
-	Run              string         `yaml:"run"`
-	With             map[string]any `yaml:"with"`
+	Name             string            `yaml:"name"`
+	ID               string            `yaml:"id"`
+	If               string            `yaml:"if"`
+	ContinueOnError  bool              `yaml:"continue-on-error"`
+	Shell            string            `yaml:"shell"`
+	WorkingDirectory string            `yaml:"working-directory"`
+	Uses             string            `yaml:"uses"`
+	Run              string            `yaml:"run"`
+	With             map[string]any    `yaml:"with"`
+	Env              map[string]string `yaml:"env"`
 }
 
 func checkReleaseConfiguration(configSource, manifestSource []byte) error {
@@ -218,12 +245,13 @@ func checkReleaseConfiguration(configSource, manifestSource []byte) error {
 }
 
 func checkWorkflows(releaseSource, verifySource []byte) error {
-	var release, verify workflow
-	if err := yaml.Unmarshal(releaseSource, &release); err != nil {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "valid YAML", Cause: err}
+	release, err := decodeWorkflow(releaseWorkflowArtifact, releaseSource)
+	if err != nil {
+		return err
 	}
-	if err := yaml.Unmarshal(verifySource, &verify); err != nil {
-		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "valid YAML", Cause: err}
+	verify, err := decodeWorkflow(verifyWorkflowArtifact, verifySource)
+	if err != nil {
+		return err
 	}
 
 	if err := checkReleaseWorkflow(release, string(releaseSource)); err != nil {
@@ -232,7 +260,20 @@ func checkWorkflows(releaseSource, verifySource []byte) error {
 	return checkVerifyWorkflow(verify, string(verifySource))
 }
 
+func decodeWorkflow(artifact string, source []byte) (workflow, error) {
+	var result workflow
+	decoder := yaml.NewDecoder(bytes.NewReader(source))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&result); err != nil {
+		return workflow{}, &Error{Artifact: artifact, Invariant: "uses only supported YAML fields", Cause: err}
+	}
+	return result, nil
+}
+
 func checkReleaseWorkflow(release workflow, releaseSource string) error {
+	if err := require(releaseWorkflowArtifact, "has the expected workflow name", release.Name == "Release Please", ""); err != nil {
+		return err
+	}
 	push, ok := release.On["push"].(map[string]any)
 	if err := require(
 		releaseWorkflowArtifact,
@@ -251,6 +292,14 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err := require(releaseWorkflowArtifact, "workflow uses default run settings", defaultRunSettings(release.Defaults), ""); err != nil {
 		return err
 	}
+	if err := require(
+		releaseWorkflowArtifact,
+		"contains only the verify and release-please jobs",
+		reflect.DeepEqual(sortedKeys(release.Jobs), []string{"release-please", "verify"}),
+		"",
+	); err != nil {
+		return err
+	}
 
 	verifyCall, exists := release.Jobs["verify"]
 	if err := require(releaseWorkflowArtifact, "has the reusable verify job", exists && verifyCall.Uses == "./.github/workflows/verify.yml", ""); err != nil {
@@ -260,6 +309,9 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 		return err
 	}
 	if err := require(releaseWorkflowArtifact, "verify job uses default run settings", defaultRunSettings(verifyCall.Defaults), ""); err != nil {
+		return err
+	}
+	if err := require(releaseWorkflowArtifact, "verify job uses reusable-workflow runtime settings", verifyCall.RunsOn == "" && verifyCall.TimeoutMinutes == 0, ""); err != nil {
 		return err
 	}
 	if err := require(releaseWorkflowArtifact, "verify job is read-only", reflect.DeepEqual(verifyCall.Permissions, map[string]string{"contents": "read"}), ""); err != nil {
@@ -275,12 +327,30 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err := require(releaseWorkflowArtifact, "release job uses default run settings", defaultRunSettings(releaseJob.Defaults), ""); err != nil {
 		return err
 	}
+	if err := require(releaseWorkflowArtifact, "release job uses the approved runner and timeout", releaseJob.RunsOn == "blacksmith-2vcpu-ubuntu-2404" && releaseJob.TimeoutMinutes == 20, ""); err != nil {
+		return err
+	}
+	expectedReleaseSteps := []string{
+		"Check out repository",
+		"Detect interrupted draft release",
+		"Run Release Please",
+		"Check out released commit",
+		"Prepare release assets",
+		"Upload release assets",
+		"Publish immutable release",
+	}
+	if !reflect.DeepEqual(stepNames(releaseJob.Steps), expectedReleaseSteps) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uses only the approved release steps in order"}
+	}
 	for _, step := range releaseJob.Steps {
 		if step.ContinueOnError {
 			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release step failures stop the job", Detail: "step " + step.Name}
 		}
 		if !defaultStepRunSettings(step) {
 			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release steps use default run settings", Detail: "step " + step.Name}
+		}
+		if !reflect.DeepEqual(step.Env, expectedReleaseStepEnv(step.Name)) {
+			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release steps use only approved environment variables", Detail: "step " + step.Name}
 		}
 	}
 	if err := require(releaseWorkflowArtifact, "release waits for verification", releaseJob.Needs == "verify", ""); err != nil {
@@ -362,28 +432,22 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 			return &Error{Artifact: releaseWorkflowArtifact, Invariant: step.Name + " runs only for a created or recovered release"}
 		}
 	}
-	if !strings.Contains(prepare.Run, "cp openapi/generated/openapi.bundle.yaml release-assets/openapi.bundle.yaml") ||
-		!strings.Contains(prepare.Run, "sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256") {
+	if !exactScript(prepare.Run, prepareReleaseAssetsScript) {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "prepares the versioned bundle and SHA-256 checksum"}
 	}
-	if !exactAssetLoop(upload.Run) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uploads only the bundle and checksum"}
+	if !exactScript(upload.Run, uploadReleaseAssetsScript) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uploads only the bundle and checksum; asset upload preserves immutable recovery semantics"}
 	}
-	if strings.Count(upload.Run, "gh release upload") != 1 {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uploads only the bundle and checksum"}
-	}
-	for _, fragment := range []string{"gh release download", "cmp -s", `gh release upload "${TAG_NAME}" "${asset_path}"`} {
-		if !strings.Contains(upload.Run, fragment) {
-			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "asset upload preserves immutable recovery semantics", Detail: "missing " + fragment}
-		}
-	}
-	if !regexp.MustCompile(`gh release edit .*--draft=false --latest`).MatchString(publish.Run) {
+	if !exactScript(publish.Run, publishReleaseScript) {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "publishes the draft only after assets are verified"}
 	}
 	return nil
 }
 
 func checkVerifyWorkflow(verify workflow, source string) error {
+	if err := require(verifyWorkflowArtifact, "has the expected workflow name", verify.Name == "Verify", ""); err != nil {
+		return err
+	}
 	if err := require(verifyWorkflowArtifact, "permissions are read-only", reflect.DeepEqual(verify.Permissions, map[string]string{"contents": "read"}), ""); err != nil {
 		return err
 	}
@@ -395,6 +459,9 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "supports " + trigger}
 		}
 	}
+	if err := require(verifyWorkflowArtifact, "contains only the verify job", reflect.DeepEqual(sortedKeys(verify.Jobs), []string{"verify"}), ""); err != nil {
+		return err
+	}
 	job, exists := verify.Jobs["verify"]
 	if err := require(verifyWorkflowArtifact, "has the verify job", exists, ""); err != nil {
 		return err
@@ -403,6 +470,9 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		return err
 	}
 	if err := require(verifyWorkflowArtifact, "verify job uses default run settings", defaultRunSettings(job.Defaults), ""); err != nil {
+		return err
+	}
+	if err := require(verifyWorkflowArtifact, "verify job uses the approved runner and timeout", job.RunsOn == "ubuntu-latest" && job.TimeoutMinutes == 20, ""); err != nil {
 		return err
 	}
 	for _, forbidden := range []struct {
@@ -456,6 +526,9 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		for _, required := range requiredActions {
 			if strings.HasPrefix(step.Uses, required.action+"@") {
 				approved = step.Run == ""
+				if required.action == "actions/checkout" && !reflect.DeepEqual(step.With, map[string]any{"persist-credentials": false}) {
+					return &Error{Artifact: verifyWorkflowArtifact, Invariant: "checkout disables persisted credentials; checkout verifies the triggering revision"}
+				}
 				foundActions[required.action] = true
 			}
 		}
@@ -467,6 +540,9 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		}
 		if !defaultStepRunSettings(step) {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default run settings", Detail: "step " + step.Name}
+		}
+		if len(step.Env) != 0 {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps do not override the environment", Detail: "step " + step.Name}
 		}
 	}
 	for _, required := range requiredCommands {
@@ -551,23 +627,37 @@ func defaultStepRunSettings(step workflowStep) bool {
 	return strings.TrimSpace(step.Shell) == "" && strings.TrimSpace(step.WorkingDirectory) == ""
 }
 
-func isCheckoutAction(action string) bool {
-	return strings.HasPrefix(action, "actions/checkout@")
+func stepNames(steps []workflowStep) []string {
+	names := make([]string, len(steps))
+	for index, step := range steps {
+		names[index] = step.Name
+	}
+	return names
 }
 
-func exactAssetLoop(command string) bool {
-	fields := strings.Fields(command)
-	expected := []string{
-		"for", "asset_path", "in", "\\",
-		"release-assets/openapi.bundle.yaml", "\\",
-		"release-assets/openapi.bundle.yaml.sha256", "do",
-	}
-	for index := 0; index+len(expected) <= len(fields); index++ {
-		if reflect.DeepEqual(fields[index:index+len(expected)], expected) {
-			return true
+func expectedReleaseStepEnv(name string) map[string]string {
+	switch name {
+	case "Detect interrupted draft release":
+		return map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}"}
+	case "Upload release assets", "Publish immutable release":
+		return map[string]string{
+			"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}",
+			"TAG_NAME": "${{ steps.release.outputs.tag_name || steps.draft.outputs.tag_name }}",
 		}
+	default:
+		return nil
 	}
-	return false
+}
+
+func exactScript(actual, expected string) bool {
+	normalize := func(script string) string {
+		return strings.TrimSpace(strings.ReplaceAll(script, "\r\n", "\n"))
+	}
+	return normalize(actual) == normalize(expected)
+}
+
+func isCheckoutAction(action string) bool {
+	return strings.HasPrefix(action, "actions/checkout@")
 }
 
 func stepByID(steps []workflowStep, id string) (int, workflowStep, error) {

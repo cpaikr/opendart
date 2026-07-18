@@ -106,6 +106,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "runs only for pushes to main",
 		},
 		{
+			name: "release workflow name", artifact: releaseWorkflowArtifact,
+			old: "name: Release Please", replacement: "name: Other",
+			invariant: "has the expected workflow name",
+		},
+		{
+			name: "release unknown top-level field", artifact: releaseWorkflowArtifact,
+			old: "permissions: {}", replacement: "env:\n  SAFE: value\n\npermissions: {}",
+			invariant: "uses only supported YAML fields",
+		},
+		{
 			name: "no manual release", artifact: releaseWorkflowArtifact,
 			old: "permissions: {}", replacement: "  workflow_dispatch:\n\npermissions: {}",
 			invariant: "runs only for pushes to main",
@@ -124,6 +134,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "release root permissions", artifact: releaseWorkflowArtifact,
 			old: "permissions: {}", replacement: "permissions:\n  contents: write",
 			invariant: "root permissions are empty",
+		},
+		{
+			name: "release extra job", artifact: releaseWorkflowArtifact,
+			old: "jobs:\n  verify:", replacement: "jobs:\n  extra:\n    permissions:\n      contents: write\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - name: Unexpected\n        run: echo unexpected\n\n  verify:",
+			invariant: "contains only the verify and release-please jobs",
 		},
 		{
 			name: "release workflow shell bypass", artifact: releaseWorkflowArtifact,
@@ -149,6 +164,21 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "release job continue-on-error bypass", artifact: releaseWorkflowArtifact,
 			old: "  release-please:\n    needs: verify", replacement: "  release-please:\n    continue-on-error: true\n    needs: verify",
 			invariant: "release job uses default execution controls",
+		},
+		{
+			name: "release job unknown field", artifact: releaseWorkflowArtifact,
+			old: "    runs-on: blacksmith-2vcpu-ubuntu-2404", replacement: "    container: ubuntu:latest\n    runs-on: blacksmith-2vcpu-ubuntu-2404",
+			invariant: "uses only supported YAML fields",
+		},
+		{
+			name: "release runner", artifact: releaseWorkflowArtifact,
+			old: "runs-on: blacksmith-2vcpu-ubuntu-2404", replacement: "runs-on: ubuntu-latest",
+			invariant: "release job uses the approved runner and timeout",
+		},
+		{
+			name: "release timeout", artifact: releaseWorkflowArtifact,
+			old: "timeout-minutes: 20", replacement: "timeout-minutes: 60",
+			invariant: "release job uses the approved runner and timeout",
 		},
 		{
 			name: "release job shell bypass", artifact: releaseWorkflowArtifact,
@@ -247,6 +277,21 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "release step failures stop the job",
 		},
 		{
+			name: "release extra step", artifact: releaseWorkflowArtifact,
+			old: "      - name: Publish immutable release", replacement: "      - name: Modify prepared assets\n        run: echo unsafe >> release-assets/openapi.bundle.yaml\n\n      - name: Publish immutable release",
+			invariant: "uses only the approved release steps in order",
+		},
+		{
+			name: "release step unknown field", artifact: releaseWorkflowArtifact,
+			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        timeout-minutes: 1\n        if:",
+			invariant: "uses only supported YAML fields",
+		},
+		{
+			name: "release step environment", artifact: releaseWorkflowArtifact,
+			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        env:\n          SAFE: value\n        if:",
+			invariant: "release steps use only approved environment variables",
+		},
+		{
 			name: "release step shell bypass", artifact: releaseWorkflowArtifact,
 			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        shell: bash {0} || true\n        if:",
 			invariant: "release steps use default run settings",
@@ -262,6 +307,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "prepares the versioned bundle and SHA-256 checksum",
 		},
 		{
+			name: "bundle modified after checksum", artifact: releaseWorkflowArtifact,
+			old: "sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256", replacement: "sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256\n          echo unsafe >> openapi.bundle.yaml",
+			invariant: "prepares the versioned bundle and SHA-256 checksum",
+		},
+		{
 			name: "only versioned assets", artifact: releaseWorkflowArtifact,
 			old: "release-assets/openapi.bundle.yaml.sha256", replacement: "release-assets/CHANGELOG.md",
 			invariant: "uploads only the bundle and checksum",
@@ -272,14 +322,34 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "asset upload preserves immutable recovery semantics",
 		},
 		{
+			name: "upload script appended command", artifact: releaseWorkflowArtifact,
+			old: "          done", replacement: "          done\n          echo unexpected",
+			invariant: "uploads only the bundle and checksum",
+		},
+		{
 			name: "publish immutable release", artifact: releaseWorkflowArtifact,
 			old: "--draft=false --latest", replacement: "--draft=false",
+			invariant: "publishes the draft only after assets are verified",
+		},
+		{
+			name: "publish failure bypass", artifact: releaseWorkflowArtifact,
+			old: "--draft=false --latest", replacement: "--draft=false --latest || true",
 			invariant: "publishes the draft only after assets are verified",
 		},
 		{
 			name: "verify workflow permissions", artifact: verifyWorkflowArtifact,
 			old: "permissions:\n  contents: read", replacement: "permissions:\n  contents: write",
 			invariant: "permissions are read-only",
+		},
+		{
+			name: "verify workflow name", artifact: verifyWorkflowArtifact,
+			old: "name: Verify", replacement: "name: Other",
+			invariant: "has the expected workflow name",
+		},
+		{
+			name: "verify extra job", artifact: verifyWorkflowArtifact,
+			old: "jobs:\n  verify:", replacement: "jobs:\n  extra:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - name: Unexpected\n        run: echo unexpected\n\n  verify:",
+			invariant: "contains only the verify job",
 		},
 		{
 			name: "verify workflow shell bypass", artifact: verifyWorkflowArtifact,
@@ -315,6 +385,21 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "verify job condition bypass", artifact: verifyWorkflowArtifact,
 			old: "  verify:\n    runs-on:", replacement: "  verify:\n    if: always()\n    runs-on:",
 			invariant: "verify job uses default execution controls",
+		},
+		{
+			name: "verify job environment", artifact: verifyWorkflowArtifact,
+			old: "  verify:\n    runs-on:", replacement: "  verify:\n    env:\n      SAFE: value\n    runs-on:",
+			invariant: "uses only supported YAML fields",
+		},
+		{
+			name: "verify runner", artifact: verifyWorkflowArtifact,
+			old: "runs-on: ubuntu-latest", replacement: "runs-on: macos-latest",
+			invariant: "verify job uses the approved runner and timeout",
+		},
+		{
+			name: "verify timeout", artifact: verifyWorkflowArtifact,
+			old: "timeout-minutes: 20", replacement: "timeout-minutes: 60",
+			invariant: "verify job uses the approved runner and timeout",
 		},
 		{
 			name: "verify job shell bypass", artifact: verifyWorkflowArtifact,
@@ -355,6 +440,26 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "verify checkout credentials", artifact: verifyWorkflowArtifact,
 			old: "persist-credentials: false", replacement: "persist-credentials: true",
 			invariant: "checkout disables persisted credentials",
+		},
+		{
+			name: "verify checkout ref", artifact: verifyWorkflowArtifact,
+			old: "persist-credentials: false", replacement: "persist-credentials: false\n          ref: main",
+			invariant: "checkout verifies the triggering revision",
+		},
+		{
+			name: "verify checkout repository", artifact: verifyWorkflowArtifact,
+			old: "persist-credentials: false", replacement: "persist-credentials: false\n          repository: cpaikr/other",
+			invariant: "checkout verifies the triggering revision",
+		},
+		{
+			name: "verify checkout extra input", artifact: verifyWorkflowArtifact,
+			old: "persist-credentials: false", replacement: "persist-credentials: false\n          fetch-depth: 0",
+			invariant: "checkout verifies the triggering revision",
+		},
+		{
+			name: "verify step environment", artifact: verifyWorkflowArtifact,
+			old: "      - name: Vet Go\n        run:", replacement: "      - name: Vet Go\n        env:\n          SAFE: value\n        run:",
+			invariant: "verification steps do not override the environment",
 		},
 		{
 			name: "verify secrets", artifact: verifyWorkflowArtifact,
