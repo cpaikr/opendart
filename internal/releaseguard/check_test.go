@@ -126,6 +126,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "root permissions are empty",
 		},
 		{
+			name: "release workflow shell bypass", artifact: releaseWorkflowArtifact,
+			old: "permissions: {}", replacement: "defaults:\n  run:\n    shell: bash {0} || true\n\npermissions: {}",
+			invariant: "workflow uses default run settings",
+		},
+		{
+			name: "release workflow working-directory bypass", artifact: releaseWorkflowArtifact,
+			old: "permissions: {}", replacement: "defaults:\n  run:\n    working-directory: nested\n\npermissions: {}",
+			invariant: "workflow uses default run settings",
+		},
+		{
 			name: "reusable verify", artifact: releaseWorkflowArtifact,
 			old: "uses: ./.github/workflows/verify.yml", replacement: "uses: ./.github/workflows/other.yml",
 			invariant: "has the reusable verify job",
@@ -139,6 +149,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "release job continue-on-error bypass", artifact: releaseWorkflowArtifact,
 			old: "  release-please:\n    needs: verify", replacement: "  release-please:\n    continue-on-error: true\n    needs: verify",
 			invariant: "release job uses default execution controls",
+		},
+		{
+			name: "release job shell bypass", artifact: releaseWorkflowArtifact,
+			old: "  release-please:\n    needs: verify", replacement: "  release-please:\n    defaults:\n      run:\n        shell: bash {0} || true\n    needs: verify",
+			invariant: "release job uses default run settings",
+		},
+		{
+			name: "release job working-directory bypass", artifact: releaseWorkflowArtifact,
+			old: "  release-please:\n    needs: verify", replacement: "  release-please:\n    defaults:\n      run:\n        working-directory: nested\n    needs: verify",
+			invariant: "release job uses default run settings",
 		},
 		{
 			name: "read-only release verify", artifact: releaseWorkflowArtifact,
@@ -227,6 +247,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "release step failures stop the job",
 		},
 		{
+			name: "release step shell bypass", artifact: releaseWorkflowArtifact,
+			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        shell: bash {0} || true\n        if:",
+			invariant: "release steps use default run settings",
+		},
+		{
+			name: "release step working-directory bypass", artifact: releaseWorkflowArtifact,
+			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        working-directory: nested\n        if:",
+			invariant: "release steps use default run settings",
+		},
+		{
 			name: "bundle checksum", artifact: releaseWorkflowArtifact,
 			old: "sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256", replacement: "sha1sum openapi.bundle.yaml > openapi.bundle.yaml.sha256",
 			invariant: "prepares the versioned bundle and SHA-256 checksum",
@@ -252,6 +282,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "permissions are read-only",
 		},
 		{
+			name: "verify workflow shell bypass", artifact: verifyWorkflowArtifact,
+			old: "permissions:\n  contents: read", replacement: "defaults:\n  run:\n    shell: bash {0} || true\n\npermissions:\n  contents: read",
+			invariant: "workflow uses default run settings",
+		},
+		{
+			name: "verify workflow working-directory bypass", artifact: verifyWorkflowArtifact,
+			old: "permissions:\n  contents: read", replacement: "defaults:\n  run:\n    working-directory: nested\n\npermissions:\n  contents: read",
+			invariant: "workflow uses default run settings",
+		},
+		{
 			name: "verify triggers", artifact: verifyWorkflowArtifact,
 			old: "  workflow_dispatch:", replacement: "  schedule:",
 			invariant: "supports workflow_dispatch",
@@ -267,6 +307,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "verify job uses default execution controls",
 		},
 		{
+			name: "verify job shell bypass", artifact: verifyWorkflowArtifact,
+			old: "  verify:\n    runs-on:", replacement: "  verify:\n    defaults:\n      run:\n        shell: bash {0} || true\n    runs-on:",
+			invariant: "verify job uses default run settings",
+		},
+		{
+			name: "verify job working-directory bypass", artifact: verifyWorkflowArtifact,
+			old: "  verify:\n    runs-on:", replacement: "  verify:\n    defaults:\n      run:\n        working-directory: nested\n    runs-on:",
+			invariant: "verify job uses default run settings",
+		},
+		{
 			name: "canonical verify step condition bypass", artifact: verifyWorkflowArtifact,
 			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        if: always()\n        run:",
 			invariant: "canonical verification uses default execution controls",
@@ -275,6 +325,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "verify step continue-on-error bypass", artifact: verifyWorkflowArtifact,
 			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        continue-on-error: true\n        run:",
 			invariant: "canonical verification uses default execution controls",
+		},
+		{
+			name: "verify step shell bypass", artifact: verifyWorkflowArtifact,
+			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        shell: bash {0} || true\n        run:",
+			invariant: "verification steps use default run settings",
+		},
+		{
+			name: "verify step working-directory bypass", artifact: verifyWorkflowArtifact,
+			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        working-directory: nested\n        run:",
+			invariant: "verification steps use default run settings",
 		},
 		{
 			name: "pinned verify action", artifact: verifyWorkflowArtifact,

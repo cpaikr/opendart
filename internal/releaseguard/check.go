@@ -88,6 +88,7 @@ type workflow struct {
 	On          map[string]any         `yaml:"on"`
 	Permissions map[string]string      `yaml:"permissions"`
 	Concurrency workflowConcurrency    `yaml:"concurrency"`
+	Defaults    workflowDefaults       `yaml:"defaults"`
 	Jobs        map[string]workflowJob `yaml:"jobs"`
 }
 
@@ -96,23 +97,35 @@ type workflowConcurrency struct {
 	CancelInProgress bool   `yaml:"cancel-in-progress"`
 }
 
+type workflowDefaults struct {
+	Run workflowRunDefaults `yaml:"run"`
+}
+
+type workflowRunDefaults struct {
+	Shell            string `yaml:"shell"`
+	WorkingDirectory string `yaml:"working-directory"`
+}
+
 type workflowJob struct {
 	Needs           string            `yaml:"needs"`
 	If              string            `yaml:"if"`
 	ContinueOnError bool              `yaml:"continue-on-error"`
+	Defaults        workflowDefaults  `yaml:"defaults"`
 	Permissions     map[string]string `yaml:"permissions"`
 	Uses            string            `yaml:"uses"`
 	Steps           []workflowStep    `yaml:"steps"`
 }
 
 type workflowStep struct {
-	Name            string         `yaml:"name"`
-	ID              string         `yaml:"id"`
-	If              string         `yaml:"if"`
-	ContinueOnError bool           `yaml:"continue-on-error"`
-	Uses            string         `yaml:"uses"`
-	Run             string         `yaml:"run"`
-	With            map[string]any `yaml:"with"`
+	Name             string         `yaml:"name"`
+	ID               string         `yaml:"id"`
+	If               string         `yaml:"if"`
+	ContinueOnError  bool           `yaml:"continue-on-error"`
+	Shell            string         `yaml:"shell"`
+	WorkingDirectory string         `yaml:"working-directory"`
+	Uses             string         `yaml:"uses"`
+	Run              string         `yaml:"run"`
+	With             map[string]any `yaml:"with"`
 }
 
 func checkReleaseConfiguration(configSource, manifestSource []byte) error {
@@ -235,12 +248,18 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err := require(releaseWorkflowArtifact, "root permissions are empty", len(release.Permissions) == 0, ""); err != nil {
 		return err
 	}
+	if err := require(releaseWorkflowArtifact, "workflow uses default run settings", defaultRunSettings(release.Defaults), ""); err != nil {
+		return err
+	}
 
 	verifyCall, exists := release.Jobs["verify"]
 	if err := require(releaseWorkflowArtifact, "has the reusable verify job", exists && verifyCall.Uses == "./.github/workflows/verify.yml", ""); err != nil {
 		return err
 	}
 	if err := require(releaseWorkflowArtifact, "verify job uses default execution controls", defaultJobExecution(verifyCall), ""); err != nil {
+		return err
+	}
+	if err := require(releaseWorkflowArtifact, "verify job uses default run settings", defaultRunSettings(verifyCall.Defaults), ""); err != nil {
 		return err
 	}
 	if err := require(releaseWorkflowArtifact, "verify job is read-only", reflect.DeepEqual(verifyCall.Permissions, map[string]string{"contents": "read"}), ""); err != nil {
@@ -253,9 +272,15 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err := require(releaseWorkflowArtifact, "release job uses default execution controls", defaultJobExecution(releaseJob), ""); err != nil {
 		return err
 	}
+	if err := require(releaseWorkflowArtifact, "release job uses default run settings", defaultRunSettings(releaseJob.Defaults), ""); err != nil {
+		return err
+	}
 	for _, step := range releaseJob.Steps {
 		if step.ContinueOnError {
 			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release step failures stop the job", Detail: "step " + step.Name}
+		}
+		if !defaultStepRunSettings(step) {
+			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release steps use default run settings", Detail: "step " + step.Name}
 		}
 	}
 	if err := require(releaseWorkflowArtifact, "release waits for verification", releaseJob.Needs == "verify", ""); err != nil {
@@ -362,6 +387,9 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	if err := require(verifyWorkflowArtifact, "permissions are read-only", reflect.DeepEqual(verify.Permissions, map[string]string{"contents": "read"}), ""); err != nil {
 		return err
 	}
+	if err := require(verifyWorkflowArtifact, "workflow uses default run settings", defaultRunSettings(verify.Defaults), ""); err != nil {
+		return err
+	}
 	for _, trigger := range []string{"pull_request", "workflow_call", "workflow_dispatch"} {
 		if _, exists := verify.On[trigger]; !exists {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "supports " + trigger}
@@ -372,6 +400,9 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		return err
 	}
 	if err := require(verifyWorkflowArtifact, "verify job uses default execution controls", defaultJobExecution(job), ""); err != nil {
+		return err
+	}
+	if err := require(verifyWorkflowArtifact, "verify job uses default run settings", defaultRunSettings(job.Defaults), ""); err != nil {
 		return err
 	}
 	for _, forbidden := range []struct {
@@ -399,6 +430,9 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		}
 		if step.ContinueOnError {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification step failures stop the job", Detail: "step " + step.Name}
+		}
+		if !defaultStepRunSettings(step) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default run settings", Detail: "step " + step.Name}
 		}
 	}
 	if !foundCommand {
@@ -463,6 +497,14 @@ func defaultJobExecution(job workflowJob) bool {
 
 func defaultStepExecution(step workflowStep) bool {
 	return strings.TrimSpace(step.If) == "" && !step.ContinueOnError
+}
+
+func defaultRunSettings(defaults workflowDefaults) bool {
+	return strings.TrimSpace(defaults.Run.Shell) == "" && strings.TrimSpace(defaults.Run.WorkingDirectory) == ""
+}
+
+func defaultStepRunSettings(step workflowStep) bool {
+	return strings.TrimSpace(step.Shell) == "" && strings.TrimSpace(step.WorkingDirectory) == ""
 }
 
 func isCheckoutAction(action string) bool {
