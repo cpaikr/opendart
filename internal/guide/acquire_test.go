@@ -216,6 +216,8 @@ func TestAcquireEndpointRejectsIdentityAndTableDrift(t *testing.T) {
 		{name: "Korean header", replace: "출력포멧", with: "출력형식", message: "Guide table headers changed"},
 		{name: "row width", replace: "<td>JSON</td>", with: "", message: "Guide table row width changed"},
 		{name: "message code", replace: "000 정상", with: "정상", message: "Message-code row has no three-digit code"},
+		{name: "response span", replace: `<td><span class="tree mgl5">`, with: `<td rowspan="1"><span class="tree mgl5">`, message: "Guide table must not use row or column spans"},
+		{name: "message span", replace: "<td>000 정상</td>", with: `<td colspan="1">000 정상</td>`, message: "Guide table must not use row or column spans"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -322,6 +324,46 @@ func TestHTTPFetcherRetriesWithoutCredentials(t *testing.T) {
 	}
 }
 
+func TestHTTPFetcherRetriesTransientBodyReadFailure(t *testing.T) {
+	t.Parallel()
+	requests := 0
+	fetcher := NewHTTPFetcher()
+	fetcher.client.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		requests++
+		body := io.NopCloser(strings.NewReader("guide"))
+		if requests == 1 {
+			body = io.NopCloser(errorReader{err: errors.New("connection reset")})
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: body, Request: request}, nil
+	})
+	fetcher.retryDelay = func(context.Context, time.Duration) error { return nil }
+	sourceURL, _ := url.Parse("https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001")
+	body, err := fetcher.Fetch(context.Background(), sourceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "guide" || requests != 2 {
+		t.Fatalf("body = %q, requests = %d", body, requests)
+	}
+}
+
+func TestHTTPFetcherDoesNotRetryOversizedBody(t *testing.T) {
+	t.Parallel()
+	requests := 0
+	fetcher := NewHTTPFetcher()
+	fetcher.client.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		requests++
+		body := io.NopCloser(io.LimitReader(zeroReader{}, maxGuideHTMLBytes+1))
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: body, Request: request}, nil
+	})
+	fetcher.retryDelay = func(context.Context, time.Duration) error { return nil }
+	sourceURL, _ := url.Parse("https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001")
+	_, err := fetcher.Fetch(context.Background(), sourceURL)
+	if !errors.Is(err, errGuideHTMLTooLarge) || requests != 1 {
+		t.Fatalf("error = %v, requests = %d", err, requests)
+	}
+}
+
 func TestHTTPFetcherReportsTransportCauseWithoutURL(t *testing.T) {
 	t.Parallel()
 	fetcher := NewHTTPFetcher()
@@ -382,6 +424,19 @@ func TestHTTPFetcherPerAttemptTimeout(t *testing.T) {
 }
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
+
+type errorReader struct{ err error }
+
+func (reader errorReader) Read([]byte) (int, error) { return 0, reader.err }
+
+type zeroReader struct{}
+
+func (zeroReader) Read(buffer []byte) (int, error) {
+	for index := range buffer {
+		buffer[index] = 0
+	}
+	return len(buffer), nil
+}
 
 func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
 	return function(request)

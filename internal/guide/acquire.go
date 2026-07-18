@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -27,7 +28,8 @@ const (
 )
 
 var (
-	guideFetchPaths = map[string]struct{}{
+	errGuideHTMLTooLarge = errors.New("guide HTML exceeds the size limit")
+	guideFetchPaths      = map[string]struct{}{
 		"/guide/main.do":   {},
 		"/guide/detail.do": {},
 	}
@@ -79,7 +81,16 @@ type HTTPFetcher struct {
 }
 
 func NewHTTPFetcher() *HTTPFetcher {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	dialer := &net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           dialer.DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: time.Second,
+	}
 	// The public, credential-free guide endpoint only supports TLS 1.2 static
 	// RSA. Keep that legacy exception confined to this exact-host acquisition
 	// client; API probes and every other repository request retain modern
@@ -152,21 +163,23 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, sourceURL *url.URL) ([]byte, er
 			body, readError := readBoundedGuideBody(response.Body)
 			closeError := response.Body.Close()
 			cancel()
+			if errors.Is(readError, errGuideHTMLTooLarge) {
+				return nil, sourceError("OpenDART guide response is too large", map[string]any{"url": trusted.String(), "attempt": attempt}, readError)
+			}
 			if readError != nil {
-				return nil, sourceError("OpenDART guide response could not be read", map[string]any{"url": trusted.String(), "attempt": attempt}, readError)
-			}
-			if closeError != nil {
-				return nil, sourceError("OpenDART guide response could not be closed", map[string]any{"url": trusted.String(), "attempt": attempt}, closeError)
-			}
-			if response.StatusCode >= 200 && response.StatusCode < 300 {
+				lastError = sourceError("OpenDART guide response could not be read", map[string]any{"url": trusted.String(), "attempt": attempt}, readError)
+			} else if closeError != nil {
+				lastError = sourceError("OpenDART guide response could not be closed", map[string]any{"url": trusted.String(), "attempt": attempt}, closeError)
+			} else if response.StatusCode >= 200 && response.StatusCode < 300 {
 				return body, nil
-			}
-			retryable := response.StatusCode == http.StatusTooManyRequests || response.StatusCode >= 500
-			lastError = sourceError("OpenDART guide request failed", map[string]any{
-				"url": trusted.String(), "status": response.StatusCode, "attempt": attempt,
-			}, nil)
-			if !retryable {
-				return nil, lastError
+			} else {
+				retryable := response.StatusCode == http.StatusTooManyRequests || response.StatusCode >= 500
+				lastError = sourceError("OpenDART guide request failed", map[string]any{
+					"url": trusted.String(), "status": response.StatusCode, "attempt": attempt,
+				}, nil)
+				if !retryable {
+					return nil, lastError
+				}
 			}
 		} else {
 			cancel()
@@ -210,7 +223,7 @@ func readBoundedGuideBody(reader io.Reader) ([]byte, error) {
 		return nil, err
 	}
 	if len(body) > maxGuideHTMLBytes {
-		return nil, fmt.Errorf("guide HTML exceeds %d bytes", maxGuideHTMLBytes)
+		return nil, fmt.Errorf("%w (%d bytes)", errGuideHTMLTooLarge, maxGuideHTMLBytes)
 	}
 	return body, nil
 }
@@ -392,6 +405,13 @@ func acquireEndpoint(ctx context.Context, fetcher Fetcher, summary EndpointSumma
 	messages, err := requiredGuideTable(tables, "메시지 설명", summary)
 	if err != nil {
 		return Endpoint{}, err
+	}
+	for _, table := range []guideTable{response, messages} {
+		if table.SourceHasSpans {
+			return Endpoint{}, sourceError("Guide table must not use row or column spans", map[string]any{
+				"logicalOperationId": summary.LogicalOperationID, "caption": table.Caption, "sourceUrl": summary.SourceURL,
+			}, nil)
+		}
 	}
 	if err := validateGuideTable(basic, []string{"메서드", "요청URL", "인코딩", "출력포멧"}, 4, summary); err != nil {
 		return Endpoint{}, err
