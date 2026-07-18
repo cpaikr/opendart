@@ -31,7 +31,21 @@ func TestExtractCompatibilityFixture(t *testing.T) {
 	if got := extracted.Tables["요청인자"][1][1]; got != "공시대상회사\n고유번호" {
 		t.Fatalf("normalized cell = %q", got)
 	}
+	wantRowGroups := [][]string{
+		{"머리", "H1"},
+		{"머리", "H2"},
+		{"본문", "B1"},
+		{"본문", "B2"},
+		{"꼬리", "F1"},
+		{"꼬리", "F2"},
+	}
+	if !reflect.DeepEqual(extracted.Tables["행그룹"], wantRowGroups) {
+		t.Fatalf("row-group table = %#v", extracted.Tables["행그룹"])
+	}
 	if extracted.Hidden["corp_code"] != "00126380" {
 		t.Fatalf("hidden values = %#v", extracted.Hidden)
+	}
+	if extracted.Hidden["api_group"] != "DS001" {
+		t.Fatalf("case-insensitive hidden values = %#v", extracted.Hidden)
 	}
 }

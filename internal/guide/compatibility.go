@@ -40,7 +40,7 @@ func ExtractCompatibilityFixture(input io.Reader) (CompatibilityExtraction, erro
 					result.Tables[normalizedText(caption)] = expandedTable(node)
 				}
 			case "input":
-				if attribute(node, "type") == "hidden" && attribute(node, "name") != "" {
+				if strings.EqualFold(attribute(node, "type"), "hidden") && attribute(node, "name") != "" {
 					result.Hidden[attribute(node, "name")] = attribute(node, "value")
 				}
 			}
@@ -58,15 +58,50 @@ type pendingSpan struct {
 }
 
 func expandedTable(table *html.Node) [][]string {
-	var rows []*html.Node
-	walk(table, func(node *html.Node) {
-		if node != table && node.Type == html.ElementNode && node.Data == "tr" {
-			rows = append(rows, node)
+	var grid [][]string
+	for _, rows := range tableRowGroups(table) {
+		grid = append(grid, expandRowGroup(rows)...)
+	}
+	return grid
+}
+
+func tableRowGroups(table *html.Node) [][]*html.Node {
+	var groups [][]*html.Node
+	var implicitRows []*html.Node
+	flushImplicit := func() {
+		if len(implicitRows) > 0 {
+			groups = append(groups, implicitRows)
+			implicitRows = nil
 		}
-	})
+	}
+	for child := table.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type != html.ElementNode {
+			continue
+		}
+		switch child.Data {
+		case "tr":
+			implicitRows = append(implicitRows, child)
+		case "thead", "tbody", "tfoot":
+			flushImplicit()
+			var rows []*html.Node
+			for row := child.FirstChild; row != nil; row = row.NextSibling {
+				if row.Type == html.ElementNode && row.Data == "tr" {
+					rows = append(rows, row)
+				}
+			}
+			if len(rows) > 0 {
+				groups = append(groups, rows)
+			}
+		}
+	}
+	flushImplicit()
+	return groups
+}
+
+func expandRowGroup(rows []*html.Node) [][]string {
 	pending := make(map[int]pendingSpan)
 	grid := make([][]string, 0, len(rows))
-	for _, rowNode := range rows {
+	for rowIndex, rowNode := range rows {
 		row := []string{}
 		column := 0
 		consumeSpan := func() bool {
@@ -92,7 +127,7 @@ func expandedTable(table *html.Node) [][]string {
 			}
 			value := normalizedText(cell)
 			columnSpan := positiveAttribute(cell, "colspan")
-			rowSpan := positiveAttribute(cell, "rowspan")
+			rowSpan := rowSpanAttribute(cell, len(rows)-rowIndex)
 			for offset := 0; offset < columnSpan; offset++ {
 				row = setCell(row, column+offset, value)
 				if rowSpan > 1 {
@@ -119,6 +154,17 @@ func expandedTable(table *html.Node) [][]string {
 		grid = append(grid, row)
 	}
 	return grid
+}
+
+func rowSpanAttribute(node *html.Node, rowsRemaining int) int {
+	value, err := strconv.Atoi(attribute(node, "rowspan"))
+	if err != nil || value < 0 {
+		return 1
+	}
+	if value == 0 || value > rowsRemaining {
+		return rowsRemaining
+	}
+	return value
 }
 
 func setCell(row []string, column int, value string) []string {
