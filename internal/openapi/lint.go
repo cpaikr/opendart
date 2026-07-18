@@ -52,15 +52,16 @@ func (d *Document) Lint() ([]LintDiagnostic, error) {
 		return nil, err
 	}
 	linter := documentLinter{
-		artifact:        d.root,
-		document:        &d.model.Model,
-		declaredTags:    make(map[string]bool),
-		operationIDs:    make(map[string]string),
-		normalizedPaths: make(map[string]string),
-		activeSchemas:   make(map[*base.Schema]bool),
-		activePathItems: make(map[*v3.PathItem]bool),
-		root:            d.root,
-		files:           d.files,
+		artifact:         d.root,
+		document:         &d.model.Model,
+		declaredTags:     make(map[string]bool),
+		operationIDs:     make(map[string]string),
+		normalizedPaths:  make(map[string]string),
+		activeSchemas:    make(map[*base.Schema]bool),
+		visitedPathItems: make(map[*yaml.Node]bool),
+		visitedDetached:  make(map[*v3.PathItem]bool),
+		root:             d.root,
+		files:            d.files,
 	}
 	linter.lint()
 	sort.Slice(linter.diagnostics, func(i, j int) bool {
@@ -104,17 +105,18 @@ func (d *Document) LintCompatibility() error {
 }
 
 type documentLinter struct {
-	artifact        string
-	document        *v3.Document
-	diagnostics     []LintDiagnostic
-	declaredTags    map[string]bool
-	operationIDs    map[string]string
-	normalizedPaths map[string]string
-	activeSchemas   map[*base.Schema]bool
-	activePathItems map[*v3.PathItem]bool
-	referenceCounts map[string]int
-	root            string
-	files           []string
+	artifact         string
+	document         *v3.Document
+	diagnostics      []LintDiagnostic
+	declaredTags     map[string]bool
+	operationIDs     map[string]string
+	normalizedPaths  map[string]string
+	activeSchemas    map[*base.Schema]bool
+	visitedPathItems map[*yaml.Node]bool
+	visitedDetached  map[*v3.PathItem]bool
+	referenceCounts  map[string]int
+	root             string
+	files            []string
 }
 
 func (l *documentLinter) lint() {
@@ -137,18 +139,12 @@ func (l *documentLinter) lint() {
 	if l.document.Components != nil {
 		if l.document.Components.Callbacks != nil {
 			for name, callback := range l.document.Components.Callbacks.FromOldest() {
-				if l.componentReferenceCount("callbacks", name) > 0 {
-					continue
-				}
 				location := "/components/callbacks/" + escapeJSONPointer(name)
 				l.lintCallback("callback component "+name, location, callback, securitySchemes)
 			}
 		}
 		if l.document.Components.PathItems != nil {
 			for name, pathItem := range l.document.Components.PathItems.FromOldest() {
-				if l.componentReferenceCount("pathItems", name) > 0 {
-					continue
-				}
 				location := "/components/pathItems/" + escapeJSONPointer(name)
 				l.lintPathItemOperations("path item component "+name, location, "", pathItem, securitySchemes)
 			}
@@ -246,11 +242,9 @@ func (l *documentLinter) lintPath(pathName string, item *v3.PathItem, securitySc
 }
 
 func (l *documentLinter) lintPathItemOperations(identityPrefix, location, pathName string, item *v3.PathItem, securitySchemes map[string]bool) {
-	if item == nil || l.activePathItems[item] {
+	if item == nil || l.markPathItemVisited(item) {
 		return
 	}
-	l.activePathItems[item] = true
-	defer delete(l.activePathItems, item)
 	l.lintServers("", location+"/servers", item.Servers)
 	l.lintParameterList("", location+"/parameters", item.Parameters)
 	for method, operation := range item.GetOperations().FromOldest() {
@@ -259,6 +253,29 @@ func (l *documentLinter) lintPathItemOperations(identityPrefix, location, pathNa
 			l.lintOperation(identity, location+"/"+strings.ToLower(method), pathName, item.Parameters, operation, securitySchemes)
 		}
 	}
+}
+
+func (l *documentLinter) markPathItemVisited(item *v3.PathItem) bool {
+	if lowItem := item.GoLow(); lowItem != nil {
+		if root := lowItem.GetRootNode(); root != nil {
+			if l.visitedPathItems == nil {
+				l.visitedPathItems = make(map[*yaml.Node]bool)
+			}
+			if l.visitedPathItems[root] {
+				return true
+			}
+			l.visitedPathItems[root] = true
+			return false
+		}
+	}
+	if l.visitedDetached == nil {
+		l.visitedDetached = make(map[*v3.PathItem]bool)
+	}
+	if l.visitedDetached[item] {
+		return true
+	}
+	l.visitedDetached[item] = true
+	return false
 }
 
 func (l *documentLinter) lintOperation(identity, location, pathName string, inherited []*v3.Parameter, operation *v3.Operation, securitySchemes map[string]bool) {
@@ -650,11 +667,6 @@ func (l *documentLinter) lintUnusedComponents() {
 			}
 		}
 	}
-}
-
-func (l *documentLinter) componentReferenceCount(category, name string) int {
-	identity := referenceIdentity(l.root, "#/components/"+category+"/"+escapeJSONPointer(name))
-	return l.countReferences()[identity]
 }
 
 func (l *documentLinter) countReferences() map[string]int {

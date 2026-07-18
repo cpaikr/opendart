@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/pb33f/libopenapi/datamodel/high/v3"
+	liborderedmap "github.com/pb33f/libopenapi/orderedmap"
 )
 
 func TestRepositorySourceAndBundlePassStrictLint(t *testing.T) {
@@ -199,6 +202,52 @@ func TestStrictLintTraversesNonPathOperations(t *testing.T) {
 			assertLintRuleAt(t, diagnostics, "operation-summary", test.location)
 		})
 	}
+}
+
+func TestStrictLintVisitsReusedPathItemReferenceOnce(t *testing.T) {
+	source := strings.Replace(strictLintFixture, "paths:\n", "paths:\n  /shared-one:\n    $ref: '#/components/pathItems/Shared'\n  /shared-two:\n    $ref: '#/components/pathItems/Shared'\n", 1)
+	source = strings.Replace(source, "components:\n", "components:\n  pathItems:\n    Shared:\n      get:\n        operationId: getShared\n        summary: Get shared\n        responses:\n          '200': {description: OK}\n", 1)
+	diagnostics := lintFixtureSource(t, source)
+	assertNoLintRule(t, diagnostics, "operation-operationId-unique")
+}
+
+func TestStrictLintVisitsMutuallyReferencedComponentCycleOnce(t *testing.T) {
+	first := &v3.PathItem{}
+	second := &v3.PathItem{}
+	first.Get = cyclicCallbackOperation("first", second)
+	second.Get = cyclicCallbackOperation("second", first)
+	pathItems := liborderedmap.New[string, *v3.PathItem]()
+	pathItems.Set("First", first)
+	pathItems.Set("Second", second)
+
+	linter := documentLinter{
+		artifact:     "cycle",
+		document:     &v3.Document{Components: &v3.Components{PathItems: pathItems}},
+		declaredTags: make(map[string]bool),
+		operationIDs: make(map[string]string),
+	}
+	linter.lint()
+
+	summaries := 0
+	for _, diagnostic := range linter.diagnostics {
+		if diagnostic.Rule == "operation-summary" {
+			summaries++
+		}
+		if diagnostic.Rule == "operation-operationId-unique" {
+			t.Fatalf("cycle was visited more than once: %+v", linter.diagnostics)
+		}
+	}
+	if summaries != 2 {
+		t.Fatalf("cycle coverage = %d summary diagnostics, want 2: %+v", summaries, linter.diagnostics)
+	}
+}
+
+func cyclicCallbackOperation(operationID string, target *v3.PathItem) *v3.Operation {
+	expressions := liborderedmap.New[string, *v3.PathItem]()
+	expressions.Set("{$request.body#/callbackUrl}", target)
+	callbacks := liborderedmap.New[string, *v3.Callback]()
+	callbacks.Set("next", &v3.Callback{Expression: expressions})
+	return &v3.Operation{OperationId: operationID, Callbacks: callbacks}
 }
 
 func TestStrictLintAllowsEncodingNamesOutsideMediaTypes(t *testing.T) {
