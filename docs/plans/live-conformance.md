@@ -16,8 +16,11 @@ credential-free [guide drift](guide-drift.md).
   multi-company serialization decision, with focused offline tests.
 - No Go live runner, complete case inventory, credentialed workflow, or live
   issue automation is committed.
-- The runner depends on the OpenAPI, HTTP safety, and reporting foundations in
-  the [Go tooling migration](go-tooling-migration.md). The existing probe is the
+- The Go compatibility gate covers OpenAPI loading, response routing and
+  validation, and representative JSON, XML, and ZIP fixtures. Operation
+  enumeration, request validation, and the shared HTTP safety and reporting
+  foundations remain future work in the
+  [Go tooling migration](go-tooling-migration.md). The existing probe is the
   only implemented credentialed command until the general runner replaces it.
 
 ## Constraints
@@ -52,10 +55,12 @@ credential-free [guide drift](guide-drift.md).
 
 ## Ordered work
 
-1. Complete the Go compatibility gate for operation enumeration, request and
-   response validation, and representative JSON, XML, and ZIP fixtures.
-2. Implement the runner, request budget, representation adapters, typed
-   assertions, sanitized report, and offline HTTP tests.
+1. **Partially complete.** The Go compatibility gate covers OpenAPI loading,
+   response routing and validation, and representative JSON, XML, and ZIP
+   fixtures. Operation enumeration and request validation remain future work.
+2. Implement operation enumeration, request validation, the runner, request
+   budget, representation adapters, typed assertions, sanitized report, and
+   offline HTTP tests.
 3. Curate one primary case for every physical operation, adding typed discovery
    only where stable public inputs are impractical. Add a preflight coverage and
    total-budget gate.
@@ -84,6 +89,8 @@ credential-free [guide drift](guide-drift.md).
 
 ## Next action
 
-Complete the Go compatibility gate, then generate the physical-operation case
-inventory and identify the inputs, discovery dependencies, and assertions that
-need manual curation. Do not configure `OPENDART_API_KEY` yet.
+When live-conformance work is explicitly started, first implement operation
+enumeration, request validation, and the shared HTTP and reporting boundaries.
+Then generate the physical-operation case inventory and identify the inputs,
+discovery dependencies, and assertions that need manual curation. Do not
+configure `OPENDART_API_KEY` yet.

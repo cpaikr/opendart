@@ -13,9 +13,9 @@ This credential-free work is independent of authenticated
 
 - `.github/workflows/verify.yml` provides read-only pull-request and manual
   verification of the committed repository.
-- Guide refresh and verification still use Node.js. The required Go generation
-  and semantic-comparison boundaries are tracked in the
-  [tooling migration](go-tooling-migration.md).
+- The internal Go CLI owns guide acquisition, normalization, generation,
+  staged validation, and semantic compatibility checks. Credential-free
+  offline verification also runs through the Go CLI.
 - No drift command, scheduled workflow, or drift issue automation is committed.
 
 ## Constraints
@@ -38,8 +38,8 @@ This credential-free work is independent of authenticated
 
 ## Ordered work
 
-1. Complete the Go generation, validation, and semantic-comparison gate needed
-   to compare a temporary candidate with the committed baseline.
+1. **Complete.** The Go generation, validation, and semantic-comparison gate
+   can compare a temporary candidate with the committed baseline.
 2. Implement the drift command, request budget, versioned report, and offline
    fixtures for unchanged content, semantic additions and removals, malformed
    sources, and processing failures.
@@ -64,7 +64,7 @@ This credential-free work is independent of authenticated
 
 ## Next action
 
-Complete the generation and semantic-comparison portion of the
-[Go tooling migration](go-tooling-migration.md), then implement the
-credential-free drift command and its offline fixtures before adding GitHub
-write permissions or scheduling.
+When drift work is explicitly started, implement the credential-free drift
+command and its offline fixtures before adding GitHub write permissions or
+scheduling. No drift implementation is part of the completed credential-free
+[Go tooling migration](go-tooling-migration.md) scope.
