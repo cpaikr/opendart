@@ -145,9 +145,16 @@ func (d *Document) bundle(inlineLocalReferences bool) ([]byte, error) {
 		return nil, err
 	}
 	defer document.Release()
-	bundled, err := bundler.BundleDocumentWithConfig(&model.Model, &bundler.BundleInlineConfig{
-		InlineLocalRefs: &inlineLocalReferences,
-	})
+	var bundled []byte
+	if inlineLocalReferences {
+		bundled, err = bundler.BundleDocumentWithConfig(&model.Model, &bundler.BundleInlineConfig{
+			InlineLocalRefs: &inlineLocalReferences,
+		})
+	} else {
+		bundled, err = bundler.BundleDocumentComposed(&model.Model, &bundler.BundleCompositionConfig{
+			StrictValidation: true,
+		})
+	}
 	if err != nil {
 		return nil, fmt.Errorf("bundle %s: %w", d.root, err)
 	}
@@ -311,7 +318,7 @@ func RunCompatibilityGate(root, baseline string) (CompatibilityReport, error) {
 	if err := os.WriteFile(bundlePath, bundleA, 0o600); err != nil {
 		return CompatibilityReport{}, fmt.Errorf("write temporary bundle: %w", err)
 	}
-	bundleComparison, err := Compare(root, bundlePath)
+	bundleComparison, err := compareBundleBaseline(root, bundlePath)
 	if err != nil {
 		return CompatibilityReport{}, err
 	}
@@ -525,6 +532,12 @@ func filterComponents(value any, inventory map[string]map[string]bool) {
 				delete(entries, name)
 			}
 		}
+		if len(entries) == 0 && len(allowed) == 0 {
+			delete(componentObject, category)
+		}
+	}
+	if len(componentObject) == 0 {
+		delete(document, "components")
 	}
 }
 

@@ -29,7 +29,7 @@ func TestGenerateBundleIsDeterministicAndPortable(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertBundleReferencesAreInternal(t, value)
-	companySchema := nestedMap(t, value, "paths", "/company.xml", "get", "responses", "200", "content", "application/xml", "schema")
+	companySchema := nestedResolvedMap(t, value, value, "paths", "/company.xml", "get", "responses", "200", "content", "application/xml", "schema")
 	xmlMetadata := nestedMap(t, companySchema, "xml")
 	if xmlMetadata["nodeType"] != "element" || xmlMetadata["name"] != "result" {
 		t.Fatalf("XML metadata = %#v", xmlMetadata)
