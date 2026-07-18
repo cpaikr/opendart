@@ -388,6 +388,8 @@ const (
 	openAPIValueGeneric openAPIValueRole = iota
 	openAPIValueDocument
 	openAPIValueComponents
+	openAPIValueComponentMap
+	openAPIValuePaths
 	openAPIValuePathItemMap
 	openAPIValuePathItem
 	openAPIValueOperationMap
@@ -439,7 +441,21 @@ func openAPIChildRole(parent openAPIValueRole, key string) openAPIValueRole {
 	if parent == openAPIValueLiteral {
 		return openAPIValueLiteral
 	}
-	if parent != openAPIValueSchemaMap && strings.HasPrefix(strings.ToLower(key), "x-") {
+
+	switch parent {
+	case openAPIValueComponentMap:
+		return openAPIValueGeneric
+	case openAPIValuePathItemMap:
+		return openAPIValuePathItem
+	case openAPIValueOperationMap:
+		return openAPIValueOperation
+	case openAPIValueCallbackMap:
+		return openAPIValueCallback
+	case openAPIValueSchemaMap:
+		return openAPIValueSchema
+	}
+
+	if isOpenAPIObjectRole(parent) && strings.HasPrefix(strings.ToLower(key), "x-") {
 		return openAPIValueLiteral
 	}
 
@@ -449,7 +465,7 @@ func openAPIChildRole(parent openAPIValueRole, key string) openAPIValueRole {
 		case "components":
 			return openAPIValueComponents
 		case "paths", "webhooks":
-			return openAPIValuePathItemMap
+			return openAPIValuePaths
 		}
 	case openAPIValueComponents:
 		switch key {
@@ -459,8 +475,10 @@ func openAPIChildRole(parent openAPIValueRole, key string) openAPIValueRole {
 			return openAPIValuePathItemMap
 		case "callbacks":
 			return openAPIValueCallbackMap
+		case "responses", "parameters", "examples", "requestBodies", "headers", "securitySchemes", "links", "mediaTypes":
+			return openAPIValueComponentMap
 		}
-	case openAPIValuePathItemMap:
+	case openAPIValuePaths:
 		return openAPIValuePathItem
 	case openAPIValuePathItem:
 		switch strings.ToLower(key) {
@@ -469,8 +487,6 @@ func openAPIChildRole(parent openAPIValueRole, key string) openAPIValueRole {
 		case "additionaloperations":
 			return openAPIValueOperationMap
 		}
-	case openAPIValueOperationMap:
-		return openAPIValueOperation
 	case openAPIValueOperation:
 		switch key {
 		case "tags":
@@ -478,12 +494,8 @@ func openAPIChildRole(parent openAPIValueRole, key string) openAPIValueRole {
 		case "callbacks":
 			return openAPIValueCallbackMap
 		}
-	case openAPIValueCallbackMap:
-		return openAPIValueCallback
 	case openAPIValueCallback:
 		return openAPIValuePathItem
-	case openAPIValueSchemaMap:
-		return openAPIValueSchema
 	case openAPIValueSchema:
 		switch key {
 		case "required", "enum":
@@ -504,6 +516,15 @@ func openAPIChildRole(parent openAPIValueRole, key string) openAPIValueRole {
 		return openAPIValueLiteral
 	default:
 		return openAPIValueGeneric
+	}
+}
+
+func isOpenAPIObjectRole(role openAPIValueRole) bool {
+	switch role {
+	case openAPIValueGeneric, openAPIValueDocument, openAPIValueComponents, openAPIValuePaths, openAPIValuePathItem, openAPIValueOperation, openAPIValueCallback, openAPIValueSchema:
+		return true
+	default:
+		return false
 	}
 }
 

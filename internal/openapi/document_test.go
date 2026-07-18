@@ -196,6 +196,45 @@ func TestSemanticComparisonNormalizesSchemaPropertyNamedLikeExtension(t *testing
 	}
 }
 
+func TestSemanticComparisonNormalizesXPrefixedComponentEntries(t *testing.T) {
+	tests := []struct {
+		name  string
+		left  map[string]any
+		right map[string]any
+	}{
+		{
+			name: "path item",
+			left: map[string]any{"components": map[string]any{"pathItems": map[string]any{
+				"x-shared": map[string]any{"get": map[string]any{"tags": []any{"one", "two"}}},
+			}}},
+			right: map[string]any{"components": map[string]any{"pathItems": map[string]any{
+				"x-shared": map[string]any{"get": map[string]any{"tags": []any{"two", "one"}}},
+			}}},
+		},
+		{
+			name: "callback",
+			left: map[string]any{"components": map[string]any{"callbacks": map[string]any{
+				"x-shared": map[string]any{"{$request.body#/callbackUrl}": map[string]any{
+					"post": map[string]any{"tags": []any{"one", "two"}},
+				}},
+			}}},
+			right: map[string]any{"components": map[string]any{"callbacks": map[string]any{
+				"x-shared": map[string]any{"{$request.body#/callbackUrl}": map[string]any{
+					"post": map[string]any{"tags": []any{"two", "one"}},
+				}},
+			}}},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			changes := semanticChanges(normalizeOpenAPIValue(test.left), normalizeOpenAPIValue(test.right), "#")
+			if len(changes) != 0 {
+				t.Fatalf("x-prefixed component entry reorder = %+v", changes)
+			}
+		})
+	}
+}
+
 func compareDocumentSources(t *testing.T, left, right string) Comparison {
 	t.Helper()
 	directory := t.TempDir()

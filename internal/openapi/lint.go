@@ -952,15 +952,21 @@ func schemaChildProxies(schema *base.Schema) []schemaChild {
 }
 
 func (l *documentLinter) validDiscriminatorMapping(mapping string) bool {
-	if l.document.Components == nil || l.document.Components.Schemas == nil {
-		return false
+	var schemas *liborderedmap.Map[string, *base.SchemaProxy]
+	if l.document.Components != nil {
+		schemas = l.document.Components.Schemas
 	}
-	if _, exists := l.document.Components.Schemas.Get(mapping); exists {
-		return true
+	if schemas != nil {
+		if _, exists := schemas.Get(mapping); exists {
+			return true
+		}
 	}
 	const prefix = "#/components/schemas/"
 	if strings.HasPrefix(mapping, prefix) {
-		_, exists := l.document.Components.Schemas.Get(strings.TrimPrefix(mapping, prefix))
+		if schemas == nil {
+			return false
+		}
+		_, exists := schemas.Get(strings.TrimPrefix(mapping, prefix))
 		return exists
 	}
 	parts := strings.SplitN(mapping, "#", 2)

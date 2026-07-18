@@ -354,6 +354,46 @@ func TestStrictLintAllowsExternalExplicitDiscriminatorSchemaMappings(t *testing.
 	}
 }
 
+func TestStrictLintAllowsExternalDiscriminatorMappingWithoutLocalComponents(t *testing.T) {
+	const source = `openapi: 3.2.0
+info:
+  title: External discriminator fixture
+  version: 1.0.0
+paths:
+  /things:
+    get:
+      operationId: getThing
+      summary: Get a thing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                discriminator:
+                  propertyName: id
+                  mapping:
+                    thing: './mapped-schema.yaml'
+                required: [id]
+                properties:
+                  id: {type: string}
+`
+	directory := t.TempDir()
+	root := filepath.Join(directory, "openapi.yaml")
+	if err := os.WriteFile(root, []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, "mapped-schema.yaml"), []byte("type: object\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	diagnostics, err := Lint(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertNoLintRule(t, diagnostics, "no-invalid-schema-discriminator")
+}
+
 func TestStrictLintCyclicCompositionDoesNotProveDiscriminatorRequired(t *testing.T) {
 	source := strings.Replace(strictLintFixture, "      required: [id]\n      properties:", "      required: [id]\n      discriminator: {propertyName: kind}\n      allOf:\n        - $ref: '#/components/schemas/Thing'\n      properties:\n        kind: {type: string}", 1)
 	diagnostics := lintFixtureSource(t, source)
