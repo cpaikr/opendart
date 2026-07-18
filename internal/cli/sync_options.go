@@ -60,8 +60,14 @@ func parseSyncCLIOptions(args []string, repositoryRoot string, now time.Time, st
 	if err != nil {
 		return syncCLIOptions{}, fmt.Errorf("resolve canonical output: %w", err)
 	}
-	if len(only) > 0 && filepath.Clean(absoluteOutput) == filepath.Clean(absoluteCanonical) {
-		return syncCLIOptions{}, errors.New("--only requires a non-canonical --output directory")
+	if len(only) > 0 {
+		canonical, err := samePhysicalPath(absoluteOutput, absoluteCanonical)
+		if err != nil {
+			return syncCLIOptions{}, fmt.Errorf("compare --output with canonical output: %w", err)
+		}
+		if canonical {
+			return syncCLIOptions{}, errors.New("--only requires a non-canonical --output directory")
+		}
 	}
 	return syncCLIOptions{
 		RepositoryRoot: repositoryRoot,
@@ -70,6 +76,24 @@ func parseSyncCLIOptions(args []string, repositoryRoot string, now time.Time, st
 		Only:           deduplicateStrings(only),
 		ParityBaseline: *parityBaseline,
 	}, nil
+}
+
+func samePhysicalPath(left, right string) (bool, error) {
+	if filepath.Clean(left) == filepath.Clean(right) {
+		return true, nil
+	}
+	physicalLeft, leftErr := filepath.EvalSymlinks(left)
+	physicalRight, rightErr := filepath.EvalSymlinks(right)
+	if errors.Is(leftErr, os.ErrNotExist) || errors.Is(rightErr, os.ErrNotExist) {
+		return false, nil
+	}
+	if leftErr != nil {
+		return false, leftErr
+	}
+	if rightErr != nil {
+		return false, rightErr
+	}
+	return filepath.Clean(physicalLeft) == filepath.Clean(physicalRight), nil
 }
 
 func checkedAtInSeoul(now time.Time) (string, error) {

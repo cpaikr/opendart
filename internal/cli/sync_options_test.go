@@ -48,6 +48,21 @@ func TestParseSyncCLIOptionsRejectsUnsafeShapes(t *testing.T) {
 	}
 }
 
+func TestParseSyncCLIOptionsRejectsCanonicalSymlinkForPartialSync(t *testing.T) {
+	repository := t.TempDir()
+	canonical := filepath.Join(repository, "openapi")
+	if err := os.Mkdir(canonical, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	alias := filepath.Join(repository, "openapi-alias")
+	if err := os.Symlink(canonical, alias); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := parseSyncCLIOptions([]string{"--only", "DS001-2019001", "--output", alias}, repository, time.Now(), &bytes.Buffer{}); err == nil {
+		t.Fatal("canonical symlink accepted for partial sync")
+	}
+}
+
 func TestFindRepositoryRoot(t *testing.T) {
 	root := t.TempDir()
 	child := filepath.Join(root, "a", "b")
