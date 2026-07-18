@@ -30,12 +30,14 @@ Specification refresh is a deliberate local network operation. Pull-request
 verification does not refresh from OpenDART, and release automation publishes
 only the committed bundle after the offline gate passes.
 
-The Go migration is active, and guide synchronization has cut over to
-`cmd/opendart-tool`, the single internal CLI. `internal/openapi` isolates the
-selected OpenAPI libraries behind repository-owned types. Its compatibility
-gate runs alongside the remaining Node/Redocly verification and proves the
-accepted contract can be loaded, validated, rendered, bundled, and compared
-without OpenDART access.
+Guide synchronization and offline repository verification are owned by
+`cmd/opendart-tool`, the single internal Go CLI. `internal/openapi` isolates the
+selected OpenAPI libraries behind repository-owned types and owns confined
+references, strict linting, deterministic bundling, freshness, and semantic
+comparison. Node.js remains only for the focused credentialed probe and its
+offline tests; the old Node and Redocly verification implementations are
+dormant pending final removal. They do not run in the current verification
+gate; their former checks were run once as non-authoritative cutover evidence.
 
 ## Runtime flows
 
@@ -43,9 +45,8 @@ without OpenDART access.
 
 `npm run sync:opendart` invokes the Go CLI. `internal/guide` fetches only the
 trusted OpenDART guide surface, normalizes the discovered catalog, and renders
-managed files into a staging directory. Until ordered work 3 completes, it runs
-the repository's Node catalog check and strict Redocly lint against that staging
-tree before publishing it.
+managed files into a staging directory. Go-owned catalog, confined-reference,
+and strict lint checks validate that tree in process before publication.
 
 Publication replaces the managed entries through a sequence of filesystem
 renames and attempts rollback when publication fails. It is not an atomic
@@ -58,10 +59,10 @@ explicitly from the committed multi-file description.
 
 ### Verify and release
 
-`npm run verify:opendart` runs the offline tests, catalog invariants, strict lint
-for the multi-file description, a byte-for-byte bundle freshness check, and
-strict lint for the bundle. The freshness check builds into a temporary
-directory and does not rewrite the committed artifact.
+`npm run verify:opendart` runs the offline tests and the Go repository verifier.
+The verifier checks catalog invariants, strict lint for the multi-file source
+and bundle, release/workflow policy, and byte-for-byte Go bundle freshness. It
+does not rewrite the committed artifact or contact OpenDART.
 
 `.github/workflows/verify.yml` runs that gate for pull requests, reusable
 workflow calls, and manual dispatches with read-only repository permission.
@@ -85,17 +86,18 @@ scheduled GitHub workflow.
   `openapi/paths/`, `openapi/schemas/`, and `openapi/components/` contain its
   generated fragments; `openapi/.opendart-spec-output` marks the managed tree.
 - `openapi/generated/openapi.bundle.yaml` is the portable release interface.
-- Start with `package.json` for the current command surface. Node implementations
-  that have not yet migrated and their offline tests remain in `scripts/`.
-- Start with `cmd/opendart-tool/main.go` for the Go command surface.
+- Start with `package.json` for stable command aliases and
+  `cmd/opendart-tool/main.go` for their Go command surface.
   `internal/openapi` owns third-party OpenAPI types, confined reference loading,
-  semantic comparison, representative lint and response validation.
+  semantic comparison, strict lint, deterministic bundle artifacts, and
+  response validation.
   `internal/guide` owns trusted acquisition, normalization, deterministic
   generation, staged validation, guarded publication, and rollback.
-- `scripts/sync-opendart.mjs` remains only as temporary parity scaffolding until
-  final Node removal. `scripts/check-opendart.mjs` owns catalog and
-  source-fidelity invariants. `scripts/check-opendart-bundle.mjs` owns bundle
-  freshness.
+  `internal/verification` coordinates the offline repository gate, while
+  `internal/releaseguard` owns release and workflow policy.
+- `scripts/probe-multi-company.mjs` and its tests retain the remaining Node.js
+  responsibility. Other Node/Redocly implementations are dormant until final
+  removal and are not part of the current verification gate.
 - `.github/workflows/verify.yml` is the credential-free repository gate.
   `.github/workflows/release-please.yml`, `release-please-config.json`, and
   `.release-please-manifest.json` own release automation.
@@ -127,9 +129,9 @@ scheduled GitHub workflow.
 
 ## Migration direction
 
-[ADR 0001](docs/decisions/0001-go-repository-tooling.md) governs the active
-migration of repository-owned tooling from Node.js to one internal Go CLI. The
-remaining [migration](docs/plans/go-tooling-migration.md),
+[ADR 0001](docs/decisions/0001-go-repository-tooling.md) governs the migration
+of repository-owned tooling from Node.js to one internal Go CLI. The remaining
+[migration](docs/plans/go-tooling-migration.md),
 [guide-drift](docs/plans/guide-drift.md), and
 [live-conformance](docs/plans/live-conformance.md) plans define work not yet
 part of the current runtime.

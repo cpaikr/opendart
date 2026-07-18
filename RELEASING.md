@@ -3,8 +3,8 @@
 The released product is `openapi/generated/openapi.bundle.yaml`. Humans classify
 changes to that public contract; Release Please turns the chosen Conventional
 Commit inputs into a version, changelog, tag, and draft GitHub Release. The
-release workflow runs repository verification, uploads the bundle and checksum,
-and publishes the immutable release.
+release workflow runs the credential-free Go repository verifier, uploads the
+bundle and checksum, and publishes the immutable release.
 
 The release sources of truth are:
 

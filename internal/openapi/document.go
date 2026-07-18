@@ -41,6 +41,7 @@ const (
 // validator types stay private so later tooling is not coupled to a library API.
 type Document struct {
 	root      string
+	files     []string
 	document  libopenapi.Document
 	model     *libopenapi.DocumentModel[v3.Document]
 	validator validator.Validator
@@ -91,6 +92,7 @@ func Load(root string) (*Document, error) {
 	}
 	return &Document{
 		root:      absoluteRoot,
+		files:     files,
 		document:  document,
 		model:     model,
 		validator: responseValidator,
@@ -121,31 +123,6 @@ func (d *Document) ValidateDocument() error {
 	return validationError("OpenAPI document "+d.root, validationErrors)
 }
 
-func (d *Document) LintCompatibility() error {
-	if err := d.ValidateDocument(); err != nil {
-		return err
-	}
-	if d.model.Model.Paths == nil || d.model.Model.Paths.PathItems == nil {
-		return nil
-	}
-	for pathName, pathItem := range d.model.Model.Paths.PathItems.FromOldest() {
-		for method, operation := range pathItem.GetOperations().FromOldest() {
-			if operation == nil || operation.Responses == nil {
-				continue
-			}
-			for code, response := range operation.Responses.Codes.FromOldest() {
-				if response != nil && response.Description == "" {
-					return fmt.Errorf("lint OpenAPI document %s: %s %s response %s has no description", d.root, method, pathName, code)
-				}
-			}
-			if response := operation.Responses.Default; response != nil && response.Description == "" {
-				return fmt.Errorf("lint OpenAPI document %s: %s %s default response has no description", d.root, method, pathName)
-			}
-		}
-	}
-	return nil
-}
-
 func (d *Document) Render() ([]byte, error) {
 	rendered, err := d.model.Model.Render()
 	if err != nil {
@@ -168,9 +145,16 @@ func (d *Document) bundle(inlineLocalReferences bool) ([]byte, error) {
 		return nil, err
 	}
 	defer document.Release()
-	bundled, err := bundler.BundleDocumentWithConfig(&model.Model, &bundler.BundleInlineConfig{
-		InlineLocalRefs: &inlineLocalReferences,
-	})
+	var bundled []byte
+	if inlineLocalReferences {
+		bundled, err = bundler.BundleDocumentWithConfig(&model.Model, &bundler.BundleInlineConfig{
+			InlineLocalRefs: &inlineLocalReferences,
+		})
+	} else {
+		bundled, err = bundler.BundleDocumentComposed(&model.Model, &bundler.BundleCompositionConfig{
+			StrictValidation: true,
+		})
+	}
 	if err != nil {
 		return nil, fmt.Errorf("bundle %s: %w", d.root, err)
 	}
@@ -334,7 +318,7 @@ func RunCompatibilityGate(root, baseline string) (CompatibilityReport, error) {
 	if err := os.WriteFile(bundlePath, bundleA, 0o600); err != nil {
 		return CompatibilityReport{}, fmt.Errorf("write temporary bundle: %w", err)
 	}
-	bundleComparison, err := Compare(root, bundlePath)
+	bundleComparison, err := compareBundleBaseline(root, bundlePath)
 	if err != nil {
 		return CompatibilityReport{}, err
 	}
@@ -548,6 +532,12 @@ func filterComponents(value any, inventory map[string]map[string]bool) {
 				delete(entries, name)
 			}
 		}
+		if len(entries) == 0 && len(allowed) == 0 {
+			delete(componentObject, category)
+		}
+	}
+	if len(componentObject) == 0 {
+		delete(document, "components")
 	}
 }
 

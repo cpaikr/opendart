@@ -8,10 +8,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/verification"
 )
 
 func Run(args []string, stdout, stderr io.Writer) int {
@@ -29,6 +31,14 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 	switch args[0] {
 	case "sync":
 		return runSync(ctx, args[1:], stdout, stderr)
+	case "catalog":
+		return runCatalog(args[1:], stdout, stderr)
+	case "lint":
+		return runLint(args[1:], stdout, stderr)
+	case "bundle":
+		return runBundle(args[1:], stdout, stderr)
+	case "verify":
+		return runVerify(args[1:], stdout, stderr)
 	case "compatibility":
 		return runCompatibility(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
@@ -45,6 +55,163 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		}
 		return 2
 	}
+}
+
+type catalogRunner func(guidesync.CatalogOptions) (guidesync.CatalogReport, error)
+
+func runCatalog(args []string, stdout, stderr io.Writer) int {
+	return runCatalogWith(args, stdout, stderr, guidesync.ValidateCatalog)
+}
+
+func runCatalogWith(args []string, stdout, stderr io.Writer, runner catalogRunner) int {
+	flags := flag.NewFlagSet("catalog", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
+	structuralOnly := flags.Bool("structural-only", false, "allow an intentionally partial endpoint inventory")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("catalog", flags, stderr); code != 0 {
+		return code
+	}
+	report, err := runner(guidesync.CatalogOptions{Root: *root, StructuralOnly: *structuralOnly})
+	if err != nil {
+		var catalogError *guidesync.CatalogError
+		if errors.As(err, &catalogError) {
+			if encodeErr := writeJSON(stderr, catalogError.Diagnostic); encodeErr != nil {
+				return 1
+			}
+			return 1
+		}
+		return writeCommandError(stderr, "catalog", err, 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write catalog report", err, 1)
+	}
+	return 0
+}
+
+type lintRunner func(string) ([]openapispec.LintDiagnostic, error)
+
+func runLint(args []string, stdout, stderr io.Writer) int {
+	return runLintWith(args, stdout, stderr, openapispec.Lint)
+}
+
+func runLintWith(args []string, stdout, stderr io.Writer, runner lintRunner) int {
+	flags := flag.NewFlagSet("lint", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("lint", flags, stderr); code != 0 {
+		return code
+	}
+	diagnostics, err := runner(*root)
+	if err != nil {
+		return writeCommandError(stderr, "lint", err, 1)
+	}
+	if len(diagnostics) != 0 {
+		if err := writeJSON(stderr, diagnostics); err != nil {
+			return 1
+		}
+		return 1
+	}
+	if err := writeJSON(stdout, struct {
+		Root  string `json:"root"`
+		Valid bool   `json:"valid"`
+	}{Root: *root, Valid: true}); err != nil {
+		return writeCommandError(stderr, "write lint report", err, 1)
+	}
+	return 0
+}
+
+type bundleRunner func(string, string) error
+
+func runBundle(args []string, stdout, stderr io.Writer) int {
+	return runBundleWith(args, stdout, stderr, openapispec.WriteBundle)
+}
+
+type verificationRunner func(string) (verification.Report, error)
+
+func runVerify(args []string, stdout, stderr io.Writer) int {
+	return runVerifyWith(args, stdout, stderr, verification.Verify)
+}
+
+func runVerifyWith(args []string, stdout, stderr io.Writer, runner verificationRunner) int {
+	flags := flag.NewFlagSet("verify", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	repositoryRoot := flags.String("repository-root", ".", "repository root")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("verify", flags, stderr); code != 0 {
+		return code
+	}
+	report, err := runner(*repositoryRoot)
+	if err != nil {
+		var verificationError *verification.Error
+		if errors.As(err, &verificationError) {
+			diagnostic := struct {
+				Phase     string `json:"phase"`
+				Artifact  string `json:"artifact"`
+				Rule      string `json:"rule"`
+				Operation string `json:"operation,omitempty"`
+				Location  string `json:"location,omitempty"`
+			}{
+				Phase:     verificationError.Phase,
+				Artifact:  verificationError.Artifact,
+				Rule:      verificationError.Rule,
+				Operation: verificationError.Operation,
+				Location:  verificationError.Location,
+			}
+			if encodeErr := writeJSON(stderr, diagnostic); encodeErr != nil {
+				return 1
+			}
+			return 1
+		}
+		return writeCommandError(stderr, "verify", err, 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write verification report", err, 1)
+	}
+	return 0
+}
+
+func runBundleWith(args []string, _ io.Writer, stderr io.Writer, runner bundleRunner) int {
+	flags := flag.NewFlagSet("bundle", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
+	output := flags.String("output", "", "portable bundle output file")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("bundle", flags, stderr); code != 0 {
+		return code
+	}
+	if strings.TrimSpace(*output) == "" {
+		return writeCommandError(stderr, "bundle", errors.New("--output is required"), 2)
+	}
+	if err := runner(*root, *output); err != nil {
+		return writeCommandError(stderr, "bundle", err, 1)
+	}
+	return 0
+}
+
+func rejectPositionalArguments(command string, flags *flag.FlagSet, stderr io.Writer) int {
+	if flags.NArg() == 0 {
+		return 0
+	}
+	if _, err := fmt.Fprintf(stderr, "%s does not accept positional arguments\n", command); err != nil {
+		return 1
+	}
+	return 2
+}
+
+func writeJSON(output io.Writer, value any) error {
+	encoder := json.NewEncoder(output)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(value)
 }
 
 func runSync(ctx context.Context, args []string, stdout, stderr io.Writer) int {
@@ -146,6 +313,10 @@ func usage(output io.Writer) error {
 		"usage: opendart-tool <command> [options]",
 		"commands:",
 		"  sync           synchronize the official guide into OpenAPI source",
+		"  catalog        validate generated catalog and reference invariants",
+		"  lint           apply strict OpenAPI policy",
+		"  bundle         write the portable OpenAPI bundle",
+		"  verify         run credential-free repository verification",
 		"  compatibility  run the temporary OpenAPI migration gate",
 	} {
 		if _, err := fmt.Fprintln(output, line); err != nil {

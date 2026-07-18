@@ -68,7 +68,7 @@ func TestCompatibilityFixturePreservesOpenAPIFeatures(t *testing.T) {
 	if err := yaml.Unmarshal(bundleA, &bundleValue); err != nil {
 		t.Fatal(err)
 	}
-	companySchema := nestedMap(t, bundleValue, "paths", "/company.xml", "get", "responses", "200", "content", "application/xml", "schema")
+	companySchema := nestedResolvedMap(t, bundleValue, bundleValue, "paths", "/company.xml", "get", "responses", "200", "content", "application/xml", "schema")
 	xmlMetadata := nestedMap(t, companySchema, "xml")
 	if xmlMetadata["nodeType"] != "element" || xmlMetadata["name"] != "result" {
 		t.Fatalf("XML metadata = %#v", xmlMetadata)
@@ -133,6 +133,39 @@ func TestSemanticComparisonIgnoresFormattingAndDetectsContractChanges(t *testing
 		}
 		assertChangeLocation(t, comparison, "/x-opendart/schemaStatus")
 	})
+}
+
+func TestCompatibilityGateIgnoresGeneratedComponentsWhenSourceHasNone(t *testing.T) {
+	directory := t.TempDir()
+	root := filepath.Join(directory, "openapi.yaml")
+	pathItem := filepath.Join(directory, "company.yaml")
+	if err := os.WriteFile(pathItem, []byte(`get:
+  operationId: get_company
+  summary: Get a company
+  responses:
+    default:
+      description: Company response
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(root, []byte(`openapi: 3.2.0
+info:
+  title: No root components
+  version: 1.0.0
+paths:
+  /company:
+    $ref: ./company.yaml
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := RunCompatibilityGate(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.BundleSemanticChanges != 0 {
+		t.Fatalf("bundle semantic changes = %d", report.BundleSemanticChanges)
+	}
 }
 
 func TestBundleBaselineComparisonKeepsReferencedAndDeclaredSchemas(t *testing.T) {
@@ -462,4 +495,43 @@ func nestedMap(t *testing.T, root map[string]any, keys ...string) map[string]any
 		current = next
 	}
 	return current
+}
+
+func nestedResolvedMap(t *testing.T, document, root map[string]any, keys ...string) map[string]any {
+	t.Helper()
+	current := root
+	for _, key := range keys {
+		current = resolveInternalMap(t, document, current)
+		next, ok := current[key].(map[string]any)
+		if !ok {
+			t.Fatalf("%q in %v is %T, want map", key, keys, current[key])
+		}
+		current = next
+	}
+	return resolveInternalMap(t, document, current)
+}
+
+func resolveInternalMap(t *testing.T, document, value map[string]any) map[string]any {
+	t.Helper()
+	for range 32 {
+		reference, ok := value["$ref"].(string)
+		if !ok {
+			return value
+		}
+		if !strings.HasPrefix(reference, "#/") {
+			t.Fatalf("reference %q is not internal", reference)
+		}
+		current := document
+		for _, segment := range strings.Split(strings.TrimPrefix(reference, "#/"), "/") {
+			segment = strings.ReplaceAll(strings.ReplaceAll(segment, "~1", "/"), "~0", "~")
+			next, ok := current[segment].(map[string]any)
+			if !ok {
+				t.Fatalf("reference %q segment %q is %T, want map", reference, segment, current[segment])
+			}
+			current = next
+		}
+		value = current
+	}
+	t.Fatal("internal reference chain exceeds limit")
+	return nil
 }

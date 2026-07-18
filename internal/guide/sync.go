@@ -28,10 +28,9 @@ type syncDependencies struct {
 	fetcher  Fetcher
 	acquire  func(context.Context, Fetcher, []string) ([]Endpoint, error)
 	generate func([]Endpoint, GenerateOptions) (GenerationResult, error)
-	validate func(context.Context, string, string, bool, commandRunner) error
+	validate func(string, bool) error
 	compare  func(string, string) error
 	publish  func(string, string, string) error
-	runner   commandRunner
 }
 
 func Sync(ctx context.Context, options SyncOptions) (SyncReport, error) {
@@ -42,7 +41,6 @@ func Sync(ctx context.Context, options SyncOptions) (SyncReport, error) {
 		validate: validateStaging,
 		compare:  compareStaged,
 		publish:  publishGenerated,
-		runner:   execCommandRunner{directory: options.RepositoryRoot},
 	})
 }
 
@@ -50,7 +48,7 @@ func syncWithDependencies(ctx context.Context, options SyncOptions, dependencies
 	if options.RepositoryRoot == "" || options.Output == "" || options.CheckedAt == "" {
 		return SyncReport{}, errors.New("guide sync requires repository root, output, and checked-at")
 	}
-	if dependencies.fetcher == nil || dependencies.acquire == nil || dependencies.generate == nil || dependencies.validate == nil || dependencies.publish == nil || dependencies.runner == nil {
+	if dependencies.fetcher == nil || dependencies.acquire == nil || dependencies.generate == nil || dependencies.validate == nil || dependencies.publish == nil {
 		return SyncReport{}, errors.New("guide sync dependencies are incomplete")
 	}
 	if err := ValidateSyncTarget(options.RepositoryRoot, options.Output, len(options.Only) > 0); err != nil {
@@ -73,9 +71,15 @@ func syncWithDependencies(ctx context.Context, options SyncOptions, dependencies
 	if err != nil {
 		return SyncReport{}, fmt.Errorf("generate staged OpenAPI: %w", err)
 	}
+	if err := ctx.Err(); err != nil {
+		return SyncReport{}, fmt.Errorf("validate staged OpenAPI: %w", err)
+	}
 	complete := len(options.Only) == 0
-	if err := dependencies.validate(ctx, staging, options.RepositoryRoot, complete, dependencies.runner); err != nil {
+	if err := dependencies.validate(staging, complete); err != nil {
 		return SyncReport{}, err
+	}
+	if err := ctx.Err(); err != nil {
+		return SyncReport{}, fmt.Errorf("validate staged OpenAPI: %w", err)
 	}
 	if options.ParityBaseline != "" {
 		if dependencies.compare == nil {
