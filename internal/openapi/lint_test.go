@@ -312,12 +312,46 @@ func TestStrictLintComposedRequiredDiscriminator(t *testing.T) {
 }
 
 func TestStrictLintRejectsInvalidExplicitDiscriminatorMapping(t *testing.T) {
-	source := strings.Replace(strictLintFixture, "      properties:\n        id:", "      discriminator:\n        propertyName: id\n        mapping:\n          'missing/type': '#/components/schemas/Missing'\n      properties:\n        id:", 1)
-	diagnostics := lintFixtureSource(t, source)
-	assertLintRuleAt(t, diagnostics, "no-invalid-schema-discriminator", "/discriminator/mapping/missing~1type")
+	for _, target := range []string{"#/components/schemas/Missing", "#/info/title"} {
+		t.Run(target, func(t *testing.T) {
+			source := strings.Replace(strictLintFixture, "      properties:\n        id:", "      discriminator:\n        propertyName: id\n        mapping:\n          'missing/type': '"+target+"'\n      properties:\n        id:", 1)
+			diagnostics := lintFixtureSource(t, source)
+			assertLintRuleAt(t, diagnostics, "no-invalid-schema-discriminator", "/discriminator/mapping/missing~1type")
+		})
+	}
 
-	valid := strings.Replace(source, "#/components/schemas/Missing", "#/components/schemas/Thing", 1)
+	valid := strings.Replace(strictLintFixture, "      properties:\n        id:", "      discriminator:\n        propertyName: id\n        mapping:\n          thing: '#/components/schemas/Thing'\n      properties:\n        id:", 1)
 	assertNoLintRule(t, lintFixtureSource(t, valid), "no-invalid-schema-discriminator")
+}
+
+func TestStrictLintAllowsExternalExplicitDiscriminatorSchemaMappings(t *testing.T) {
+	tests := []struct {
+		name     string
+		target   string
+		filename string
+		content  string
+	}{
+		{name: "root schema", target: "./mapped-schema.yaml", filename: "mapped-schema.yaml", content: "type: object\n"},
+		{name: "schema pointer", target: "./mapped-schemas.yaml#/Named", filename: "mapped-schemas.yaml", content: "Named:\n  type: object\n"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			directory := t.TempDir()
+			root := filepath.Join(directory, "openapi.yaml")
+			source := strings.Replace(strictLintFixture, "      properties:\n        id:", "      discriminator:\n        propertyName: id\n        mapping:\n          thing: '"+test.target+"'\n      properties:\n        id:", 1)
+			if err := os.WriteFile(root, []byte(source), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(directory, test.filename), []byte(test.content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			diagnostics, err := Lint(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertNoLintRule(t, diagnostics, "no-invalid-schema-discriminator")
+		})
+	}
 }
 
 func TestStrictLintCyclicCompositionDoesNotProveDiscriminatorRequired(t *testing.T) {

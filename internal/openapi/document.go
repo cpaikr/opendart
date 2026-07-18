@@ -379,10 +379,29 @@ func escapeJSONPointer(value string) string {
 }
 
 func normalizeOpenAPIValue(value any) any {
-	return normalizeOpenAPIValueAt(value, "#", false)
+	return normalizeOpenAPIValueAt(value, openAPIValueDocument)
 }
 
-func normalizeOpenAPIValueAt(value any, location string, inExtension bool) any {
+type openAPIValueRole uint8
+
+const (
+	openAPIValueGeneric openAPIValueRole = iota
+	openAPIValueDocument
+	openAPIValueComponents
+	openAPIValuePathItemMap
+	openAPIValuePathItem
+	openAPIValueOperationMap
+	openAPIValueOperation
+	openAPIValueCallbackMap
+	openAPIValueCallback
+	openAPIValueSchema
+	openAPIValueSchemaMap
+	openAPIValueSchemaArray
+	openAPIValueSetArray
+	openAPIValueLiteral
+)
+
+func normalizeOpenAPIValueAt(value any, role openAPIValueRole) any {
 	switch typed := value.(type) {
 	case time.Time:
 		if typed.Hour() == 0 && typed.Minute() == 0 && typed.Second() == 0 && typed.Nanosecond() == 0 {
@@ -391,15 +410,21 @@ func normalizeOpenAPIValueAt(value any, location string, inExtension bool) any {
 		return typed.Format(time.RFC3339Nano)
 	case map[string]any:
 		for key, child := range typed {
-			childLocation := location + "/" + escapeJSONPointer(key)
-			typed[key] = normalizeOpenAPIValueAt(child, childLocation, inExtension || strings.HasPrefix(strings.ToLower(key), "x-"))
+			typed[key] = normalizeOpenAPIValueAt(child, openAPIChildRole(role, key))
 		}
 		return typed
 	case []any:
-		for index, child := range typed {
-			typed[index] = normalizeOpenAPIValueAt(child, fmt.Sprintf("%s/%d", location, index), inExtension)
+		elementRole := openAPIValueGeneric
+		switch role {
+		case openAPIValueSchemaArray:
+			elementRole = openAPIValueSchema
+		case openAPIValueLiteral:
+			elementRole = openAPIValueLiteral
 		}
-		if !inExtension && isSetValuedOpenAPIArray(location) {
+		for index, child := range typed {
+			typed[index] = normalizeOpenAPIValueAt(child, elementRole)
+		}
+		if role == openAPIValueSetArray {
 			sort.SliceStable(typed, func(i, j int) bool {
 				return canonicalOpenAPIValueKey(typed[i]) < canonicalOpenAPIValueKey(typed[j])
 			})
@@ -410,21 +435,76 @@ func normalizeOpenAPIValueAt(value any, location string, inExtension bool) any {
 	}
 }
 
-func isSetValuedOpenAPIArray(location string) bool {
-	segments := strings.Split(location, "/")
-	last := segments[len(segments)-1]
-	if last == "required" || last == "enum" {
-		return true
+func openAPIChildRole(parent openAPIValueRole, key string) openAPIValueRole {
+	if parent == openAPIValueLiteral {
+		return openAPIValueLiteral
 	}
-	if last != "tags" || len(segments) < 2 {
-		return false
+	if parent != openAPIValueSchemaMap && strings.HasPrefix(strings.ToLower(key), "x-") {
+		return openAPIValueLiteral
 	}
-	parent := segments[len(segments)-2]
-	switch strings.ToLower(parent) {
-	case "get", "put", "post", "delete", "options", "head", "patch", "trace", "query":
-		return true
+
+	switch parent {
+	case openAPIValueDocument:
+		switch key {
+		case "components":
+			return openAPIValueComponents
+		case "paths", "webhooks":
+			return openAPIValuePathItemMap
+		}
+	case openAPIValueComponents:
+		switch key {
+		case "schemas":
+			return openAPIValueSchemaMap
+		case "pathItems":
+			return openAPIValuePathItemMap
+		case "callbacks":
+			return openAPIValueCallbackMap
+		}
+	case openAPIValuePathItemMap:
+		return openAPIValuePathItem
+	case openAPIValuePathItem:
+		switch strings.ToLower(key) {
+		case "get", "put", "post", "delete", "options", "head", "patch", "trace", "query":
+			return openAPIValueOperation
+		case "additionaloperations":
+			return openAPIValueOperationMap
+		}
+	case openAPIValueOperationMap:
+		return openAPIValueOperation
+	case openAPIValueOperation:
+		switch key {
+		case "tags":
+			return openAPIValueSetArray
+		case "callbacks":
+			return openAPIValueCallbackMap
+		}
+	case openAPIValueCallbackMap:
+		return openAPIValueCallback
+	case openAPIValueCallback:
+		return openAPIValuePathItem
+	case openAPIValueSchemaMap:
+		return openAPIValueSchema
+	case openAPIValueSchema:
+		switch key {
+		case "required", "enum":
+			return openAPIValueSetArray
+		case "allOf", "anyOf", "oneOf", "prefixItems":
+			return openAPIValueSchemaArray
+		case "properties", "patternProperties", "dependentSchemas", "$defs":
+			return openAPIValueSchemaMap
+		case "not", "if", "then", "else", "items", "contains", "propertyNames", "unevaluatedItems", "unevaluatedProperties", "additionalProperties", "contentSchema":
+			return openAPIValueSchema
+		}
 	}
-	return len(segments) >= 3 && segments[len(segments)-3] == "additionalOperations"
+
+	switch key {
+	case "schema":
+		return openAPIValueSchema
+	case "default", "const", "example", "examples", "value", "dataValue":
+		return openAPIValueLiteral
+	default:
+		return openAPIValueGeneric
+	}
 }
 
 func canonicalOpenAPIValueKey(value any) string {

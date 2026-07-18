@@ -166,6 +166,36 @@ func TestSemanticComparisonPreservesExtensionArrayOrder(t *testing.T) {
 	}
 }
 
+func TestSemanticComparisonPreservesSchemaInstanceValueArrayOrder(t *testing.T) {
+	for _, keyword := range []string{"example", "default", "const"} {
+		t.Run(keyword, func(t *testing.T) {
+			marker := "      required: [id]\n"
+			left := strings.Replace(strictLintFixture, marker, "      "+keyword+":\n        enum: [one, two]\n"+marker, 1)
+			right := strings.Replace(strictLintFixture, marker, "      "+keyword+":\n        enum: [two, one]\n"+marker, 1)
+			if left == strictLintFixture || right == strictLintFixture {
+				t.Fatalf("fixture does not contain %q", marker)
+			}
+			comparison := compareDocumentSources(t, left, right)
+			if comparison.TotalChanges == 0 {
+				t.Fatalf("%s array reorder was ignored", keyword)
+			}
+		})
+	}
+}
+
+func TestSemanticComparisonNormalizesSchemaPropertyNamedLikeExtension(t *testing.T) {
+	marker := "      properties:\n        id:"
+	left := strings.Replace(strictLintFixture, marker, "      properties:\n        x-kind:\n          type: string\n          enum: [one, two]\n        id:", 1)
+	right := strings.Replace(strictLintFixture, marker, "      properties:\n        x-kind:\n          type: string\n          enum: [two, one]\n        id:", 1)
+	if left == strictLintFixture || right == strictLintFixture {
+		t.Fatalf("fixture does not contain %q", marker)
+	}
+	comparison := compareDocumentSources(t, left, right)
+	if comparison.TotalChanges != 0 {
+		t.Fatalf("schema property enum reorder comparison = %+v", comparison)
+	}
+}
+
 func compareDocumentSources(t *testing.T, left, right string) Comparison {
 	t.Helper()
 	directory := t.TempDir()

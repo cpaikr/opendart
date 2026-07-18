@@ -986,14 +986,20 @@ func (l *documentLinter) validDiscriminatorMapping(mapping string) bool {
 	if err != nil {
 		return false
 	}
-	if len(parts) == 1 || parts[1] == "" {
-		return true
-	}
 	var document yaml.Node
 	if yaml.Unmarshal(source, &document) != nil {
 		return false
 	}
-	return resolveYAMLPointer(yamlDocumentValue(&document), parts[1]) != nil
+	targetNode := yamlDocumentValue(&document)
+	if len(parts) == 2 && parts[1] != "" {
+		targetNode = resolveYAMLPointer(targetNode, parts[1])
+	}
+	return isSchemaObjectNode(targetNode)
+}
+
+func isSchemaObjectNode(node *yaml.Node) bool {
+	node = utils.NodeAlias(node)
+	return node != nil && node.Kind == yaml.MappingNode
 }
 
 func resolveYAMLPointer(node *yaml.Node, pointer string) *yaml.Node {
