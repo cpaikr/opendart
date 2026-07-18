@@ -97,22 +97,29 @@ type workflowConcurrency struct {
 }
 
 type workflowJob struct {
-	Needs       string            `yaml:"needs"`
-	Permissions map[string]string `yaml:"permissions"`
-	Uses        string            `yaml:"uses"`
-	Steps       []workflowStep    `yaml:"steps"`
+	Needs           string            `yaml:"needs"`
+	If              string            `yaml:"if"`
+	ContinueOnError bool              `yaml:"continue-on-error"`
+	Permissions     map[string]string `yaml:"permissions"`
+	Uses            string            `yaml:"uses"`
+	Steps           []workflowStep    `yaml:"steps"`
 }
 
 type workflowStep struct {
-	Name string         `yaml:"name"`
-	ID   string         `yaml:"id"`
-	If   string         `yaml:"if"`
-	Uses string         `yaml:"uses"`
-	Run  string         `yaml:"run"`
-	With map[string]any `yaml:"with"`
+	Name            string         `yaml:"name"`
+	ID              string         `yaml:"id"`
+	If              string         `yaml:"if"`
+	ContinueOnError bool           `yaml:"continue-on-error"`
+	Uses            string         `yaml:"uses"`
+	Run             string         `yaml:"run"`
+	With            map[string]any `yaml:"with"`
 }
 
 func checkReleaseConfiguration(configSource, manifestSource []byte) error {
+	var configFields map[string]json.RawMessage
+	if err := json.Unmarshal(configSource, &configFields); err != nil {
+		return &Error{Artifact: configArtifact, Invariant: "valid JSON", Cause: err}
+	}
 	var config struct {
 		Packages map[string]map[string]any `json:"packages"`
 	}
@@ -133,9 +140,38 @@ func checkReleaseConfiguration(configSource, manifestSource []byte) error {
 	if err := require(configArtifact, "contains only the root package", reflect.DeepEqual(sortedKeys(config.Packages), []string{"."}), ""); err != nil {
 		return err
 	}
+	if err := require(
+		configArtifact,
+		"contains only supported top-level options",
+		reflect.DeepEqual(sortedKeys(configFields), []string{"$schema", "bootstrap-sha", "packages"}),
+		"exact option allowlist is required",
+	); err != nil {
+		return err
+	}
 	root := config.Packages["."]
 	if _, exists := root["releaseType"]; exists {
 		return &Error{Artifact: configArtifact, Invariant: "uses kebab-case release-type"}
+	}
+	expectedRootKeys := []string{
+		"bump-minor-pre-major",
+		"bump-patch-for-minor-pre-major",
+		"changelog-path",
+		"draft",
+		"exclude-paths",
+		"force-tag-creation",
+		"include-component-in-tag",
+		"include-v-in-release-name",
+		"include-v-in-tag",
+		"package-name",
+		"release-type",
+	}
+	if err := require(
+		configArtifact,
+		"root package contains only supported options",
+		reflect.DeepEqual(sortedKeys(root), expectedRootKeys),
+		"exact option allowlist is required",
+	); err != nil {
+		return err
 	}
 
 	expectedValues := []struct {
@@ -146,6 +182,8 @@ func checkReleaseConfiguration(configSource, manifestSource []byte) error {
 		{key: "package-name", value: "opendart-spec"},
 		{key: "include-component-in-tag", value: false},
 		{key: "include-v-in-tag", value: true},
+		{key: "include-v-in-release-name", value: true},
+		{key: "changelog-path", value: "CHANGELOG.md"},
 		{key: "bump-minor-pre-major", value: true},
 		{key: "bump-patch-for-minor-pre-major", value: true},
 		{key: "draft", value: true},
@@ -183,11 +221,13 @@ func checkWorkflows(releaseSource, verifySource []byte) error {
 
 func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	push, ok := release.On["push"].(map[string]any)
-	if err := require(releaseWorkflowArtifact, "runs only for pushes to main", ok && reflect.DeepEqual(push["branches"], []any{"main"}), ""); err != nil {
+	if err := require(
+		releaseWorkflowArtifact,
+		"runs only for pushes to main",
+		reflect.DeepEqual(sortedKeys(release.On), []string{"push"}) && ok && reflect.DeepEqual(push["branches"], []any{"main"}),
+		"",
+	); err != nil {
 		return err
-	}
-	if _, exists := release.On["workflow_dispatch"]; exists {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "manual dispatch is disabled"}
 	}
 	if err := require(releaseWorkflowArtifact, "serializes release runs", release.Concurrency.Group == "release-please" && !release.Concurrency.CancelInProgress, ""); err != nil {
 		return err
@@ -200,12 +240,23 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err := require(releaseWorkflowArtifact, "has the reusable verify job", exists && verifyCall.Uses == "./.github/workflows/verify.yml", ""); err != nil {
 		return err
 	}
+	if err := require(releaseWorkflowArtifact, "verify job uses default execution controls", defaultJobExecution(verifyCall), ""); err != nil {
+		return err
+	}
 	if err := require(releaseWorkflowArtifact, "verify job is read-only", reflect.DeepEqual(verifyCall.Permissions, map[string]string{"contents": "read"}), ""); err != nil {
 		return err
 	}
 	releaseJob, exists := release.Jobs["release-please"]
 	if err := require(releaseWorkflowArtifact, "has the release-please job", exists, ""); err != nil {
 		return err
+	}
+	if err := require(releaseWorkflowArtifact, "release job uses default execution controls", defaultJobExecution(releaseJob), ""); err != nil {
+		return err
+	}
+	for _, step := range releaseJob.Steps {
+		if step.ContinueOnError {
+			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release step failures stop the job", Detail: "step " + step.Name}
+		}
 	}
 	if err := require(releaseWorkflowArtifact, "release waits for verification", releaseJob.Needs == "verify", ""); err != nil {
 		return err
@@ -229,6 +280,9 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err != nil {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "has one interrupted-draft detector", Cause: err}
 	}
+	if !defaultStepExecution(draft) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "draft detector uses default execution controls"}
+	}
 	releaseIndex, releaseStep, err := stepByID(releaseJob.Steps, "release")
 	if err != nil {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "has one Release Please action", Cause: err}
@@ -241,7 +295,7 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "draft recovery records " + fragment}
 		}
 	}
-	if !strings.Contains(releaseStep.If, "steps.draft.outputs.recovering != 'true'") {
+	if !exactWorkflowExpression(releaseStep.If, "steps.draft.outputs.recovering != 'true'") {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "Release Please is skipped during recovery"}
 	}
 	if releaseStep.With["token"] != "${{ secrets.GITHUB_TOKEN }}" {
@@ -252,7 +306,9 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err != nil {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "checks out the released commit", Cause: err}
 	}
-	if releasedCheckoutIndex <= releaseIndex || releasedCheckout.With["ref"] != "${{ steps.release.outputs.sha || steps.draft.outputs.sha }}" {
+	if releasedCheckoutIndex <= releaseIndex ||
+		!isCheckoutAction(releasedCheckout.Uses) ||
+		releasedCheckout.With["ref"] != "${{ steps.release.outputs.sha || steps.draft.outputs.sha }}" {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "released checkout uses the created or recovered SHA"}
 	}
 
@@ -315,11 +371,15 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	if err := require(verifyWorkflowArtifact, "has the verify job", exists, ""); err != nil {
 		return err
 	}
+	if err := require(verifyWorkflowArtifact, "verify job uses default execution controls", defaultJobExecution(job), ""); err != nil {
+		return err
+	}
 	for _, forbidden := range []struct {
 		name    string
 		pattern *regexp.Regexp
 	}{
-		{name: "GitHub secrets", pattern: regexp.MustCompile(`(?i)secrets\.`)},
+		{name: "GitHub secrets", pattern: regexp.MustCompile(`(?i)\bsecrets\s*(?:\.|\[)`)},
+		{name: "GitHub token", pattern: regexp.MustCompile(`(?i)\bgithub\s*(?:\.\s*token\b|\[\s*['"]token['"]\s*\])`)},
 		{name: "OpenDART API key", pattern: regexp.MustCompile(`OPENDART_API_KEY`)},
 		{name: "guide synchronization", pattern: regexp.MustCompile(`sync:opendart|opendart-tool\s+sync|scripts/sync-opendart`)},
 		{name: "package publication", pattern: regexp.MustCompile(`npm publish`)},
@@ -332,7 +392,13 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	foundCommand := false
 	for _, step := range job.Steps {
 		if step.Run == "npm run verify:opendart" {
+			if !defaultStepExecution(step) {
+				return &Error{Artifact: verifyWorkflowArtifact, Invariant: "canonical verification uses default execution controls"}
+			}
 			foundCommand = true
+		}
+		if step.ContinueOnError {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification step failures stop the job", Detail: "step " + step.Name}
 		}
 	}
 	if !foundCommand {
@@ -364,7 +430,7 @@ func checkActionPins(artifact string, workflow workflow) error {
 func checkCheckoutCredentials(artifact string, workflow workflow) error {
 	for _, job := range workflow.Jobs {
 		for _, step := range job.Steps {
-			if !strings.HasPrefix(step.Uses, "actions/checkout@") {
+			if !isCheckoutAction(step.Uses) {
 				continue
 			}
 			persist, exists := step.With["persist-credentials"]
@@ -377,8 +443,30 @@ func checkCheckoutCredentials(artifact string, workflow workflow) error {
 }
 
 func releaseOrRecovery(condition string) bool {
-	return strings.Contains(condition, "steps.release.outputs.release_created == 'true'") &&
-		strings.Contains(condition, "steps.draft.outputs.recovering == 'true'")
+	return exactWorkflowExpression(
+		condition,
+		"steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true'",
+	)
+}
+
+func exactWorkflowExpression(condition, expected string) bool {
+	condition = strings.TrimSpace(condition)
+	if strings.HasPrefix(condition, "${{") && strings.HasSuffix(condition, "}}") {
+		condition = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(condition, "${{"), "}}"))
+	}
+	return strings.Join(strings.Fields(condition), " ") == expected
+}
+
+func defaultJobExecution(job workflowJob) bool {
+	return strings.TrimSpace(job.If) == "" && !job.ContinueOnError
+}
+
+func defaultStepExecution(step workflowStep) bool {
+	return strings.TrimSpace(step.If) == "" && !step.ContinueOnError
+}
+
+func isCheckoutAction(action string) bool {
+	return strings.HasPrefix(action, "actions/checkout@")
 }
 
 func exactAssetLoop(command string) bool {

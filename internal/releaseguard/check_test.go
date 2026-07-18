@@ -41,6 +41,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "contains only the root package",
 		},
 		{
+			name: "config top-level option allowlist", artifact: configArtifact,
+			old: `"bootstrap-sha":`, replacement: `"extra-files": ["VERSION"], "bootstrap-sha":`,
+			invariant: "contains only supported top-level options",
+		},
+		{
+			name: "config root package option allowlist", artifact: configArtifact,
+			old: `"release-type": "simple"`, replacement: `"extra-files": ["VERSION"], "release-type": "simple"`,
+			invariant: "root package contains only supported options",
+		},
+		{
 			name: "release type spelling", artifact: configArtifact,
 			old: `"release-type": "simple"`, replacement: `"releaseType": "simple"`,
 			invariant: "uses kebab-case release-type",
@@ -98,7 +108,12 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "no manual release", artifact: releaseWorkflowArtifact,
 			old: "permissions: {}", replacement: "  workflow_dispatch:\n\npermissions: {}",
-			invariant: "manual dispatch is disabled",
+			invariant: "runs only for pushes to main",
+		},
+		{
+			name: "no scheduled release", artifact: releaseWorkflowArtifact,
+			old: "permissions: {}", replacement: "  schedule:\n    - cron: '0 0 * * *'\n\npermissions: {}",
+			invariant: "runs only for pushes to main",
 		},
 		{
 			name: "release concurrency", artifact: releaseWorkflowArtifact,
@@ -114,6 +129,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "reusable verify", artifact: releaseWorkflowArtifact,
 			old: "uses: ./.github/workflows/verify.yml", replacement: "uses: ./.github/workflows/other.yml",
 			invariant: "has the reusable verify job",
+		},
+		{
+			name: "release verify job condition bypass", artifact: releaseWorkflowArtifact,
+			old: "  verify:\n    permissions:", replacement: "  verify:\n    if: always()\n    permissions:",
+			invariant: "verify job uses default execution controls",
+		},
+		{
+			name: "release job continue-on-error bypass", artifact: releaseWorkflowArtifact,
+			old: "  release-please:\n    needs: verify", replacement: "  release-please:\n    continue-on-error: true\n    needs: verify",
+			invariant: "release job uses default execution controls",
 		},
 		{
 			name: "read-only release verify", artifact: releaseWorkflowArtifact,
@@ -156,6 +181,21 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "Release Please is skipped during recovery",
 		},
 		{
+			name: "release recovery condition extra clause", artifact: releaseWorkflowArtifact,
+			old: "steps.draft.outputs.recovering != 'true' }}", replacement: "steps.draft.outputs.recovering != 'true' || always() }}",
+			invariant: "Release Please is skipped during recovery",
+		},
+		{
+			name: "release action continue-on-error bypass", artifact: releaseWorkflowArtifact,
+			old: "      - name: Run Release Please\n        if:", replacement: "      - name: Run Release Please\n        continue-on-error: true\n        if:",
+			invariant: "release step failures stop the job",
+		},
+		{
+			name: "draft detector condition bypass", artifact: releaseWorkflowArtifact,
+			old: "      - name: Detect interrupted draft release\n        id:", replacement: "      - name: Detect interrupted draft release\n        if: false\n        id:",
+			invariant: "draft detector uses default execution controls",
+		},
+		{
 			name: "release token", artifact: releaseWorkflowArtifact,
 			old: "token: ${{ secrets.GITHUB_TOKEN }}", replacement: "token: ${{ secrets.OTHER_TOKEN }}",
 			invariant: "Release Please uses GITHUB_TOKEN",
@@ -166,9 +206,25 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "released checkout uses the created or recovered SHA",
 		},
 		{
+			name: "released commit uses checkout action", artifact: releaseWorkflowArtifact,
+			old:         "      - name: Check out released commit\n        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}\n        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+			replacement: "      - name: Check out released commit\n        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}\n        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+			invariant:   "released checkout uses the created or recovered SHA",
+		},
+		{
 			name: "release asset condition", artifact: releaseWorkflowArtifact,
 			old: "if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}", replacement: "if: ${{ steps.release.outputs.release_created == 'true' }}",
 			invariant: "runs only for a created or recovered release",
+		},
+		{
+			name: "release asset condition extra clause", artifact: releaseWorkflowArtifact,
+			old: "if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}", replacement: "if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' || always() }}",
+			invariant: "runs only for a created or recovered release",
+		},
+		{
+			name: "release asset continue-on-error bypass", artifact: releaseWorkflowArtifact,
+			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        continue-on-error: true\n        if:",
+			invariant: "release step failures stop the job",
 		},
 		{
 			name: "bundle checksum", artifact: releaseWorkflowArtifact,
@@ -206,6 +262,21 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "runs the canonical repository verification command",
 		},
 		{
+			name: "verify job condition bypass", artifact: verifyWorkflowArtifact,
+			old: "  verify:\n    runs-on:", replacement: "  verify:\n    if: always()\n    runs-on:",
+			invariant: "verify job uses default execution controls",
+		},
+		{
+			name: "canonical verify step condition bypass", artifact: verifyWorkflowArtifact,
+			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        if: always()\n        run:",
+			invariant: "canonical verification uses default execution controls",
+		},
+		{
+			name: "verify step continue-on-error bypass", artifact: verifyWorkflowArtifact,
+			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        continue-on-error: true\n        run:",
+			invariant: "canonical verification uses default execution controls",
+		},
+		{
 			name: "pinned verify action", artifact: verifyWorkflowArtifact,
 			old: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e", replacement: "actions/setup-go@v7",
 			invariant: "third-party step action is pinned",
@@ -219,6 +290,21 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "verify secrets", artifact: verifyWorkflowArtifact,
 			old: "run: npm run verify:opendart", replacement: "env:\n          TOKEN: ${{ secrets.GITHUB_TOKEN }}\n        run: npm run verify:opendart",
 			invariant: "excludes GitHub secrets",
+		},
+		{
+			name: "verify secrets bracket access", artifact: verifyWorkflowArtifact,
+			old: "run: npm run verify:opendart", replacement: "env:\n          TOKEN: ${{ secrets['GITHUB_TOKEN'] }}\n        run: npm run verify:opendart",
+			invariant: "excludes GitHub secrets",
+		},
+		{
+			name: "verify github token property access", artifact: verifyWorkflowArtifact,
+			old: "run: npm run verify:opendart", replacement: "env:\n          TOKEN: ${{ github.token }}\n        run: npm run verify:opendart",
+			invariant: "excludes GitHub token",
+		},
+		{
+			name: "verify github token index access", artifact: verifyWorkflowArtifact,
+			old: "run: npm run verify:opendart", replacement: "env:\n          TOKEN: ${{ github[\"token\"] }}\n        run: npm run verify:opendart",
+			invariant: "excludes GitHub token",
 		},
 		{
 			name: "verify API key", artifact: verifyWorkflowArtifact,
