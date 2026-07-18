@@ -15,7 +15,12 @@
         ".agents",
         ".codex",
         ".github",
+        "ARCHITECTURE.md",
+        "cmd",
         "docs",
+        "go.mod",
+        "go.sum",
+        "internal",
         "scripts"
       ],
       "draft": true,

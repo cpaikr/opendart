@@ -1,0 +1,16 @@
+get:
+  operationId: get_document_zip_fixture
+  responses:
+    "200":
+      description: Representative ZIP response
+      content:
+        application/zip:
+          schema:
+            type: string
+            format: binary
+        application/xml:
+          schema:
+            $ref: ../schemas/error.yaml
+  x-opendart:
+    logicalOperationId: DS001-2019003
+    representation: ZIP

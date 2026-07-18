@@ -1,0 +1,17 @@
+type: object
+required:
+  - status
+  - message
+properties:
+  status:
+    type: string
+    pattern: "^[0-9]{3}$"
+  message:
+    type: string
+    minLength: 1
+additionalProperties: false
+xml:
+  nodeType: element
+  name: result
+x-opendart:
+  schemaStatus: empirically-observed

@@ -1,0 +1,21 @@
+openapi: 3.2.0
+info:
+  title: OpenDART compatibility fixture
+  version: 1.0.0
+paths:
+  /company.json:
+    $ref: ./paths/company.json.yaml
+  /company.xml:
+    $ref: ./paths/company.xml.yaml
+  /companies/{corp_code}.xml:
+    $ref: ./paths/company-template.xml.yaml
+  /document.xml:
+    $ref: ./paths/document.xml.yaml
+components:
+  schemas:
+    OpenDartError:
+      $ref: ./schemas/error.yaml
+x-opendart:
+  source:
+    guideUrl: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001
+  compatibilityFixture: true

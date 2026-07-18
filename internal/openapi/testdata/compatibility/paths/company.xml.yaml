@@ -1,0 +1,12 @@
+get:
+  operationId: get_company_xml_fixture
+  responses:
+    "200":
+      description: Representative XML response
+      content:
+        application/xml:
+          schema:
+            $ref: ../schemas/company.yaml
+  x-opendart:
+    logicalOperationId: DS001-2019002
+    representation: XML
