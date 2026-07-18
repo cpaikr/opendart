@@ -226,6 +226,12 @@ func TestAcquireEndpointRejectsIdentityAndTableDrift(t *testing.T) {
 			if err == nil || err.Error() != test.message {
 				t.Fatalf("error = %v, want %q", err, test.message)
 			}
+			if test.name == "message code" {
+				var source *SourceError
+				if !errors.As(err, &source) || source.Context["logicalOperationId"] != summary.LogicalOperationID || source.Context["sourceUrl"] != summary.SourceURL {
+					t.Fatalf("source error = %#v", source)
+				}
+			}
 		})
 	}
 }

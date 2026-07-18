@@ -63,6 +63,19 @@ func TestParseSyncCLIOptionsRejectsCanonicalSymlinkForPartialSync(t *testing.T) 
 	}
 }
 
+func TestParseSyncCLIOptionsRejectsMissingCanonicalThroughSymlinkedParent(t *testing.T) {
+	repository := t.TempDir()
+	aliasParent := t.TempDir()
+	alias := filepath.Join(aliasParent, "repository")
+	if err := os.Symlink(repository, alias); err != nil {
+		t.Fatal(err)
+	}
+	output := filepath.Join(alias, "openapi")
+	if _, err := parseSyncCLIOptions([]string{"--only", "DS001-2019001", "--output", output}, repository, time.Now(), &bytes.Buffer{}); err == nil {
+		t.Fatal("missing canonical output through symlinked parent accepted for partial sync")
+	}
+}
+
 func TestFindRepositoryRoot(t *testing.T) {
 	root := t.TempDir()
 	child := filepath.Join(root, "a", "b")

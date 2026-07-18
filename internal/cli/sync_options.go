@@ -82,11 +82,8 @@ func samePhysicalPath(left, right string) (bool, error) {
 	if filepath.Clean(left) == filepath.Clean(right) {
 		return true, nil
 	}
-	physicalLeft, leftErr := filepath.EvalSymlinks(left)
-	physicalRight, rightErr := filepath.EvalSymlinks(right)
-	if errors.Is(leftErr, os.ErrNotExist) || errors.Is(rightErr, os.ErrNotExist) {
-		return false, nil
-	}
+	physicalLeft, leftErr := physicalPathAllowMissing(left)
+	physicalRight, rightErr := physicalPathAllowMissing(right)
 	if leftErr != nil {
 		return false, leftErr
 	}
@@ -94,6 +91,29 @@ func samePhysicalPath(left, right string) (bool, error) {
 		return false, rightErr
 	}
 	return filepath.Clean(physicalLeft) == filepath.Clean(physicalRight), nil
+}
+
+func physicalPathAllowMissing(value string) (string, error) {
+	current := filepath.Clean(value)
+	var missing []string
+	for {
+		physical, err := filepath.EvalSymlinks(current)
+		if err == nil {
+			for index := len(missing) - 1; index >= 0; index-- {
+				physical = filepath.Join(physical, missing[index])
+			}
+			return filepath.Clean(physical), nil
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return "", err
+		}
+		missing = append(missing, filepath.Base(current))
+		current = parent
+	}
 }
 
 func checkedAtInSeoul(now time.Time) (string, error) {

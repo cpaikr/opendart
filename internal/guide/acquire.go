@@ -424,7 +424,7 @@ func acquireEndpoint(ctx context.Context, fetcher Fetcher, summary EndpointSumma
 	endpoint.SectionNotes = extractSectionNotes(root)
 	endpoint.SourceTableHeaders = SourceTableHeaders{BasicInfo: basic.Headers, RequestArguments: requests.Headers, ResponseFields: response.Headers}
 	endpoint.GuideTestRequestArguments = extractGuideTestArguments(root)
-	endpoint.MessageCodes, err = extractMessageCodes(messages.Node)
+	endpoint.MessageCodes, err = extractMessageCodes(messages.Node, summary)
 	if err != nil {
 		return Endpoint{}, err
 	}
@@ -601,7 +601,7 @@ func extractReferenceTables(tables []guideTable, summary EndpointSummary) ([]Ref
 	return references, nil
 }
 
-func extractMessageCodes(table *html.Node) ([]MessageCode, error) {
+func extractMessageCodes(table *html.Node, summary EndpointSummary) ([]MessageCode, error) {
 	var messages []MessageCode
 	for _, row := range directBodyRows(table) {
 		cells := directChildTableCells(row)
@@ -611,7 +611,9 @@ func extractMessageCodes(table *html.Node) ([]MessageCode, error) {
 		label := guideNodeText(cells[0])
 		code := messageCodePattern.FindString(label)
 		if code == "" {
-			return nil, sourceError("Message-code row has no three-digit code", map[string]any{"label": label}, nil)
+			return nil, sourceError("Message-code row has no three-digit code", map[string]any{
+				"label": label, "logicalOperationId": summary.LogicalOperationID, "sourceUrl": summary.SourceURL,
+			}, nil)
 		}
 		messages = append(messages, MessageCode{Code: code, Description: guideNodeText(cells[1])})
 	}
