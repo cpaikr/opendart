@@ -24,6 +24,7 @@ import (
 	validator "github.com/pb33f/libopenapi-validator"
 	validatorconfig "github.com/pb33f/libopenapi-validator/config"
 	validatorerrors "github.com/pb33f/libopenapi-validator/errors"
+	validatorhelpers "github.com/pb33f/libopenapi-validator/helpers"
 	validatorpaths "github.com/pb33f/libopenapi-validator/paths"
 	"github.com/pb33f/libopenapi/bundler"
 	"github.com/pb33f/libopenapi/datamodel"
@@ -222,7 +223,7 @@ func (d *Document) responseOperation(request *http.Request) *v3.Operation {
 	if pathItem == nil || len(validationErrors) != 0 {
 		return nil
 	}
-	return pathItem.GetOperations().GetOrZero(strings.ToLower(request.Method))
+	return validatorhelpers.ExtractOperation(request, pathItem)
 }
 
 func (d *Document) responseMedia(operation *v3.Operation, status int, contentType string) *v3.MediaType {

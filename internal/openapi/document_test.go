@@ -213,6 +213,9 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 	if err := document.ValidateResponse("GET", "/company.xml", "application/xml; charset=UTF-8", 200, wrongRoot); err == nil || !strings.Contains(err.Error(), "does not match") || strings.Contains(err.Error(), "sentinel-root") {
 		t.Fatalf("wrong XML root error = %v", err)
 	}
+	if err := document.ValidateResponse("HEAD", "/company.xml", "application/xml", 200, wrongRoot); err == nil || !strings.Contains(err.Error(), "does not match") {
+		t.Fatalf("HEAD-to-GET XML root error = %v", err)
+	}
 	validTemplatedXML := []byte("<result><status>000</status><corp_name>company</corp_name></result>")
 	for _, method := range []string{"PUT", "PATCH"} {
 		if err := document.ValidateResponse(method, "/companies/00126380.xml", "application/xml; charset=UTF-8", 200, validTemplatedXML); err != nil {
@@ -223,6 +226,9 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 	validZIP := zipFixture(t, "document.xml", []byte("<document><rcept_no>1</rcept_no></document>"))
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, validZIP); err != nil {
 		t.Fatalf("valid ZIP: %v", err)
+	}
+	if err := document.ValidateResponse("HEAD", "/document.xml", "application/zip", 200, validZIP); err != nil {
+		t.Fatalf("HEAD-to-GET ZIP: %v", err)
 	}
 	xbrlZIP := zipFixture(t, "report.xbrl", []byte("<xbrl/>"))
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip; charset=binary", 200, xbrlZIP); err != nil {
