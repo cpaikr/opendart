@@ -413,6 +413,7 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		{name: "GitHub token", pattern: regexp.MustCompile(`(?i)\bgithub\s*(?:\.\s*token\b|\[\s*['"]token['"]\s*\])`)},
 		{name: "OpenDART API key", pattern: regexp.MustCompile(`OPENDART_API_KEY`)},
 		{name: "guide synchronization", pattern: regexp.MustCompile(`sync:opendart|opendart-tool\s+sync|scripts/sync-opendart`)},
+		{name: "JavaScript or Node package tooling", pattern: regexp.MustCompile(`(?i)(?:actions/setup-node@|\b(?:node|nodejs|npm|npx|corepack|yarn|pnpm|bun|deno)\b)`)},
 		{name: "package publication", pattern: regexp.MustCompile(`npm publish`)},
 		{name: "release asset replacement", pattern: regexp.MustCompile(`--clobber`)},
 	} {
@@ -420,13 +421,23 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "credential-free verification excludes " + forbidden.name}
 		}
 	}
-	foundCommand := false
+	requiredCommands := []struct {
+		command   string
+		invariant string
+	}{
+		{command: "go vet ./...", invariant: "runs Go vet"},
+		{command: "go test -race ./...", invariant: "runs race-enabled Go tests"},
+		{command: "go run ./cmd/opendart-tool verify --repository-root .", invariant: "runs the canonical repository verification command"},
+	}
+	foundCommands := make(map[string]bool, len(requiredCommands))
 	for _, step := range job.Steps {
-		if step.Run == "npm run verify:opendart" {
-			if !defaultStepExecution(step) {
-				return &Error{Artifact: verifyWorkflowArtifact, Invariant: "canonical verification uses default execution controls"}
+		for _, required := range requiredCommands {
+			if step.Run == required.command {
+				if !defaultStepExecution(step) {
+					return &Error{Artifact: verifyWorkflowArtifact, Invariant: required.invariant + " with default execution controls"}
+				}
+				foundCommands[step.Run] = true
 			}
-			foundCommand = true
 		}
 		if step.ContinueOnError {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification step failures stop the job", Detail: "step " + step.Name}
@@ -435,8 +446,10 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default run settings", Detail: "step " + step.Name}
 		}
 	}
-	if !foundCommand {
-		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "runs the canonical repository verification command"}
+	for _, required := range requiredCommands {
+		if !foundCommands[required.command] {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: required.invariant}
+		}
 	}
 	if err := checkActionPins(verifyWorkflowArtifact, verify); err != nil {
 		return err
