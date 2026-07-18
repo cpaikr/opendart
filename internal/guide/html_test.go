@@ -21,12 +21,12 @@ func TestExpandRowGroupPreservesValidColumnSpans(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			grid, err := expandRowGroup([]*html.Node{expandedTestRow(test.spans...)}, expandedTestCellText)
+			grid, cells, err := expandRowGroup([]*html.Node{expandedTestRow(test.spans...)}, expandedTestCellText, maximumExpandedTableCells)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(grid) != 1 || len(grid[0]) != test.want {
-				t.Fatalf("grid dimensions = %d x %d, want 1 x %d", len(grid), len(grid[0]), test.want)
+			if len(grid) != 1 || len(grid[0]) != test.want || cells != test.want {
+				t.Fatalf("grid dimensions/cells = %d x %d / %d, want 1 x %d / %d", len(grid), len(grid[0]), cells, test.want, test.want)
 			}
 		})
 	}
@@ -38,7 +38,7 @@ func TestExpandRowGroupRejectsExcessiveRowWidth(t *testing.T) {
 		{maximumColumnSpan, 1},
 		{maximumColumnSpan - 1, 2},
 	} {
-		if _, err := expandRowGroup([]*html.Node{expandedTestRow(spans...)}, expandedTestCellText); !errors.Is(err, errGuideTableExpansionLimit) {
+		if _, _, err := expandRowGroup([]*html.Node{expandedTestRow(spans...)}, expandedTestCellText, maximumExpandedTableCells); !errors.Is(err, errGuideTableExpansionLimit) {
 			t.Fatalf("expandRowGroup(%v) error = %v", spans, err)
 		}
 	}
@@ -50,15 +50,15 @@ func TestExpandRowGroupEnforcesAggregateTableBudget(t *testing.T) {
 	for index := range rows {
 		rows[index] = expandedTestRow(maximumColumnSpan)
 	}
-	grid, err := expandRowGroup(rows, expandedTestCellText)
+	grid, cells, err := expandRowGroup(rows, expandedTestCellText, maximumExpandedTableCells)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(grid) != len(rows) {
-		t.Fatalf("expanded rows = %d, want %d", len(grid), len(rows))
+	if len(grid) != len(rows) || cells != maximumExpandedTableCells {
+		t.Fatalf("expanded rows/cells = %d / %d, want %d / %d", len(grid), cells, len(rows), maximumExpandedTableCells)
 	}
 	rows = append(rows, expandedTestRow(1))
-	if _, err := expandRowGroup(rows, expandedTestCellText); !errors.Is(err, errGuideTableExpansionLimit) {
+	if _, _, err := expandRowGroup(rows, expandedTestCellText, maximumExpandedTableCells); !errors.Is(err, errGuideTableExpansionLimit) {
 		t.Fatalf("over-budget expansion error = %v", err)
 	}
 }

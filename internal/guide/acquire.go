@@ -497,6 +497,7 @@ type guideTable struct {
 func collectGuideTables(root *html.Node) ([]guideTable, error) {
 	var tables []guideTable
 	var expansionErr error
+	expandedCells := 0
 	walk(root, func(node *html.Node) {
 		if expansionErr != nil {
 			return
@@ -527,11 +528,12 @@ func collectGuideTables(root *html.Node) ([]guideTable, error) {
 				}
 			}
 		}
-		rows, err := expandRowGroup(bodyRows, guideNodeText)
+		rows, tableCells, err := expandRowGroup(bodyRows, guideNodeText, maximumExpandedGuidePageCells-expandedCells)
 		if err != nil {
 			expansionErr = err
 			return
 		}
+		expandedCells += tableCells
 		table := guideTable{Node: node, Headers: headers, Rows: rows}
 		if caption != nil {
 			table.Caption = guideNodeText(caption)

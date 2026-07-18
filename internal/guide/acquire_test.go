@@ -14,6 +14,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"golang.org/x/net/html"
 )
 
 type fetchFunc func(context.Context, *url.URL) ([]byte, error)
@@ -282,6 +284,27 @@ func TestAcquireEndpointRejectsExcessiveTableExpansion(t *testing.T) {
 	var source *SourceError
 	if !errors.As(err, &source) || source.Context["logicalOperationId"] != summary.LogicalOperationID || source.Context["sourceUrl"] != summary.SourceURL {
 		t.Fatalf("source error = %#v", source)
+	}
+}
+
+func TestCollectGuideTablesEnforcesPageExpansionBudget(t *testing.T) {
+	t.Parallel()
+	rows := strings.Repeat(`<tr><td colspan="1000">value</td></tr>`, 6)
+	table := `<table><tbody>` + rows + `</tbody></table>`
+	parse := func(source string) *html.Node {
+		root, err := html.Parse(strings.NewReader(`<div class="DGCont">` + source + `</div>`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return root
+	}
+
+	tables, err := collectGuideTables(parse(table))
+	if err != nil || len(tables) != 1 {
+		t.Fatalf("single-table collection = %d tables, error %v", len(tables), err)
+	}
+	if _, err := collectGuideTables(parse(table + table)); !errors.Is(err, errGuideTableExpansionLimit) {
+		t.Fatalf("multi-table expansion error = %v", err)
 	}
 }
 

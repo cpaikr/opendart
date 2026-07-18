@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	maximumColumnSpan         = 1000
-	maximumExpandedTableCells = 10_000
+	maximumColumnSpan             = 1000
+	maximumExpandedTableCells     = 10_000
+	maximumExpandedGuidePageCells = 10_000
 )
 
 var errGuideTableExpansionLimit = errors.New("guide table expansion exceeds the cell limit")
@@ -19,10 +20,11 @@ type pendingSpan struct {
 	remaining int
 }
 
-func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) ([][]string, error) {
+func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string, remainingCells int) ([][]string, int, error) {
 	if len(rows) > maximumExpandedTableCells {
-		return nil, errGuideTableExpansionLimit
+		return nil, 0, errGuideTableExpansionLimit
 	}
+	cellLimit := min(max(remainingCells, 0), maximumExpandedTableCells)
 	pending := make(map[int]pendingSpan)
 	grid := make([][]string, 0, len(rows))
 	expandedCells := 0
@@ -32,7 +34,7 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) ([][]st
 		setExpandedCell := func(column int, value string) error {
 			growth := column + 1 - len(row)
 			if growth > 0 {
-				if expandedCells > maximumExpandedTableCells-growth {
+				if expandedCells > cellLimit-growth {
 					return errGuideTableExpansionLimit
 				}
 				expandedCells += growth
@@ -64,24 +66,24 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) ([][]st
 			for {
 				consumed, err := consumeSpan()
 				if err != nil {
-					return nil, err
+					return nil, expandedCells, err
 				}
 				if !consumed {
 					break
 				}
 			}
 			if column >= maximumColumnSpan {
-				return nil, errGuideTableExpansionLimit
+				return nil, expandedCells, errGuideTableExpansionLimit
 			}
 			value := cellText(cell)
 			columnSpan := min(positiveAttribute(cell, "colspan"), maximumColumnSpan)
 			if columnSpan > maximumColumnSpan-column {
-				return nil, errGuideTableExpansionLimit
+				return nil, expandedCells, errGuideTableExpansionLimit
 			}
 			rowSpan := rowSpanAttribute(cell, len(rows)-rowIndex)
 			for offset := 0; offset < columnSpan; offset++ {
 				if err := setExpandedCell(column+offset, value); err != nil {
-					return nil, err
+					return nil, expandedCells, err
 				}
 				if rowSpan > 1 {
 					pending[column+offset] = pendingSpan{value: value, remaining: rowSpan - 1}
@@ -92,7 +94,7 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) ([][]st
 		for {
 			consumed, err := consumeSpan()
 			if err != nil {
-				return nil, err
+				return nil, expandedCells, err
 			}
 			if consumed {
 				continue
@@ -110,7 +112,7 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) ([][]st
 		}
 		grid = append(grid, row)
 	}
-	return grid, nil
+	return grid, expandedCells, nil
 }
 
 func rowSpanAttribute(node *html.Node, rowsRemaining int) int {
