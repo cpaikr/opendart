@@ -1,62 +1,64 @@
 package guide
 
 import (
-	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
-type recordedCommand struct {
-	Name string
-	Args []string
-}
-
-type recordingRunner struct {
-	commands []recordedCommand
-	errAt    int
-}
-
-func (r *recordingRunner) Run(_ context.Context, name string, args ...string) error {
-	r.commands = append(r.commands, recordedCommand{Name: name, Args: append([]string(nil), args...)})
-	if r.errAt > 0 && len(r.commands) == r.errAt {
-		return errors.New("injected validation failure")
-	}
-	return nil
-}
-
-func TestValidateStagingRunsCatalogBeforeOpenAPI(t *testing.T) {
-	runner := &recordingRunner{}
-	if err := validateStaging(context.Background(), "/stage", "/repo", false, runner); err != nil {
+func TestValidateStagingAcceptsCompleteAndStructuralCatalogs(t *testing.T) {
+	completeRoot := copyCatalogTree(t)
+	if err := validateStaging(filepath.Dir(completeRoot), true); err != nil {
 		t.Fatal(err)
 	}
-	if len(runner.commands) != 2 {
-		t.Fatalf("commands = %#v", runner.commands)
+
+	partialRoot := copyCatalogTree(t)
+	removeCatalogEndpoint(t, partialRoot)
+	if err := validateStaging(filepath.Dir(partialRoot), false); err != nil {
+		t.Fatal(err)
 	}
-	if runner.commands[0].Name != "node" || !containsArgument(runner.commands[0].Args, "--structural-only") || !strings.Contains(runner.commands[0].Args[0], "check-opendart.mjs") {
-		t.Fatalf("catalog command = %#v", runner.commands[0])
-	}
-	if runner.commands[1].Name != "node" || !containsArgument(runner.commands[1].Args, "lint") || !strings.Contains(runner.commands[1].Args[0], "@redocly") {
-		t.Fatalf("OpenAPI command = %#v", runner.commands[1])
+	if err := validateStaging(filepath.Dir(partialRoot), true); err == nil || !strings.Contains(err.Error(), "physical-path-completeness") {
+		t.Fatalf("complete validation error = %v", err)
 	}
 }
 
-func TestValidateStagingStopsBeforeOpenAPIAfterCatalogFailure(t *testing.T) {
-	runner := &recordingRunner{errAt: 1}
-	err := validateStaging(context.Background(), "/stage", "/repo", true, runner)
-	if err == nil || !strings.Contains(err.Error(), "catalog artifact") {
+func TestValidateStagingStopsAtCatalogFailure(t *testing.T) {
+	root := copyCatalogTree(t)
+	writeCatalogTestFile(t, filepath.Join(filepath.Dir(root), OutputMarker), "changed\n")
+	replaceCatalogTestFile(t, filepath.Join(filepath.Dir(root), "paths", "ds001", "company.json.yaml"), "  summary: 기업개황 (JSON)\n", "")
+
+	err := validateStaging(filepath.Dir(root), true)
+	var catalogErr *CatalogError
+	if !errors.As(err, &catalogErr) || catalogErr.Diagnostic.Rule != "output-marker" {
 		t.Fatalf("validation error = %v", err)
 	}
-	if len(runner.commands) != 1 {
-		t.Fatalf("commands = %#v", runner.commands)
+	if !strings.Contains(err.Error(), "staged catalog") || strings.Contains(err.Error(), "operation-summary") {
+		t.Fatalf("catalog failure is not bounded or ordered: %v", err)
 	}
 }
 
-func containsArgument(arguments []string, want string) bool {
-	for _, argument := range arguments {
-		if argument == want {
-			return true
-		}
+func TestValidateStagingReportsBoundedOpenAPILintContext(t *testing.T) {
+	root := copyCatalogTree(t)
+	path := filepath.Join(filepath.Dir(root), "paths", "ds001", "company.json.yaml")
+	replaceCatalogTestFile(t, path, "  summary: 기업개황 (JSON)\n", "")
+
+	err := validateStaging(filepath.Dir(root), true)
+	if err == nil || !strings.Contains(err.Error(), "staged OpenAPI") || !strings.Contains(err.Error(), "operation-summary") || !strings.Contains(err.Error(), "GET /company.json") {
+		t.Fatalf("lint validation error = %v", err)
 	}
-	return false
+	if len([]rune(err.Error())) > 4*maxStagingDiagnosticRunes {
+		t.Fatalf("lint validation error is unbounded: %d runes", len([]rune(err.Error())))
+	}
+}
+
+func TestBoundedStagingErrorPreservesCause(t *testing.T) {
+	cause := errors.New(strings.Repeat("sentinel", maxStagingDiagnosticRunes))
+	err := boundedStagingError("OpenAPI", strings.Repeat("artifact", maxStagingDiagnosticRunes), cause)
+	if !errors.Is(err, cause) {
+		t.Fatalf("error does not preserve cause: %v", err)
+	}
+	if len([]rune(err.Error())) > 3*maxStagingDiagnosticRunes {
+		t.Fatalf("error = %d runes, want bounded output", len([]rune(err.Error())))
+	}
 }

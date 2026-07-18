@@ -29,7 +29,7 @@ func TestSyncStagesValidatesComparesAndPublishes(t *testing.T) {
 			writeManagedFixture(t, options.OutputDir, "new")
 			return GenerationResult{PhysicalPaths: 2, SchemaFiles: 1}, nil
 		},
-		validate: func(_ context.Context, staging, _ string, complete bool, _ commandRunner) error {
+		validate: func(staging string, complete bool) error {
 			if staging != stagedDirectory || !complete {
 				t.Fatalf("validation staging=%q complete=%v", staging, complete)
 			}
@@ -40,7 +40,6 @@ func TestSyncStagesValidatesComparesAndPublishes(t *testing.T) {
 			return nil
 		},
 		publish: publishGenerated,
-		runner:  &recordingRunner{},
 	}
 	report, err := syncWithDependencies(context.Background(), SyncOptions{
 		RepositoryRoot: root,
@@ -73,9 +72,8 @@ func TestSyncDoesNotPublishAfterValidationFailure(t *testing.T) {
 			writeManagedFixture(t, options.OutputDir, "new")
 			return GenerationResult{}, nil
 		},
-		validate: func(context.Context, string, string, bool, commandRunner) error { return validationFailure },
+		validate: func(string, bool) error { return validationFailure },
 		publish:  publishGenerated,
-		runner:   &recordingRunner{},
 	}
 	_, err := syncWithDependencies(context.Background(), SyncOptions{RepositoryRoot: root, Output: output, CheckedAt: "2026-07-17"}, dependencies)
 	if !errors.Is(err, validationFailure) {
@@ -83,6 +81,37 @@ func TestSyncDoesNotPublishAfterValidationFailure(t *testing.T) {
 	}
 	if _, err := os.Stat(output); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("output was published: %v", err)
+	}
+}
+
+func TestSyncDoesNotPublishWhenCanceledDuringValidation(t *testing.T) {
+	root := t.TempDir()
+	ctx, cancel := context.WithCancel(context.Background())
+	published := false
+	dependencies := syncDependencies{
+		fetcher: inertFetcher{},
+		acquire: func(context.Context, Fetcher, []string) ([]Endpoint, error) {
+			return []Endpoint{{}}, nil
+		},
+		generate: func(_ []Endpoint, options GenerateOptions) (GenerationResult, error) {
+			writeManagedFixture(t, options.OutputDir, "new")
+			return GenerationResult{}, nil
+		},
+		validate: func(string, bool) error {
+			cancel()
+			return nil
+		},
+		publish: func(string, string, string) error {
+			published = true
+			return nil
+		},
+	}
+	_, err := syncWithDependencies(ctx, SyncOptions{RepositoryRoot: root, Output: filepath.Join(root, "openapi"), CheckedAt: "2026-07-17"}, dependencies)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("sync error = %v", err)
+	}
+	if published {
+		t.Fatal("canceled sync published staged output")
 	}
 }
 
@@ -98,7 +127,6 @@ func TestSyncRejectsBroadOutputBeforeAcquisition(t *testing.T) {
 		generate: Generate,
 		validate: validateStaging,
 		publish:  publishGenerated,
-		runner:   &recordingRunner{},
 	}
 	_, err := syncWithDependencies(context.Background(), SyncOptions{RepositoryRoot: root, Output: root, CheckedAt: "2026-07-17"}, dependencies)
 	if err == nil || !strings.Contains(err.Error(), "broad directory") {
@@ -121,7 +149,6 @@ func TestSyncRejectsPartialCanonicalOutputBeforeAcquisition(t *testing.T) {
 		generate: Generate,
 		validate: validateStaging,
 		publish:  publishGenerated,
-		runner:   &recordingRunner{},
 	}
 	_, err := syncWithDependencies(context.Background(), SyncOptions{
 		RepositoryRoot: root, Output: filepath.Join(root, "openapi"), CheckedAt: "2026-07-17", Only: []string{"DS001-2019001"},

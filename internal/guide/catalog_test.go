@@ -133,40 +133,7 @@ func TestValidateCatalogRejectsMutationFamilies(t *testing.T) {
 
 func TestStructuralCatalogAcceptsConsistentPartialInventory(t *testing.T) {
 	root := copyCatalogTree(t)
-	directory := filepath.Dir(root)
-	var document map[string]any
-	data, err := os.ReadFile(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := yaml.Unmarshal(data, &document); err != nil {
-		t.Fatal(err)
-	}
-	paths := document["paths"].(map[string]any)
-	delete(paths, "/dvRs.json")
-	delete(paths, "/dvRs.xml")
-	metadata := document["x-opendart"].(map[string]any)
-	inventory := metadata["inventory"].(map[string]any)
-	inventory["logicalEndpointCount"] = ExpectedFullTotals.LogicalEndpoints - 1
-	inventory["physicalPathCount"] = ExpectedFullTotals.PhysicalPaths - 2
-	groups := inventory["groupCounts"].(map[string]any)
-	groups["DS006"] = 5
-	encoded, err := yaml.Marshal(document)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(root, encoded, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	for _, file := range []string{
-		filepath.Join(directory, "paths", "ds006", "dvRs.json.yaml"),
-		filepath.Join(directory, "paths", "ds006", "dvRs.xml.yaml"),
-		filepath.Join(directory, "schemas", "ds006", "2020059.yaml"),
-	} {
-		if err := os.Remove(file); err != nil {
-			t.Fatal(err)
-		}
-	}
+	removeCatalogEndpoint(t, root)
 
 	report, err := ValidateCatalog(CatalogOptions{Root: root, StructuralOnly: true})
 	if err != nil {
@@ -231,6 +198,42 @@ func writeCatalogTestFile(t *testing.T, file, content string) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func removeCatalogEndpoint(t *testing.T, root string) {
+	t.Helper()
+	directory := filepath.Dir(root)
+	document := readGeneratedMap(t, root)
+	paths := yamlMap(t, document["paths"])
+	delete(paths, "/dvRs.json")
+	delete(paths, "/dvRs.xml")
+	metadata := yamlMap(t, document["x-opendart"])
+	inventory := yamlMap(t, metadata["inventory"])
+	inventory["logicalEndpointCount"] = ExpectedFullTotals.LogicalEndpoints - 1
+	inventory["physicalPathCount"] = ExpectedFullTotals.PhysicalPaths - 2
+	groups := yamlMap(t, inventory["groupCounts"])
+	groups["DS006"] = 5
+	writeCatalogYAML(t, root, document)
+	for _, file := range []string{
+		filepath.Join(directory, "paths", "ds006", "dvRs.json.yaml"),
+		filepath.Join(directory, "paths", "ds006", "dvRs.xml.yaml"),
+		filepath.Join(directory, "schemas", "ds006", "2020059.yaml"),
+	} {
+		if err := os.Remove(file); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func writeCatalogYAML(t *testing.T, path string, value any) {
+	t.Helper()
+	encoded, err := yaml.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, encoded, 0o600); err != nil {
 		t.Fatal(err)
 	}
 }
