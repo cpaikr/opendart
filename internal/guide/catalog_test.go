@@ -152,6 +152,50 @@ func TestValidateCatalogRejectsMarkerSymlinkBeforeReadingTarget(t *testing.T) {
 	}
 }
 
+func TestValidateCatalogAllowsSelectedRootDirectorySymlink(t *testing.T) {
+	root := copyCatalogTree(t)
+	linkedDirectory := filepath.Join(t.TempDir(), "catalog")
+	if err := os.Symlink(filepath.Dir(root), linkedDirectory); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ValidateCatalog(CatalogOptions{Root: filepath.Join(linkedDirectory, filepath.Base(root))}); err != nil {
+		t.Fatalf("catalog through selected root-directory symlink: %v", err)
+	}
+}
+
+func TestValidateCatalogRejectsRootFileSymlink(t *testing.T) {
+	root := copyCatalogTree(t)
+	physicalRoot := filepath.Join(filepath.Dir(root), "root-target.yaml")
+	if err := os.Rename(root, physicalRoot); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(physicalRoot, root); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := ValidateCatalog(CatalogOptions{Root: root})
+	var catalogErr *CatalogError
+	if !errors.As(err, &catalogErr) || catalogErr.Diagnostic.Rule != "root-symlink" {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestValidateCatalogRejectsReferenceSymlinkWithinRoot(t *testing.T) {
+	root := copyCatalogTree(t)
+	target := filepath.Join(filepath.Dir(root), "paths", "ds001", "company.json.yaml")
+	linked := filepath.Join(filepath.Dir(root), "paths", "alias.yaml")
+	if err := os.Symlink(target, linked); err != nil {
+		t.Fatal(err)
+	}
+	replaceCatalogTestFile(t, root, "./paths/ds001/company.json.yaml", "./paths/alias.yaml")
+
+	_, err := ValidateCatalog(CatalogOptions{Root: root})
+	var catalogErr *CatalogError
+	if !errors.As(err, &catalogErr) || catalogErr.Diagnostic.Rule != "reference-symlink" {
+		t.Fatalf("error = %v", err)
+	}
+}
+
 func TestStructuralCatalogAcceptsConsistentPartialInventory(t *testing.T) {
 	root := copyCatalogTree(t)
 	removeCatalogEndpoint(t, root)

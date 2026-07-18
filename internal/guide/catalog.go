@@ -127,6 +127,14 @@ func (v *catalogValidator) validate() (CatalogReport, error) {
 	if err := v.validateMarker(); err != nil {
 		return CatalogReport{}, err
 	}
+	physicalRootFile, err := filepath.EvalSymlinks(v.rootFile)
+	if err != nil {
+		return CatalogReport{}, v.fail("references", "root-target", v.rootFile, "", "", "root artifact cannot be resolved", err)
+	}
+	expectedRootFile := filepath.Join(v.physicalRoot, filepath.Base(v.rootFile))
+	if filepath.Clean(physicalRootFile) != filepath.Clean(expectedRootFile) {
+		return CatalogReport{}, v.fail("references", "root-symlink", v.rootFile, "", "", "root artifact uses a symlink below the specification directory", nil)
+	}
 	rootValue, _, err := v.readYAML(v.rootFile)
 	if err != nil {
 		return CatalogReport{}, err
@@ -694,6 +702,14 @@ func (v *catalogValidator) resolveReference(fromFile, reference, operation, loca
 	}
 	if !within(v.physicalRoot, physicalTarget) {
 		return "", v.fail("references", "reference-physical-escape", fromFile, operation, location, "$ref resolves outside the OpenDART specification directory", nil)
+	}
+	relativeTarget, err := filepath.Rel(v.rootDir, target)
+	if err != nil {
+		return "", v.fail("references", "reference-target", fromFile, operation, location, "$ref target cannot be resolved relative to the specification directory", err)
+	}
+	expectedPhysicalTarget := filepath.Join(v.physicalRoot, relativeTarget)
+	if filepath.Clean(physicalTarget) != filepath.Clean(expectedPhysicalTarget) {
+		return "", v.fail("references", "reference-symlink", fromFile, operation, location, "$ref uses a symlink below the specification directory", nil)
 	}
 	info, err := os.Stat(physicalTarget)
 	if err != nil {

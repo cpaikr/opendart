@@ -33,6 +33,11 @@
       documentedType: STRING(4)
       required: Y
       description: 사업연도(4자리)
+    - key: reprt_code
+      name: 보고서 코드
+      documentedType: STRING(5)
+      required: Y
+      description: 보고서 코드(11011: 사업보고서)
   responsefields:
     - sourceIndex: 0
       key: result

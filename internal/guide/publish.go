@@ -38,11 +38,19 @@ func ValidateSyncTarget(repositoryRoot, output string, partial bool) error {
 }
 
 func samePhysicalPath(left, right string) (bool, error) {
-	if filepath.Clean(left) == filepath.Clean(right) {
+	absoluteLeft, err := filepath.Abs(left)
+	if err != nil {
+		return false, err
+	}
+	absoluteRight, err := filepath.Abs(right)
+	if err != nil {
+		return false, err
+	}
+	if filepath.Clean(absoluteLeft) == filepath.Clean(absoluteRight) {
 		return true, nil
 	}
-	physicalLeft, leftErr := physicalPathAllowMissing(left)
-	physicalRight, rightErr := physicalPathAllowMissing(right)
+	physicalLeft, leftErr := physicalPathAllowMissing(absoluteLeft)
+	physicalRight, rightErr := physicalPathAllowMissing(absoluteRight)
 	if leftErr != nil {
 		return false, leftErr
 	}
@@ -212,11 +220,14 @@ func validateOutputMarker(directory string) error {
 	if err != nil {
 		return err
 	}
+	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
+		return errors.New("generated-output ownership marker is invalid")
+	}
 	content, err := os.ReadFile(marker)
 	if err != nil {
 		return err
 	}
-	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || string(content) != OutputMarkerContent {
+	if string(content) != OutputMarkerContent {
 		return errors.New("generated-output ownership marker is invalid")
 	}
 	return nil

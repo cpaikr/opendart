@@ -85,7 +85,7 @@ func TestGenerateDeterministicGuideContract(t *testing.T) {
 	multi := readGeneratedMap(t, filepath.Join(left, "paths/ds003/fnlttMultiAcnt.json.yaml"))
 	operation := yamlMap(t, multi["get"])
 	parameters := yamlSlice(t, operation["parameters"])
-	if len(parameters) != 2 {
+	if len(parameters) != 3 {
 		t.Fatalf("parameters = %#v", parameters)
 	}
 	corpCode := yamlMap(t, parameters[0])
@@ -102,6 +102,10 @@ func TestGenerateDeterministicGuideContract(t *testing.T) {
 	}
 	if _, ok := corpCode["x-opendart-source-diagnostics"]; !ok {
 		t.Fatal("multi-company source diagnostic is missing")
+	}
+	reportCode := yamlMap(t, parameters[2])
+	if reportCode["name"] != "reprt_code" || reportCode["required"] != true {
+		t.Fatalf("reprt_code parameter = %#v", reportCode)
 	}
 
 	responseSchema := readGeneratedMap(t, filepath.Join(left, "schemas/ds003/2019017.yaml"))
@@ -208,11 +212,11 @@ func TestGenerateRejectsUnsafeOrConflictingInput(t *testing.T) {
 	}
 }
 
-func TestGenerateAcceptsAdditionalGuideQueryParameters(t *testing.T) {
+func TestGenerateRejectsAdditionalGuideQueryParameters(t *testing.T) {
 	endpoints := generationFixture(t)
 	endpoints[0].SourceURL += "&view=full"
-	if _, err := Generate(endpoints, GenerateOptions{OutputDir: t.TempDir(), CheckedAt: "2026-07-17"}); err != nil {
-		t.Fatal(err)
+	if _, err := Generate(endpoints, GenerateOptions{OutputDir: t.TempDir(), CheckedAt: "2026-07-17"}); err == nil || !strings.Contains(err.Error(), "guide source identity") {
+		t.Fatalf("additional query parameter error = %v", err)
 	}
 }
 

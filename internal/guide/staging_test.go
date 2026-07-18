@@ -2,6 +2,7 @@ package guide
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -65,5 +66,22 @@ func TestBoundedStagingErrorPreservesCause(t *testing.T) {
 	}
 	if len([]rune(err.Error())) > 3*maxStagingDiagnosticRunes {
 		t.Fatalf("error = %d runes, want bounded output", len([]rune(err.Error())))
+	}
+}
+
+func TestCompareStagedRejectsMarkerSymlinkBeforeReadingTarget(t *testing.T) {
+	stagedRoot := copyCatalogTree(t)
+	baselineRoot := copyCatalogTree(t)
+	marker := filepath.Join(filepath.Dir(stagedRoot), OutputMarker)
+	if err := os.Remove(marker); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(filepath.Dir(stagedRoot), "missing-target"), marker); err != nil {
+		t.Fatal(err)
+	}
+
+	err := compareStaged(filepath.Dir(stagedRoot), filepath.Dir(baselineRoot))
+	if err == nil || !strings.Contains(err.Error(), "staged ownership marker is invalid") || strings.Contains(err.Error(), "no such file") {
+		t.Fatalf("comparison error = %v", err)
 	}
 }

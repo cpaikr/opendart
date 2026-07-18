@@ -93,6 +93,9 @@ func syncWithDependencies(ctx context.Context, options SyncOptions, dependencies
 			return SyncReport{}, err
 		}
 	}
+	if err := ctx.Err(); err != nil {
+		return SyncReport{}, fmt.Errorf("publish staged OpenAPI: %w", err)
+	}
 	if err := dependencies.publish(staging, options.Output, options.RepositoryRoot); err != nil {
 		return SyncReport{}, fmt.Errorf("publish staged OpenAPI: %w", err)
 	}

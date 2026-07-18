@@ -115,6 +115,43 @@ func TestSyncDoesNotPublishWhenCanceledDuringValidation(t *testing.T) {
 	}
 }
 
+func TestSyncDoesNotPublishWhenCanceledDuringParityComparison(t *testing.T) {
+	root := t.TempDir()
+	ctx, cancel := context.WithCancel(context.Background())
+	published := false
+	dependencies := syncDependencies{
+		fetcher: inertFetcher{},
+		acquire: func(context.Context, Fetcher, []string) ([]Endpoint, error) {
+			return []Endpoint{{}}, nil
+		},
+		generate: func(_ []Endpoint, options GenerateOptions) (GenerationResult, error) {
+			writeManagedFixture(t, options.OutputDir, "new")
+			return GenerationResult{}, nil
+		},
+		validate: func(string, bool) error { return nil },
+		compare: func(string, string) error {
+			cancel()
+			return nil
+		},
+		publish: func(string, string, string) error {
+			published = true
+			return nil
+		},
+	}
+	_, err := syncWithDependencies(ctx, SyncOptions{
+		RepositoryRoot: root,
+		Output:         filepath.Join(root, "openapi"),
+		CheckedAt:      "2026-07-17",
+		ParityBaseline: "accepted",
+	}, dependencies)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("sync error = %v", err)
+	}
+	if published {
+		t.Fatal("canceled sync published staged output")
+	}
+}
+
 func TestSyncRejectsBroadOutputBeforeAcquisition(t *testing.T) {
 	root := t.TempDir()
 	acquired := false

@@ -6,6 +6,8 @@ import (
 	"golang.org/x/net/html"
 )
 
+const maximumColumnSpan = 1000
+
 type pendingSpan struct {
 	value     string
 	remaining int
@@ -39,7 +41,7 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) [][]str
 			for consumeSpan() {
 			}
 			value := cellText(cell)
-			columnSpan := positiveAttribute(cell, "colspan")
+			columnSpan := min(positiveAttribute(cell, "colspan"), maximumColumnSpan)
 			rowSpan := rowSpanAttribute(cell, len(rows)-rowIndex)
 			for offset := 0; offset < columnSpan; offset++ {
 				row = setCell(row, column+offset, value)

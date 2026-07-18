@@ -370,6 +370,23 @@ func trustedGuideURL(value, expectedPath string) (*url.URL, error) {
 			"scheme": resolved.Scheme, "host": resolved.Hostname(), "path": resolved.Path, "expectedPath": expectedPath,
 		}, nil)
 	}
+	query := resolved.Query()
+	requiredKeys := map[string]struct{}{"apiGrpCd": {}}
+	if resolved.Path == "/guide/detail.do" {
+		requiredKeys["apiId"] = struct{}{}
+	}
+	if len(query) != len(requiredKeys) {
+		return nil, sourceError("OpenDART guide URL query is outside the trusted guide surface", map[string]any{
+			"path": resolved.Path, "expectedPath": expectedPath,
+		}, nil)
+	}
+	for key := range requiredKeys {
+		if len(query[key]) != 1 {
+			return nil, sourceError("OpenDART guide URL query is outside the trusted guide surface", map[string]any{
+				"path": resolved.Path, "expectedPath": expectedPath,
+			}, nil)
+		}
+	}
 	return resolved, nil
 }
 
@@ -544,10 +561,13 @@ func validateHiddenIdentity(root *html.Node, summary EndpointSummary) error {
 		name string
 		want string
 	}{{"apiId", summary.APIID}, {"apiGrpCd", summary.APIGroupCode}} {
-		input := firstMatchingDescendant(root, func(node *html.Node) bool {
-			return node.Type == html.ElementNode && node.Data == "input" && attribute(node, "name") == identity.name
+		var inputs []*html.Node
+		walk(root, func(node *html.Node) {
+			if node.Type == html.ElementNode && node.Data == "input" && strings.EqualFold(attribute(node, "type"), "hidden") && attribute(node, "name") == identity.name {
+				inputs = append(inputs, node)
+			}
 		})
-		if input != nil && attribute(input, "value") != identity.want {
+		if len(inputs) != 1 || attribute(inputs[0], "value") != identity.want {
 			return sourceError("Detail page identity does not match its link", map[string]any{
 				"logicalOperationId": summary.LogicalOperationID, "identity": identity.name, "sourceUrl": summary.SourceURL,
 			}, nil)

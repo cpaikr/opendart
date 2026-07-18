@@ -133,8 +133,8 @@ go run ./cmd/opendart-tool verify --repository-root .
 
 This cleanup is complete. Future work starts only through the dedicated
 [guide-drift](guide-drift.md) or [live-conformance](live-conformance.md) plan;
-credential configuration, notifier automation, and production promotion remain
-outside this completed migration.
+credential configuration and notifier automation remain outside this completed
+migration. Promotion from `dev` to `main` is complete.
 
 ## Acceptance criteria
 

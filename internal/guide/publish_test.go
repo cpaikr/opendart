@@ -78,6 +78,43 @@ func TestPublishGeneratedRefusesInvalidStagingMarker(t *testing.T) {
 	assertFileContent(t, filepath.Join(output, "openapi.yaml"), "old")
 }
 
+func TestValidateOutputMarkerRejectsSymlinkBeforeReadingTarget(t *testing.T) {
+	directory := t.TempDir()
+	if err := os.Symlink(filepath.Join(directory, "missing-target"), filepath.Join(directory, OutputMarker)); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateOutputMarker(directory); err == nil || err.Error() != "generated-output ownership marker is invalid" {
+		t.Fatalf("marker error = %v", err)
+	}
+}
+
+func TestSamePhysicalPathNormalizesRelativeAndAbsolutePaths(t *testing.T) {
+	absolute := filepath.Join(t.TempDir(), "missing", "openapi")
+	relative, err := filepath.Rel(".", absolute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	same, err := samePhysicalPath(relative, absolute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !same {
+		t.Fatalf("samePhysicalPath(%q, %q) = false", relative, absolute)
+	}
+}
+
+func TestValidateSyncTargetRejectsRelativeCanonicalOutput(t *testing.T) {
+	repositoryRoot := t.TempDir()
+	absoluteOutput := filepath.Join(repositoryRoot, "openapi")
+	relativeOutput, err := filepath.Rel(".", absoluteOutput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateSyncTarget(repositoryRoot, relativeOutput, true); err == nil || !strings.Contains(err.Error(), "non-canonical") {
+		t.Fatalf("relative canonical output error = %v", err)
+	}
+}
+
 func TestPublishGeneratedRollsBackFailure(t *testing.T) {
 	root := t.TempDir()
 	output := filepath.Join(root, "openapi")

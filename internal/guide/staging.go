@@ -3,7 +3,6 @@ package guide
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -93,17 +92,8 @@ func compareStaged(staging, baseline string) error {
 	if comparison.TotalChanges != 0 {
 		return fmt.Errorf("staged OpenAPI differs semantically from accepted artifact at %s", firstChangeLocation(comparison))
 	}
-	marker := filepath.Join(staging, OutputMarker)
-	markerInfo, err := os.Lstat(marker)
-	if err != nil {
-		return fmt.Errorf("inspect staged ownership marker: %w", err)
-	}
-	markerContent, err := os.ReadFile(marker)
-	if err != nil {
-		return fmt.Errorf("read staged ownership marker: %w", err)
-	}
-	if !markerInfo.Mode().IsRegular() || markerInfo.Mode()&os.ModeSymlink != 0 || string(markerContent) != OutputMarkerContent {
-		return errors.New("staged ownership marker is invalid")
+	if err := validateOutputMarker(staging); err != nil {
+		return fmt.Errorf("staged ownership marker is invalid: %w", err)
 	}
 	return nil
 }

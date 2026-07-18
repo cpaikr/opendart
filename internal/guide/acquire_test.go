@@ -45,6 +45,12 @@ func TestTrustedGuideURL(t *testing.T) {
 		}
 	}
 	rejected := []string{
+		"/guide/main.do",
+		"/guide/main.do?apiGrpCd=DS001&apiGrpCd=DS001",
+		"/guide/main.do?apiGrpCd=DS001&crtfc_key=secret",
+		"/guide/detail.do?apiGrpCd=DS001",
+		"/guide/detail.do?apiGrpCd=DS001&apiId=2019001&view=full",
+		"/guide/detail.do?apiGrpCd=DS001&apiId=2019001&apiId=2019001",
 		"http://opendart.fss.or.kr/guide/main.do",
 		"https://OPENDART.FSS.OR.KR/guide/main.do",
 		"https://opendart.fss.or.kr:443/guide/main.do",
@@ -73,25 +79,25 @@ func TestNormalizeGuideTextPreservesOneBlankLine(t *testing.T) {
 
 func TestTrustedGuideURLRedactsRejectedCredentials(t *testing.T) {
 	t.Parallel()
-	_, err := trustedGuideURL("https://user:secret@evil.example/guide/main.do?token=private", "")
+	_, err := trustedGuideURL("https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001&crtfc_key=private", "")
 	var source *SourceError
 	if !errors.As(err, &source) {
 		t.Fatalf("error = %v", err)
 	}
 	diagnostic := fmt.Sprintf("%v", source.Context)
-	for _, secret := range []string{"user", "secret", "private", "token"} {
+	for _, secret := range []string{"crtfc_key", "private"} {
 		if strings.Contains(diagnostic, secret) {
 			t.Fatalf("diagnostic %q contains %q", diagnostic, secret)
 		}
 	}
-	if source.Context["host"] != "evil.example" || source.Context["path"] != "/guide/main.do" {
+	if source.Context["path"] != "/guide/main.do" {
 		t.Fatalf("context = %#v", source.Context)
 	}
 }
 
 func TestEndpointIdentityRequiresSingleMatchingParameters(t *testing.T) {
 	t.Parallel()
-	sourceURL, group, apiID, err := endpointIdentity("/guide/detail.do?apiGrpCd=DS001&apiId=2019001&view=full", "DS001")
+	sourceURL, group, apiID, err := endpointIdentity("/guide/detail.do?apiGrpCd=DS001&apiId=2019001", "DS001")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,6 +108,7 @@ func TestEndpointIdentityRequiresSingleMatchingParameters(t *testing.T) {
 		"/guide/detail.do?apiGrpCd=DS002&apiId=2019001",
 		"/guide/detail.do?apiGrpCd=DS001&apiGrpCd=DS001&apiId=2019001",
 		"/guide/detail.do?apiGrpCd=DS001&apiId=2019001&apiId=2019002",
+		"/guide/detail.do?apiGrpCd=DS001&apiId=2019001&view=full",
 		"/guide/detail.do?apiGrpCd=DS001&apiId=abc",
 	}
 	for _, href := range invalid {
@@ -207,12 +214,18 @@ func TestAcquireEndpointRejectsIdentityAndTableDrift(t *testing.T) {
 		SourceURL: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019001",
 	}
 	tests := []struct {
-		name    string
-		replace string
-		with    string
-		message string
+		name     string
+		replace  string
+		with     string
+		message  string
+		identity string
 	}{
-		{name: "hidden identity", replace: `name="apiId" value="2019001"`, with: `name="apiId" value="2019002"`, message: "Detail page identity does not match its link"},
+		{name: "hidden identity mismatch", replace: `name="apiId" value="2019001"`, with: `name="apiId" value="2019002"`, message: "Detail page identity does not match its link", identity: "apiId"},
+		{name: "hidden identity missing", replace: `<input type="hidden" name="apiId" value="2019001">`, with: "", message: "Detail page identity does not match its link", identity: "apiId"},
+		{name: "hidden group identity missing", replace: `<input type="hidden" name="apiGrpCd" value="DS001">`, with: "", message: "Detail page identity does not match its link", identity: "apiGrpCd"},
+		{name: "hidden API identity duplicate", replace: `<input type="hidden" name="apiId" value="2019001">`, with: `<input type="hidden" name="apiId" value="2019001"><input type="hidden" name="apiId" value="2019001">`, message: "Detail page identity does not match its link", identity: "apiId"},
+		{name: "hidden identity duplicate", replace: `<input type="hidden" name="apiGrpCd" value="DS001">`, with: `<input type="hidden" name="apiGrpCd" value="DS001"><input type="hidden" name="apiGrpCd" value="DS001">`, message: "Detail page identity does not match its link", identity: "apiGrpCd"},
+		{name: "identity must be hidden", replace: `type="hidden" name="apiId"`, with: `type="text" name="apiId"`, message: "Detail page identity does not match its link", identity: "apiId"},
 		{name: "Korean header", replace: "출력포멧", with: "출력형식", message: "Guide table headers changed"},
 		{name: "row width", replace: "<td>JSON</td>", with: "", message: "Guide table row width changed"},
 		{name: "message code", replace: "000 정상", with: "정상", message: "Message-code row has no three-digit code"},
@@ -222,16 +235,22 @@ func TestAcquireEndpointRejectsIdentityAndTableDrift(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			changed := strings.Replace(body, test.replace, test.with, 1)
+			if changed == body {
+				t.Fatalf("test mutation %q did not match the fixture", test.replace)
+			}
 			_, err := acquireEndpoint(context.Background(), fetchFunc(func(_ context.Context, _ *url.URL) ([]byte, error) {
 				return []byte(changed), nil
 			}), summary)
 			if err == nil || err.Error() != test.message {
 				t.Fatalf("error = %v, want %q", err, test.message)
 			}
-			if test.name == "message code" {
+			if test.identity != "" || test.name == "message code" {
 				var source *SourceError
 				if !errors.As(err, &source) || source.Context["logicalOperationId"] != summary.LogicalOperationID || source.Context["sourceUrl"] != summary.SourceURL {
 					t.Fatalf("source error = %#v", source)
+				}
+				if test.identity != "" && source.Context["identity"] != test.identity {
+					t.Fatalf("identity context = %#v", source.Context)
 				}
 			}
 		})
