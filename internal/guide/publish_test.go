@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -46,6 +47,22 @@ func TestPublishGeneratedRefusesUnownedOutput(t *testing.T) {
 	assertFileContent(t, filepath.Join(output, "openapi.yaml"), "owned-by-user")
 }
 
+func TestPublishGeneratedRefusesOutputSymlink(t *testing.T) {
+	root := t.TempDir()
+	physicalOutput := filepath.Join(root, "physical")
+	output := filepath.Join(root, "openapi")
+	staging := filepath.Join(root, "stage")
+	writeManagedFixture(t, physicalOutput, "old")
+	writeManagedFixture(t, staging, "new")
+	if err := os.Symlink(physicalOutput, output); err != nil {
+		t.Fatal(err)
+	}
+	if err := publishGenerated(staging, output, filepath.Join(root, "repository")); err == nil {
+		t.Fatal("output symlink was accepted")
+	}
+	assertFileContent(t, filepath.Join(physicalOutput, "openapi.yaml"), "old")
+}
+
 func TestPublishGeneratedRollsBackFailure(t *testing.T) {
 	root := t.TempDir()
 	output := filepath.Join(root, "openapi")
@@ -64,6 +81,29 @@ func TestPublishGeneratedRollsBackFailure(t *testing.T) {
 	}
 	assertFileContent(t, filepath.Join(output, "openapi.yaml"), "old")
 	assertFileContent(t, filepath.Join(output, OutputMarker), OutputMarkerContent)
+}
+
+func TestPublishGeneratedRollsBackBundleInvalidationFailure(t *testing.T) {
+	root := t.TempDir()
+	output := filepath.Join(root, "openapi")
+	staging := filepath.Join(root, "stage")
+	writeManagedFixture(t, output, "old")
+	writeManagedFixture(t, staging, "new")
+	bundle := filepath.Join(output, "generated", "openapi.bundle.yaml")
+	if err := os.MkdirAll(bundle, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bundle, "keep"), []byte("not removable as a file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := publishGenerated(staging, output, filepath.Join(root, "repository"))
+	if err == nil || !strings.Contains(err.Error(), "invalidate generated bundle") {
+		t.Fatalf("error = %v", err)
+	}
+	assertFileContent(t, filepath.Join(output, "openapi.yaml"), "old")
+	assertFileContent(t, filepath.Join(output, OutputMarker), OutputMarkerContent)
+	assertFileContent(t, filepath.Join(bundle, "keep"), "not removable as a file")
 }
 
 func writeManagedFixture(t *testing.T, directory, value string) {
