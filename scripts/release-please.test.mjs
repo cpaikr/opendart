@@ -44,6 +44,7 @@ test("configures one simple root release with a SemVer manifest", async () => {
     ".agents",
     ".codex",
     ".github",
+    "ARCHITECTURE.md",
     "cmd",
     "docs",
     "go.mod",

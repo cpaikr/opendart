@@ -11,7 +11,9 @@ import (
 
 func Run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		usage(stderr)
+		if err := usage(stderr); err != nil {
+			return 1
+		}
 		return 2
 	}
 
@@ -19,11 +21,17 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	case "compatibility":
 		return runCompatibility(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
-		usage(stdout)
+		if err := usage(stdout); err != nil {
+			return 1
+		}
 		return 0
 	default:
-		fmt.Fprintf(stderr, "unknown command %q\n", args[0])
-		usage(stderr)
+		if _, err := fmt.Fprintf(stderr, "unknown command %q\n", args[0]); err != nil {
+			return 1
+		}
+		if err := usage(stderr); err != nil {
+			return 1
+		}
 		return 2
 	}
 }
@@ -37,26 +45,39 @@ func runCompatibility(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	if flags.NArg() != 0 {
-		fmt.Fprintln(stderr, "compatibility does not accept positional arguments")
+		if _, err := fmt.Fprintln(stderr, "compatibility does not accept positional arguments"); err != nil {
+			return 1
+		}
 		return 2
 	}
 
 	report, err := openapispec.RunCompatibilityGate(*root, *baseline)
 	if err != nil {
-		fmt.Fprintf(stderr, "compatibility: %v\n", err)
+		if _, writeErr := fmt.Fprintf(stderr, "compatibility: %v\n", err); writeErr != nil {
+			return 1
+		}
 		return 1
 	}
 	encoder := json.NewEncoder(stdout)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(report); err != nil {
-		fmt.Fprintf(stderr, "write compatibility report: %v\n", err)
+		if _, writeErr := fmt.Fprintf(stderr, "write compatibility report: %v\n", err); writeErr != nil {
+			return 1
+		}
 		return 1
 	}
 	return 0
 }
 
-func usage(output io.Writer) {
-	fmt.Fprintln(output, "usage: opendart-tool <command> [options]")
-	fmt.Fprintln(output, "commands:")
-	fmt.Fprintln(output, "  compatibility  run the temporary OpenAPI migration gate")
+func usage(output io.Writer) error {
+	for _, line := range []string{
+		"usage: opendart-tool <command> [options]",
+		"commands:",
+		"  compatibility  run the temporary OpenAPI migration gate",
+	} {
+		if _, err := fmt.Fprintln(output, line); err != nil {
+			return err
+		}
+	}
+	return nil
 }
