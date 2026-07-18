@@ -66,8 +66,8 @@ collection analysis.
 
 ## Refresh and verify
 
-The current repository tooling requires Node.js `>=22.12.0` or `20.19.x` and npm
-`>=10`:
+The current repository tooling requires the Go version declared in `go.mod`,
+Node.js `>=22.12.0` or `20.19.x`, and npm `>=10`:
 
 ```sh
 npm ci --ignore-scripts
@@ -76,7 +76,8 @@ npm run bundle:opendart
 npm run verify:opendart
 ```
 
-`sync:opendart` refreshes the canonical files from the public guide and
+`sync:opendart` runs the internal Go CLI, refreshes the canonical files from the
+public guide through validated staging and owned-output publication, and
 invalidates the old bundle. `bundle:opendart` rebuilds the portable artifact.
 `verify:opendart` runs the script tests, catalog and reference checks, strict
 linting, and a byte-for-byte bundle freshness check.

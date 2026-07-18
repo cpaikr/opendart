@@ -10,15 +10,18 @@ language decision is recorded in
 
 ## Current state
 
-- Node.js remains authoritative for guide acquisition, generation, catalog
-  checks, bundle creation and freshness, release-configuration checks, and the
+- The Go CLI is authoritative for guide acquisition, normalization, generation,
+  staged validation orchestration, guarded publication, and rollback. The
+  canonical `sync:opendart` command has cut over once.
+- Node.js and Redocly remain authoritative for catalog and reference checks,
+  lint, bundle creation and freshness, release-configuration checks, and the
   focused multi-company probe.
 - The internal Go CLI and OpenAPI boundary are committed as an additive
   compatibility gate. Representative extraction, lint, JSON, XML, and ZIP
   fixtures plus the accepted multi-file OpenAPI 3.2 contract and Redocly bundle
   pass without OpenDART credentials.
 - Pull-request and manual verification run the Node.js and Redocly baseline plus
-  the Go compatibility gate. No repository command has cut over yet.
+  the Go compatibility gate. Credential-free verification has not cut over yet.
 - [Guide drift](guide-drift.md) and [live conformance](live-conformance.md) are
   committed follow-on work. They depend on the Go OpenAPI and reporting
   foundations but retain separate network, credential, and issue boundaries.
@@ -54,8 +57,8 @@ once and automation never closes an issue.
 1. **Complete.** Add the Go module, CLI skeleton, compatibility harness, and
    representative fixtures. Record the chosen OpenAPI components and narrow
    adapters after the gate passes.
-2. Port trusted guide acquisition, normalization, generation, staged
-   validation, owned-output safeguards, and failure rollback. Compare a
+2. **Complete.** Port trusted guide acquisition, normalization, generation,
+   staged validation, owned-output safeguards, and failure rollback. Compare a
    complete staged refresh with the accepted artifacts before switching
    synchronization.
 3. Port catalog and reference checks, lint coverage, bundling, freshness, and
@@ -84,11 +87,9 @@ once and automation never closes an issue.
 
 ## Next action
 
-Port trusted guide acquisition and normalization into the internal Go CLI,
-then add deterministic generation, staged validation, owned-output safeguards,
-and rollback. Keep Node/Redocly authoritative until a complete staged refresh
-matches the accepted artifacts semantically and the synchronization command
-cuts over once.
+Port catalog and reference checks, lint coverage, bundling, freshness, workflow
+and release guards. Demonstrate parity before switching local verification,
+documentation, and credential-free CI.
 
 ## Progress log
 
@@ -99,3 +100,8 @@ cuts over once.
   deterministic rendering and bundling with zero semantic changes against the
   accepted Redocly bundle. The existing Node/Redocly gate remains authoritative
   while the additive Go compatibility gate runs in credential-free verification.
+- 2026-07-18: Completed ordered work 2. Added exact-host credential-free guide
+  acquisition, normalized source models, deterministic generation, staged
+  catalog and Redocly validation, owned-output publication, and rollback. A
+  complete live refresh matched the accepted OpenAPI source with zero semantic
+  changes, and `sync:opendart` cut over once to the Go CLI.
