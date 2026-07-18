@@ -186,7 +186,7 @@ func validateEndpointIdentity(endpoint Endpoint) error {
 		return endpointError(endpoint, "invalid endpoint identity (group %q, API ID %q, logical operation %q)", endpoint.APIGroupCode, endpoint.APIID, endpoint.LogicalOperationID)
 	}
 	source, err := trustedGuideURL(endpoint.SourceURL, "/guide/detail.do")
-	if err != nil || len(source.Query()) != 2 ||
+	if err != nil ||
 		!reflect.DeepEqual(source.Query()["apiGrpCd"], []string{endpoint.APIGroupCode}) ||
 		!reflect.DeepEqual(source.Query()["apiId"], []string{endpoint.APIID}) {
 		return endpointError(endpoint, "guide source identity does not match the endpoint")
@@ -412,7 +412,14 @@ func objectSchema(endpoint Endpoint, node *responseNode) map[string]any {
 	return map[string]any{"type": "object", "properties": properties, "additionalProperties": true}
 }
 
-func parameterSerialization(endpoint Endpoint, argument RequestArgument) (map[string]any, error) {
+type parameterSerializationResult struct {
+	maximumItems    int
+	values          []string
+	serializedValue string
+	extension       map[string]any
+}
+
+func parameterSerialization(endpoint Endpoint, argument RequestArgument) (*parameterSerializationResult, error) {
 	if !multiCompanyOperations[endpoint.LogicalOperationID] || argument.Key != "corp_code" {
 		return nil, nil
 	}
@@ -453,7 +460,7 @@ func parameterSerialization(endpoint Endpoint, argument RequestArgument) (map[st
 	if err != nil || maximumItems < 1 {
 		return nil, endpointError(endpoint, "multi-company maximum is missing from message 021")
 	}
-	return map[string]any{
+	extension := map[string]any{
 		"status": "guide-example-supported", "wireFormat": "comma-separated", "delimiter": ",",
 		"guideEvidence": map[string]any{
 			"source": "official-guide-test-form", "serializedValue": value, "values": values,
@@ -462,6 +469,9 @@ func parameterSerialization(endpoint Endpoint, argument RequestArgument) (map[st
 			},
 		},
 		"authenticatedVerification": map[string]any{"status": "pending"},
+	}
+	return &parameterSerializationResult{
+		maximumItems: maximumItems, values: values, serializedValue: value, extension: extension,
 	}, nil
 }
 
@@ -492,16 +502,13 @@ func parameterObjects(endpoint Endpoint) ([]any, error) {
 			parameter["x-opendart-source-diagnostics"] = diagnostics
 		}
 		if serialization != nil {
-			maximum := serialization["guideEvidence"].(map[string]any)["maximumItems"].(map[string]any)["value"]
-			values := serialization["guideEvidence"].(map[string]any)["values"].([]string)
-			serialized := serialization["guideEvidence"].(map[string]any)["serializedValue"].(string)
 			parameter["style"] = "form"
 			parameter["explode"] = false
-			parameter["schema"] = map[string]any{"type": "array", "minItems": 1, "maxItems": maximum, "items": map[string]any{"type": "string"}}
+			parameter["schema"] = map[string]any{"type": "array", "minItems": 1, "maxItems": serialization.maximumItems, "items": map[string]any{"type": "string"}}
 			parameter["examples"] = map[string]any{"officialGuide": map[string]any{
-				"summary": "공식 개발가이드 테스트 예시", "dataValue": values, "serializedValue": "corp_code=" + serialized,
+				"summary": "공식 개발가이드 테스트 예시", "dataValue": serialization.values, "serializedValue": "corp_code=" + serialization.serializedValue,
 			}}
-			parameter["x-opendart-serialization"] = serialization
+			parameter["x-opendart-serialization"] = serialization.extension
 		}
 		parameters = append(parameters, parameter)
 	}

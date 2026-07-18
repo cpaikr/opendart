@@ -204,6 +204,14 @@ func TestGenerateRejectsUnsafeOrConflictingInput(t *testing.T) {
 	}
 }
 
+func TestGenerateAcceptsAdditionalGuideQueryParameters(t *testing.T) {
+	endpoints := generationFixture(t)
+	endpoints[0].SourceURL += "&view=full"
+	if _, err := Generate(endpoints, GenerateOptions{OutputDir: t.TempDir(), CheckedAt: "2026-07-17"}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestGenerateRequiresEmptyPhysicalDirectory(t *testing.T) {
 	endpoints := generationFixture(t)
 	nonempty := t.TempDir()
