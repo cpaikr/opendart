@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
@@ -406,6 +407,7 @@ func observeStructured(ctx context.Context, deps dependencies, budget *requestBu
 func observeSearch(ctx context.Context, deps dependencies, budget *requestBudget, probeCase searchCase) (SearchObservation, error) {
 	observation := SearchObservation{CompanyName: probeCase.Company.Name, CorpCode: probeCase.Company.CorpCode, DetailType: probeCase.DetailType}
 	expectedTotal, expectedPages, observedRows := -1, -1, 0
+	seenReceipts := make(map[string]bool)
 	for pageNumber := 1; pageNumber <= maxSearchPages; pageNumber++ {
 		coordinate := RequestCoordinate{
 			LogicalOperationID: "DS001-2019001", Endpoint: "list.json",
@@ -464,9 +466,10 @@ func observeSearch(ctx context.Context, deps dependencies, budget *requestBudget
 		page.PageNumber, page.PageCount, page.TotalCount, page.TotalPages = pageNo, pageCount, totalCount, totalPages
 		page.Filings = filingEvidence(envelope.List)
 		for _, filing := range page.Filings {
-			if filing.CorpCode != probeCase.Company.CorpCode || !validReceiptNumber(filing.ReceiptNumber) {
+			if filing.CorpCode != probeCase.Company.CorpCode || !validReceiptNumber(filing.ReceiptNumber) || seenReceipts[filing.ReceiptNumber] {
 				return SearchObservation{}, newError("Disclosure search returned an invalid filing identity", &coordinate)
 			}
+			seenReceipts[filing.ReceiptNumber] = true
 		}
 		observedRows += len(page.Filings)
 		observation.Pages = append(observation.Pages, page)
@@ -730,6 +733,9 @@ func inspectArchive(body []byte, expectedFirm string) (archiveEvidence, error) {
 	if compactDocumentText(expectedFirm) == "" {
 		return archiveEvidence{}, errors.New("Original-document selection did not identify an expected accounting firm")
 	}
+	if err := preflightZIPDirectory(body); err != nil {
+		return archiveEvidence{}, err
+	}
 	reader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
 		return archiveEvidence{}, errors.New("Original-document response was not a valid ZIP archive")
@@ -774,6 +780,134 @@ func inspectArchive(body []byte, expectedFirm string) (archiveEvidence, error) {
 		return archiveEvidence{}, errors.New("Original-document ZIP contained no file entries")
 	}
 	return result, nil
+}
+
+const (
+	zipDirectoryHeaderSignature = 0x02014b50
+	zipDirectoryHeaderLength    = 46
+	zipDirectory64EndSignature  = 0x06064b50
+	zipDirectory64EndLength     = 56
+	zipDirectory64LocSignature  = 0x07064b50
+	zipDirectory64LocLength     = 20
+	zipDirectoryEndSignature    = 0x06054b50
+	zipDirectoryEndLength       = 22
+	zipMaximumCommentLength     = 1<<16 - 1
+)
+
+type zipDirectoryMetadata struct {
+	records uint64
+	offset  uint64
+	size    uint64
+}
+
+func preflightZIPDirectory(body []byte) error {
+	metadata, endOffset, err := readZIPDirectoryMetadata(body)
+	if err != nil {
+		return errors.New("Original-document response was not a valid ZIP archive")
+	}
+	if metadata.records == 0 || metadata.records > maxArchiveEntries {
+		return errors.New("Original-document ZIP exceeded the entry-count limit")
+	}
+	if metadata.offset > uint64(len(body)) || metadata.size > uint64(len(body))-metadata.offset {
+		return errors.New("Original-document response was not a valid ZIP archive")
+	}
+	directoryEnd := metadata.offset + metadata.size
+	if directoryEnd != uint64(endOffset) {
+		return errors.New("Original-document response was not a valid ZIP archive")
+	}
+	position, limit := int(metadata.offset), int(directoryEnd)
+	var records uint64
+	for position < limit {
+		if records >= maxArchiveEntries {
+			return errors.New("Original-document ZIP exceeded the entry-count limit")
+		}
+		if position+zipDirectoryHeaderLength > limit || binary.LittleEndian.Uint32(body[position:position+4]) != zipDirectoryHeaderSignature {
+			return errors.New("Original-document response was not a valid ZIP archive")
+		}
+		nameLength := int(binary.LittleEndian.Uint16(body[position+28 : position+30]))
+		extraLength := int(binary.LittleEndian.Uint16(body[position+30 : position+32]))
+		commentLength := int(binary.LittleEndian.Uint16(body[position+32 : position+34]))
+		next := position + zipDirectoryHeaderLength + nameLength + extraLength + commentLength
+		if next < position || next > limit {
+			return errors.New("Original-document response was not a valid ZIP archive")
+		}
+		position = next
+		records++
+	}
+	if position != limit || records != metadata.records {
+		return errors.New("Original-document response was not a valid ZIP archive")
+	}
+	return nil
+}
+
+func readZIPDirectoryMetadata(body []byte) (zipDirectoryMetadata, int, error) {
+	if len(body) < zipDirectoryEndLength {
+		return zipDirectoryMetadata{}, 0, errors.New("missing ZIP directory end")
+	}
+	searchStart := len(body) - zipDirectoryEndLength - zipMaximumCommentLength
+	if searchStart < 0 {
+		searchStart = 0
+	}
+	for offset := len(body) - zipDirectoryEndLength; offset >= searchStart; offset-- {
+		if binary.LittleEndian.Uint32(body[offset:offset+4]) != zipDirectoryEndSignature {
+			continue
+		}
+		commentLength := int(binary.LittleEndian.Uint16(body[offset+20 : offset+22]))
+		if offset+zipDirectoryEndLength+commentLength != len(body) {
+			continue
+		}
+		if binary.LittleEndian.Uint16(body[offset+4:offset+6]) != 0 || binary.LittleEndian.Uint16(body[offset+6:offset+8]) != 0 {
+			return zipDirectoryMetadata{}, 0, errors.New("multi-disk ZIP is unsupported")
+		}
+		recordsOnDisk := binary.LittleEndian.Uint16(body[offset+8 : offset+10])
+		records := binary.LittleEndian.Uint16(body[offset+10 : offset+12])
+		directorySize := binary.LittleEndian.Uint32(body[offset+12 : offset+16])
+		directoryOffset := binary.LittleEndian.Uint32(body[offset+16 : offset+20])
+		if recordsOnDisk != 0xffff && records != 0xffff && directorySize != 0xffffffff && directoryOffset != 0xffffffff {
+			if recordsOnDisk != records {
+				return zipDirectoryMetadata{}, 0, errors.New("inconsistent ZIP entry count")
+			}
+			return zipDirectoryMetadata{records: uint64(records), offset: uint64(directoryOffset), size: uint64(directorySize)}, offset, nil
+		}
+		metadata, zip64Offset, err := readZIP64DirectoryMetadata(body, offset)
+		return metadata, zip64Offset, err
+	}
+	return zipDirectoryMetadata{}, 0, errors.New("missing ZIP directory end")
+}
+
+func readZIP64DirectoryMetadata(body []byte, endOffset int) (zipDirectoryMetadata, int, error) {
+	locatorOffset := endOffset - zipDirectory64LocLength
+	if locatorOffset < 0 || binary.LittleEndian.Uint32(body[locatorOffset:locatorOffset+4]) != zipDirectory64LocSignature {
+		return zipDirectoryMetadata{}, 0, errors.New("missing ZIP64 locator")
+	}
+	if binary.LittleEndian.Uint32(body[locatorOffset+4:locatorOffset+8]) != 0 || binary.LittleEndian.Uint32(body[locatorOffset+16:locatorOffset+20]) != 1 {
+		return zipDirectoryMetadata{}, 0, errors.New("multi-disk ZIP64 is unsupported")
+	}
+	recordOffset := binary.LittleEndian.Uint64(body[locatorOffset+8 : locatorOffset+16])
+	if recordOffset > uint64(locatorOffset) || uint64(locatorOffset)-recordOffset < zipDirectory64EndLength {
+		return zipDirectoryMetadata{}, 0, errors.New("invalid ZIP64 directory end offset")
+	}
+	offset := int(recordOffset)
+	if binary.LittleEndian.Uint32(body[offset:offset+4]) != zipDirectory64EndSignature {
+		return zipDirectoryMetadata{}, 0, errors.New("missing ZIP64 directory end")
+	}
+	recordSize := binary.LittleEndian.Uint64(body[offset+4 : offset+12])
+	if recordSize < 44 || recordSize > uint64(locatorOffset-offset-12) || offset+12+int(recordSize) != locatorOffset {
+		return zipDirectoryMetadata{}, 0, errors.New("invalid ZIP64 directory end size")
+	}
+	if binary.LittleEndian.Uint32(body[offset+16:offset+20]) != 0 || binary.LittleEndian.Uint32(body[offset+20:offset+24]) != 0 {
+		return zipDirectoryMetadata{}, 0, errors.New("multi-disk ZIP64 is unsupported")
+	}
+	recordsOnDisk := binary.LittleEndian.Uint64(body[offset+24 : offset+32])
+	records := binary.LittleEndian.Uint64(body[offset+32 : offset+40])
+	if recordsOnDisk != records {
+		return zipDirectoryMetadata{}, 0, errors.New("inconsistent ZIP64 entry count")
+	}
+	return zipDirectoryMetadata{
+		records: records,
+		size:    binary.LittleEndian.Uint64(body[offset+40 : offset+48]),
+		offset:  binary.LittleEndian.Uint64(body[offset+48 : offset+56]),
+	}, offset, nil
 }
 
 func decodeDocumentText(content []byte) (string, string) {

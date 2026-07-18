@@ -66,10 +66,12 @@ opinion when:
 - the opinion is needed but exists only in the standalone report body.
 
 The guide does not define a stable ZIP-member schema for auditor extraction.
-Preserve the source archive, bound extraction, and treat document parsing as an
-empirical adapter rather than as a documented OpenAPI field contract. Older
-documents may also require a CP949 decoding fallback even when their declaration
-suggests UTF-8.
+Callers that need source retention must preserve the archive outside the
+sanitized probe workflow, bound extraction, and treat document parsing as an
+empirical adapter rather than as a documented OpenAPI field contract. Never
+commit or log a raw archive or add one to the evidence manifest. Older documents
+may also require a CP949 decoding fallback even when their declaration suggests
+UTF-8.
 
 See the canonical [original-document path](../../openapi/paths/ds001/document.xml.yaml).
 

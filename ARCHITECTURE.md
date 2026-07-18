@@ -98,12 +98,15 @@ source-controlled member paths; this empirical adapter also accommodates the
 observed non-contract media type and CP949-compatible content.
 
 `internal/liveprobe` confines the live-only HTTP policy shared by both probes.
-OpenDART currently requires a TLS 1.2 RSA key-exchange suite that modern Go does
-not enable by default. The probe client adds only the required AES-GCM suite
-to Go's secure suite set; this compatibility path lacks forward secrecy and
-must not be reused by released SDK or general application transport. Ambient
-HTTP proxies are disabled because authenticated query parameters must go only
-to the fixed OpenDART origin.
+On 2026-07-18, the live OpenDART origin required a TLS 1.2 RSA key-exchange
+suite that modern Go does not enable by default. The probe client adds only the
+required AES-GCM suite to Go's secure suite set; this compatibility path lacks
+forward secrecy and must not be reused by released SDK or general application
+transport. Re-test the origin with Go's default transport whenever the dated
+live evidence is refreshed or the Go toolchain changes, and remove the
+exception as soon as the default handshake succeeds. Ambient HTTP proxies are
+disabled because authenticated query parameters must go only to the fixed
+OpenDART origin.
 
 ## Code map
 

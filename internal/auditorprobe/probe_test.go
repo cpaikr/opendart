@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"io"
 	"net/http"
@@ -212,6 +213,33 @@ func TestArchiveInspectionLimitsAndDecoding(t *testing.T) {
 		}
 	})
 
+	t.Run("understated classic directory count", func(t *testing.T) {
+		_, err := inspectArchive(understatedZIPDirectoryFixture(maxArchiveEntries+1), "firm")
+		if err == nil || !strings.Contains(err.Error(), "entry-count") {
+			t.Fatalf("error = %v", err)
+		}
+	})
+
+	t.Run("understated classic directory size", func(t *testing.T) {
+		_, err := inspectArchive(understatedZIPDirectorySizeFixture(2), "firm")
+		if err == nil || !strings.Contains(err.Error(), "valid ZIP archive") {
+			t.Fatalf("error = %v", err)
+		}
+	})
+
+	t.Run("zip64 entry count", func(t *testing.T) {
+		_, err := inspectArchive(zip64EntryCountFixture(maxArchiveEntries+1), "firm")
+		if err == nil || !strings.Contains(err.Error(), "entry-count") {
+			t.Fatalf("error = %v", err)
+		}
+	})
+
+	t.Run("bounded zip64 directory", func(t *testing.T) {
+		if err := preflightZIPDirectory(boundedZIP64DirectoryFixture()); err != nil {
+			t.Fatalf("preflight error = %v", err)
+		}
+	})
+
 	t.Run("member size", func(t *testing.T) {
 		archive := zipFixture(t, map[string][]byte{"large.xml": bytes.Repeat([]byte("x"), maxArchiveMember+1)})
 		_, err := inspectArchive(archive, "firm")
@@ -219,6 +247,33 @@ func TestArchiveInspectionLimitsAndDecoding(t *testing.T) {
 			t.Fatalf("error = %v", err)
 		}
 	})
+}
+
+func TestSearchRejectsDuplicateReceiptAcrossPages(t *testing.T) {
+	filing := FilingEvidence{
+		CorpCode: nuga.CorpCode, CorpName: nuga.Name, ReportName: "감사보고서 (2020.12)",
+		ReceiptNumber: "20210330000002", FilerName: "삼정회계법인", ReceiptDate: "20210330",
+	}
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		page, err := strconv.Atoi(request.URL.Query().Get("page_no"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		body := []byte(listBody(page, 2, 2, []FilingEvidence{filing}))
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(bytes.NewReader(body)),
+			Request:    request,
+		}, nil
+	})}
+	_, err := observeSearch(context.Background(), dependencies{
+		client: client, validate: &recordingValidator{}, wait: func(context.Context, time.Duration) error { return nil },
+		key: testKey, origin: apiOrigin,
+	}, &requestBudget{maximum: 2}, searchCases[0])
+	if err == nil || !strings.Contains(err.Error(), "invalid filing identity") {
+		t.Fatalf("error = %v", err)
+	}
 }
 
 func TestDocumentSelectionIsDeterministic(t *testing.T) {
@@ -432,6 +487,68 @@ func zipFixture(t *testing.T, entries map[string][]byte) []byte {
 		t.Fatal(err)
 	}
 	return buffer.Bytes()
+}
+
+func understatedZIPDirectoryFixture(entries int) []byte {
+	directorySize := entries * zipDirectoryHeaderLength
+	body := make([]byte, directorySize+zipDirectoryEndLength)
+	for index := 0; index < entries; index++ {
+		binary.LittleEndian.PutUint32(body[index*zipDirectoryHeaderLength:], zipDirectoryHeaderSignature)
+	}
+	end := body[directorySize:]
+	binary.LittleEndian.PutUint32(end, zipDirectoryEndSignature)
+	binary.LittleEndian.PutUint16(end[8:], 1)
+	binary.LittleEndian.PutUint16(end[10:], 1)
+	binary.LittleEndian.PutUint32(end[12:], uint32(directorySize))
+	return body
+}
+
+func understatedZIPDirectorySizeFixture(entries int) []byte {
+	body := understatedZIPDirectoryFixture(entries)
+	end := body[entries*zipDirectoryHeaderLength:]
+	binary.LittleEndian.PutUint32(end[12:], zipDirectoryHeaderLength)
+	return body
+}
+
+func zip64EntryCountFixture(entries int) []byte {
+	body := make([]byte, zipDirectory64EndLength+zipDirectory64LocLength+zipDirectoryEndLength)
+	binary.LittleEndian.PutUint32(body, zipDirectory64EndSignature)
+	binary.LittleEndian.PutUint64(body[4:], 44)
+	binary.LittleEndian.PutUint64(body[24:], uint64(entries))
+	binary.LittleEndian.PutUint64(body[32:], uint64(entries))
+	locator := body[zipDirectory64EndLength:]
+	binary.LittleEndian.PutUint32(locator, zipDirectory64LocSignature)
+	binary.LittleEndian.PutUint32(locator[16:], 1)
+	end := locator[zipDirectory64LocLength:]
+	binary.LittleEndian.PutUint32(end, zipDirectoryEndSignature)
+	binary.LittleEndian.PutUint16(end[8:], 0xffff)
+	binary.LittleEndian.PutUint16(end[10:], 0xffff)
+	binary.LittleEndian.PutUint32(end[12:], 0xffffffff)
+	binary.LittleEndian.PutUint32(end[16:], 0xffffffff)
+	return body
+}
+
+func boundedZIP64DirectoryFixture() []byte {
+	const directorySize = zipDirectoryHeaderLength
+	body := make([]byte, directorySize+zipDirectory64EndLength+zipDirectory64LocLength+zipDirectoryEndLength)
+	binary.LittleEndian.PutUint32(body, zipDirectoryHeaderSignature)
+	zip64 := body[directorySize:]
+	binary.LittleEndian.PutUint32(zip64, zipDirectory64EndSignature)
+	binary.LittleEndian.PutUint64(zip64[4:], 44)
+	binary.LittleEndian.PutUint64(zip64[24:], 1)
+	binary.LittleEndian.PutUint64(zip64[32:], 1)
+	binary.LittleEndian.PutUint64(zip64[40:], directorySize)
+	locator := zip64[zipDirectory64EndLength:]
+	binary.LittleEndian.PutUint32(locator, zipDirectory64LocSignature)
+	binary.LittleEndian.PutUint64(locator[8:], directorySize)
+	binary.LittleEndian.PutUint32(locator[16:], 1)
+	end := locator[zipDirectory64LocLength:]
+	binary.LittleEndian.PutUint32(end, zipDirectoryEndSignature)
+	binary.LittleEndian.PutUint16(end[8:], 0xffff)
+	binary.LittleEndian.PutUint16(end[10:], 0xffff)
+	binary.LittleEndian.PutUint32(end[12:], 0xffffffff)
+	binary.LittleEndian.PutUint32(end[16:], 0xffffffff)
+	return body
 }
 
 func responseClient(contentType string, body []byte) *http.Client {

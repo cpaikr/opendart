@@ -97,10 +97,8 @@ func validateEvidence(report Report) error {
 			status == "013" && (observation.RowCount != 0 || observation.PlaceholderCount != 0 || len(observation.ReceiptNumbers) != 0 || len(observation.DistinctAuditors) != 0 || len(observation.DistinctOpinions) != 0) {
 			return fmt.Errorf("auditor evidence structured response %d has inconsistent row counts", index)
 		}
-		for _, receipt := range observation.ReceiptNumbers {
-			if !validReceiptNumber(receipt) {
-				return fmt.Errorf("auditor evidence structured response %d has an invalid receipt number", index)
-			}
+		if !validSortedReceiptSet(observation.ReceiptNumbers) || !validSortedSubstantiveSet(observation.DistinctAuditors) || !validSortedSubstantiveSet(observation.DistinctOpinions) {
+			return fmt.Errorf("auditor evidence structured response %d has invalid distinct values", index)
 		}
 	}
 	for index, observation := range report.Searches {
@@ -113,6 +111,7 @@ func validateEvidence(report Report) error {
 		}
 		used += len(observation.Pages)
 		expectedTotal, observedRows := -1, 0
+		seenReceipts := make(map[string]bool)
 		for pageIndex, page := range observation.Pages {
 			wantPage := pageIndex + 1
 			want := RequestCoordinate{
@@ -148,9 +147,10 @@ func validateEvidence(report Report) error {
 				}
 				observedRows += len(page.Filings)
 				for _, filing := range page.Filings {
-					if filing.CorpCode != observation.CorpCode || !validReceiptNumber(filing.ReceiptNumber) {
+					if filing.CorpCode != observation.CorpCode || !validReceiptNumber(filing.ReceiptNumber) || seenReceipts[filing.ReceiptNumber] {
 						return fmt.Errorf("auditor evidence search %d contains an invalid filing", index)
 					}
+					seenReceipts[filing.ReceiptNumber] = true
 				}
 			default:
 				return fmt.Errorf("auditor evidence search %d has an unexpected API status", index)
@@ -166,9 +166,13 @@ func validateEvidence(report Report) error {
 	}{
 		{nuga, "2015"}, {nuga, "2020"}, {nuga, "2025"}, {lotte, "2024"},
 	}
+	canonicalSelections, err := documentSelections(report.Structured, report.Searches)
+	if err != nil || len(canonicalSelections) != len(report.Documents) {
+		return errors.New("auditor evidence document selections could not be reproduced")
+	}
 	for index, document := range report.Documents {
 		want := wantDocuments[index]
-		if document.Selection.CompanyName != want.company.Name || document.Selection.ReportPeriod != want.period || !validReceiptNumber(document.Selection.ReceiptNumber) || document.Selection.ExpectedFirm == "" {
+		if document.Selection != canonicalSelections[index] || document.Selection.CompanyName != want.company.Name || document.Selection.ReportPeriod != want.period || !validReceiptNumber(document.Selection.ReceiptNumber) || document.Selection.ExpectedFirm == "" {
 			return fmt.Errorf("auditor evidence document %d is not canonical", index)
 		}
 		coordinate := RequestCoordinate{
@@ -184,13 +188,6 @@ func validateEvidence(report Report) error {
 		if document.Response.HTTPStatus != 200 || document.Response.APIStatus != nil {
 			return fmt.Errorf("auditor evidence document %d has unexpected response status", index)
 		}
-		if index < 3 {
-			if document.Selection.SelectionBasis != "latest-receipt-matching-report-period-from-F001-or-F002" || !evidenceContainsFiling(report.Searches, nuga.CorpCode, want.period, document.Selection.ReceiptNumber, document.Selection.ExpectedFirm) {
-				return fmt.Errorf("auditor evidence document %d selection is not supported by disclosure search", index)
-			}
-		} else if document.Selection.SelectionBasis != "greatest-receipt-from-2024-annual-structured-result" || document.Selection.ExpectedFirm != "안진회계법인" || !evidenceContainsReceipt(report.Structured, lotte.CorpCode, document.Selection.ReceiptNumber) {
-			return errors.New("auditor evidence Lotte document selection is not supported by structured results")
-		}
 		if document.ArchiveBytes != document.Response.BodyBytes || document.ArchiveSHA256 != document.Response.BodySHA256 ||
 			document.EntryCount != len(document.Entries) || document.EntryCount == 0 || document.EntryCount > maxArchiveEntries ||
 			document.ExpandedBytes <= 0 || document.ExpandedBytes > maxArchiveExpanded || document.ExpectedMatches <= 0 || document.SectionMarkers <= 0 ||
@@ -201,6 +198,8 @@ func validateEvidence(report Report) error {
 		expectedMatches, sectionMarkers := 0, 0
 		for _, entry := range document.Entries {
 			if entry.Name == "" || entry.ExpandedBytes > maxArchiveMember || entry.CompressedBytes > uint64(document.ArchiveBytes) ||
+				entry.ExpectedFirmMatches < 0 || entry.AuditorSectionMarkerMatches < 0 ||
+				uint64(entry.ExpectedFirmMatches) > entry.ExpandedBytes || uint64(entry.AuditorSectionMarkerMatches) > entry.ExpandedBytes ||
 				!validSHA256(entry.NameSHA256) || !validSHA256(entry.ContentSHA256) || !slices.Contains([]string{"utf-8", "cp949-compatible", "binary-or-unsupported"}, entry.Decoding) {
 				return fmt.Errorf("auditor evidence document %d has invalid entry evidence", index)
 			}
@@ -225,29 +224,22 @@ func validateEvidence(report Report) error {
 	return nil
 }
 
-func evidenceContainsFiling(searches []SearchObservation, corpCode, period, receipt, firm string) bool {
-	for _, search := range searches {
-		if search.CorpCode != corpCode {
-			continue
-		}
-		for _, page := range search.Pages {
-			for _, filing := range page.Filings {
-				if filing.ReceiptNumber == receipt && filing.FilerName == firm && strings.Contains(filing.ReportName, period) {
-					return true
-				}
-			}
+func validSortedReceiptSet(values []string) bool {
+	for index, value := range values {
+		if !validReceiptNumber(value) || index > 0 && values[index-1] >= value {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
-func evidenceContainsReceipt(observations []StructuredObservation, corpCode, receipt string) bool {
-	for _, observation := range observations {
-		if observation.Request.CorpCode == corpCode && slices.Contains(observation.ReceiptNumbers, receipt) {
-			return true
+func validSortedSubstantiveSet(values []string) bool {
+	for index, value := range values {
+		if isPlaceholder(value) || strings.TrimSpace(value) != value || index > 0 && values[index-1] >= value {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func validateResponseEvidence(evidence ResponseEvidence, maximumBody int) error {
