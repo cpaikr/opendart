@@ -1,0 +1,18 @@
+type: object
+required:
+  - status
+  - corp_name
+properties:
+  status:
+    type: string
+    pattern: "^[0-9]{3}$"
+  corp_name:
+    type: string
+    minLength: 1
+additionalProperties: false
+xml:
+  nodeType: element
+  name: result
+x-opendart:
+  schemaStatus: source-derived-unverified
+  sourceRootKey: result

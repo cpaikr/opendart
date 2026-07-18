@@ -10,12 +10,13 @@
     "sync:opendart": "node scripts/sync-opendart.mjs",
     "probe:opendart-multi-company": "node scripts/probe-multi-company.mjs",
     "test:opendart": "node --test scripts/*.test.mjs",
+    "test:go-compatibility": "go test ./... && go run ./cmd/opendart-tool compatibility --root openapi/openapi.yaml --baseline openapi/generated/openapi.bundle.yaml",
     "check:opendart": "node scripts/check-opendart.mjs",
     "lint:opendart": "redocly lint openapi/openapi.yaml --config openapi/redocly.yaml --lint-config error --max-problems 1000",
     "bundle:opendart": "redocly bundle openapi/openapi.yaml --config openapi/redocly.yaml --output openapi/generated/openapi.bundle.yaml --component-renaming-conflicts-severity error",
     "check:opendart-bundle": "node scripts/check-opendart-bundle.mjs",
     "lint:opendart-bundle": "redocly lint openapi/generated/openapi.bundle.yaml --config openapi/redocly.yaml --lint-config error --max-problems 1000",
-    "verify:opendart": "npm run test:opendart && npm run check:opendart && npm run lint:opendart && npm run check:opendart-bundle && npm run lint:opendart-bundle"
+    "verify:opendart": "npm run test:opendart && npm run check:opendart && npm run lint:opendart && npm run check:opendart-bundle && npm run lint:opendart-bundle && npm run test:go-compatibility"
   },
   "devDependencies": {
     "@redocly/cli": "2.39.0",

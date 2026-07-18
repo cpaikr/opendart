@@ -30,6 +30,13 @@ Specification refresh is a deliberate local network operation. Pull-request
 verification does not refresh from OpenDART, and release automation publishes
 only the committed bundle after the offline gate passes.
 
+The Go migration is active but has not cut over a repository command.
+`cmd/opendart-tool` is the single internal CLI, and `internal/openapi` isolates
+the selected OpenAPI libraries behind repository-owned types. Its compatibility
+gate runs alongside the authoritative Node/Redocly verification and proves the
+accepted contract can be loaded, validated, rendered, bundled, and compared
+without OpenDART access.
+
 ## Runtime flows
 
 ### Refresh and bundle
@@ -76,6 +83,11 @@ scheduled GitHub workflow.
 - `openapi/generated/openapi.bundle.yaml` is the portable release interface.
 - Start with `package.json` for the current command surface. The corresponding
   implementations and offline tests live in `scripts/`.
+- Start with `cmd/opendart-tool/main.go` for the migrating Go command surface.
+  `internal/openapi` owns third-party OpenAPI types, confined reference loading,
+  semantic comparison, representative lint and response validation.
+  `internal/guide` contains the bounded HTML extraction compatibility surface
+  that ordered work 2 will extend into the complete guide model.
 - `scripts/sync-opendart.mjs` owns guide acquisition, normalization, generation,
   staged validation, and publication. `scripts/check-opendart.mjs` owns catalog
   and source-fidelity invariants. `scripts/check-opendart-bundle.mjs` owns bundle
@@ -99,6 +111,8 @@ scheduled GitHub workflow.
 - Bundle generation is explicit after refresh, and verification requires the
   committed bundle to match a fresh build byte for byte.
 - Offline verification makes no OpenDART request and requires no API key.
+- Third-party OpenAPI types do not cross `internal/openapi`; reference loading
+  is local-only and physically confined to the selected specification tree.
 - The focused probe receives its key only from `OPENDART_API_KEY`; its output
   never contains the key, an authenticated URL, or an unrestricted response
   body.
@@ -107,11 +121,11 @@ scheduled GitHub workflow.
 - No current automation modifies the specification from guide drift or live API
   observations. Specification changes remain reviewed repository changes.
 
-## Planned direction
+## Migration direction
 
-[ADR 0001](docs/decisions/0001-go-repository-tooling.md) accepts migration of
-repository-owned tooling from Node.js to one internal Go CLI. The active
-[migration](docs/plans/go-tooling-migration.md),
+[ADR 0001](docs/decisions/0001-go-repository-tooling.md) governs the active
+migration of repository-owned tooling from Node.js to one internal Go CLI. The
+remaining [migration](docs/plans/go-tooling-migration.md),
 [guide-drift](docs/plans/guide-drift.md), and
-[live-conformance](docs/plans/live-conformance.md) plans describe work that is
-not part of the current runtime.
+[live-conformance](docs/plans/live-conformance.md) plans define work not yet
+part of the current runtime.
