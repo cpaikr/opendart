@@ -52,6 +52,24 @@ func TestTrustedGuideURL(t *testing.T) {
 	}
 }
 
+func TestTrustedGuideURLRedactsRejectedCredentials(t *testing.T) {
+	t.Parallel()
+	_, err := trustedGuideURL("https://user:secret@evil.example/guide/main.do?token=private", "")
+	var source *SourceError
+	if !errors.As(err, &source) {
+		t.Fatalf("error = %v", err)
+	}
+	diagnostic := fmt.Sprintf("%v", source.Context)
+	for _, secret := range []string{"user", "secret", "private", "token"} {
+		if strings.Contains(diagnostic, secret) {
+			t.Fatalf("diagnostic %q contains %q", diagnostic, secret)
+		}
+	}
+	if source.Context["host"] != "evil.example" || source.Context["path"] != "/guide/main.do" {
+		t.Fatalf("context = %#v", source.Context)
+	}
+}
+
 func TestEndpointIdentityRequiresSingleMatchingParameters(t *testing.T) {
 	t.Parallel()
 	sourceURL, group, apiID, err := endpointIdentity("/guide/detail.do?apiGrpCd=DS001&apiId=2019001&view=full", "DS001")

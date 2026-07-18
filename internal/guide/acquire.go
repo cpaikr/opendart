@@ -310,7 +310,7 @@ func trustedGuideURL(value, expectedPath string) (*url.URL, error) {
 	base, _ := url.Parse(guideOrigin)
 	parsed, err := url.Parse(value)
 	if err != nil {
-		return nil, sourceError("OpenDART guide URL is invalid", map[string]any{"value": value}, err)
+		return nil, sourceError("OpenDART guide URL is invalid", map[string]any{"expectedPath": expectedPath}, err)
 	}
 	resolved := base.ResolveReference(parsed)
 	_, pathAllowed := guideFetchPaths[resolved.Path]
@@ -319,7 +319,7 @@ func trustedGuideURL(value, expectedPath string) (*url.URL, error) {
 	}
 	if resolved.Scheme != "https" || resolved.Host != "opendart.fss.or.kr" || resolved.User != nil || resolved.Fragment != "" || resolved.Opaque != "" || !pathAllowed {
 		return nil, sourceError("OpenDART guide URL is outside the trusted guide surface", map[string]any{
-			"url": resolved.String(), "expectedPath": expectedPath,
+			"scheme": resolved.Scheme, "host": resolved.Hostname(), "path": resolved.Path, "expectedPath": expectedPath,
 		}, nil)
 	}
 	return resolved, nil
