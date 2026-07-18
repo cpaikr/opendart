@@ -11,17 +11,18 @@ language decision is recorded in
 ## Current state
 
 - The Go CLI is authoritative for guide acquisition, normalization, generation,
-  staged validation orchestration, guarded publication, and rollback. The
-  canonical `sync:opendart` command has cut over once.
-- Node.js and Redocly remain authoritative for catalog and reference checks,
-  lint, bundle creation and freshness, release-configuration checks, and the
-  focused multi-company probe.
-- The internal Go CLI and OpenAPI boundary are committed as an additive
-  compatibility gate. Representative extraction, lint, JSON, XML, and ZIP
-  fixtures plus the accepted multi-file OpenAPI 3.2 contract and Redocly bundle
-  pass without OpenDART credentials.
-- Pull-request and manual verification run the Node.js and Redocly baseline plus
-  the Go compatibility gate. Credential-free verification has not cut over yet.
+  staged validation orchestration, guarded publication, rollback, catalog and
+  reference checks, strict linting, deterministic bundling and freshness, and
+  release/workflow guards. Canonical synchronization and offline verification
+  have cut over once.
+- Node.js remains authoritative only for the focused multi-company probe and
+  its offline tests. The superseded Node and Redocly verification paths remain
+  dormant parity scaffolding until final removal.
+- Pull-request, manual, and release verification use the credential-free Go
+  repository verifier. The accepted multi-file OpenAPI 3.2 contract and Go
+  bundle pass the Go policies plus retained Node catalog, Redocly lint, and
+  semantic parity checks without OpenDART credentials. The superseded Redocly
+  byte-freshness check intentionally rejects the approved Go formatting.
 - [Guide drift](guide-drift.md) and [live conformance](live-conformance.md) are
   committed follow-on work. They depend on the Go OpenAPI and reporting
   foundations but retain separate network, credential, and issue boundaries.
@@ -61,9 +62,9 @@ once and automation never closes an issue.
    staged validation, owned-output safeguards, and failure rollback. Compare a
    complete staged refresh with the accepted artifacts before switching
    synchronization.
-3. Port catalog and reference checks, lint coverage, bundling, freshness, and
-   workflow and release guards. Switch local documentation and credential-free
-   CI after parity is demonstrated.
+3. **Complete.** Port catalog and reference checks, lint coverage, bundling,
+   freshness, and workflow and release guards. Switch local documentation and
+   credential-free CI after parity is demonstrated.
 4. Add the shared report and HTTP safety boundaries needed by the drift and
    live plans. Replace the focused Node.js probe through the live-conformance
    work before removing it.
@@ -87,9 +88,9 @@ once and automation never closes an issue.
 
 ## Next action
 
-Port catalog and reference checks, lint coverage, bundling, freshness, workflow
-and release guards. Demonstrate parity before switching local verification,
-documentation, and credential-free CI.
+Begin ordered work 4 by adding the shared bounded report and HTTP safety
+boundaries for drift and live conformance. This plan intentionally stops after
+the completed verification cutover until that work is explicitly started.
 
 ## Progress log
 
@@ -105,3 +106,10 @@ documentation, and credential-free CI.
   catalog and Redocly validation, owned-output publication, and rollback. A
   complete live refresh matched the accepted OpenAPI source with zero semantic
   changes, and `sync:opendart` cut over once to the Go CLI.
+- 2026-07-18: Completed ordered work 3. Ported catalog and confined-reference
+  checks, strict linting, release/workflow guards, staged validation, composed
+  bundling, exact freshness, and the offline repository verifier. The reviewed
+  Go bundle has zero semantic changes from the accepted contract; retained Node
+  catalog and Redocly lint checks pass, while the obsolete Redocly byte check is
+  intentionally superseded. Local and credential-free CI commands now use the
+  Go verifier. Ordered work 4 and 5 remain unstarted.

@@ -20,10 +20,8 @@ of the upstream guide snapshot; they do not imply that OpenDART follows SemVer.
 
 Each operation records its official guide URL, group code, API ID, source
 tables, and check date under `x-opendart`. The root document, its referenced
-fragments, and the
-[`check:opendart` catalog check](scripts/check-opendart.mjs) are the inventory
-source of truth. Avoid copying volatile endpoint or field totals into
-documentation.
+fragments, and the Go `catalog` validation command are the inventory source of
+truth. Avoid copying volatile endpoint or field totals into documentation.
 
 ## Source fidelity
 
@@ -66,8 +64,9 @@ collection analysis.
 
 ## Refresh and verify
 
-The current repository tooling requires the Go version declared in `go.mod`,
-Node.js `>=22.12.0` or `20.19.x`, and npm `>=10`:
+The repository tooling requires the Go version declared in `go.mod`. Node.js
+`>=22.12.0` or `20.19.x` and npm `>=10` remain temporarily required only for
+the focused multi-company probe and its offline tests:
 
 ```sh
 npm ci --ignore-scripts
@@ -77,10 +76,11 @@ npm run verify:opendart
 ```
 
 `sync:opendart` runs the internal Go CLI, refreshes the canonical files from the
-public guide through validated staging and owned-output publication, and
-invalidates the old bundle. `bundle:opendart` rebuilds the portable artifact.
-`verify:opendart` runs the script tests, catalog and reference checks, strict
-linting, and a byte-for-byte bundle freshness check.
+public guide through in-process validated staging and owned-output publication,
+and invalidates the old bundle. `bundle:opendart` deterministically rebuilds the
+portable artifact. `verify:opendart` runs the focused probe's offline tests, Go
+tests, catalog and confined-reference checks, strict linting, release/workflow
+guards, and a byte-for-byte bundle freshness check.
 
 Generated OpenAPI files are reviewed artifacts. Do not edit them by hand; change
 the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is

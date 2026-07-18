@@ -24,7 +24,9 @@ jobs:
           node-version: 22.12.0
           cache: npm
 
-      - name: Install dependencies
+      # The focused multi-company probe's offline unit tests are the only
+      # remaining Node.js responsibility in this gate.
+      - name: Install focused probe dependencies
         run: npm ci --ignore-scripts
 
       - name: Set up Go
