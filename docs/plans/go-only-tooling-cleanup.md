@@ -16,9 +16,12 @@ guide-drift automation or the general
 
 - The Go CLI owns guide synchronization, catalog and reference validation,
   strict linting, deterministic bundling and freshness, offline verification,
-  and release/workflow guards.
-- `scripts/probe-multi-company.mjs` and its offline tests retain the only active
-  repository-owned Node.js behavior.
+  release/workflow guards, and an additive focused multi-company probe.
+- The Go probe preserves the existing ten-request sequence, OpenAPI-backed
+  response checks, endpoint assertions, pacing, one-attempt HTTP policy, and
+  allowlisted report, with bounded response bodies and offline HTTP coverage.
+- `scripts/probe-multi-company.mjs` remains the operational probe only until
+  the second delivery slice cuts current entry points over to Go.
 - `package.json` is both the probe dependency manifest and a command alias
   layer over the Go CLI. The remaining Node and Redocly scripts are dormant
   migration scaffolding.
@@ -73,7 +76,7 @@ go run ./cmd/opendart-tool verify --repository-root .
 
 ## Ordered work
 
-### 1. Port the focused probe with temporary parity
+### 1. **Complete.** Port the focused probe with temporary parity
 
 - Add the Go CLI command and a focused internal module with a small
   `Run`-style interface returning the sanitized report.
@@ -126,6 +129,12 @@ go run ./cmd/opendart-tool verify --repository-root .
 - Leave guide drift, the general live operation matrix, credentialed workflow,
   issue notification, and production promotion for their dedicated plans.
 
+## Next action
+
+Land the additive probe slice into `dev`. Then start the second slice from that
+merged state, cut current documentation and CI directly to Go, and remove the
+superseded Node/npm/Redocly and temporary compatibility surfaces.
+
 ## Acceptance criteria
 
 - One internal Go CLI owns every repository-operated command, including the
@@ -172,3 +181,12 @@ Stop when the repository-owned toolchain is Go-only and this plan is complete.
 Do not continue into scheduled guide drift, the general live-conformance
 matrix, credential or notifier configuration, or promotion from `dev` to
 `main`.
+
+## Progress log
+
+- 2026-07-18: Completed the additive focused-probe slice. Added the Go command
+  and narrow internal module, preserved the fixed request matrix, assertions,
+  pacing, one-attempt policy, and sanitized report, added bounded-body and
+  OpenAPI response checks, and passed both the original Node 22.12.0 tests and
+  the Go race-enabled suite. No credential was available for an optional live
+  comparison; the cutover and deletion slice remains next.

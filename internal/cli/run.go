@@ -12,6 +12,7 @@ import (
 	"time"
 
 	guidesync "github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/verification"
 )
@@ -39,6 +40,8 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runBundle(args[1:], stdout, stderr)
 	case "verify":
 		return runVerify(args[1:], stdout, stderr)
+	case "probe-multi-company":
+		return runProbeMultiCompany(ctx, args[1:], stdout, stderr)
 	case "compatibility":
 		return runCompatibility(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
@@ -275,6 +278,59 @@ func writeCommandError(output io.Writer, command string, err error, code int) in
 	return code
 }
 
+type probeMultiCompanyRunner func(context.Context, string) (multicompanyprobe.Report, error)
+
+func runProbeMultiCompany(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		return writeCommandError(stderr, "probe-multi-company", fmt.Errorf("read working directory: %w", err), 1)
+	}
+	repositoryRoot, err := findRepositoryRoot(workingDirectory)
+	if err != nil {
+		return writeCommandError(stderr, "probe-multi-company", err, 1)
+	}
+	return runProbeMultiCompanyWith(ctx, args, stdout, stderr, repositoryRoot, multicompanyprobe.Run)
+}
+
+func runProbeMultiCompanyWith(ctx context.Context, args []string, stdout, stderr io.Writer, repositoryRoot string, runner probeMultiCompanyRunner) int {
+	flags := flag.NewFlagSet("probe-multi-company", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("probe-multi-company", flags, stderr); code != 0 {
+		return code
+	}
+	report, err := runner(ctx, repositoryRoot)
+	if err != nil {
+		var probeError *multicompanyprobe.Error
+		if errors.As(err, &probeError) {
+			diagnostic := struct {
+				Error   string         `json:"error"`
+				Message string         `json:"message"`
+				Context map[string]any `json:"context"`
+			}{Error: "ProbeError", Message: probeError.Message, Context: probeError.Context}
+			if encodeErr := writeJSON(stderr, diagnostic); encodeErr != nil {
+				return 1
+			}
+			return 1
+		}
+		diagnostic := struct {
+			Error   string         `json:"error"`
+			Message string         `json:"message"`
+			Context map[string]any `json:"context"`
+		}{Error: "ProbeError", Message: "Unexpected serialization probe failure", Context: map[string]any{}}
+		if encodeErr := writeJSON(stderr, diagnostic); encodeErr != nil {
+			return 1
+		}
+		return 1
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write probe-multi-company report", err, 1)
+	}
+	return 0
+}
+
 func runCompatibility(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("compatibility", flag.ContinueOnError)
 	flags.SetOutput(stderr)
@@ -317,6 +373,7 @@ func usage(output io.Writer) error {
 		"  lint           apply strict OpenAPI policy",
 		"  bundle         write the portable OpenAPI bundle",
 		"  verify         run credential-free repository verification",
+		"  probe-multi-company  run the focused credentialed serialization probe",
 		"  compatibility  run the temporary OpenAPI migration gate",
 	} {
 		if _, err := fmt.Fprintln(output, line); err != nil {

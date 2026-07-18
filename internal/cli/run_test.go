@@ -12,6 +12,7 @@ import (
 	"time"
 
 	guidesync "github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/verification"
 )
@@ -35,10 +36,85 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "compatibility"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "probe-multi-company", "compatibility"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
+	}
+}
+
+func TestRunProbeMultiCompany(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	report := multicompanyprobe.Report{SchemaVersion: 1, RequestCount: 10}
+	code := runProbeMultiCompanyWith(context.Background(), nil, &stdout, &stderr, "/repository", func(_ context.Context, root string) (multicompanyprobe.Report, error) {
+		if root != "/repository" {
+			t.Fatalf("root = %q", root)
+		}
+		return report, nil
+	})
+	if code != 0 || stderr.Len() != 0 {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+	var actual multicompanyprobe.Report
+	if err := json.Unmarshal(stdout.Bytes(), &actual); err != nil {
+		t.Fatal(err)
+	}
+	if actual.SchemaVersion != 1 || actual.RequestCount != 10 {
+		t.Fatalf("report = %#v", actual)
+	}
+}
+
+func TestRunProbeMultiCompanyEmitsSanitizedDiagnostic(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runProbeMultiCompanyWith(context.Background(), nil, &stdout, &stderr, "/repository", func(context.Context, string) (multicompanyprobe.Report, error) {
+		return multicompanyprobe.Report{}, &multicompanyprobe.Error{Message: "request failed", Context: map[string]any{"endpoint": "fnlttMultiAcnt"}}
+	})
+	if code != 1 || stdout.Len() != 0 {
+		t.Fatalf("code = %d, stdout = %q", code, stdout.String())
+	}
+	var diagnostic struct {
+		Error   string         `json:"error"`
+		Message string         `json:"message"`
+		Context map[string]any `json:"context"`
+	}
+	if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostic.Error != "ProbeError" || diagnostic.Message != "request failed" || diagnostic.Context["endpoint"] != "fnlttMultiAcnt" {
+		t.Fatalf("diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestRunProbeMultiCompanyRejectsArguments(t *testing.T) {
+	var stderr bytes.Buffer
+	code := runProbeMultiCompanyWith(context.Background(), []string{"unexpected"}, &bytes.Buffer{}, &stderr, "/repository", func(context.Context, string) (multicompanyprobe.Report, error) {
+		t.Fatal("runner should not be called")
+		return multicompanyprobe.Report{}, nil
+	})
+	if code != 2 || !strings.Contains(stderr.String(), "does not accept positional arguments") {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+}
+
+func TestRunProbeMultiCompanyHidesUnexpectedErrors(t *testing.T) {
+	var stderr bytes.Buffer
+	code := runProbeMultiCompanyWith(context.Background(), nil, &bytes.Buffer{}, &stderr, "/repository", func(context.Context, string) (multicompanyprobe.Report, error) {
+		return multicompanyprobe.Report{}, errors.New("unexpected secret and authenticated URL")
+	})
+	if code != 1 || strings.Contains(stderr.String(), "unexpected secret") || !strings.Contains(stderr.String(), "Unexpected serialization probe failure") {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+}
+
+func TestRunProbeMultiCompanyReportsOutputFailure(t *testing.T) {
+	var stderr bytes.Buffer
+	code := runProbeMultiCompanyWith(context.Background(), nil, failingWriter{}, &stderr, "/repository", func(context.Context, string) (multicompanyprobe.Report, error) {
+		return multicompanyprobe.Report{SchemaVersion: 1}, nil
+	})
+	if code != 1 || !strings.Contains(stderr.String(), "write probe-multi-company report") {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
 	}
 }
 
