@@ -29,6 +29,18 @@ func TestRunRejectsUnknownCommand(t *testing.T) {
 	}
 }
 
+func TestRunRejectsRetiredCompatibilityCommand(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	if code := Run([]string{"compatibility"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("Run() code = %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), `unknown command "compatibility"`) {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
 func TestRunPrintsHelp(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
