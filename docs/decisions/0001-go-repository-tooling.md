@@ -33,9 +33,21 @@ module and workflow are committed.
 
 The specification boundary owns OpenAPI loading, references, rendering,
 bundling, validation, and comparison. External OpenAPI library types do not
-cross that boundary. No candidate library is adopted by this decision: the
-compatibility gate in the migration plan determines whether each candidate is
-acceptable.
+cross that boundary. The compatibility gate selected
+`github.com/pb33f/libopenapi` for OpenAPI 3.2 loading, modeling, rendering,
+bundling, and change detection, with `github.com/pb33f/libopenapi-validator`
+for document and representative JSON and XML response validation. Their types
+remain confined to `internal/openapi`.
+
+The extraction fixture selected `golang.org/x/net/html` for standards-based
+HTML parsing. It remains confined to `internal/guide`; acquisition, guide
+policy, and normalized repository types do not depend on parser nodes.
+
+The repository boundary adds only the gaps proven by the gate: confined,
+offline local-reference checks; comparison normalization for reference layout
+and YAML scalar presentation; a representative response-description lint check
+that document-schema validation does not enforce; and ZIP archive validation
+because OpenAPI schema validation does not inspect archive contents.
 
 Within OpenAPI, guide-supported facts remain distinguishable from explicitly
 labeled empirical observations. Live-test scenarios remain separate typed
@@ -52,9 +64,10 @@ Before the port expands, the migration must prove that the selected components
 preserve the repository's multi-file OpenAPI 3.2 meaning, local references,
 extensions, XML metadata, bundle semantics, and required validation coverage.
 The gate must also establish deterministic output and meaningful semantic
-comparison. A candidate that fails a core requirement is not adopted; an
-isolated capability gap may use a narrow adapter or replacement only when
-coverage remains equal or stronger.
+comparison. The selected components passed the repository's multi-file OpenAPI
+3.2 and accepted-bundle fixtures. A future failure in a core requirement
+requires replacement; an isolated capability gap may use a narrow adapter only
+when coverage remains equal or stronger.
 
 Node.js and Redocly remain authoritative for each command until its Go
 replacement passes parity and cuts over. The migration may make one reviewed

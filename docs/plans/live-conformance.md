@@ -12,13 +12,19 @@ credential-free [guide drift](guide-drift.md).
 
 ## Current state
 
-- `scripts/probe-multi-company.mjs` is a targeted Node.js probe for the existing
-  multi-company serialization decision, with focused offline tests.
-- No Go live runner, complete case inventory, credentialed workflow, or live
-  issue automation is committed.
-- The runner depends on the OpenAPI, HTTP safety, and reporting foundations in
-  the [Go tooling migration](go-tooling-migration.md). The existing probe is the
-  only implemented credentialed command until the general runner replaces it.
+- The focused multi-company probe is ported to the Go CLI with its existing
+  request matrix, assertions, sanitized report, expanded offline HTTP coverage,
+  and direct operational entry point.
+- No general Go live runner, complete case inventory, credentialed workflow, or
+  live issue automation is committed.
+- Lasting Go tests cover OpenAPI loading, semantic comparison, response routing
+  and validation, and representative JSON, XML, and ZIP fixtures. Operation
+  enumeration, request validation, and the shared HTTP safety and reporting
+  foundations remain future work in this plan. The focused Go probe is the only
+  implemented credentialed command until the general runner replaces it.
+- The completed [Go-only cleanup](go-only-tooling-cleanup.md) does not claim
+  completion of the general runner or introduce scheduled credentialed
+  automation.
 
 ## Constraints
 
@@ -52,17 +58,24 @@ credential-free [guide drift](guide-drift.md).
 
 ## Ordered work
 
-1. Complete the Go compatibility gate for operation enumeration, request and
-   response validation, and representative JSON, XML, and ZIP fixtures.
-2. Implement the runner, request budget, representation adapters, typed
-   assertions, sanitized report, and offline HTTP tests.
-3. Curate one primary case for every physical operation, adding typed discovery
+1. **Partially complete.** Lasting Go tests cover OpenAPI loading, semantic
+   comparison, response routing and validation, and representative JSON, XML,
+   and ZIP fixtures. Operation enumeration and request validation remain future
+   work.
+2. **Complete.** Ported the existing focused multi-company probe to Go through
+   the [Go-only cleanup](go-only-tooling-cleanup.md), preserving its cases,
+   assertions, credential isolation, and sanitized report. This remains a
+   focused probe rather than the general runner.
+3. Implement operation enumeration, request validation, the runner, request
+   budget, representation adapters, typed assertions, sanitized report, and
+   offline HTTP tests.
+4. Curate one primary case for every physical operation, adding typed discovery
    only where stable public inputs are impractical. Add a preflight coverage and
    total-budget gate.
-4. Add a manual protected workflow and isolated notifier. Configure the
+5. Add a manual protected workflow and isolated notifier. Configure the
    environment and credential only after offline coverage, budgets, and report
    sanitization have been reviewed.
-5. Run the complete matrix under supervision, inspect logs and artifacts for
+6. Run the complete matrix under supervision, inspect logs and artifacts for
    leakage, and enable the weekly schedule only after the run is accepted.
 
 ## Acceptance criteria
@@ -84,6 +97,7 @@ credential-free [guide drift](guide-drift.md).
 
 ## Next action
 
-Complete the Go compatibility gate, then generate the physical-operation case
-inventory and identify the inputs, discovery dependencies, and assertions that
-need manual curation. Do not configure `OPENDART_API_KEY` yet.
+When general live-conformance work is explicitly started, implement operation
+enumeration, request validation, and the shared HTTP and reporting seams before
+curating the complete case inventory. Do not configure a credentialed workflow
+yet.

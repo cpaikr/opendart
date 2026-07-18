@@ -1,0 +1,144 @@
+- endpointsummary:
+    apigroupcode: DS003
+    apigroupname: 정기보고서 재무정보
+    apiid: "2019017"
+    logicaloperationid: DS003-2019017
+    name: 다중회사 주요계정
+    description: 대상법인 복수조회 가능
+    sourceurl: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2019017
+    groupsourceurl: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS003
+  pageheading: 다중회사 주요계정 개발가이드
+  basicinfo:
+    - method: GET
+      requestUrl: https://opendart.fss.or.kr/api/fnlttMultiAcnt.json
+      encoding: UTF-8
+      outputFormat: JSON
+    - method: GET
+      requestUrl: https://opendart.fss.or.kr/api/fnlttMultiAcnt.xml
+      encoding: UTF-8
+      outputFormat: XML
+  requestarguments:
+    - key: crtfc_key
+      name: API 인증키
+      documentedType: STRING(40)
+      required: Y
+      description: 발급받은 인증키(40자리)
+    - key: corp_code
+      name: 고유번호
+      documentedType: STRING(8)
+      required: Y
+      description: 공시대상회사의 고유번호(8자리)
+    - key: bsns_year
+      name: 사업연도
+      documentedType: STRING(4)
+      required: Y
+      description: 사업연도(4자리)
+    - key: reprt_code
+      name: 보고서 코드
+      documentedType: STRING(5)
+      required: Y
+      description: "보고서 코드(11011: 사업보고서)"
+  responsefields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: 메시지 설명 참조
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+    - sourceIndex: 2
+      key: list
+      name: 목록
+      description: ""
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 3
+      key: corp_code
+      name: 고유번호
+      description: 공시대상회사의 고유번호
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+  referencetables:
+    - title: 보고서 코드
+      headers: [코드, 설명]
+      rows:
+        - ["11011", 사업보고서]
+      normalization: none
+  sectionnotes:
+    - section: OpenAPI 테스트
+      text: 공식 개발가이드 테스트 예시입니다.
+  sourcetableheaders:
+    basicInfo: [메서드, 요청URL, 인코딩, 출력포멧]
+    requestArguments: [요청키, 명칭, 타입, 필수여부, 값설명]
+    responseFields: [응답키, 명칭, 출력설명]
+  guidetestrequestarguments:
+    - key: corp_code
+      value: 00334624,00126380
+  messagecodes: &message_codes
+    - code: "000"
+      description: 정상
+    - code: "010"
+      description: 등록되지 않은 키입니다.
+    - code: "021"
+      description: 조회 가능한 회사 개수가 초과하였습니다.(최대 100건)
+- endpointsummary:
+    apigroupcode: DS001
+    apigroupname: 공시정보
+    apiid: "2019003"
+    logicaloperationid: DS001-2019003
+    name: 공시서류원본파일
+    description: 공시보고서 원본파일을 제공합니다.
+    sourceurl: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019003
+    groupsourceurl: https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001
+  pageheading: 공시서류원본파일 개발가이드
+  basicinfo:
+    - method: GET
+      requestUrl: https://opendart.fss.or.kr/api/document.xml
+      encoding: UTF-8
+      outputFormat: Zip FILE (binary)
+  requestarguments:
+    - key: crtfc_key
+      name: API 인증키
+      documentedType: STRING(40)
+      required: Y
+      description: 발급받은 인증키(40자리)
+    - key: rcept_no
+      name: 접수번호
+      documentedType: STRING(14)
+      required: Y
+      description: 접수번호
+  responsefields:
+    - sourceIndex: 0
+      key: result
+      name: ""
+      description: ""
+      depth: 0
+      sourceIndentClass: mgl05
+      sourceIconClass: iconArrow
+      sourceKind: container
+    - sourceIndex: 1
+      key: status
+      name: 에러 및 정보 코드
+      description: 메시지 설명 참조
+      depth: 1
+      sourceIndentClass: mgl20
+      sourceIconClass: iconFile
+      sourceKind: field
+  sourcetableheaders:
+    basicInfo: [메서드, 요청URL, 인코딩, 출력포멧]
+    requestArguments: [요청키, 명칭, 타입, 필수여부, 값설명]
+    responseFields: [응답키, 명칭, 출력설명]
+  messagecodes: *message_codes

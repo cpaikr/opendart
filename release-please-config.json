@@ -15,8 +15,12 @@
         ".agents",
         ".codex",
         ".github",
+        "ARCHITECTURE.md",
+        "cmd",
         "docs",
-        "scripts"
+        "go.mod",
+        "go.sum",
+        "internal"
       ],
       "draft": true,
       "force-tag-creation": true

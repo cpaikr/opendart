@@ -1,0 +1,12 @@
+get:
+  operationId: get_company_json_fixture
+  responses:
+    "200":
+      description: Representative JSON response
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/company.yaml
+  x-opendart:
+    logicalOperationId: DS001-2019002
+    representation: JSON
