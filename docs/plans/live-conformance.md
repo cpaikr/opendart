@@ -12,19 +12,22 @@ credential-free [guide drift](guide-drift.md).
 
 ## Current state
 
-- `scripts/probe-multi-company.mjs` is a targeted Node.js probe for the existing
-  multi-company serialization decision, with focused offline tests.
-- No Go live runner, complete case inventory, credentialed workflow, or live
-  issue automation is committed.
+- The focused multi-company probe is ported to the Go CLI with its existing
+  request matrix, assertions, sanitized report, and expanded offline HTTP
+  coverage. Its Node predecessor remains only until the tooling cleanup cuts
+  operational entry points over and removes the Node toolchain.
+- No general Go live runner, complete case inventory, credentialed workflow, or
+  live issue automation is committed.
 - The Go compatibility gate covers OpenAPI loading, response routing and
   validation, and representative JSON, XML, and ZIP fixtures. Operation
   enumeration, request validation, and the shared HTTP safety and reporting
   foundations remain future work in the
-  [Go tooling migration](go-tooling-migration.md). The existing probe is the
+  [Go tooling migration](go-tooling-migration.md). The focused Go probe is the
   only implemented credentialed command until the general runner replaces it.
-- The approved [Go-only cleanup](go-only-tooling-cleanup.md) ports that focused
-  probe to Go and removes the Node toolchain without claiming completion of the
-  general runner or introducing scheduled credentialed automation.
+- The approved [Go-only cleanup](go-only-tooling-cleanup.md) now needs only to
+  cut operational entry points over and remove the Node toolchain; it does not
+  claim completion of the general runner or introduce scheduled credentialed
+  automation.
 
 ## Constraints
 
@@ -61,8 +64,8 @@ credential-free [guide drift](guide-drift.md).
 1. **Partially complete.** The Go compatibility gate covers OpenAPI loading,
    response routing and validation, and representative JSON, XML, and ZIP
    fixtures. Operation enumeration and request validation remain future work.
-2. Port the existing focused multi-company probe to Go through the
-   [Go-only cleanup](go-only-tooling-cleanup.md), preserving its current cases,
+2. **Complete.** Ported the existing focused multi-company probe to Go through
+   the [Go-only cleanup](go-only-tooling-cleanup.md), preserving its cases,
    assertions, credential isolation, and sanitized report. This remains a
    focused probe rather than the general runner.
 3. Implement operation enumeration, request validation, the runner, request
@@ -96,8 +99,8 @@ credential-free [guide drift](guide-drift.md).
 
 ## Next action
 
-First complete the focused probe port and Node removal in the
+First complete Node removal and operational cutover in the
 [Go-only cleanup](go-only-tooling-cleanup.md). When general live-conformance
 work is explicitly started afterward, implement operation enumeration, request
-validation, and the shared HTTP and reporting seams before curating the complete
-case inventory. Do not configure a credentialed workflow yet.
+validation, and the shared HTTP and reporting seams before curating the
+complete case inventory. Do not configure a credentialed workflow yet.

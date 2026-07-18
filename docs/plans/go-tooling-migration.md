@@ -15,9 +15,10 @@ language decision is recorded in
   reference checks, strict linting, deterministic bundling and freshness, and
   release/workflow guards. Canonical synchronization and offline verification
   have cut over once.
-- Node.js remains authoritative only for the focused multi-company probe and
-  its offline tests. The superseded Node and Redocly verification paths remain
-  dormant until final removal and do not run in the current verification gate.
+- The focused multi-company probe is implemented in the Go CLI with offline
+  HTTP coverage. Node.js remains the operational entry point only until the
+  final command and CI cutover; the superseded Node and Redocly verification
+  paths remain dormant and do not run in the current verification gate.
 - Pull-request, manual, and release verification use the credential-free Go
   repository verifier. During cutover, the accepted multi-file OpenAPI 3.2
   contract and Go bundle also passed the former Node catalog and Redocly lint
@@ -29,9 +30,9 @@ language decision is recorded in
   future shared reporting implementation, while retaining separate network,
   credential, and issue boundaries.
 - The approved [Go-only cleanup](go-only-tooling-cleanup.md) is the
-  authoritative remaining migration slice: port the focused probe without
-  inventing the general live runner, cut current entry points over to direct Go
-  commands, and delete the superseded Node/npm/Redocly surface.
+  authoritative remaining migration slice. Its additive focused-probe port is
+  complete; only direct-Go command and CI cutover and deletion of the
+  superseded Node/npm/Redocly surface remain.
 
 ## Constraints
 
@@ -75,9 +76,10 @@ tooling-migration completion prerequisite.
 3. **Complete.** Port catalog and reference checks, lint coverage, bundling,
    freshness, and workflow and release guards. Switch local documentation and
    credential-free CI after parity is demonstrated.
-4. Complete the [Go-only cleanup](go-only-tooling-cleanup.md): port the focused
-   probe behind a narrow Go interface, cut local and CI entry points over to
-   direct Go commands, and remove repository-owned Node.js, npm, and Redocly.
+4. **Partially complete.** The [Go-only cleanup](go-only-tooling-cleanup.md)
+   added the focused probe behind a narrow Go interface. Cut local and CI entry
+   points over to direct Go commands and remove repository-owned Node.js, npm,
+   and Redocly.
 5. After the tooling migration is complete, add shared report and HTTP safety
    seams through the drift or general live-conformance work when another
    implemented consumer makes them concrete.
@@ -100,9 +102,10 @@ tooling-migration completion prerequisite.
 
 ## Next action
 
-Execute the [Go-only cleanup](go-only-tooling-cleanup.md) through its additive
-probe-parity slice and final cutover/deletion slice. Stop before scheduled guide
-drift or the general live-conformance runner.
+Complete the [Go-only cleanup](go-only-tooling-cleanup.md) by cutting local and
+CI entry points directly to Go and deleting the superseded Node/npm/Redocly and
+temporary compatibility surfaces. Stop before scheduled guide drift or the
+general live-conformance runner.
 
 ## Progress log
 
