@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	guidesync "github.com/cpaikr/opendart/internal/guide"
+	openapispec "github.com/cpaikr/opendart/internal/openapi"
 )
 
 func TestRunRejectsUnknownCommand(t *testing.T) {
@@ -32,8 +34,10 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	if !strings.Contains(stdout.String(), "compatibility") {
-		t.Fatalf("stdout = %q", stdout.String())
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "compatibility"} {
+		if !strings.Contains(stdout.String(), command) {
+			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
+		}
 	}
 }
 
@@ -122,6 +126,139 @@ func TestRunSyncEmitsNestedSourceContext(t *testing.T) {
 	}
 	if diagnostic["group"] != "DS002" || diagnostic["status"] != float64(503) || diagnostic["attempt"] != float64(3) {
 		t.Fatalf("diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestRunCatalogEmitsReportAndForwardsMode(t *testing.T) {
+	var received guidesync.CatalogOptions
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runCatalogWith([]string{"--root", "spec.yaml", "--structural-only"}, &stdout, &stderr, func(options guidesync.CatalogOptions) (guidesync.CatalogReport, error) {
+		received = options
+		return guidesync.CatalogReport{Root: options.Root, OpenAPI: "3.2.0", LogicalEndpoints: 1}, nil
+	})
+	if code != 0 {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+	if received.Root != "spec.yaml" || !received.StructuralOnly {
+		t.Fatalf("options = %#v", received)
+	}
+	var report guidesync.CatalogReport
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.OpenAPI != "3.2.0" || report.LogicalEndpoints != 1 {
+		t.Fatalf("report = %#v", report)
+	}
+}
+
+func TestRunCatalogEmitsStructuredDiagnostic(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	diagnostic := guidesync.CatalogDiagnostic{Rule: "reference", Phase: "references", Artifact: "spec.yaml", Message: "invalid reference"}
+	code := runCatalogWith(nil, &stdout, &stderr, func(guidesync.CatalogOptions) (guidesync.CatalogReport, error) {
+		return guidesync.CatalogReport{}, &guidesync.CatalogError{Diagnostic: diagnostic}
+	})
+	if code != 1 || stdout.Len() != 0 {
+		t.Fatalf("code = %d, stdout = %q", code, stdout.String())
+	}
+	var actual guidesync.CatalogDiagnostic
+	if err := json.Unmarshal(stderr.Bytes(), &actual); err != nil {
+		t.Fatal(err)
+	}
+	if actual != diagnostic {
+		t.Fatalf("diagnostic = %#v", actual)
+	}
+}
+
+func TestRunLintEmitsSuccessAndDeterministicDiagnostics(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := runLintWith([]string{"--root", "spec.yaml"}, &stdout, &stderr, func(root string) ([]openapispec.LintDiagnostic, error) {
+			if root != "spec.yaml" {
+				t.Fatalf("root = %q", root)
+			}
+			return nil, nil
+		})
+		if code != 0 || stderr.Len() != 0 {
+			t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+		}
+		var report struct {
+			Root  string `json:"root"`
+			Valid bool   `json:"valid"`
+		}
+		if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+			t.Fatal(err)
+		}
+		if report.Root != "spec.yaml" || !report.Valid {
+			t.Fatalf("report = %#v", report)
+		}
+	})
+
+	t.Run("policy diagnostics", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		diagnostics := []openapispec.LintDiagnostic{
+			{Rule: "a", Artifact: "spec.yaml", Location: "/a", Message: "first"},
+			{Rule: "b", Artifact: "spec.yaml", Location: "/b", Message: "second"},
+		}
+		code := runLintWith(nil, &stdout, &stderr, func(string) ([]openapispec.LintDiagnostic, error) {
+			return diagnostics, nil
+		})
+		if code != 1 || stdout.Len() != 0 {
+			t.Fatalf("code = %d, stdout = %q", code, stdout.String())
+		}
+		var actual []openapispec.LintDiagnostic
+		if err := json.Unmarshal(stderr.Bytes(), &actual); err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Equal(actual, diagnostics) {
+			t.Fatalf("diagnostics = %#v", actual)
+		}
+	})
+}
+
+func TestRunBundleRequiresOutputAndForwardsPaths(t *testing.T) {
+	t.Run("missing output", func(t *testing.T) {
+		var stderr bytes.Buffer
+		called := false
+		code := runBundleWith(nil, &bytes.Buffer{}, &stderr, func(string, string) error {
+			called = true
+			return nil
+		})
+		if code != 2 || called || !strings.Contains(stderr.String(), "--output is required") {
+			t.Fatalf("code = %d, called = %v, stderr = %q", code, called, stderr.String())
+		}
+	})
+
+	t.Run("success", func(t *testing.T) {
+		var root, output string
+		var stderr bytes.Buffer
+		code := runBundleWith([]string{"--root", "spec.yaml", "--output", "bundle.yaml"}, &bytes.Buffer{}, &stderr, func(receivedRoot, receivedOutput string) error {
+			root, output = receivedRoot, receivedOutput
+			return nil
+		})
+		if code != 0 || stderr.Len() != 0 {
+			t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+		}
+		if root != "spec.yaml" || output != "bundle.yaml" {
+			t.Fatalf("root = %q, output = %q", root, output)
+		}
+	})
+}
+
+func TestNewCommandsRejectPositionalArguments(t *testing.T) {
+	for _, command := range []string{"catalog", "lint", "bundle"} {
+		t.Run(command, func(t *testing.T) {
+			var stderr bytes.Buffer
+			if code := Run([]string{command, "unexpected"}, &bytes.Buffer{}, &stderr); code != 2 {
+				t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+			}
+			if !strings.Contains(stderr.String(), "does not accept positional arguments") {
+				t.Fatalf("stderr = %q", stderr.String())
+			}
+		})
 	}
 }
 
