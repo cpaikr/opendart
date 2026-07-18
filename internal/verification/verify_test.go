@@ -55,8 +55,8 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 	wantCalls := []string{
 		"catalog:openapi.yaml",
 		"lint:openapi.yaml",
-		"lint:openapi.bundle.yaml",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
+		"lint:openapi.bundle.yaml",
 		"release-guard:repository",
 	}
 	if !reflect.DeepEqual(calls, wantCalls) {
@@ -94,8 +94,8 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 	}{
 		{name: "catalog", fail: phaseCatalog, wantPhase: "catalog/references", wantArtifact: "fragment.yaml", wantRule: "reference-escape", wantCallCount: 1},
 		{name: "source lint diagnostic", fail: phaseSourceLint, wantPhase: phaseSourceLint, wantArtifact: "source.yaml", wantRule: "operation-summary", wantCallCount: 2},
-		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 3},
-		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 4},
+		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 4},
+		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 3},
 		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 5},
 	}
 
@@ -115,7 +115,7 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 				lint: func(artifact string) ([]openapispec.LintDiagnostic, error) {
 					calls++
 					if test.fail == phaseSourceLint && filepath.Base(artifact) == "openapi.yaml" {
-						return []openapispec.LintDiagnostic{{Rule: "operation-summary", Artifact: "source.yaml"}}, nil
+						return []openapispec.LintDiagnostic{{Rule: "operation-summary", Artifact: "source.yaml", Operation: "getCompany", Location: "#/paths/~1company/get"}}, nil
 					}
 					if test.fail == phaseBundleLint && filepath.Base(artifact) == "openapi.bundle.yaml" {
 						return nil, cause
@@ -149,6 +149,9 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 			if calls != test.wantCallCount {
 				t.Fatalf("calls = %d, want %d", calls, test.wantCallCount)
 			}
+			if test.fail == phaseSourceLint && (verifyError.Operation != "getCompany" || verifyError.Location != "#/paths/~1company/get") {
+				t.Fatalf("lint context = %#v", verifyError)
+			}
 			if strings.Contains(verifyError.Error(), "https://") || strings.Contains(verifyError.Error(), "secret") || strings.Contains(verifyError.Error(), "body") {
 				t.Fatalf("error leaked cause: %v", verifyError)
 			}
@@ -160,12 +163,42 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 }
 
 func TestVerificationErrorBoundsContext(t *testing.T) {
-	err := failure("https://unsafe.invalid/phase", "artifact\nbody", strings.Repeat("r", 1025), errors.New("secret"))
+	err := contextualFailure("https://unsafe.invalid/phase", "artifact\nbody", strings.Repeat("r", 1025), "operation\nbody", "https://unsafe.invalid/location", errors.New("secret"))
 	if err.Phase != "unknown" || err.Artifact != "unknown-artifact" || err.Rule != "unknown-rule" {
 		t.Fatalf("error context = %#v", err)
 	}
+	if err.Operation != "" || err.Location != "" {
+		t.Fatalf("optional error context = %#v", err)
+	}
 	if err.Error() != "verification failed: phase=unknown artifact=unknown-artifact rule=unknown-rule" {
 		t.Fatalf("error = %q", err.Error())
+	}
+}
+
+func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
+	bundleLintCalled := false
+	deps := dependencies{
+		validateCatalog: func(guide.CatalogOptions) (guide.CatalogReport, error) {
+			return guide.CatalogReport{OpenAPI: "3.2.0"}, nil
+		},
+		lint: func(artifact string) ([]openapispec.LintDiagnostic, error) {
+			if filepath.Base(artifact) == "openapi.bundle.yaml" {
+				bundleLintCalled = true
+				return nil, errors.New("missing bundle reached lint")
+			}
+			return nil, nil
+		},
+		checkFresh:   func(string, string) error { return openapispec.ErrBundleMissing },
+		checkRelease: func(string) error { return nil },
+	}
+
+	_, err := verifyWith(t.TempDir(), deps)
+	var verifyError *Error
+	if !errors.As(err, &verifyError) || verifyError.Rule != "bundle-missing" {
+		t.Fatalf("error = %#v", err)
+	}
+	if bundleLintCalled {
+		t.Fatal("missing bundle was linted before freshness reported it")
 	}
 }
 

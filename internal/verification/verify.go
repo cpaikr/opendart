@@ -2,7 +2,6 @@ package verification
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -22,8 +21,8 @@ const (
 var passedPhases = []string{
 	phaseCatalog,
 	phaseSourceLint,
-	phaseBundleLint,
 	phaseBundleFreshness,
+	phaseBundleLint,
 	phaseReleaseGuard,
 }
 
@@ -49,14 +48,28 @@ type CatalogSummary struct {
 // underlying error remains available through errors.Is/As but is deliberately
 // omitted from Error() so source bodies, URLs, and credentials cannot leak.
 type Error struct {
-	Phase    string
-	Artifact string
-	Rule     string
-	cause    error
+	Phase     string
+	Artifact  string
+	Rule      string
+	Operation string
+	Location  string
+	cause     error
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("verification failed: phase=%s artifact=%s rule=%s", e.Phase, e.Artifact, e.Rule)
+	parts := []string{
+		"verification failed:",
+		"phase=" + e.Phase,
+		"artifact=" + e.Artifact,
+		"rule=" + e.Rule,
+	}
+	if e.Operation != "" {
+		parts = append(parts, "operation="+e.Operation)
+	}
+	if e.Location != "" {
+		parts = append(parts, "location="+e.Location)
+	}
+	return strings.Join(parts, " ")
 }
 
 func (e *Error) Unwrap() error {
@@ -99,9 +112,6 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	if err := lintArtifact(deps, phaseSourceLint, source); err != nil {
 		return Report{}, err
 	}
-	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
-		return Report{}, err
-	}
 	if err := deps.checkFresh(source, bundle); err != nil {
 		rule := "bundle-generation"
 		switch {
@@ -111,6 +121,9 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 			rule = "bundle-stale"
 		}
 		return Report{}, failure(phaseBundleFreshness, bundle, rule, err)
+	}
+	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
+		return Report{}, err
 	}
 	if err := deps.checkRelease(absoluteRoot); err != nil {
 		artifact, rule := "release configuration", "release-policy"
@@ -150,11 +163,12 @@ func lintArtifact(deps dependencies, phase, artifact string) error {
 	if rule == "" {
 		rule = "strict-lint"
 	}
-	return failure(phase, artifact, rule, errors.New("strict OpenAPI lint rejected the artifact"))
+	return contextualFailure(phase, artifact, rule, diagnostic.Operation, diagnostic.Location, errors.New("strict OpenAPI lint rejected the artifact"))
 }
 
 func catalogFailure(artifact string, err error) error {
 	phase, rule := phaseCatalog, "catalog-validation"
+	operation, location := "", ""
 	var catalogError *guide.CatalogError
 	if errors.As(err, &catalogError) {
 		if catalogError.Diagnostic.Phase != "" {
@@ -166,16 +180,24 @@ func catalogFailure(artifact string, err error) error {
 		if catalogError.Diagnostic.Artifact != "" {
 			artifact = catalogError.Diagnostic.Artifact
 		}
+		operation = catalogError.Diagnostic.Operation
+		location = catalogError.Diagnostic.Location
 	}
-	return failure(phase, artifact, rule, err)
+	return contextualFailure(phase, artifact, rule, operation, location, err)
 }
 
 func failure(phase, artifact, rule string, cause error) *Error {
+	return contextualFailure(phase, artifact, rule, "", "", cause)
+}
+
+func contextualFailure(phase, artifact, rule, operation, location string, cause error) *Error {
 	return &Error{
-		Phase:    boundedContext(phase, "unknown"),
-		Artifact: boundedContext(artifact, "unknown-artifact"),
-		Rule:     boundedContext(rule, "unknown-rule"),
-		cause:    cause,
+		Phase:     boundedContext(phase, "unknown"),
+		Artifact:  boundedContext(artifact, "unknown-artifact"),
+		Rule:      boundedContext(rule, "unknown-rule"),
+		Operation: boundedOptionalContext(operation),
+		Location:  boundedOptionalContext(location),
+		cause:     cause,
 	}
 }
 
@@ -183,6 +205,14 @@ func boundedContext(value, fallback string) string {
 	value = strings.TrimSpace(value)
 	if value == "" || strings.Contains(value, "://") || strings.ContainsAny(value, "\r\n") || len(value) > 1024 {
 		return fallback
+	}
+	return value
+}
+
+func boundedOptionalContext(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" || strings.Contains(value, "://") || strings.ContainsAny(value, "\r\n") || len(value) > 1024 {
+		return ""
 	}
 	return value
 }

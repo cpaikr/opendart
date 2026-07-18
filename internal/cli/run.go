@@ -13,6 +13,7 @@ import (
 
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/verification"
 )
 
 func Run(args []string, stdout, stderr io.Writer) int {
@@ -36,6 +37,8 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runLint(args[1:], stdout, stderr)
 	case "bundle":
 		return runBundle(args[1:], stdout, stderr)
+	case "verify":
+		return runVerify(args[1:], stdout, stderr)
 	case "compatibility":
 		return runCompatibility(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
@@ -127,6 +130,32 @@ type bundleRunner func(string, string) error
 
 func runBundle(args []string, stdout, stderr io.Writer) int {
 	return runBundleWith(args, stdout, stderr, openapispec.WriteBundle)
+}
+
+type verificationRunner func(string) (verification.Report, error)
+
+func runVerify(args []string, stdout, stderr io.Writer) int {
+	return runVerifyWith(args, stdout, stderr, verification.Verify)
+}
+
+func runVerifyWith(args []string, stdout, stderr io.Writer, runner verificationRunner) int {
+	flags := flag.NewFlagSet("verify", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	repositoryRoot := flags.String("repository-root", ".", "repository root")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("verify", flags, stderr); code != 0 {
+		return code
+	}
+	report, err := runner(*repositoryRoot)
+	if err != nil {
+		return writeCommandError(stderr, "verify", err, 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write verification report", err, 1)
+	}
+	return 0
 }
 
 func runBundleWith(args []string, _ io.Writer, stderr io.Writer, runner bundleRunner) int {
@@ -267,6 +296,7 @@ func usage(output io.Writer) error {
 		"  catalog        validate generated catalog and reference invariants",
 		"  lint           apply strict OpenAPI policy",
 		"  bundle         write the portable OpenAPI bundle",
+		"  verify         run credential-free repository verification",
 		"  compatibility  run the temporary OpenAPI migration gate",
 	} {
 		if _, err := fmt.Fprintln(output, line); err != nil {

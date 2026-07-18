@@ -13,6 +13,7 @@ import (
 
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/verification"
 )
 
 func TestRunRejectsUnknownCommand(t *testing.T) {
@@ -34,7 +35,7 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "compatibility"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "compatibility"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
@@ -248,8 +249,43 @@ func TestRunBundleRequiresOutputAndForwardsPaths(t *testing.T) {
 	})
 }
 
+func TestRunVerifyEmitsReportAndForwardsRepositoryRoot(t *testing.T) {
+	var received string
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	report := verification.Report{PassedPhases: []string{"catalog"}, Catalog: verification.CatalogSummary{OpenAPI: "3.2.0"}}
+	code := runVerifyWith([]string{"--repository-root", "repository"}, &stdout, &stderr, func(root string) (verification.Report, error) {
+		received = root
+		return report, nil
+	})
+	if code != 0 || stderr.Len() != 0 {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+	if received != "repository" {
+		t.Fatalf("repository root = %q", received)
+	}
+	var actual verification.Report
+	if err := json.Unmarshal(stdout.Bytes(), &actual); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(actual.PassedPhases, report.PassedPhases) || actual.Catalog.OpenAPI != "3.2.0" {
+		t.Fatalf("report = %#v", actual)
+	}
+
+	stderr.Reset()
+	code = runVerifyWith(nil, &stdout, &stderr, func(string) (verification.Report, error) {
+		return verification.Report{}, &verification.Error{
+			Phase: "source-lint", Artifact: "openapi.yaml", Rule: "operation-summary",
+			Operation: "getCompany", Location: "#/paths/~1company/get",
+		}
+	})
+	if code != 1 || !strings.Contains(stderr.String(), "operation=getCompany") || !strings.Contains(stderr.String(), "location=#/paths/~1company/get") {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+}
+
 func TestNewCommandsRejectPositionalArguments(t *testing.T) {
-	for _, command := range []string{"catalog", "lint", "bundle"} {
+	for _, command := range []string{"catalog", "lint", "bundle", "verify"} {
 		t.Run(command, func(t *testing.T) {
 			var stderr bytes.Buffer
 			if code := Run([]string{command, "unexpected"}, &bytes.Buffer{}, &stderr); code != 2 {
