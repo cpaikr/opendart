@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"mime"
 	"net/http"
 	"os"
 	"path"
@@ -174,6 +175,11 @@ func (d *Document) bundle(inlineLocalReferences bool) ([]byte, error) {
 }
 
 func (d *Document) ValidateResponse(method, path, contentType string, status int, body []byte) error {
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return errors.New("validate response: Content-Type is malformed")
+	}
+	contentType = strings.ToLower(mediaType)
 	if contentType == "application/zip" {
 		if !d.declaresResponseMedia(method, path, status, contentType) {
 			return fmt.Errorf("%s %s response %d does not declare %s", method, path, status, contentType)
@@ -675,7 +681,8 @@ func validateZIP(body []byte) error {
 		if len(data) > remaining {
 			return fmt.Errorf("validate ZIP response: expanded archive exceeds %d bytes", maxCompatibilityArchiveBytes)
 		}
-		if strings.EqualFold(filepath.Ext(file.Name), ".xml") {
+		switch strings.ToLower(filepath.Ext(file.Name)) {
+		case ".xml", ".xbrl":
 			foundXML = true
 			decoder := xml.NewDecoder(bytes.NewReader(data))
 			for {

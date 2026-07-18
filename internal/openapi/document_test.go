@@ -206,13 +206,20 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 		})
 	}
 	wrongRoot := []byte("<sentinel-root><status>000</status><corp_name>company</corp_name></sentinel-root>")
-	if err := document.ValidateResponse("GET", "/company.xml", "application/xml", 200, wrongRoot); err == nil || !strings.Contains(err.Error(), "does not match") || strings.Contains(err.Error(), "sentinel-root") {
+	if err := document.ValidateResponse("GET", "/company.xml", "application/xml; charset=UTF-8", 200, wrongRoot); err == nil || !strings.Contains(err.Error(), "does not match") || strings.Contains(err.Error(), "sentinel-root") {
 		t.Fatalf("wrong XML root error = %v", err)
 	}
 
 	validZIP := zipFixture(t, "document.xml", []byte("<document><rcept_no>1</rcept_no></document>"))
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, validZIP); err != nil {
 		t.Fatalf("valid ZIP: %v", err)
+	}
+	xbrlZIP := zipFixture(t, "report.xbrl", []byte("<xbrl/>"))
+	if err := document.ValidateResponse("GET", "/document.xml", "application/zip; charset=binary", 200, xbrlZIP); err != nil {
+		t.Fatalf("valid XBRL ZIP with parameterized media type: %v", err)
+	}
+	if err := document.ValidateResponse("GET", "/document.xml", "application/zip; charset=binary", 200, []byte("not a zip")); err == nil {
+		t.Fatal("parameterized ZIP media type bypassed archive validation")
 	}
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, []byte("not a zip")); err == nil {
 		t.Fatal("corrupt ZIP passed validation")
