@@ -25,8 +25,13 @@ language decision is recorded in
   non-authoritative checks are retained as migration evidence, not automation;
   the former Redocly byte-freshness check rejects the approved Go formatting.
 - [Guide drift](guide-drift.md) and [live conformance](live-conformance.md) are
-  committed follow-on work. They depend on the Go OpenAPI and reporting
-  foundations but retain separate network, credential, and issue boundaries.
+  committed follow-on work. They depend on the Go OpenAPI foundation and a
+  future shared reporting implementation, while retaining separate network,
+  credential, and issue boundaries.
+- The approved [Go-only cleanup](go-only-tooling-cleanup.md) is the
+  authoritative remaining migration slice: port the focused probe without
+  inventing the general live runner, cut current entry points over to direct Go
+  commands, and delete the superseded Node/npm/Redocly surface.
 
 ## Constraints
 
@@ -45,14 +50,18 @@ language decision is recorded in
 - Keep offline verification deterministic and free of OpenDART requests.
   Diagnostics must identify the affected operation, source, artifact, and phase
   without exposing credentials, authenticated URLs, or response bodies.
+- Use direct Go commands as the final local and CI interface. Do not replace npm
+  scripts with another task runner.
 
-Both observation consumers use one shared automation contract: commands emit a
-small versioned, allowlisted JSON report while diagnostics remain separate; a
-minimally privileged notification job validates that report and otherwise uses
-only a fixed failure envelope derived from trusted GitHub Actions metadata.
-Producer logs and arbitrary error text are never notification input. Guide drift
-and live conformance own independent deduplicated issues; recovery is recorded
-once and automation never closes an issue.
+Future drift and live observation consumers must use one shared automation
+contract: commands emit a small versioned, allowlisted JSON report while
+diagnostics remain separate; a minimally privileged notification job validates
+that report and otherwise uses only a fixed failure envelope derived from
+trusted GitHub Actions metadata. Producer logs and arbitrary error text are
+never notification input. Guide drift and live conformance own independent
+deduplicated issues; recovery is recorded once and automation never closes an
+issue. This is settled cross-plan policy, not an implemented shared module or a
+tooling-migration completion prerequisite.
 
 ## Ordered work
 
@@ -66,12 +75,12 @@ once and automation never closes an issue.
 3. **Complete.** Port catalog and reference checks, lint coverage, bundling,
    freshness, and workflow and release guards. Switch local documentation and
    credential-free CI after parity is demonstrated.
-4. Add the shared report and HTTP safety boundaries needed by the drift and
-   live plans. Replace the focused Node.js probe through the live-conformance
-   work before removing it.
-5. Remove repository-owned Node.js scripts and package metadata and retire
-   Redocly after all current responsibilities have migrated. Add pinned Go and
-   Actions dependency maintenance as part of the cutover.
+4. Complete the [Go-only cleanup](go-only-tooling-cleanup.md): port the focused
+   probe behind a narrow Go interface, cut local and CI entry points over to
+   direct Go commands, and remove repository-owned Node.js, npm, and Redocly.
+5. After the tooling migration is complete, add shared report and HTTP safety
+   seams through the drift or general live-conformance work when another
+   implemented consumer makes them concrete.
 
 ## Acceptance criteria
 
@@ -84,14 +93,16 @@ once and automation never closes an issue.
 - No repository-owned Node.js CLI, package dependency, Redocly dependency,
   duplicate generator, or public Go API remains. Pinned third-party Actions may
   use their bundled runtimes.
-- The drift and live plans reuse the OpenAPI and report foundations without
-  sharing credentials or issue state.
+- Direct Go commands are the sole documented command surface; the repository
+  does not require a replacement task runner.
+- The drift and live plans retain one shared automation contract for their
+  future implementations without sharing credentials or issue state.
 
 ## Next action
 
-Begin ordered work 4 by adding the shared bounded report and HTTP safety
-boundaries for drift and live conformance. This plan intentionally stops after
-the completed verification cutover until that work is explicitly started.
+Execute the [Go-only cleanup](go-only-tooling-cleanup.md) through its additive
+probe-parity slice and final cutover/deletion slice. Stop before scheduled guide
+drift or the general live-conformance runner.
 
 ## Progress log
 
