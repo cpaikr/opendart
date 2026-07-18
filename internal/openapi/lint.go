@@ -20,9 +20,8 @@ import (
 )
 
 var (
-	pathParameterPattern   = regexp.MustCompile(`\{([^{}]+)\}`)
-	safeIdentifierPattern  = regexp.MustCompile(`^[A-Za-z0-9._~-]+$`)
-	forbiddenServerPattern = regexp.MustCompile(`^(.*[/.])?(example\.com|localhost)([/:?].*|$)`)
+	pathParameterPattern  = regexp.MustCompile(`\{([^{}]+)\}`)
+	safeIdentifierPattern = regexp.MustCompile(`^[A-Za-z0-9._~-]+$`)
 )
 
 // LintDiagnostic is a stable repository-owned lint result. It deliberately
@@ -59,6 +58,7 @@ func (d *Document) Lint() ([]LintDiagnostic, error) {
 		operationIDs:    make(map[string]string),
 		normalizedPaths: make(map[string]string),
 		activeSchemas:   make(map[*base.Schema]bool),
+		activePathItems: make(map[*v3.PathItem]bool),
 		root:            d.root,
 		files:           d.files,
 	}
@@ -111,6 +111,8 @@ type documentLinter struct {
 	operationIDs    map[string]string
 	normalizedPaths map[string]string
 	activeSchemas   map[*base.Schema]bool
+	activePathItems map[*v3.PathItem]bool
+	referenceCounts map[string]int
 	root            string
 	files           []string
 }
@@ -124,6 +126,32 @@ func (l *documentLinter) lint() {
 	if l.document.Paths != nil && l.document.Paths.PathItems != nil {
 		for pathName, pathItem := range l.document.Paths.PathItems.FromOldest() {
 			l.lintPath(pathName, pathItem, securitySchemes)
+		}
+	}
+	if l.document.Webhooks != nil {
+		for name, pathItem := range l.document.Webhooks.FromOldest() {
+			location := "/webhooks/" + escapeJSONPointer(name)
+			l.lintPathItemOperations("webhook "+name, location, "", pathItem, securitySchemes)
+		}
+	}
+	if l.document.Components != nil {
+		if l.document.Components.Callbacks != nil {
+			for name, callback := range l.document.Components.Callbacks.FromOldest() {
+				if l.componentReferenceCount("callbacks", name) > 0 {
+					continue
+				}
+				location := "/components/callbacks/" + escapeJSONPointer(name)
+				l.lintCallback("callback component "+name, location, callback, securitySchemes)
+			}
+		}
+		if l.document.Components.PathItems != nil {
+			for name, pathItem := range l.document.Components.PathItems.FromOldest() {
+				if l.componentReferenceCount("pathItems", name) > 0 {
+					continue
+				}
+				location := "/components/pathItems/" + escapeJSONPointer(name)
+				l.lintPathItemOperations("path item component "+name, location, "", pathItem, securitySchemes)
+			}
 		}
 	}
 	l.lintComponentNamesAndSchemas()
@@ -214,11 +242,21 @@ func (l *documentLinter) lintPath(pathName string, item *v3.PathItem, securitySc
 	if item == nil {
 		return
 	}
+	l.lintPathItemOperations(pathName, location, pathName, item, securitySchemes)
+}
+
+func (l *documentLinter) lintPathItemOperations(identityPrefix, location, pathName string, item *v3.PathItem, securitySchemes map[string]bool) {
+	if item == nil || l.activePathItems[item] {
+		return
+	}
+	l.activePathItems[item] = true
+	defer delete(l.activePathItems, item)
 	l.lintServers("", location+"/servers", item.Servers)
 	l.lintParameterList("", location+"/parameters", item.Parameters)
 	for method, operation := range item.GetOperations().FromOldest() {
 		if operation != nil {
-			l.lintOperation(strings.ToUpper(method)+" "+pathName, location+"/"+strings.ToLower(method), pathName, item.Parameters, operation, securitySchemes)
+			identity := strings.ToUpper(method) + " " + identityPrefix
+			l.lintOperation(identity, location+"/"+strings.ToLower(method), pathName, item.Parameters, operation, securitySchemes)
 		}
 	}
 }
@@ -248,10 +286,28 @@ func (l *documentLinter) lintOperation(identity, location, pathName string, inhe
 	l.lintSecurity(location+"/security", operation.Security, securitySchemes)
 	l.lintParameterList(identity, location+"/parameters", operation.Parameters)
 	l.lintQuerystringParameters(identity, location+"/parameters", inherited, operation.Parameters)
-	l.lintPathParameters(identity, location, pathName, inherited, operation.Parameters)
+	if pathName != "" {
+		l.lintPathParameters(identity, location, pathName, inherited, operation.Parameters)
+	}
 	l.lintResponses(identity, location+"/responses", operation.Responses)
 	if operation.RequestBody != nil {
 		l.lintContent(identity, location+"/requestBody/content", operation.RequestBody.Content)
+	}
+	if operation.Callbacks != nil {
+		for name, callback := range operation.Callbacks.FromOldest() {
+			callbackLocation := location + "/callbacks/" + escapeJSONPointer(name)
+			l.lintCallback(identity+" callback "+name, callbackLocation, callback, securitySchemes)
+		}
+	}
+}
+
+func (l *documentLinter) lintCallback(identityPrefix, location string, callback *v3.Callback, securitySchemes map[string]bool) {
+	if callback == nil || callback.Expression == nil {
+		return
+	}
+	for expression, pathItem := range callback.Expression.FromOldest() {
+		expressionLocation := location + "/" + escapeJSONPointer(expression)
+		l.lintPathItemOperations(identityPrefix+" "+expression, expressionLocation, "", pathItem, securitySchemes)
 	}
 }
 
@@ -351,8 +407,11 @@ func (l *documentLinter) lintResponses(operation, location string, responses *v3
 			}
 		}
 	}
-	if responses.Default != nil && strings.TrimSpace(responses.Default.Description) == "" {
-		l.add("response-description", operation, location+"/default", "response description is required")
+	if responses.Default != nil {
+		if strings.TrimSpace(responses.Default.Description) == "" {
+			l.add("response-description", operation, location+"/default", "response description is required")
+		}
+		l.lintContent(operation, location+"/default/content", responses.Default.Content)
 	}
 	if !hasSuccess {
 		l.add("operation-2xx-response", operation, location, "at least one 2xx response is required")
@@ -430,8 +489,7 @@ func (l *documentLinter) lintServers(operation, location string, servers []*v3.S
 			l.add("no-empty-servers", "", serverLocation, "server URL is required")
 			continue
 		}
-		lowerURL := strings.ToLower(server.URL)
-		if forbiddenServerPattern.MatchString(lowerURL) {
+		if forbiddenServerHost(server.URL) {
 			l.add("no-server-example.com", operation, serverLocation+"/url", "example.com and localhost are not allowed servers")
 		}
 		if server.URL != "/" && strings.HasSuffix(server.URL, "/") {
@@ -460,6 +518,15 @@ func (l *documentLinter) lintServers(operation, location string, servers []*v3.S
 			}
 		}
 	}
+}
+
+func forbiddenServerHost(serverURL string) bool {
+	parsed, err := url.Parse(serverURL)
+	if err != nil {
+		return false
+	}
+	hostname := strings.TrimRight(strings.ToLower(parsed.Hostname()), ".")
+	return hostname == "localhost" || hostname == "example.com" || strings.HasSuffix(hostname, ".example.com")
 }
 
 func (l *documentLinter) securitySchemeNames() map[string]bool {
@@ -553,20 +620,7 @@ func (l *documentLinter) lintUnusedComponents() {
 		return
 	}
 
-	counts := make(map[string]int)
-	for _, file := range l.sourceFiles() {
-		data, readErr := os.ReadFile(file)
-		if readErr != nil {
-			continue
-		}
-		var document yaml.Node
-		if yaml.Unmarshal(data, &document) != nil {
-			continue
-		}
-		for _, reference := range references(&document) {
-			counts[referenceIdentity(file, reference)]++
-		}
-	}
+	counts := l.countReferences()
 	securityUsage := l.usedSecuritySchemes()
 	for categoryIndex := 0; categoryIndex+1 < len(components.Content); categoryIndex += 2 {
 		category := components.Content[categoryIndex].Value
@@ -596,6 +650,32 @@ func (l *documentLinter) lintUnusedComponents() {
 			}
 		}
 	}
+}
+
+func (l *documentLinter) componentReferenceCount(category, name string) int {
+	identity := referenceIdentity(l.root, "#/components/"+category+"/"+escapeJSONPointer(name))
+	return l.countReferences()[identity]
+}
+
+func (l *documentLinter) countReferences() map[string]int {
+	if l.referenceCounts != nil {
+		return l.referenceCounts
+	}
+	l.referenceCounts = make(map[string]int)
+	for _, file := range l.sourceFiles() {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			continue
+		}
+		var document yaml.Node
+		if yaml.Unmarshal(data, &document) != nil {
+			continue
+		}
+		for _, reference := range references(&document) {
+			l.referenceCounts[referenceIdentity(file, reference)]++
+		}
+	}
+	return l.referenceCounts
 }
 
 func (l *documentLinter) usedSecuritySchemes() map[string]bool {
@@ -722,11 +802,13 @@ func (l *documentLinter) lintSchema(operation, location string, proxy *base.Sche
 	}
 	l.activeSchemas[schema] = true
 	defer delete(l.activeSchemas, schema)
-	if schema.Properties != nil {
-		for _, required := range schema.Required {
-			if _, exists := schema.Properties.Get(required); !exists {
-				l.add("no-required-schema-properties-undefined", operation, location+"/required", "required property is not defined: "+required)
-			}
+	for _, required := range schema.Required {
+		if schema.Properties == nil {
+			l.add("no-required-schema-properties-undefined", operation, location+"/required", "required property is not defined: "+required)
+			continue
+		}
+		if _, exists := schema.Properties.Get(required); !exists {
+			l.add("no-required-schema-properties-undefined", operation, location+"/required", "required property is not defined: "+required)
 		}
 	}
 	l.lintRange(operation, location, "length", schema.MinLength, schema.MaxLength)

@@ -66,6 +66,7 @@ var strictLintMutationCases = []strictLintMutation{
 	{name: "summary required", old: "      summary: Get a thing\n", rule: "operation-summary"},
 	{name: "success response", old: "        '200':", replacement: "        '400':", rule: "operation-2xx-response"},
 	{name: "response description", old: "          description: OK\n", rule: "response-description"},
+	{name: "default response content", old: "        '200':\n          description: OK\n          content:\n            application/json:", replacement: "        default:\n          description: OK\n          content:\n            not-a-media-type:", rule: "media-type-name", goOnly: true},
 	{name: "path parameter", old: "        - name: id", replacement: "        - name: other", rule: "path-parameters-defined"},
 	{name: "duplicate parameter", old: "        - name: id\n          in: path\n          required: true\n          schema:\n            type: string", replacement: "        - name: id\n          in: path\n          required: true\n          schema:\n            type: string\n        - name: id\n          in: path\n          required: true\n          schema:\n            type: string", rule: "parameter-unique"},
 	{name: "unknown tag", old: "tags: [things]", replacement: "tags: [missing]", rule: "operation-tag-defined", goOnly: true},
@@ -73,7 +74,9 @@ var strictLintMutationCases = []strictLintMutation{
 	{name: "security scheme", old: "  - apiKey: []", replacement: "  - missing: []", rule: "security-defined"},
 	{name: "server trailing slash", old: "https://api.invalid", replacement: "https://api.invalid/", rule: "no-server-trailing-slash"},
 	{name: "server example", old: "https://api.invalid", replacement: "https://example.com", rule: "no-server-example.com"},
+	{name: "server example with userinfo", old: "https://api.invalid", replacement: "https://user@example.com", rule: "no-server-example.com", goOnly: true},
 	{name: "required property", old: "required: [id]", replacement: "required: [missing]", rule: "no-required-schema-properties-undefined"},
+	{name: "required without properties", old: "    Thing:\n      type: object", replacement: "    MissingProperties:\n      type: object\n      required: [missing]\n    Thing:\n      type: object", rule: "no-required-schema-properties-undefined"},
 	{name: "enum type", old: "enum: [one]", replacement: "enum: [1]", rule: "no-enum-type-mismatch"},
 	{name: "schema range", old: "maxLength: 10", replacement: "maxLength: 0", rule: "no-schema-type-mismatch"},
 	{name: "schema example", old: "example: one", replacement: "example: 1", rule: "no-invalid-schema-examples"},
@@ -91,6 +94,9 @@ var strictLintMutationCases = []strictLintMutation{
 	{name: "nested schema", old: "      properties:\n        id:", replacement: "      $defs:\n        Bad:\n          type: object\n          required: [missing]\n          properties: {}\n      properties:\n        id:", rule: "no-required-schema-properties-undefined"},
 	{name: "schema example constraint", old: "example: one", replacement: "example: far-too-long-example", rule: "no-invalid-schema-examples"},
 	{name: "media example enum", old: "                $ref: '#/components/schemas/Thing'", replacement: "                $ref: '#/components/schemas/Thing'\n              example: {id: two}", rule: "no-invalid-media-type-examples"},
+	{name: "webhook operation", old: "components:\n", replacement: "webhooks:\n  changed:\n    post:\n      operationId: changedWebhook\n      responses:\n        '200': {description: OK}\ncomponents:\n", rule: "operation-summary"},
+	{name: "callback operation", old: "      responses:\n", replacement: "      callbacks:\n        changed:\n          '{$request.body#/callbackUrl}':\n            post:\n              operationId: changedCallback\n              responses:\n                '200': {description: OK}\n      responses:\n", rule: "operation-summary"},
+	{name: "component path item operation", old: "  schemas:\n", replacement: "  pathItems:\n    Changed:\n      post:\n        operationId: changedPathItem\n        responses:\n          '200': {description: OK}\n  schemas:\n", rule: "operation-summary"},
 }
 
 var strictValidationMutationCases = []strictLintMutation{
@@ -118,35 +124,81 @@ func TestStrictLintStructuralValidationFamilies(t *testing.T) {
 
 func TestStrictLintServerHostSemantics(t *testing.T) {
 	source := strings.Replace(strictLintFixture, "https://api.invalid", "https://notexample.com", 1)
-	root := filepath.Join(t.TempDir(), "openapi.yaml")
-	if err := os.WriteFile(root, []byte(source), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	diagnostics, err := Lint(root)
-	if err != nil {
-		t.Fatal(err)
-	}
+	diagnostics := lintFixtureSource(t, source)
 	for _, diagnostic := range diagnostics {
 		if diagnostic.Rule == "no-server-example.com" {
 			t.Fatalf("near-match host was rejected: %+v", diagnostic)
 		}
 	}
 
-	source = strings.Replace(strictLintFixture, "https://api.invalid", "http://localhost:8080", 1)
-	root = filepath.Join(t.TempDir(), "openapi.yaml")
-	if err := os.WriteFile(root, []byte(source), 0o600); err != nil {
-		t.Fatal(err)
+	for _, serverURL := range []string{
+		"http://localhost:8080",
+		"https://user@example.com",
+		"https://api.example.com.",
+	} {
+		t.Run(serverURL, func(t *testing.T) {
+			source := strings.Replace(strictLintFixture, "https://api.invalid", serverURL, 1)
+			assertLintRule(t, lintFixtureSource(t, source), "no-server-example.com")
+		})
 	}
-	diagnostics, err = Lint(root)
-	if err != nil {
-		t.Fatal(err)
+}
+
+func TestStrictLintDefaultResponseContent(t *testing.T) {
+	source := strings.Replace(strictLintFixture, "        '200':", "        default:", 1)
+	source = strings.Replace(source, "            application/json:", "            not-a-media-type:", 1)
+	diagnostics := lintFixtureSource(t, source)
+	assertLintRuleAt(t, diagnostics, "media-type-name", "/responses/default/content/")
+}
+
+func TestStrictLintRequiredWithoutProperties(t *testing.T) {
+	source := strings.Replace(strictLintFixture,
+		"    Thing:\n      type: object",
+		"    MissingProperties:\n      type: object\n      required: [missing]\n    Thing:\n      type: object",
+		1,
+	)
+	diagnostics := lintFixtureSource(t, source)
+	assertLintRuleAt(t, diagnostics, "no-required-schema-properties-undefined", "/components/schemas/MissingProperties/required")
+}
+
+func TestStrictLintTraversesNonPathOperations(t *testing.T) {
+	tests := []struct {
+		name     string
+		old      string
+		insert   string
+		location string
+	}{
+		{
+			name: "webhook",
+			old:  "components:\n",
+			insert: "webhooks:\n  changed:\n    post:\n      operationId: changedWebhook\n" +
+				"      responses:\n        '200': {description: OK}\ncomponents:\n",
+			location: "/webhooks/changed/post",
+		},
+		{
+			name: "operation callback",
+			old:  "      responses:\n",
+			insert: "      callbacks:\n        changed:\n          '{$request.body#/callbackUrl}':\n            post:\n" +
+				"              operationId: changedCallback\n              responses:\n                '200': {description: OK}\n      responses:\n",
+			location: "/callbacks/changed/",
+		},
+		{
+			name: "component path item",
+			old:  "  schemas:\n",
+			insert: "  pathItems:\n    Changed:\n      post:\n        operationId: changedPathItem\n" +
+				"        responses:\n          '200': {description: OK}\n  schemas:\n",
+			location: "/components/pathItems/Changed/post",
+		},
 	}
-	for _, diagnostic := range diagnostics {
-		if diagnostic.Rule == "no-server-example.com" {
-			return
-		}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			source := strings.Replace(strictLintFixture, test.old, test.insert, 1)
+			if source == strictLintFixture {
+				t.Fatalf("fixture does not contain %q", test.old)
+			}
+			diagnostics := lintFixtureSource(t, source)
+			assertLintRuleAt(t, diagnostics, "operation-summary", test.location)
+		})
 	}
-	t.Fatal("localhost server was accepted")
 }
 
 func TestStrictLintAllowsEncodingNamesOutsideMediaTypes(t *testing.T) {
@@ -191,6 +243,21 @@ func assertNoLintRule(t *testing.T, diagnostics []LintDiagnostic, rule string) {
 			t.Fatalf("unexpected %s diagnostic: %+v", rule, diagnostic)
 		}
 	}
+}
+
+func assertLintRule(t *testing.T, diagnostics []LintDiagnostic, rule string) {
+	t.Helper()
+	assertLintRuleAt(t, diagnostics, rule, "")
+}
+
+func assertLintRuleAt(t *testing.T, diagnostics []LintDiagnostic, rule, location string) {
+	t.Helper()
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Rule == rule && strings.Contains(diagnostic.Location, location) {
+			return
+		}
+	}
+	t.Fatalf("missing %s diagnostic at %q: %+v", rule, location, diagnostics)
 }
 
 func TestStrictLintRejectsOpenAPISchemaMutation(t *testing.T) {
