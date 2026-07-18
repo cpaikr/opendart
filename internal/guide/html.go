@@ -1,30 +1,53 @@
 package guide
 
 import (
+	"errors"
 	"strconv"
 
 	"golang.org/x/net/html"
 )
 
-const maximumColumnSpan = 1000
+const (
+	maximumColumnSpan         = 1000
+	maximumExpandedTableCells = 10_000
+)
+
+var errGuideTableExpansionLimit = errors.New("guide table expansion exceeds the cell limit")
 
 type pendingSpan struct {
 	value     string
 	remaining int
 }
 
-func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) [][]string {
+func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) ([][]string, error) {
+	if len(rows) > maximumExpandedTableCells {
+		return nil, errGuideTableExpansionLimit
+	}
 	pending := make(map[int]pendingSpan)
 	grid := make([][]string, 0, len(rows))
+	expandedCells := 0
 	for rowIndex, rowNode := range rows {
 		row := []string{}
 		column := 0
-		consumeSpan := func() bool {
+		setExpandedCell := func(column int, value string) error {
+			growth := column + 1 - len(row)
+			if growth > 0 {
+				if expandedCells > maximumExpandedTableCells-growth {
+					return errGuideTableExpansionLimit
+				}
+				expandedCells += growth
+			}
+			row = setCell(row, column, value)
+			return nil
+		}
+		consumeSpan := func() (bool, error) {
 			span, ok := pending[column]
 			if !ok {
-				return false
+				return false, nil
 			}
-			row = setCell(row, column, span.value)
+			if err := setExpandedCell(column, span.value); err != nil {
+				return false, err
+			}
 			span.remaining--
 			if span.remaining == 0 {
 				delete(pending, column)
@@ -32,22 +55,34 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) [][]str
 				pending[column] = span
 			}
 			column++
-			return true
+			return true, nil
 		}
 		for cell := rowNode.FirstChild; cell != nil; cell = cell.NextSibling {
 			if cell.Type != html.ElementNode || (cell.Data != "th" && cell.Data != "td") {
 				continue
 			}
-			for consumeSpan() {
+			for {
+				consumed, err := consumeSpan()
+				if err != nil {
+					return nil, err
+				}
+				if !consumed {
+					break
+				}
 			}
 			if column >= maximumColumnSpan {
-				break
+				return nil, errGuideTableExpansionLimit
 			}
 			value := cellText(cell)
-			columnSpan := min(positiveAttribute(cell, "colspan"), maximumColumnSpan-column)
+			columnSpan := min(positiveAttribute(cell, "colspan"), maximumColumnSpan)
+			if columnSpan > maximumColumnSpan-column {
+				return nil, errGuideTableExpansionLimit
+			}
 			rowSpan := rowSpanAttribute(cell, len(rows)-rowIndex)
 			for offset := 0; offset < columnSpan; offset++ {
-				row = setCell(row, column+offset, value)
+				if err := setExpandedCell(column+offset, value); err != nil {
+					return nil, err
+				}
 				if rowSpan > 1 {
 					pending[column+offset] = pendingSpan{value: value, remaining: rowSpan - 1}
 				}
@@ -55,7 +90,11 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) [][]str
 			column += columnSpan
 		}
 		for {
-			if consumeSpan() {
+			consumed, err := consumeSpan()
+			if err != nil {
+				return nil, err
+			}
+			if consumed {
 				continue
 			}
 			maxColumn := -1
@@ -71,7 +110,7 @@ func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) [][]str
 		}
 		grid = append(grid, row)
 	}
-	return grid
+	return grid, nil
 }
 
 func rowSpanAttribute(node *html.Node, rowsRemaining int) int {

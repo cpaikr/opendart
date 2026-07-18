@@ -411,7 +411,12 @@ func acquireEndpoint(ctx context.Context, fetcher Fetcher, summary EndpointSumma
 	if err := validateHiddenIdentity(root, summary); err != nil {
 		return Endpoint{}, err
 	}
-	tables := collectGuideTables(root)
+	tables, err := collectGuideTables(root)
+	if err != nil {
+		return Endpoint{}, sourceError("Guide table expansion exceeds the cell limit", map[string]any{
+			"logicalOperationId": summary.LogicalOperationID, "sourceUrl": summary.SourceURL,
+		}, err)
+	}
 	basic, err := requiredGuideTable(tables, "기본 정보", summary)
 	if err != nil {
 		return Endpoint{}, err
@@ -489,9 +494,13 @@ type guideTable struct {
 	SourceHasSpans bool
 }
 
-func collectGuideTables(root *html.Node) []guideTable {
+func collectGuideTables(root *html.Node) ([]guideTable, error) {
 	var tables []guideTable
+	var expansionErr error
 	walk(root, func(node *html.Node) {
+		if expansionErr != nil {
+			return
+		}
 		if node.Type != html.ElementNode || node.Data != "table" || !hasAncestorClass(node, "DGCont") {
 			return
 		}
@@ -518,7 +527,12 @@ func collectGuideTables(root *html.Node) []guideTable {
 				}
 			}
 		}
-		table := guideTable{Node: node, Headers: headers, Rows: expandRowGroup(bodyRows, guideNodeText)}
+		rows, err := expandRowGroup(bodyRows, guideNodeText)
+		if err != nil {
+			expansionErr = err
+			return
+		}
+		table := guideTable{Node: node, Headers: headers, Rows: rows}
 		if caption != nil {
 			table.Caption = guideNodeText(caption)
 		}
@@ -529,7 +543,7 @@ func collectGuideTables(root *html.Node) []guideTable {
 		})
 		tables = append(tables, table)
 	})
-	return tables
+	return tables, expansionErr
 }
 
 func requiredGuideTable(tables []guideTable, caption string, endpoint EndpointSummary) (guideTable, error) {

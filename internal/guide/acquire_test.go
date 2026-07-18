@@ -263,6 +263,28 @@ func TestAcquireEndpointRejectsIdentityAndTableDrift(t *testing.T) {
 	}
 }
 
+func TestAcquireEndpointRejectsExcessiveTableExpansion(t *testing.T) {
+	t.Parallel()
+	body := string(readAcquisitionFixture(t, "detail.html"))
+	excessRows := strings.Repeat(`<tr><td colspan="1000">value</td></tr>`, maximumExpandedTableCells/maximumColumnSpan+1)
+	body = strings.Replace(body, "<tbody>", "<tbody>"+excessRows, 1)
+	summary := EndpointSummary{
+		APIGroupCode: "DS001", APIID: "2019001", LogicalOperationID: "DS001-2019001",
+		SourceURL: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019001",
+	}
+
+	_, err := acquireEndpoint(context.Background(), fetchFunc(func(_ context.Context, _ *url.URL) ([]byte, error) {
+		return []byte(body), nil
+	}), summary)
+	if !errors.Is(err, errGuideTableExpansionLimit) || err.Error() != "Guide table expansion exceeds the cell limit" {
+		t.Fatalf("expansion error = %v", err)
+	}
+	var source *SourceError
+	if !errors.As(err, &source) || source.Context["logicalOperationId"] != summary.LogicalOperationID || source.Context["sourceUrl"] != summary.SourceURL {
+		t.Fatalf("source error = %#v", source)
+	}
+}
+
 func TestAcquireUsesCompleteInventoryAndBoundedConcurrency(t *testing.T) {
 	detail := string(readAcquisitionFixture(t, "detail.html"))
 	fetcher := newInventoryFetcher(detail)
