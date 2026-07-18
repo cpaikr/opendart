@@ -60,7 +60,7 @@ type pendingSpan struct {
 func expandedTable(table *html.Node) [][]string {
 	var grid [][]string
 	for _, rows := range tableRowGroups(table) {
-		grid = append(grid, expandRowGroup(rows)...)
+		grid = append(grid, expandRowGroup(rows, normalizedText)...)
 	}
 	return grid
 }
@@ -98,7 +98,7 @@ func tableRowGroups(table *html.Node) [][]*html.Node {
 	return groups
 }
 
-func expandRowGroup(rows []*html.Node) [][]string {
+func expandRowGroup(rows []*html.Node, cellText func(*html.Node) string) [][]string {
 	pending := make(map[int]pendingSpan)
 	grid := make([][]string, 0, len(rows))
 	for rowIndex, rowNode := range rows {
@@ -125,7 +125,7 @@ func expandRowGroup(rows []*html.Node) [][]string {
 			}
 			for consumeSpan() {
 			}
-			value := normalizedText(cell)
+			value := cellText(cell)
 			columnSpan := positiveAttribute(cell, "colspan")
 			rowSpan := rowSpanAttribute(cell, len(rows)-rowIndex)
 			for offset := 0; offset < columnSpan; offset++ {

@@ -2,6 +2,8 @@ package guide
 
 import (
 	"context"
+	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -21,6 +23,7 @@ const (
 	guideOrigin       = "https://opendart.fss.or.kr"
 	maxGuideHTMLBytes = 16 << 20
 	acquireWorkers    = 6
+	guideConnections  = 1
 )
 
 var (
@@ -76,8 +79,21 @@ type HTTPFetcher struct {
 }
 
 func NewHTTPFetcher() *HTTPFetcher {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// The public, credential-free guide endpoint only supports TLS 1.2 static
+	// RSA. Keep that legacy exception confined to this exact-host acquisition
+	// client; API probes and every other repository request retain modern
+	// defaults. The small pool also reuses the expensive legacy connection.
+	transport.MaxConnsPerHost = guideConnections
+	transport.MaxIdleConnsPerHost = guideConnections
+	transport.TLSClientConfig = &tls.Config{
+		MinVersion:   tls.VersionTLS12,
+		MaxVersion:   tls.VersionTLS12,
+		CipherSuites: []uint16{tls.TLS_RSA_WITH_AES_128_GCM_SHA256},
+	}
 	return &HTTPFetcher{
 		client: &http.Client{
+			Transport: transport,
 			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
@@ -166,7 +182,26 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, sourceURL *url.URL) ([]byte, er
 			}
 		}
 	}
-	return nil, sourceError("OpenDART guide request failed after retries", map[string]any{"url": trusted.String()}, lastError)
+	context := map[string]any{"url": trusted.String()}
+	if cause := safeTransportCause(lastError); cause != "" {
+		context["cause"] = cause
+	}
+	return nil, sourceError("OpenDART guide request failed after retries", context, lastError)
+}
+
+func safeTransportCause(err error) string {
+	if err == nil {
+		return ""
+	}
+	var requestError *url.Error
+	if errors.As(err, &requestError) {
+		err = requestError.Err
+	}
+	message := err.Error()
+	if len(message) > 256 {
+		message = message[:256] + "…"
+	}
+	return message
 }
 
 func readBoundedGuideBody(reader io.Reader) ([]byte, error) {
@@ -441,7 +476,7 @@ func collectGuideTables(root *html.Node) []guideTable {
 				}
 			}
 		}
-		table := guideTable{Node: node, Headers: headers, Rows: expandRowGroup(bodyRows)}
+		table := guideTable{Node: node, Headers: headers, Rows: expandRowGroup(bodyRows, guideNodeText)}
 		if caption != nil {
 			table.Caption = guideNodeText(caption)
 		}

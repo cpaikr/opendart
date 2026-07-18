@@ -2,6 +2,7 @@ package guide
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +20,17 @@ type fetchFunc func(context.Context, *url.URL) ([]byte, error)
 
 func (function fetchFunc) Fetch(ctx context.Context, sourceURL *url.URL) ([]byte, error) {
 	return function(ctx, sourceURL)
+}
+
+func TestNewHTTPFetcherBoundsGuideConnections(t *testing.T) {
+	t.Parallel()
+	fetcher := NewHTTPFetcher()
+	transport, ok := fetcher.client.Transport.(*http.Transport)
+	if !ok || transport.MaxConnsPerHost != guideConnections || transport.MaxIdleConnsPerHost != guideConnections ||
+		transport.TLSClientConfig.MinVersion != tls.VersionTLS12 || transport.TLSClientConfig.MaxVersion != tls.VersionTLS12 ||
+		!reflect.DeepEqual(transport.TLSClientConfig.CipherSuites, []uint16{tls.TLS_RSA_WITH_AES_128_GCM_SHA256}) {
+		t.Fatalf("transport = %#v", fetcher.client.Transport)
+	}
 }
 
 func TestTrustedGuideURL(t *testing.T) {
@@ -49,6 +61,13 @@ func TestTrustedGuideURL(t *testing.T) {
 	}
 	if _, err := trustedGuideURL("/guide/main.do", "/guide/detail.do"); err == nil {
 		t.Fatal("expected exact-path rejection")
+	}
+}
+
+func TestNormalizeGuideTextPreservesOneBlankLine(t *testing.T) {
+	t.Parallel()
+	if got := normalizeGuideText("first\n\n\nsecond"); got != "first\n\nsecond" {
+		t.Fatalf("normalizeGuideText() = %q", got)
 	}
 }
 
@@ -294,6 +313,27 @@ func TestHTTPFetcherRetriesWithoutCredentials(t *testing.T) {
 	}
 	if string(body) != "guide" || requests != 3 {
 		t.Fatalf("body = %q, requests = %d", body, requests)
+	}
+}
+
+func TestHTTPFetcherReportsTransportCauseWithoutURL(t *testing.T) {
+	t.Parallel()
+	fetcher := NewHTTPFetcher()
+	fetcher.client.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		return nil, errors.New("connection reset by peer")
+	})
+	fetcher.retryDelay = func(context.Context, time.Duration) error { return nil }
+	sourceURL, _ := url.Parse("https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001")
+	_, err := fetcher.Fetch(context.Background(), sourceURL)
+	var source *SourceError
+	if !errors.As(err, &source) {
+		t.Fatalf("error = %v", err)
+	}
+	if source.Context["cause"] != "connection reset by peer" {
+		t.Fatalf("context = %#v", source.Context)
+	}
+	if strings.Contains(source.Context["cause"].(string), "opendart.fss.or.kr") {
+		t.Fatalf("cause contains URL: %#v", source.Context)
 	}
 }
 
