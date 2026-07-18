@@ -30,10 +30,10 @@ Specification refresh is a deliberate local network operation. Pull-request
 verification does not refresh from OpenDART, and release automation publishes
 only the committed bundle after the offline gate passes.
 
-The Go migration is active but has not cut over a repository command.
-`cmd/opendart-tool` is the single internal CLI, and `internal/openapi` isolates
-the selected OpenAPI libraries behind repository-owned types. Its compatibility
-gate runs alongside the authoritative Node/Redocly verification and proves the
+The Go migration is active, and guide synchronization has cut over to
+`cmd/opendart-tool`, the single internal CLI. `internal/openapi` isolates the
+selected OpenAPI libraries behind repository-owned types. Its compatibility
+gate runs alongside the remaining Node/Redocly verification and proves the
 accepted contract can be loaded, validated, rendered, bundled, and compared
 without OpenDART access.
 
@@ -41,16 +41,20 @@ without OpenDART access.
 
 ### Refresh and bundle
 
-`scripts/sync-opendart.mjs` fetches only the trusted OpenDART guide surface,
-normalizes the discovered catalog, and renders managed files into a staging
-directory. It runs the repository catalog check and strict Redocly lint against
-that staging tree before publishing it.
+`npm run sync:opendart` invokes the Go CLI. `internal/guide` fetches only the
+trusted OpenDART guide surface, normalizes the discovered catalog, and renders
+managed files into a staging directory. Until ordered work 3 completes, it runs
+the repository's Node catalog check and strict Redocly lint against that staging
+tree before publishing it.
 
 Publication replaces the managed entries through a sequence of filesystem
 renames and attempts rollback when publication fails. It is not an atomic
-directory swap. Existing managed output is replaced only when its ownership
-marker is valid. A successful refresh removes the prior portable bundle, which
-must then be regenerated explicitly from the committed multi-file description.
+directory swap because the output also contains unmanaged configuration and
+release artifacts. Existing managed output is replaced only when its ownership
+marker is valid, and that marker remains present throughout publication so an
+interrupted run remains owned and repairable by the next refresh. A successful
+refresh removes the prior portable bundle, which must then be regenerated
+explicitly from the committed multi-file description.
 
 ### Verify and release
 
@@ -81,16 +85,16 @@ scheduled GitHub workflow.
   `openapi/paths/`, `openapi/schemas/`, and `openapi/components/` contain its
   generated fragments; `openapi/.opendart-spec-output` marks the managed tree.
 - `openapi/generated/openapi.bundle.yaml` is the portable release interface.
-- Start with `package.json` for the current command surface. The corresponding
-  implementations and offline tests live in `scripts/`.
-- Start with `cmd/opendart-tool/main.go` for the migrating Go command surface.
+- Start with `package.json` for the current command surface. Node implementations
+  that have not yet migrated and their offline tests remain in `scripts/`.
+- Start with `cmd/opendart-tool/main.go` for the Go command surface.
   `internal/openapi` owns third-party OpenAPI types, confined reference loading,
   semantic comparison, representative lint and response validation.
-  `internal/guide` contains the bounded HTML extraction compatibility surface
-  that ordered work 2 will extend into the complete guide model.
-- `scripts/sync-opendart.mjs` owns guide acquisition, normalization, generation,
-  staged validation, and publication. `scripts/check-opendart.mjs` owns catalog
-  and source-fidelity invariants. `scripts/check-opendart-bundle.mjs` owns bundle
+  `internal/guide` owns trusted acquisition, normalization, deterministic
+  generation, staged validation, guarded publication, and rollback.
+- `scripts/sync-opendart.mjs` remains only as temporary parity scaffolding until
+  final Node removal. `scripts/check-opendart.mjs` owns catalog and
+  source-fidelity invariants. `scripts/check-opendart-bundle.mjs` owns bundle
   freshness.
 - `.github/workflows/verify.yml` is the credential-free repository gate.
   `.github/workflows/release-please.yml`, `release-please-config.json`, and

@@ -7,7 +7,7 @@
     "npm": ">=10"
   },
   "scripts": {
-    "sync:opendart": "node scripts/sync-opendart.mjs",
+    "sync:opendart": "go run ./cmd/opendart-tool sync",
     "probe:opendart-multi-company": "node scripts/probe-multi-company.mjs",
     "test:opendart": "node --test scripts/*.test.mjs",
     "test:go-compatibility": "go vet ./... && go test -race ./... && go run ./cmd/opendart-tool compatibility --root openapi/openapi.yaml --baseline openapi/generated/openapi.bundle.yaml",

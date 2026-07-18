@@ -2,7 +2,7 @@ import { realpathSync } from "node:fs";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseArgs } from "node:util";
+import { isDeepStrictEqual, parseArgs } from "node:util";
 
 import { parseDocument } from "yaml";
 
@@ -201,7 +201,18 @@ function normalizedPath(path) {
 }
 
 function sameValue(left, right) {
-  return JSON.stringify(left) === JSON.stringify(right);
+  return isDeepStrictEqual(left, right);
+}
+
+function sameMembers(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  const remaining = [...right];
+  for (const value of left) {
+    const index = remaining.findIndex((candidate) => sameValue(value, candidate));
+    if (index === -1) return false;
+    remaining.splice(index, 1);
+  }
+  return true;
 }
 
 function parameterSourceDiagnostics(logicalOperationId, endpointDescription, argument) {
@@ -487,10 +498,11 @@ async function main() {
       documented.outputFormat === "Zip FILE (binary)"
         ? [mediaType, "application/xml"]
         : [mediaType];
+    const actualMediaTypes = Object.keys(response?.content || {});
     assert(
-      response && sameValue(Object.keys(response.content || {}), expectedMediaTypes),
+      response && sameMembers(actualMediaTypes, expectedMediaTypes),
       "Response media type differs from the documented output format",
-      { pathKey, expected: expectedMediaTypes, actual: Object.keys(response?.content || {}) },
+      { pathKey, expected: expectedMediaTypes, actual: actualMediaTypes },
     );
     const responseSchema = response.content[mediaType].schema;
     const expectedSchemaFile = resolve(
@@ -735,7 +747,7 @@ async function main() {
     const expectedSourceDiagnostics =
       EXPECTED_RESPONSE_SOURCE_DIAGNOSTICS[relativeSchemaFile] || [];
     assert(
-      sameValue(sourceDiagnostics, expectedSourceDiagnostics),
+      sameMembers(sourceDiagnostics, expectedSourceDiagnostics),
       "Response source diagnostics differ from the curated contradictions",
       { schemaFile, expectedSourceDiagnostics, sourceDiagnostics },
     );
