@@ -78,6 +78,9 @@ func TestValidateCatalogRejectsMutationFamilies(t *testing.T) {
 		{name: "operation provenance", rule: "source-date", edit: func(t *testing.T, root string) {
 			replaceCatalogTestFile(t, filepath.Join(filepath.Dir(root), "paths", "ds001", "company.json.yaml"), "checkedAt: 2026-07-17", "checkedAt: 2026-07-16")
 		}},
+		{name: "documented API prefix", rule: "documented-path", edit: func(t *testing.T, root string) {
+			replaceCatalogTestFile(t, filepath.Join(filepath.Dir(root), "paths", "ds001", "company.json.yaml"), "/api/company.json", "/xxx/company.json")
+		}},
 		{name: "parameter normalization", rule: "parameter-normalization", edit: func(t *testing.T, root string) {
 			replaceCatalogTestFile(t, filepath.Join(filepath.Dir(root), "paths", "ds001", "company.json.yaml"), "schema:\n        type: string", "schema:\n        type: array")
 		}},
@@ -128,6 +131,24 @@ func TestValidateCatalogRejectsMutationFamilies(t *testing.T) {
 				t.Fatalf("diagnostic lacks artifact or phase: %#v", catalogErr.Diagnostic)
 			}
 		})
+	}
+}
+
+func TestValidateCatalogRejectsMarkerSymlinkBeforeReadingTarget(t *testing.T) {
+	root := copyCatalogTree(t)
+	marker := filepath.Join(filepath.Dir(root), OutputMarker)
+	if err := os.Remove(marker); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Dir(root), marker); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := ValidateCatalog(CatalogOptions{Root: root})
+	var catalogErr *CatalogError
+	if !errors.As(err, &catalogErr) || catalogErr.Diagnostic.Rule != "output-marker" ||
+		catalogErr.Diagnostic.Message != "generated-output marker must be a regular non-symlink file" {
+		t.Fatalf("error = %v", err)
 	}
 }
 

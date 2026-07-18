@@ -321,12 +321,12 @@ func (v *catalogValidator) validateMarker() error {
 	if err != nil {
 		return v.fail("ownership", "output-marker", marker, "", "", "generated-output ownership marker is missing", err)
 	}
+	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
+		return v.fail("ownership", "output-marker", marker, "", "", "generated-output marker must be a regular non-symlink file", nil)
+	}
 	content, err := os.ReadFile(marker)
 	if err != nil {
 		return v.fail("ownership", "output-marker", marker, "", "", "generated-output ownership marker cannot be read", err)
-	}
-	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-		return v.fail("ownership", "output-marker", marker, "", "", "generated-output marker must be a regular non-symlink file", nil)
 	}
 	if string(content) != OutputMarkerContent {
 		return v.fail("ownership", "output-marker", marker, "", "", "generated-output marker changed", nil)
@@ -397,7 +397,7 @@ func (v *catalogValidator) validateOperation(pathKey, pathFile, pathText string,
 		return "", "", "", v.fail("operations", "operation-security", pathFile, identity, "#/get/security", "operation security does not use the documented query authentication key", nil)
 	}
 	documentedURL, err := url.Parse(basic.RequestURL)
-	if err != nil || len(documentedURL.Path) < len("/api") || documentedURL.Path[len("/api"):] != pathKey {
+	if err != nil || documentedURL.Path != "/api"+pathKey {
 		return "", "", "", v.fail("operations", "documented-path", pathFile, identity, "#/get/x-opendart/documentedBasicInfo/requestUrl", "OpenAPI path does not match the documented URL", err)
 	}
 	if !((strings.HasSuffix(pathKey, ".json") && basic.OutputFormat == "JSON") || (strings.HasSuffix(pathKey, ".xml") && (basic.OutputFormat == "XML" || basic.OutputFormat == "Zip FILE (binary)"))) {

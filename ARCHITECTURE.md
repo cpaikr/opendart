@@ -36,7 +36,8 @@ selected OpenAPI libraries behind repository-owned types and owns confined
 references, strict linting, deterministic bundling, freshness, and semantic
 comparison. Node.js remains only for the focused credentialed probe and its
 offline tests; the old Node and Redocly verification implementations are
-temporary parity scaffolding pending final removal.
+dormant pending final removal. They do not run in the current verification
+gate; their former checks were run once as non-authoritative cutover evidence.
 
 ## Runtime flows
 
@@ -95,8 +96,8 @@ scheduled GitHub workflow.
   `internal/verification` coordinates the offline repository gate, while
   `internal/releaseguard` owns release and workflow policy.
 - `scripts/probe-multi-company.mjs` and its tests retain the remaining Node.js
-  responsibility. Other Node/Redocly implementations are dormant parity
-  scaffolding until final removal.
+  responsibility. Other Node/Redocly implementations are dormant until final
+  removal and are not part of the current verification gate.
 - `.github/workflows/verify.yml` is the credential-free repository gate.
   `.github/workflows/release-please.yml`, `release-please-config.json`, and
   `.release-please-manifest.json` own release automation.

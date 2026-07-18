@@ -279,8 +279,23 @@ func TestRunVerifyEmitsReportAndForwardsRepositoryRoot(t *testing.T) {
 			Operation: "getCompany", Location: "#/paths/~1company/get",
 		}
 	})
-	if code != 1 || !strings.Contains(stderr.String(), "operation=getCompany") || !strings.Contains(stderr.String(), "location=#/paths/~1company/get") {
+	if code != 1 {
 		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+	var diagnostic struct {
+		Phase     string `json:"phase"`
+		Artifact  string `json:"artifact"`
+		Rule      string `json:"rule"`
+		Operation string `json:"operation"`
+		Location  string `json:"location"`
+	}
+	if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+		t.Fatalf("decode diagnostic: %v; stderr = %q", err, stderr.String())
+	}
+	if diagnostic.Phase != "source-lint" || diagnostic.Artifact != "openapi.yaml" ||
+		diagnostic.Rule != "operation-summary" || diagnostic.Operation != "getCompany" ||
+		diagnostic.Location != "#/paths/~1company/get" {
+		t.Fatalf("diagnostic = %#v", diagnostic)
 	}
 }
 

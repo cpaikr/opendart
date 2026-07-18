@@ -62,6 +62,12 @@ func boundedStagingError(phase, artifact string, err error) error {
 	validationErr := &stagingValidationError{phase: phase, artifact: artifact, message: err.Error(), cause: err}
 	var catalogErr *CatalogError
 	if errors.As(err, &catalogErr) {
+		if catalogErr.Diagnostic.Phase != "" {
+			validationErr.phase = phase + "/" + catalogErr.Diagnostic.Phase
+		}
+		if catalogErr.Diagnostic.Artifact != "" {
+			validationErr.artifact = catalogErr.Diagnostic.Artifact
+		}
 		validationErr.rule = catalogErr.Diagnostic.Rule
 		validationErr.operation = catalogErr.Diagnostic.Operation
 		validationErr.location = catalogErr.Diagnostic.Location

@@ -33,6 +33,11 @@ func TestValidateStagingStopsAtCatalogFailure(t *testing.T) {
 	if !errors.As(err, &catalogErr) || catalogErr.Diagnostic.Rule != "output-marker" {
 		t.Fatalf("validation error = %v", err)
 	}
+	var stagingErr *stagingValidationError
+	if !errors.As(err, &stagingErr) || stagingErr.phase != "catalog/ownership" ||
+		stagingErr.artifact != filepath.Join(filepath.Dir(root), OutputMarker) {
+		t.Fatalf("staging diagnostic = %#v", stagingErr)
+	}
 	if !strings.Contains(err.Error(), "staged catalog") || strings.Contains(err.Error(), "operation-summary") {
 		t.Fatalf("catalog failure is not bounded or ordered: %v", err)
 	}

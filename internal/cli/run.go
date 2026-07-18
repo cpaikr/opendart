@@ -150,6 +150,26 @@ func runVerifyWith(args []string, stdout, stderr io.Writer, runner verificationR
 	}
 	report, err := runner(*repositoryRoot)
 	if err != nil {
+		var verificationError *verification.Error
+		if errors.As(err, &verificationError) {
+			diagnostic := struct {
+				Phase     string `json:"phase"`
+				Artifact  string `json:"artifact"`
+				Rule      string `json:"rule"`
+				Operation string `json:"operation,omitempty"`
+				Location  string `json:"location,omitempty"`
+			}{
+				Phase:     verificationError.Phase,
+				Artifact:  verificationError.Artifact,
+				Rule:      verificationError.Rule,
+				Operation: verificationError.Operation,
+				Location:  verificationError.Location,
+			}
+			if encodeErr := writeJSON(stderr, diagnostic); encodeErr != nil {
+				return 1
+			}
+			return 1
+		}
 		return writeCommandError(stderr, "verify", err, 1)
 	}
 	if err := writeJSON(stdout, report); err != nil {

@@ -17,12 +17,13 @@ language decision is recorded in
   have cut over once.
 - Node.js remains authoritative only for the focused multi-company probe and
   its offline tests. The superseded Node and Redocly verification paths remain
-  dormant parity scaffolding until final removal.
+  dormant until final removal and do not run in the current verification gate.
 - Pull-request, manual, and release verification use the credential-free Go
-  repository verifier. The accepted multi-file OpenAPI 3.2 contract and Go
-  bundle pass the Go policies plus retained Node catalog, Redocly lint, and
-  semantic parity checks without OpenDART credentials. The superseded Redocly
-  byte-freshness check intentionally rejects the approved Go formatting.
+  repository verifier. During cutover, the accepted multi-file OpenAPI 3.2
+  contract and Go bundle also passed the former Node catalog and Redocly lint
+  checks plus semantic parity checks without OpenDART credentials. Those
+  non-authoritative checks are retained as migration evidence, not automation;
+  the former Redocly byte-freshness check rejects the approved Go formatting.
 - [Guide drift](guide-drift.md) and [live conformance](live-conformance.md) are
   committed follow-on work. They depend on the Go OpenAPI and reporting
   foundations but retain separate network, credential, and issue boundaries.
@@ -109,7 +110,8 @@ the completed verification cutover until that work is explicitly started.
 - 2026-07-18: Completed ordered work 3. Ported catalog and confined-reference
   checks, strict linting, release/workflow guards, staged validation, composed
   bundling, exact freshness, and the offline repository verifier. The reviewed
-  Go bundle has zero semantic changes from the accepted contract; retained Node
-  catalog and Redocly lint checks pass, while the obsolete Redocly byte check is
-  intentionally superseded. Local and credential-free CI commands now use the
-  Go verifier. Ordered work 4 and 5 remain unstarted.
+  Go bundle has zero semantic changes from the accepted contract; the former
+  Node catalog and Redocly lint checks passed as one-time cutover evidence,
+  while the obsolete Redocly byte check is intentionally superseded. Local and
+  credential-free CI commands now use only the Go verifier. Ordered work 4 and
+  5 remain unstarted.
