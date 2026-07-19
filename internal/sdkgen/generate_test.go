@@ -95,6 +95,15 @@ func TestGenerateRustRefusesToReplaceUnownedOutput(t *testing.T) {
 	}
 }
 
+func TestPublishRollbackErrorPreservesBothCauses(t *testing.T) {
+	publishErr := errors.New("publish")
+	rollbackErr := errors.New("rollback")
+	err := publishRollbackError(publishErr, rollbackErr)
+	if !errors.Is(err, publishErr) || !errors.Is(err, rollbackErr) {
+		t.Fatalf("joined error does not preserve both causes: %v", err)
+	}
+}
+
 func TestGenerateRustReplacesOnlyOlderOwnedSchemas(t *testing.T) {
 	root := canonicalRoot(t)
 

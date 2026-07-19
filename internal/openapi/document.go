@@ -664,12 +664,27 @@ func validateArchiveXML(data []byte) error {
 	if err != nil || !utf8.Valid(decoded) || bytes.ContainsRune(decoded, utf8.RuneError) {
 		return errors.New("XML encoding is invalid")
 	}
-	return consumeXML(decoded)
+	return consumeDecodedXML(decoded)
 }
 
 func consumeXML(data []byte) error {
+	return consumeXMLWithCharsetReader(data, openDARTXMLCharsetReader)
+}
+
+func consumeDecodedXML(data []byte) error {
+	return consumeXMLWithCharsetReader(data, func(label string, input io.Reader) (io.Reader, error) {
+		switch strings.ToLower(strings.TrimSpace(label)) {
+		case "utf-8", "utf8", "us-ascii", "euc-kr", "ks_c_5601-1987", "cp949":
+			return input, nil
+		default:
+			return nil, errors.New("XML encoding is unsupported")
+		}
+	})
+}
+
+func consumeXMLWithCharsetReader(data []byte, charsetReader func(string, io.Reader) (io.Reader, error)) error {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
-	decoder.CharsetReader = openDARTXMLCharsetReader
+	decoder.CharsetReader = charsetReader
 	for {
 		token, err := decoder.Token()
 		if err != nil {

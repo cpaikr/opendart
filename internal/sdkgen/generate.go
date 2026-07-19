@@ -158,7 +158,7 @@ func publishOwnedTree(output string, files map[string][]byte) error {
 	}
 	if err := os.Rename(staging, output); err != nil {
 		if rollbackErr := os.Rename(backup, output); rollbackErr != nil {
-			return fmt.Errorf("replace generated Rust SDK: publish failed: %v; rollback failed: %w", err, rollbackErr)
+			return publishRollbackError(err, rollbackErr)
 		}
 		return fmt.Errorf("replace generated Rust SDK: publish failed and accepted output was restored: %w", err)
 	}
@@ -167,6 +167,16 @@ func publishOwnedTree(output string, files map[string][]byte) error {
 		return fmt.Errorf("replace generated Rust SDK: remove rollback copy: %w", err)
 	}
 	return nil
+}
+
+func publishRollbackError(publishErr, rollbackErr error) error {
+	return fmt.Errorf(
+		"replace generated Rust SDK: %w",
+		errors.Join(
+			fmt.Errorf("publish failed: %w", publishErr),
+			fmt.Errorf("rollback failed: %w", rollbackErr),
+		),
+	)
 }
 
 func writeTree(root string, files map[string][]byte) error {

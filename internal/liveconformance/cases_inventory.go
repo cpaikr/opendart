@@ -128,11 +128,14 @@ func primaryLogicalCases() []logicalCase {
 func disclosureDiscoveryRequests() []DiscoveryRequest {
 	requests := make([]DiscoveryRequest, 0, 32)
 	for month := 1; month <= 12; month++ {
-		lastDay := 31
-		if month == 2 {
+		var lastDay int
+		switch month {
+		case 2:
 			lastDay = 28
-		} else if month == 4 || month == 6 || month == 9 || month == 11 {
+		case 4, 6, 9, 11:
 			lastDay = 30
+		default:
+			lastDay = 31
 		}
 		for half, days := range [][2]int{{1, 15}, {16, lastDay}} {
 			id := strings.Join([]string{"b001", "2025", "m" + twoDigits(month), "h" + strconv.Itoa(half+1)}, "-")
