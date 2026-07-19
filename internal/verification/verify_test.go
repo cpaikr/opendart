@@ -105,6 +105,12 @@ func TestLiveConformanceFailurePreservesSanitizedContext(t *testing.T) {
 	if got.Phase != phaseLiveConformance || got.Artifact != "nested-artifact" || got.Rule != "nested-rule" {
 		t.Fatalf("nested failure = %#v", got)
 	}
+
+	unknown := errors.New("unclassified detail")
+	got = liveConformanceFailure(unknown)
+	if got.Phase != phaseLiveConformance || got.Artifact != "live conformance repository" || got.Rule != "unknown-rule" || !errors.Is(got, unknown) {
+		t.Fatalf("unclassified failure = %#v", got)
+	}
 }
 
 func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
@@ -121,7 +127,7 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 		{name: "source lint diagnostic", fail: phaseSourceLint, wantPhase: phaseSourceLint, wantArtifact: "source.yaml", wantRule: "operation-summary", wantCallCount: 2},
 		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 4},
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 3},
-		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance inventory", wantRule: "coverage-budget-sanitization", wantCallCount: 5},
+		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 5},
 		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 6},
 		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 7},
 	}

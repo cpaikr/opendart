@@ -128,7 +128,7 @@ and gives issue-write permission only to the isolated notifier. The notifier
 strictly decodes the bounded report; missing, malformed, or inconsistent
 artifacts become a fixed failure derived only from Actions metadata. Failures
 update one marker-owned issue, recovery is recorded once, and automation never
-changes issue state. The protected environment and credential remain
+closes the issue. The protected environment and credential remain
 unconfigured, and the workflow has not been dispatched or scheduled.
 
 `internal/liveprobe` confines the live-only HTTP policy shared by credentialed
@@ -210,9 +210,10 @@ OpenDART origin.
 migration of repository-owned tooling from Node.js to one internal Go CLI. The
 [guide-drift](tasks/main/guide-drift.md) task defines future work not yet part
 of the current runtime. The
-[live-conformance](tasks/main/live-conformance.md) task tracks protected
-workflow, notification, and supervised scheduling work beyond the current
-manual command. The
+[live-conformance](tasks/main/live-conformance.md) task defers protected
+environment setup, supervised execution, and weekly scheduling pending
+explicit authorization; the runner, protected workflow definition, and
+isolated notifier are implemented. The
 [Rust SDK task](tasks/rust/public-rust-sdk.md)
 proposes an explicit future product-boundary change while retaining Go as
 private repository tooling; no SDK is part of the current system until that
