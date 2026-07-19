@@ -21,11 +21,11 @@ opendart = "0.1"
 use std::time::Duration;
 
 # #[cfg(feature = "client-reqwest")]
-use opendart::{operations::Company, ApiKey, Client, Representation, SourceReply};
+use opendart::{operations::Company, ApiKey, Client, SourceReply};
 
 # #[cfg(feature = "client-reqwest")]
 # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-let request = Company::new("00126380").prepare(Representation::Json)?;
+let request = Company::new("00126380").prepare_json()?;
 let client = Client::builder(ApiKey::new("example-key")?)
     .connect_timeout(Duration::from_secs(5))
     .read_timeout(Duration::from_secs(20))
@@ -33,7 +33,9 @@ let client = Client::builder(ApiKey::new("example-key")?)
     .build()?;
 
 match client.execute(&request).await?.reply {
-    SourceReply::Success(value) => println!("{value:?}"),
+    SourceReply::Success(company) => {
+        println!("company name evidence: {:?}", company.corp_name)
+    }
     SourceReply::Status(status) => println!("OpenDART status: {}", status.code),
     _ => unreachable!("future reply variants remain representable"),
 }
@@ -45,6 +47,9 @@ match client.execute(&request).await?.reply {
 recognized status envelope—including `000`, `013`, documented error values,
 and unknown future strings—as `SourceReply::Status`. The SDK does not decide
 that `013` is an empty success and does not mark any source status retryable.
+Each `prepare_json` or `prepare_xml` call binds its representation-specific
+generated success type. Use `Client::execute_raw(&request)` when you need the
+complete normalized `SourceValue` envelope instead.
 
 ZIP operations use `Client::execute_binary`. The result distinguishes a
 positive ZIP signature, a bounded alternate XML status envelope, and an
@@ -60,9 +65,9 @@ opendart = { version = "0.1", default-features = false }
 ```
 
 ```rust
-use opendart::{operations::Company, ApiKey, Representation};
+use opendart::{operations::Company, ApiKey};
 
-let request = Company::new("00126380").prepare(Representation::Xml)?;
+let request = Company::new("00126380").prepare_xml()?;
 assert_eq!(request.relative_path(), "/api/company.xml");
 
 let key = ApiKey::new("example-key")?;
@@ -91,6 +96,7 @@ assert!(matches!(reply, SourceReply::Status(_)));
 ```
 
 The SDK never retries, follows redirects, reads ambient proxies, or
-automatically decodes response content. `source_provenance()` identifies the
-reviewed specification and generator inputs; packaged archives also include
-Cargo's `.cargo_vcs_info.json` for the exact source revision.
+automatically decodes response content. `source_provenance()` separately
+identifies the reviewed semantic specification sources and exact generated
+bundle artifact; packaged archives also include Cargo's `.cargo_vcs_info.json`
+for the exact source revision.

@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, fmt};
 
+pub(crate) mod decode;
 mod inspect;
 
 pub use inspect::{BodyLimitError, EnvelopeError, EnvelopeFormat, WireInspectError, WireInspector};
@@ -164,6 +165,28 @@ pub enum SourceValueKind {
     Object,
 }
 
+/// A generated response did not satisfy its documented wire shape.
+#[derive(Clone, Debug, Eq, PartialEq, thiserror::Error)]
+#[non_exhaustive]
+pub enum ResponseDecodeError {
+    /// A required documented field was absent.
+    #[error("response is missing the required field at {path}")]
+    MissingRequired {
+        /// JSON-Pointer-like location within the normalized response.
+        path: String,
+    },
+    /// A documented field had an incompatible normalized kind.
+    #[error("response field at {path} is {actual:?}, expected {expected:?}")]
+    WrongKind {
+        /// JSON-Pointer-like location within the normalized response.
+        path: String,
+        /// Kind required by the selected operation contract.
+        expected: SourceValueKind,
+        /// Kind observed in the source response.
+        actual: SourceValueKind,
+    },
+}
+
 /// A conservative source value that does not expose JSON or XML parser types.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SourceValue(SourceValueRepr);
@@ -297,7 +320,7 @@ impl SourceValue {
     }
 }
 
-/// A source status-only envelope retained without application interpretation.
+/// A source status envelope retained without application interpretation.
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub struct StatusEnvelope {
@@ -305,6 +328,8 @@ pub struct StatusEnvelope {
     pub code: SourceStatus,
     /// The optional opaque source message.
     pub message: Option<SourceValue>,
+    /// The complete normalized envelope, including additive source evidence.
+    pub evidence: SourceValue,
 }
 
 /// A recognized source reply that separates success payload from status evidence.

@@ -2,17 +2,18 @@ use crate::generated::{GENERATOR_SCHEMA, PROJECTION_CHECKSUM};
 
 const CANONICAL_BUNDLE_SHA256: &str =
     "76711f2e9c886eb1977f1292c07fcefdd60528a910982cc92b2df565ab97fe24";
-const SPECIFICATION_RELEASE: Option<&str> = Some("v0.1.0");
+const SPECIFICATION_SOURCE_RELEASE: Option<&str> = Some("v0.1.0");
 
-/// The reviewed specification and generator snapshot implemented by this crate.
+/// The reviewed specification sources, generated artifact, and SDK projection.
 ///
 /// The packaged archive's Cargo-generated `.cargo_vcs_info.json` records the
-/// exact source revision. These values identify the independent specification
-/// and generated-contract inputs selected for the crate release.
+/// exact repository revision. The specification source release identifies the
+/// canonical source inputs semantically; the bundle checksum independently
+/// identifies the exact generated OpenAPI artifact selected for this crate.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SourceProvenance {
     crate_version: &'static str,
-    specification_release: Option<&'static str>,
+    specification_source_release: Option<&'static str>,
     canonical_bundle_sha256: &'static str,
     generator_schema: u32,
     sdk_projection_sha256: &'static str,
@@ -25,10 +26,13 @@ impl SourceProvenance {
         self.crate_version
     }
 
-    /// Returns the selected specification release tag, when one exists.
+    /// Returns the release whose canonical specification sources were selected.
+    ///
+    /// This tag identifies source inputs, not byte identity of a generated
+    /// bundle. Use [`Self::canonical_bundle_sha256`] for exact artifact identity.
     #[must_use]
-    pub const fn specification_release(self) -> Option<&'static str> {
-        self.specification_release
+    pub const fn specification_source_release(self) -> Option<&'static str> {
+        self.specification_source_release
     }
 
     /// Returns the SHA-256 of the selected canonical OpenAPI bundle.
@@ -55,7 +59,7 @@ impl SourceProvenance {
 pub const fn source_provenance() -> SourceProvenance {
     SourceProvenance {
         crate_version: env!("CARGO_PKG_VERSION"),
-        specification_release: SPECIFICATION_RELEASE,
+        specification_source_release: SPECIFICATION_SOURCE_RELEASE,
         canonical_bundle_sha256: CANONICAL_BUNDLE_SHA256,
         generator_schema: GENERATOR_SCHEMA,
         sdk_projection_sha256: PROJECTION_CHECKSUM,
@@ -70,7 +74,7 @@ mod tests {
     fn release_snapshot_has_complete_stable_identity() {
         let provenance = source_provenance();
         assert_eq!(provenance.crate_version(), env!("CARGO_PKG_VERSION"));
-        assert!(provenance.specification_release().is_some());
+        assert_eq!(provenance.specification_source_release(), Some("v0.1.0"));
         assert_eq!(provenance.canonical_bundle_sha256().len(), 64);
         assert_eq!(provenance.sdk_projection_sha256().len(), 64);
         assert_ne!(

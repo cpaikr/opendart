@@ -1,11 +1,13 @@
-// Package rust emits formatter-stable Rust from the normalized SDK model.
+// Package rust emits deterministically formatted Rust from the normalized SDK model.
 package rust
 
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
 	"github.com/cpaikr/opendart/internal/sdkgen/ownership"
@@ -17,11 +19,13 @@ func Render(source model.Model) (map[string][]byte, error) {
 	if source.SchemaVersion != model.SchemaVersion || source.Checksum == "" {
 		return nil, fmt.Errorf("render Rust SDK: invalid model schema or checksum")
 	}
+	if err := validateRustSymbols(source); err != nil {
+		return nil, err
+	}
 	files := map[string][]byte{
 		ownership.Filename: []byte(ownership.Marker(source.SchemaVersion)),
 		"mod.rs":           []byte(renderModule(source)),
 		"mapping.rs":       []byte(renderMapping(source)),
-		"wire_shapes.rs":   []byte(renderWireShapes(source)),
 	}
 	groups := make(map[string][]model.LogicalOperation)
 	for _, operation := range source.Logical {
@@ -33,12 +37,18 @@ func Render(source model.Model) (map[string][]byte, error) {
 	}
 	sort.Strings(groupNames)
 	files["operations/mod.rs"] = []byte(renderOperationsModule(source, groupNames))
+	files["responses/mod.rs"] = []byte(renderResponsesModule(source, groupNames))
 	physical := make(map[string]model.PhysicalOperation, len(source.Physical))
 	for _, operation := range source.Physical {
 		physical[operation.OperationID] = operation
 	}
 	for _, group := range groupNames {
 		files["operations/"+group+".rs"] = []byte(renderOperationGroup(source, groups[group], physical))
+		responses, err := renderResponseGroup(source, groups[group], physical)
+		if err != nil {
+			return nil, err
+		}
+		files["responses/"+group+".rs"] = []byte(responses)
 	}
 	return files, nil
 }
@@ -51,7 +61,7 @@ func header(source model.Model) string {
 
 func renderModule(source model.Model) string {
 	return header(source) + fmt.Sprintf(
-		"pub(crate) const GENERATOR_SCHEMA: u32 = %d;\npub(crate) const PROJECTION_CHECKSUM: &str = %s;\n\n/// Generator-owned logical-operation input types.\n///\n/// Types in this module are supported public API. The generated file layout is not.\npub mod operations;\n#[cfg(test)]\npub(crate) mod mapping;\n#[cfg(test)]\npub(crate) mod wire_shapes;\n\n#[cfg(test)]\nmod generated_inventory_tests {\n    use std::collections::{BTreeMap, BTreeSet};\n\n    use super::{\n        mapping::OPERATION_MAPPINGS,\n        wire_shapes::{AdditionalPropertiesPolicy, RESPONSE_SHAPES},\n    };\n\n    #[test]\n    fn mappings_and_response_routes_cover_the_same_physical_inventory() {\n        let mut physical = BTreeSet::new();\n        let mut logical_names = BTreeMap::new();\n        for mapping in OPERATION_MAPPINGS {\n            assert!(physical.insert(mapping.operation_id), \"duplicate physical mapping: {}\", mapping.operation_id);\n            if let Some(previous) = logical_names.insert(mapping.logical_operation_id, mapping.rust_name) {\n                assert_eq!(previous, mapping.rust_name, \"logical operation has multiple public names: {}\", mapping.logical_operation_id);\n            }\n        }\n\n        let mut routed = BTreeSet::new();\n        for shape in RESPONSE_SHAPES {\n            assert!(physical.contains(shape.operation_id), \"response route has no operation mapping: {}\", shape.operation_id);\n            assert!(!shape.selector.is_empty());\n            assert!(!shape.http_status_evidence.is_empty());\n            assert!(!shape.media_type.is_empty());\n            assert!(!shape.content_type_status.is_empty());\n            assert_eq!(shape.nodes.first().map(|node| node.path), Some(\"$\"));\n            for node in shape.nodes {\n                let _ = (\n                    node.description,\n                    node.kind,\n                    node.required,\n                    node.additional_properties,\n                    node.xml_name,\n                    node.xml_node_type,\n                    node.known_statuses,\n                );\n            }\n            routed.insert(shape.operation_id);\n        }\n        let _ = AdditionalPropertiesPolicy::Forbidden;\n        assert_eq!(physical, routed);\n    }\n}\n",
+		"pub(crate) const GENERATOR_SCHEMA: u32 = %d;\npub(crate) const PROJECTION_CHECKSUM: &str = %s;\n\n/// Generator-owned logical-operation input types.\n///\n/// Types in this module are supported public API. The generated file layout is not.\npub mod operations;\n/// Generator-owned representation-specific response wire types.\n///\n/// Types in this module are supported public API. The generated file layout is not.\npub mod responses;\n#[cfg(test)]\npub(crate) mod mapping;\n\n#[cfg(test)]\nmod generated_inventory_tests {\n    use std::collections::{BTreeMap, BTreeSet};\n\n    use super::mapping::OPERATION_MAPPINGS;\n\n    #[test]\n    fn mappings_cover_the_physical_inventory_without_public_name_drift() {\n        let mut physical = BTreeSet::new();\n        let mut logical_names = BTreeMap::new();\n        for mapping in OPERATION_MAPPINGS {\n            assert!(physical.insert(mapping.operation_id), \"duplicate physical mapping: {}\", mapping.operation_id);\n            if let Some(previous) = logical_names.insert(mapping.logical_operation_id, mapping.rust_name) {\n                assert_eq!(previous, mapping.rust_name, \"logical operation has multiple public names: {}\", mapping.logical_operation_id);\n            }\n        }\n        assert!(!physical.is_empty());\n    }\n}\n",
 		source.SchemaVersion, quote(source.Checksum),
 	)
 }
@@ -88,11 +98,30 @@ func renderOperationsModule(source model.Model, groups []string) string {
 	return output.String()
 }
 
+func renderResponsesModule(source model.Model, groups []string) string {
+	var output strings.Builder
+	output.WriteString(header(source))
+	for _, group := range groups {
+		fmt.Fprintf(&output, "pub(crate) mod %s;\n", group)
+	}
+	output.WriteByte('\n')
+	for _, group := range groups {
+		fmt.Fprintf(&output, "pub use %s::*;\n", group)
+	}
+	return output.String()
+}
+
 func renderOperationGroup(source model.Model, operations []model.LogicalOperation, physical map[string]model.PhysicalOperation) string {
 	var output strings.Builder
 	output.WriteString(header(source))
-	output.WriteString("use crate::request::{QueryParameter, QueryValue};\n")
-	output.WriteString("use crate::{OperationIdentity, PrepareError, PreparedRequest, Representation};\n")
+	output.WriteString("use crate::request::{QueryParameter, QueryValue, RequestParts};\n")
+	requestImports := []string{"OperationIdentity", "PrepareError"}
+	if hasBinaryVariant(operations) {
+		requestImports = append(requestImports, "PreparedBinaryRequest")
+	}
+	requestImports = append(requestImports, "PreparedRequest", "Representation")
+	fmt.Fprintf(&output, "use crate::{%s};\n", strings.Join(requestImports, ", "))
+	fmt.Fprintf(&output, "use super::super::responses::%s as response;\n", operations[0].Group)
 	output.WriteString("use super::super::{GENERATOR_SCHEMA, PROJECTION_CHECKSUM};\n\n")
 	needed := make(map[string]bool)
 	for _, operation := range operations {
@@ -127,7 +156,7 @@ func renderGeneratedRequestTests(output *strings.Builder, operations []model.Log
 			physicalOperation := physical[variant.OperationID]
 			output.WriteString("        {\n")
 			fmt.Fprintf(output, "            let input = %s;\n", inputExpression(operation, true))
-			fmt.Fprintf(output, "            let prepared = input.prepare(Representation::%s).expect(\"generated vector must prepare\");\n", rustRepresentation(variant.Representation))
+			fmt.Fprintf(output, "            let prepared = input.%s().expect(\"generated vector must prepare\");\n", preparationMethod(variant.Representation))
 			fmt.Fprintf(output, "            assert_eq!(prepared.identity().physical(), %s);\n", quote(physicalOperation.OperationID))
 			fmt.Fprintf(output, "            assert_eq!(prepared.identity().logical(), %s);\n", quote(physicalOperation.LogicalID))
 			output.WriteString("            assert_eq!(prepared.method(), RequestMethod::Get);\n")
@@ -139,7 +168,7 @@ func renderGeneratedRequestTests(output *strings.Builder, operations []model.Log
 			output.WriteString("            assert_eq!(prepared.generator_schema(), GENERATOR_SCHEMA);\n")
 			output.WriteString("            assert_eq!(prepared.projection_identity(), PROJECTION_CHECKSUM);\n")
 			if hasOptionalParameter(operation.Parameters) {
-				fmt.Fprintf(output, "            let defaults = %s.prepare(Representation::%s).expect(\"omitted optional values must prepare\");\n", inputExpression(operation, false), rustRepresentation(variant.Representation))
+				fmt.Fprintf(output, "            let defaults = %s.%s().expect(\"omitted optional values must prepare\");\n", inputExpression(operation, false), preparationMethod(variant.Representation))
 				fmt.Fprintf(output, "            assert_eq!(defaults.encoded_query(), %s);\n", quote(vectorQuery(operation.Parameters, false)))
 			}
 			output.WriteString("        }\n")
@@ -217,16 +246,25 @@ func renderLogicalOperation(output *strings.Builder, operation model.LogicalOper
 	for _, parameter := range operation.Parameters {
 		renderParameterMethods(output, parameter)
 	}
-	output.WriteString("    /// Prepares one physical representation without performing I/O.\n")
-	output.WriteString("    pub fn prepare(&self, representation: Representation) -> Result<PreparedRequest, PrepareError> {\n")
-	output.WriteString("        let (path, identity, expected) = match representation {\n")
 	for _, variant := range operation.Variants {
 		physicalOperation := physical[variant.OperationID]
-		fmt.Fprintf(output, "            Representation::%s => (%s, OperationIdentity::new(%s, Self::LOGICAL_OPERATION_ID), %s),\n",
-			rustRepresentation(variant.Representation), quote(physicalOperation.Path), quote(variant.OperationID), expectedConstant(physicalOperation.ExpectedRepresentations))
+		method := preparationMethod(variant.Representation)
+		fmt.Fprintf(output, "    /// Prepares the %s physical representation without performing I/O.\n", strings.ToUpper(string(variant.Representation)))
+		if variant.Representation == model.RepresentationZIP {
+			fmt.Fprintf(output, "    pub fn %s(&self) -> Result<PreparedBinaryRequest, PrepareError> {\n", method)
+			fmt.Fprintf(output, "        let identity = OperationIdentity::new(%s, Self::LOGICAL_OPERATION_ID);\n", quote(variant.OperationID))
+			fmt.Fprintf(output, "        let parts = self.prepare_parts(%s, identity, %s)?;\n", quote(physicalOperation.Path), expectedConstant(physicalOperation.ExpectedRepresentations))
+			output.WriteString("        Ok(PreparedBinaryRequest::new(parts))\n")
+		} else {
+			responseName := responseRootName(operation.RustName, variant.Representation)
+			fmt.Fprintf(output, "    pub fn %s(&self) -> Result<PreparedRequest<response::%s>, PrepareError> {\n", method, responseName)
+			fmt.Fprintf(output, "        let identity = OperationIdentity::new(%s, Self::LOGICAL_OPERATION_ID);\n", quote(variant.OperationID))
+			fmt.Fprintf(output, "        let parts = self.prepare_parts(%s, identity, %s)?;\n", quote(physicalOperation.Path), expectedConstant(physicalOperation.ExpectedRepresentations))
+			fmt.Fprintf(output, "        Ok(PreparedRequest::new(parts, response::%s))\n", responseDecoderName(responseName))
+		}
+		output.WriteString("    }\n\n")
 	}
-	output.WriteString("            _ => return Err(PrepareError::UnsupportedRepresentation { logical_operation: Self::LOGICAL_OPERATION_ID, representation }),\n")
-	output.WriteString("        };\n")
+	output.WriteString("    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {\n")
 	for _, parameter := range operation.Parameters {
 		if parameter.Required && parameter.Shape == model.ScalarString {
 			fmt.Fprintf(output, "        require_nonempty(identity, %s, &self.%s)?;\n", quote(parameter.WireName), parameter.RustName)
@@ -253,7 +291,7 @@ func renderLogicalOperation(output *strings.Builder, operation model.LogicalOper
 			renderQueryParameter(output, parameter)
 		}
 	}
-	output.WriteString("        Ok(PreparedRequest::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))\n")
+	output.WriteString("        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))\n")
 	output.WriteString("    }\n}\n\n")
 }
 
@@ -335,6 +373,303 @@ func renderQueryParameter(output *strings.Builder, parameter model.Parameter) {
 		parameter.RustName, quote(parameter.WireName), queryValue(parameter, "value"))
 }
 
+func renderResponseGroup(source model.Model, operations []model.LogicalOperation, physical map[string]model.PhysicalOperation) (string, error) {
+	dependencies := responseGroupDependencies(operations, physical)
+	decodeImports := []string{"ObjectDecoder"}
+	if dependencies.jsonArray {
+		decodeImports = append(decodeImports, "decode_array")
+	}
+	if dependencies.xmlArray {
+		decodeImports = append(decodeImports, "decode_xml_array")
+	}
+	if dependencies.status {
+		decodeImports = append(decodeImports, "decode_source_status")
+	}
+	if dependencies.opaque {
+		decodeImports = append(decodeImports, "decode_source_value")
+	}
+	if dependencies.string {
+		decodeImports = append(decodeImports, "decode_string")
+	}
+	runtimeImports := []string{"ResponseDecodeError"}
+	if dependencies.status {
+		runtimeImports = append(runtimeImports, "SourceStatus")
+	}
+	runtimeImports = append(runtimeImports, "SourceValue")
+
+	var output strings.Builder
+	output.WriteString(header(source))
+	output.WriteString("use std::collections::BTreeMap;\n\n")
+	fmt.Fprintf(&output, "use crate::wire::decode::{%s};\n", strings.Join(decodeImports, ", "))
+	fmt.Fprintf(&output, "use crate::{%s};\n\n", strings.Join(runtimeImports, ", "))
+	for _, operation := range operations {
+		for _, variant := range operation.Variants {
+			if variant.Representation == model.RepresentationZIP {
+				continue
+			}
+			physicalOperation := physical[variant.OperationID]
+			shape, err := primaryResponseShape(physicalOperation)
+			if err != nil {
+				return "", err
+			}
+			if shape.Kind != "object" {
+				return "", fmt.Errorf("render Rust SDK: structured response %s root is %s, want object", physicalOperation.OperationID, shape.Kind)
+			}
+			rootName := responseRootName(operation.RustName, variant.Representation)
+			rootDecoder := responseDecoderName(rootName)
+			arrayDecoder := "decode_array"
+			if variant.Representation == model.RepresentationXML {
+				arrayDecoder = "decode_xml_array"
+			}
+			renderResponseObject(&output, rootName, rootDecoder+"_at", shape, arrayDecoder)
+			fmt.Fprintf(&output, "pub(crate) fn %s(value: SourceValue) -> Result<%s, ResponseDecodeError> {\n", rootDecoder, rootName)
+			fmt.Fprintf(&output, "    %s(value, \"$\".to_owned())\n", rootDecoder+"_at")
+			output.WriteString("}\n\n")
+		}
+	}
+	return output.String(), nil
+}
+
+func primaryResponseShape(operation model.PhysicalOperation) (model.ResponseShape, error) {
+	wantedMedia := map[model.Representation]string{
+		model.RepresentationJSON: "application/json",
+		model.RepresentationXML:  "application/xml",
+		model.RepresentationZIP:  "application/zip",
+	}[operation.PrimaryRepresentation]
+	var selected *model.ResponseShape
+	for _, response := range operation.Responses {
+		for _, media := range response.Media {
+			if media.Name != wantedMedia || media.ContentTypeStatus != "inferred-from-documented-output-format" {
+				continue
+			}
+			if selected != nil {
+				return model.ResponseShape{}, fmt.Errorf("render Rust SDK: response %s has multiple primary shapes", operation.OperationID)
+			}
+			shape := media.Shape
+			selected = &shape
+		}
+	}
+	if selected == nil {
+		return model.ResponseShape{}, fmt.Errorf("render Rust SDK: response %s has no primary shape", operation.OperationID)
+	}
+	return *selected, nil
+}
+
+func renderResponseObject(output *strings.Builder, name, decoder string, shape model.ResponseShape, arrayDecoder string) {
+	renderRustDoc(output, "", shape.Description, "Generated OpenDART response object.")
+	fmt.Fprintf(output, "#[derive(Clone, Debug, PartialEq)]\n#[non_exhaustive]\npub struct %s {\n", name)
+	for _, property := range shape.Properties {
+		renderRustDoc(output, "    ", property.Shape.Description, "Documented source field `"+property.Name+"`.")
+		fieldType := responseFieldType(name, property.RustName, property.Shape)
+		if !responsePropertyRequired(shape, property.Name) {
+			fieldType = "Option<" + fieldType + ">"
+		}
+		fmt.Fprintf(output, "    pub %s: %s,\n", property.RustName, fieldType)
+	}
+	output.WriteString("    additional_fields: BTreeMap<String, SourceValue>,\n")
+	output.WriteString("}\n\n")
+	fmt.Fprintf(output, "impl %s {\n", name)
+	output.WriteString("    /// Returns an additive field not documented by this SDK version.\n    #[must_use]\n    pub fn additional_field(&self, name: &str) -> Option<&SourceValue> { self.additional_fields.get(name) }\n\n")
+	output.WriteString("    /// Iterates additive fields in deterministic name order.\n    pub fn additional_fields(&self) -> impl Iterator<Item = (&str, &SourceValue)> { self.additional_fields.iter().map(|(name, value)| (name.as_str(), value)) }\n")
+	output.WriteString("}\n\n")
+
+	for _, property := range shape.Properties {
+		childName := responseChildTypeName(name, property.RustName)
+		childDecoder := decoder + "_" + property.RustName
+		renderResponseNode(output, childName, childDecoder, property.Shape, arrayDecoder)
+	}
+
+	fmt.Fprintf(output, "fn %s(value: SourceValue, path: String) -> Result<%s, ResponseDecodeError> {\n", decoder, name)
+	output.WriteString("    let mut object = ObjectDecoder::new(value, path)?;\n")
+	for _, property := range shape.Properties {
+		method := "optional"
+		if responsePropertyRequired(shape, property.Name) {
+			method = "required"
+		}
+		fmt.Fprintf(output, "    let %s = object.%s(%s, %s)?;\n", property.RustName, method, quote(property.Name), responseNodeDecoder(decoder+"_"+property.RustName, property.Shape))
+	}
+	output.WriteString("    let additional_fields = object.finish();\n")
+	fmt.Fprintf(output, "    Ok(%s {\n", name)
+	for _, property := range shape.Properties {
+		fmt.Fprintf(output, "        %s,\n", property.RustName)
+	}
+	output.WriteString("        additional_fields,\n    })\n}\n\n")
+}
+
+func renderResponseNode(output *strings.Builder, name, decoder string, shape model.ResponseShape, arrayDecoder string) {
+	switch shape.Kind {
+	case "object":
+		renderResponseObject(output, name, decoder, shape, arrayDecoder)
+	case "array":
+		itemName := name + "Item"
+		itemDecoder := decoder + "_item"
+		renderResponseNode(output, itemName, itemDecoder, *shape.Items, arrayDecoder)
+		fmt.Fprintf(output, "fn %s(value: SourceValue, path: String) -> Result<Vec<%s>, ResponseDecodeError> {\n", decoder, responseShapeType(itemName, *shape.Items))
+		fmt.Fprintf(output, "    %s(value, path, %s)\n", arrayDecoder, responseNodeDecoder(itemDecoder, *shape.Items))
+		output.WriteString("}\n\n")
+	}
+}
+
+func responseFieldType(parent, field string, shape model.ResponseShape) string {
+	return responseShapeType(responseChildTypeName(parent, field), shape)
+}
+
+func responseShapeType(name string, shape model.ResponseShape) string {
+	switch shape.Kind {
+	case "object":
+		return name
+	case "array":
+		itemName := name + "Item"
+		return "Vec<" + responseShapeType(itemName, *shape.Items) + ">"
+	case "string":
+		if shape.OpenStatus {
+			return "SourceStatus"
+		}
+		return "String"
+	case "opaque":
+		return "SourceValue"
+	default:
+		panic(fmt.Sprintf("unsupported generated response shape %q", shape.Kind))
+	}
+}
+
+func responseNodeDecoder(generated string, shape model.ResponseShape) string {
+	switch shape.Kind {
+	case "object", "array":
+		return generated
+	case "string":
+		if shape.OpenStatus {
+			return "decode_source_status"
+		}
+		return "decode_string"
+	case "opaque":
+		return "decode_source_value"
+	default:
+		panic("unsupported generated response decoder")
+	}
+}
+
+func responsePropertyRequired(shape model.ResponseShape, name string) bool {
+	for _, required := range shape.Required {
+		if required == name {
+			return true
+		}
+	}
+	return false
+}
+
+func responseChildTypeName(parent, field string) string {
+	return parent + upperCamelIdentifier(field)
+}
+
+func renderRustDoc(output *strings.Builder, indent, description, fallback string) {
+	description = strings.ReplaceAll(description, "\r", "")
+	if strings.TrimSpace(description) == "" {
+		description = fallback
+	}
+	for _, line := range strings.Split(description, "\n") {
+		fmt.Fprintf(output, "%s/// %s\n", indent, safeRustDocText(line))
+	}
+}
+
+func hasBinaryVariant(operations []model.LogicalOperation) bool {
+	for _, operation := range operations {
+		for _, variant := range operation.Variants {
+			if variant.Representation == model.RepresentationZIP {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+type responseDependencies struct {
+	jsonArray bool
+	xmlArray  bool
+	opaque    bool
+	status    bool
+	string    bool
+}
+
+func responseGroupDependencies(operations []model.LogicalOperation, physical map[string]model.PhysicalOperation) responseDependencies {
+	var dependencies responseDependencies
+	for _, operation := range operations {
+		for _, variant := range operation.Variants {
+			if variant.Representation == model.RepresentationZIP {
+				continue
+			}
+			shape, err := primaryResponseShape(physical[variant.OperationID])
+			if err != nil {
+				continue
+			}
+			if responseShapeHasArray(shape) {
+				switch variant.Representation {
+				case model.RepresentationJSON:
+					dependencies.jsonArray = true
+				case model.RepresentationXML:
+					dependencies.xmlArray = true
+				}
+			}
+			collectResponseDependencies(shape, &dependencies)
+		}
+	}
+	return dependencies
+}
+
+func collectResponseDependencies(shape model.ResponseShape, dependencies *responseDependencies) {
+	switch shape.Kind {
+	case "array":
+		collectResponseDependencies(*shape.Items, dependencies)
+	case "object":
+		for _, property := range shape.Properties {
+			collectResponseDependencies(property.Shape, dependencies)
+		}
+	case "opaque":
+		dependencies.opaque = true
+	case "string":
+		if shape.OpenStatus {
+			dependencies.status = true
+		} else {
+			dependencies.string = true
+		}
+	}
+}
+
+func responseShapeHasArray(shape model.ResponseShape) bool {
+	switch shape.Kind {
+	case "array":
+		return true
+	case "object":
+		for _, property := range shape.Properties {
+			if responseShapeHasArray(property.Shape) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func safeRustDocText(value string) string {
+	var output strings.Builder
+	for _, character := range value {
+		if unicode.IsControl(character) || unicode.Is(unicode.Zl, character) || unicode.Is(unicode.Zp, character) {
+			fmt.Fprintf(&output, `\u{%x}`, character)
+		} else {
+			output.WriteRune(character)
+		}
+	}
+	safe := output.String()
+	safe = strings.ReplaceAll(safe, "[", `\[`)
+	safe = strings.ReplaceAll(safe, "]", `\]`)
+	safe = strings.ReplaceAll(safe, "<", "&lt;")
+	safe = strings.ReplaceAll(safe, ">", "&gt;")
+	return bareRustDocURL.ReplaceAllStringFunc(safe, func(value string) string {
+		return "`" + strings.ReplaceAll(value, "`", "\\`") + "`"
+	})
+}
+
+var bareRustDocURL = regexp.MustCompile(`https?://[^\s]+`)
+
 func hasRequiredParameter(parameters []model.Parameter) bool {
 	for _, parameter := range parameters {
 		if parameter.Required {
@@ -365,70 +700,6 @@ func queryValue(parameter model.Parameter, reference string) string {
 		return "QueryValue::CommaSeparated(" + reference + ")"
 	}
 	return "QueryValue::Scalar(" + reference + ")"
-}
-
-func renderWireShapes(source model.Model) string {
-	var output strings.Builder
-	output.WriteString(header(source))
-	output.WriteString("/// Conservative kind established by the canonical source schema.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n")
-	output.WriteString("pub(crate) enum WireShapeKind {\n    /// An object with named properties.\n    Object,\n    /// An ordered array.\n    Array,\n    /// A source-established string.\n    String,\n    /// A scalar whose type is not established.\n    Opaque,\n    /// Uninterpreted binary entity bytes.\n    Binary,\n}\n\n")
-	output.WriteString("/// Source policy for fields not named by an object schema.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n")
-	output.WriteString("pub(crate) enum AdditionalPropertiesPolicy {\n    /// The canonical schema does not close or explicitly open the object.\n    Unspecified,\n    /// Additional properties are explicitly allowed.\n    Allowed,\n    /// Additional properties are explicitly forbidden.\n    Forbidden,\n}\n\n")
-	output.WriteString("/// One flattened node in a conservative response-shape tree.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub(crate) struct WireShapeNode {\n")
-	output.WriteString("    /// Stable source-field path from the media root.\n    pub path: &'static str,\n    /// Selected canonical source description, or an empty string when absent.\n    pub description: &'static str,\n    /// Conservative source-established value kind.\n    pub kind: WireShapeKind,\n    /// Whether the parent object requires this property.\n    pub required: bool,\n    /// Additional-property policy when this node is an object.\n    pub additional_properties: AdditionalPropertiesPolicy,\n    /// OpenAPI XML element name, or an empty string when unspecified.\n    pub xml_name: &'static str,\n    /// OpenAPI 3.2 XML node type, or an empty string when unspecified.\n    pub xml_node_type: &'static str,\n    /// Documented values when this is the open OpenDART status field.\n    pub known_statuses: &'static [&'static str],\n}\n\n")
-	output.WriteString("/// Response routing and conservative wire-shape metadata for one media type.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub(crate) struct ResponseShape {\n")
-	output.WriteString("    /// Canonical physical OpenAPI operation ID.\n    pub operation_id: &'static str,\n    /// OpenAPI response selector such as `default`.\n    pub selector: &'static str,\n    /// Canonical evidence for interpreting the HTTP response status.\n    pub http_status_evidence: &'static str,\n    /// Declared response media type.\n    pub media_type: &'static str,\n    /// Canonical evidence classification for the content type.\n    pub content_type_status: &'static str,\n    /// Flattened conservative shape tree.\n    pub nodes: &'static [WireShapeNode],\n}\n\n")
-	for _, operation := range source.Physical {
-		for responseIndex, response := range operation.Responses {
-			for mediaIndex, media := range response.Media {
-				name := fmt.Sprintf("%s_RESPONSE_%d_MEDIA_%d", operation.RustConstant, responseIndex, mediaIndex)
-				fmt.Fprintf(&output, "const %s: &[WireShapeNode] = &[\n", name)
-				var nodes []flatShape
-				flattenShape("$", true, media.Shape, &nodes)
-				for _, node := range nodes {
-					fmt.Fprintf(&output, "    WireShapeNode { path: %s, description: %s, kind: WireShapeKind::%s, required: %t, additional_properties: AdditionalPropertiesPolicy::%s, xml_name: %s, xml_node_type: %s, known_statuses: %s },\n",
-						quote(node.path), quote(node.shape.Description), rustShapeKind(node.shape.Kind), node.required, rustAdditionalPolicy(node.shape.AdditionalPropertiesPolicy), quote(node.shape.XMLName), quote(node.shape.XMLNodeType), rustStringSlice(node.shape.StatusValues))
-				}
-				output.WriteString("];\n")
-			}
-		}
-	}
-	output.WriteString("\n/// Complete generated response-routing inventory.\npub(crate) const RESPONSE_SHAPES: &[ResponseShape] = &[\n")
-	for _, operation := range source.Physical {
-		for responseIndex, response := range operation.Responses {
-			for mediaIndex, media := range response.Media {
-				name := fmt.Sprintf("%s_RESPONSE_%d_MEDIA_%d", operation.RustConstant, responseIndex, mediaIndex)
-				fmt.Fprintf(&output, "    ResponseShape { operation_id: %s, selector: %s, http_status_evidence: %s, media_type: %s, content_type_status: %s, nodes: %s },\n",
-					quote(operation.OperationID), quote(response.Selector), quote(response.HTTPStatusEvidence), quote(media.Name), quote(media.ContentTypeStatus), name)
-			}
-		}
-	}
-	output.WriteString("];\n")
-	return output.String()
-}
-
-type flatShape struct {
-	path     string
-	required bool
-	shape    model.ResponseShape
-}
-
-func flattenShape(path string, required bool, shape model.ResponseShape, output *[]flatShape) {
-	*output = append(*output, flatShape{path: path, required: required, shape: shape})
-	requiredNames := make(map[string]bool, len(shape.Required))
-	for _, name := range shape.Required {
-		requiredNames[name] = true
-	}
-	for _, property := range shape.Properties {
-		flattenShape(path+"/"+jsonPointerSegment(property.Name), requiredNames[property.Name], property.Shape, output)
-	}
-	if shape.Items != nil {
-		flattenShape(path+"/-", true, *shape.Items, output)
-	}
-}
-
-func jsonPointerSegment(value string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(value, "~", "~0"), "/", "~1")
 }
 
 func rustParameterType(parameter model.Parameter) string {
@@ -508,45 +779,121 @@ func rustRepresentation(value model.Representation) string {
 	}
 }
 
-func rustShapeKind(value string) string {
+func preparationMethod(value model.Representation) string {
 	switch value {
+	case model.RepresentationJSON:
+		return "prepare_json"
+	case model.RepresentationXML:
+		return "prepare_xml"
+	case model.RepresentationZIP:
+		return "prepare_zip"
+	default:
+		panic("unsupported normalized representation")
+	}
+}
+
+func responseRootName(operation string, representation model.Representation) string {
+	return operation + rustRepresentation(representation) + "Response"
+}
+
+func responseDecoderName(response string) string {
+	return "decode_" + lowerSnake(response)
+}
+
+func upperCamelIdentifier(value string) string {
+	var output strings.Builder
+	upper := true
+	for _, character := range value {
+		if character == '_' {
+			upper = true
+			continue
+		}
+		if upper {
+			output.WriteRune(unicode.ToUpper(character))
+			upper = false
+		} else {
+			output.WriteRune(character)
+		}
+	}
+	return output.String()
+}
+
+func lowerSnake(value string) string {
+	var output strings.Builder
+	for index, character := range value {
+		if unicode.IsUpper(character) {
+			if index > 0 {
+				output.WriteByte('_')
+			}
+			output.WriteRune(unicode.ToLower(character))
+		} else {
+			output.WriteRune(character)
+		}
+	}
+	return output.String()
+}
+
+func validateRustSymbols(source model.Model) error {
+	requestReserved := map[string]string{
+		"OperationIdentity":     "runtime import",
+		"PrepareError":          "runtime import",
+		"PreparedBinaryRequest": "runtime import",
+		"PreparedRequest":       "runtime import",
+		"QueryParameter":        "runtime import",
+		"QueryValue":            "runtime import",
+		"Representation":        "runtime import",
+		"RequestParts":          "runtime import",
+	}
+	publicRequests := make(map[string]string, len(source.Logical))
+	publicResponses := make(map[string]string)
+	physical := make(map[string]model.PhysicalOperation, len(source.Physical))
+	for _, operation := range source.Physical {
+		physical[operation.OperationID] = operation
+	}
+	for _, operation := range source.Logical {
+		if previous := requestReserved[operation.RustName]; previous != "" {
+			return fmt.Errorf("render Rust SDK: request type %s collides with %s", operation.RustName, previous)
+		}
+		if previous := publicRequests[operation.RustName]; previous != "" {
+			return fmt.Errorf("render Rust SDK: request type %s is shared by %s and %s", operation.RustName, previous, operation.ID)
+		}
+		publicRequests[operation.RustName] = operation.ID
+		for _, variant := range operation.Variants {
+			if variant.Representation == model.RepresentationZIP {
+				continue
+			}
+			shape, err := primaryResponseShape(physical[variant.OperationID])
+			if err != nil {
+				return err
+			}
+			root := responseRootName(operation.RustName, variant.Representation)
+			if err := collectResponseSymbols(publicResponses, root, variant.OperationID, shape); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func collectResponseSymbols(symbols map[string]string, name, operation string, shape model.ResponseShape) error {
+	switch shape.Kind {
 	case "object":
-		return "Object"
+		if previous := symbols[name]; previous != "" {
+			return fmt.Errorf("render Rust SDK: response type %s is shared by %s and %s", name, previous, operation)
+		}
+		symbols[name] = operation
+		for _, property := range shape.Properties {
+			if property.RustName == "additional_field" || property.RustName == "additional_fields" {
+				return fmt.Errorf("render Rust SDK: response field %s collides with generated evidence accessors for %s", property.Name, operation)
+			}
+			if err := collectResponseSymbols(symbols, responseChildTypeName(name, property.RustName), operation, property.Shape); err != nil {
+				return err
+			}
+		}
 	case "array":
-		return "Array"
-	case "string":
-		return "String"
-	case "opaque":
-		return "Opaque"
-	case "binary":
-		return "Binary"
-	default:
-		panic("unsupported normalized shape")
+		return collectResponseSymbols(symbols, name+"Item", operation, *shape.Items)
 	}
-}
-
-func rustAdditionalPolicy(value string) string {
-	switch value {
-	case "unspecified":
-		return "Unspecified"
-	case "allowed":
-		return "Allowed"
-	case "forbidden":
-		return "Forbidden"
-	default:
-		panic("unsupported additional-properties policy")
-	}
-}
-
-func rustStringSlice(values []string) string {
-	if len(values) == 0 {
-		return "&[]"
-	}
-	quoted := make([]string, 0, len(values))
-	for _, value := range values {
-		quoted = append(quoted, quote(value))
-	}
-	return "&[" + strings.Join(quoted, ", ") + "]"
+	return nil
 }
 
 func quote(value string) string {

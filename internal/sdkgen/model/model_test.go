@@ -150,6 +150,55 @@ func TestBuildRejectsIncompatibleLogicalMetadataAndRoutingMatrix(t *testing.T) {
 	})
 }
 
+func TestBuildRejectsGeneratedMethodCollisionsAndEscapesRust2024Keywords(t *testing.T) {
+	t.Run("preparation method", func(t *testing.T) {
+		surface := canonicalSurface(t)
+		operation := firstOperationWithParameters(t, &surface)
+		operation.Parameters[0].Name = "prepare_json"
+		_, err := model.Build(surface)
+		assertModelRule(t, err, "rust-name-collision")
+	})
+
+	t.Run("private assembly method", func(t *testing.T) {
+		surface := canonicalSurface(t)
+		operation := firstOperationWithParameters(t, &surface)
+		operation.Parameters[0].Name = "prepare_parts"
+		_, err := model.Build(surface)
+		assertModelRule(t, err, "rust-name-collision")
+	})
+
+	t.Run("getter and builder", func(t *testing.T) {
+		surface := canonicalSurface(t)
+		operation := firstOperationWithParameters(t, &surface)
+		operation.Parameters[0].Name = "foo"
+		operation.Parameters[0].Required = false
+		other := operation.Parameters[0]
+		other.Name = "with_foo"
+		operation.Parameters = append(operation.Parameters, other)
+		_, err := model.Build(surface)
+		assertModelRule(t, err, "rust-name-collision")
+	})
+
+	t.Run("edition 2024 keyword", func(t *testing.T) {
+		surface := canonicalSurface(t)
+		operation := firstOperationWithParameters(t, &surface)
+		logicalID := operation.LogicalOperationID
+		for index := range surface.Operations {
+			if surface.Operations[index].LogicalOperationID == logicalID {
+				surface.Operations[index].Parameters[0].Name = "gen"
+			}
+		}
+		generated, err := model.Build(surface)
+		if err != nil {
+			t.Fatal(err)
+		}
+		logical := findLogical(t, generated, logicalID)
+		if parameter := findParameter(t, logical, "gen"); parameter.RustName != "gen_" {
+			t.Fatalf("Rust name = %q, want gen_", parameter.RustName)
+		}
+	})
+}
+
 func assertModelRule(t *testing.T, err error, rule string) {
 	t.Helper()
 	var modelError *model.Error

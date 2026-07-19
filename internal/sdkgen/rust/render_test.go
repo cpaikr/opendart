@@ -1,7 +1,6 @@
 package rust
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -33,8 +32,8 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 			},
 		},
 		Physical: []model.PhysicalOperation{
-			{OperationID: "optional.json", LogicalID: "optional", RustConstant: "OPTIONAL_JSON", Path: "/api/optional.json", ExpectedRepresentations: []model.Representation{model.RepresentationJSON}, Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "opaque", Description: "source description", AdditionalPropertiesPolicy: "unspecified"}}}}}},
-			{OperationID: "required.json", LogicalID: "required", Path: "/api/required.json", ExpectedRepresentations: []model.Representation{model.RepresentationJSON}},
+			{OperationID: "optional.json", LogicalID: "optional", RustConstant: "OPTIONAL_JSON", Path: "/api/optional.json", PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON}, Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "object", Description: "source description", AdditionalPropertiesPolicy: "allowed"}}}}}},
+			{OperationID: "required.json", LogicalID: "required", RustConstant: "REQUIRED_JSON", Path: "/api/required.json", PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON}, Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "object", AdditionalPropertiesPolicy: "allowed"}}}}}},
 		},
 	}
 
@@ -52,9 +51,9 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 	if strings.Contains(generated, "let mut parameters = Vec::with_capacity(1);\n        parameters.push") {
 		t.Fatal("required-only operation uses push-based vector initialization")
 	}
-	wires := string(files["wire_shapes.rs"])
-	if !strings.Contains(wires, "http_status_evidence: \"not-documented\"") || !strings.Contains(wires, "description: \"source description\"") {
-		t.Fatal("response evidence or selected description was not emitted")
+	responses := string(files["responses/group.rs"])
+	if !strings.Contains(responses, "pub struct OptionalInputJsonResponse") || !strings.Contains(responses, "source description") {
+		t.Fatal("typed response or selected description was not emitted")
 	}
 }
 
@@ -68,8 +67,8 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 			Variants:   []model.PhysicalReference{{OperationID: "array.json", Representation: model.RepresentationJSON}},
 		}},
 		Physical: []model.PhysicalOperation{{
-			OperationID: "array.json", LogicalID: "array", RustConstant: "ARRAY_JSON", Path: "/api/array.json", ExpectedRepresentations: []model.Representation{model.RepresentationJSON},
-			Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "opaque", Description: "back\bseparator\u2028", AdditionalPropertiesPolicy: "unspecified"}}}}},
+			OperationID: "array.json", LogicalID: "array", RustConstant: "ARRAY_JSON", Path: "/api/array.json", PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON},
+			Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "object", Description: "back\bseparator\u2028", AdditionalPropertiesPolicy: "allowed"}}}}},
 		}},
 	}
 
@@ -81,28 +80,89 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 	if !strings.Contains(operation, `for value in &self.corp_code { require_nonempty(identity, "corp_code", value)?; }`) {
 		t.Fatal("array elements are not checked for empty strings")
 	}
-	wires := string(files["wire_shapes.rs"])
-	if !strings.Contains(wires, `description: "back\u{8}separator\u{2028}"`) {
-		t.Fatalf("Rust string literal was not escaped safely:\n%s", wires)
+	responses := string(files["responses/group.rs"])
+	if !strings.Contains(responses, `back\u{8}separator\u{2028}`) {
+		t.Fatalf("response description was not retained safely:\n%s", responses)
 	}
 }
 
-func TestFlattenShapeUsesUnambiguousJSONPointerPaths(t *testing.T) {
-	shape := model.ResponseShape{Kind: "object", Properties: []model.ResponseProperty{
-		{Name: "a.b", Shape: model.ResponseShape{Kind: "string"}},
-		{Name: "a", Shape: model.ResponseShape{Kind: "object", Properties: []model.ResponseProperty{{Name: "b", Shape: model.ResponseShape{Kind: "string"}}}}},
-		{Name: "slash/tilde~", Shape: model.ResponseShape{Kind: "string"}},
-	}}
-	var nodes []flatShape
-	flattenShape("$", true, shape, &nodes)
-	paths := make([]string, 0, len(nodes))
-	for _, node := range nodes {
-		paths = append(paths, node.path)
+func TestRenderUsesRepresentationAwareArrayDecoding(t *testing.T) {
+	arrayShape := model.ResponseShape{
+		Kind: "object",
+		Properties: []model.ResponseProperty{{
+			Name: "items", RustName: "items",
+			Shape: model.ResponseShape{Kind: "array", Items: &model.ResponseShape{Kind: "opaque"}},
+		}},
 	}
-	want := []string{"$", "$/a.b", "$/a", "$/a/b", "$/slash~1tilde~0"}
-	if !slices.Equal(paths, want) {
-		t.Fatalf("paths = %#v, want %#v", paths, want)
+	media := func(name string) []model.Response {
+		return []model.Response{{Selector: "default", Media: []model.ResponseMedia{{
+			Name: name, ContentTypeStatus: "inferred-from-documented-output-format", Shape: arrayShape,
+		}}}}
 	}
+	source := model.Model{
+		SchemaVersion: model.SchemaVersion,
+		Checksum:      strings.Repeat("a", 64),
+		Logical: []model.LogicalOperation{{
+			ID: "items", RustName: "Items", Group: "group",
+			Variants: []model.PhysicalReference{
+				{OperationID: "items.json", Representation: model.RepresentationJSON},
+				{OperationID: "items.xml", Representation: model.RepresentationXML},
+			},
+		}},
+		Physical: []model.PhysicalOperation{
+			{OperationID: "items.json", LogicalID: "items", RustConstant: "ITEMS_JSON", Path: "/api/items.json", PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON}, Responses: media("application/json")},
+			{OperationID: "items.xml", LogicalID: "items", RustConstant: "ITEMS_XML", Path: "/api/items.xml", PrimaryRepresentation: model.RepresentationXML, ExpectedRepresentations: []model.Representation{model.RepresentationXML}, Responses: media("application/xml")},
+		},
+	}
+
+	files, err := Render(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	responses := string(files["responses/group.rs"])
+	if !strings.Contains(responses, "decode_array(value, path, decode_source_value)") {
+		t.Fatal("JSON array decoder no longer requires an explicit source array")
+	}
+	if !strings.Contains(responses, "decode_xml_array(value, path, decode_source_value)") {
+		t.Fatal("XML array decoder does not normalize a singleton element")
+	}
+}
+
+func TestRenderRejectsPublicRustSymbolCollisions(t *testing.T) {
+	base := model.Model{
+		SchemaVersion: model.SchemaVersion,
+		Checksum:      strings.Repeat("a", 64),
+		Logical: []model.LogicalOperation{{
+			ID: "logical", RustName: "Input", Group: "group",
+			Variants: []model.PhysicalReference{{OperationID: "input.json", Representation: model.RepresentationJSON}},
+		}},
+		Physical: []model.PhysicalOperation{{
+			OperationID: "input.json", LogicalID: "logical", RustConstant: "INPUT_JSON", Path: "/api/input.json",
+			PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON},
+			Responses: []model.Response{{Selector: "default", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "object"}}}}},
+		}},
+	}
+
+	t.Run("request runtime import", func(t *testing.T) {
+		source := base
+		source.Logical = append([]model.LogicalOperation(nil), base.Logical...)
+		source.Logical[0].RustName = "PreparedRequest"
+		if _, err := Render(source); err == nil || !strings.Contains(err.Error(), "runtime import") {
+			t.Fatalf("error = %v", err)
+		}
+	})
+
+	t.Run("response evidence accessor", func(t *testing.T) {
+		source := base
+		source.Physical = append([]model.PhysicalOperation(nil), base.Physical...)
+		shape := &source.Physical[0].Responses[0].Media[0].Shape
+		shape.Properties = []model.ResponseProperty{{
+			Name: "additional_fields", RustName: "additional_fields", Shape: model.ResponseShape{Kind: "opaque"},
+		}}
+		if _, err := Render(source); err == nil || !strings.Contains(err.Error(), "evidence accessors") {
+			t.Fatalf("error = %v", err)
+		}
+	})
 }
 
 func int64Pointer(value int64) *int64 { return &value }

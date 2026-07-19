@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
@@ -142,7 +143,7 @@ func publishOwnedTree(output string, files map[string][]byte) error {
 	if statErr != nil {
 		return fmt.Errorf("inspect existing generated Rust SDK: %w", statErr)
 	}
-	if _, err := readOwnedTree(output); err != nil {
+	if _, err := readReplaceableOwnedTree(output); err != nil {
 		return fmt.Errorf("replace generated Rust SDK: %w", err)
 	}
 	backup, err := os.MkdirTemp(parent, ".opendart-sdk-backup-")
@@ -185,6 +186,14 @@ func writeTree(root string, files map[string][]byte) error {
 }
 
 func readOwnedTree(root string) (map[string][]byte, error) {
+	return readOwnedTreeWithMarker(root, false)
+}
+
+func readReplaceableOwnedTree(root string) (map[string][]byte, error) {
+	return readOwnedTreeWithMarker(root, true)
+}
+
+func readOwnedTreeWithMarker(root string, acceptPreviousSchema bool) (map[string][]byte, error) {
 	info, err := os.Lstat(root)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrGeneratedMissing
@@ -231,10 +240,21 @@ func readOwnedTree(root string) (map[string][]byte, error) {
 		return nil, err
 	}
 	marker, exists := files[ownership.Filename]
-	if !exists || string(marker) != ownership.Marker(model.SchemaVersion) {
+	if !exists || string(marker) != ownership.Marker(model.SchemaVersion) && !(acceptPreviousSchema && validPreviousOwnershipMarker(marker)) {
 		return nil, ErrGeneratedUnowned
 	}
 	return files, nil
+}
+
+func validPreviousOwnershipMarker(marker []byte) bool {
+	const prefix = "opendart-sdk-generator-schema="
+	value, found := strings.CutPrefix(string(marker), prefix)
+	if !found || !strings.HasSuffix(value, "\n") {
+		return false
+	}
+	value = strings.TrimSuffix(value, "\n")
+	parsed, err := strconv.ParseUint(value, 10, 32)
+	return err == nil && parsed > 0 && parsed < uint64(model.SchemaVersion)
 }
 
 func validRelativeName(name string) bool {

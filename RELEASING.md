@@ -50,8 +50,11 @@ workspace-lock package version, and component-qualified tag. Specification and
 Rust versions may differ even when both products change in one commit.
 
 The Rust manifest may be absent from `.release-please-manifest.json` before the
-first component release. Release Please bootstraps it at `0.1.0`; pre-seeding
-that entry would falsely claim the version was already released.
+first component release. Release Please proposes bootstrapping it at `0.1.0`;
+pre-seeding that entry would falsely claim the version was already released.
+The repository guard rejects a Rust manifest entry until work 6 is complete, so
+do not merge a Rust component Release Please PR before that gate is deliberately
+replaced by the reviewed publication flow.
 
 ## Verification gate
 
@@ -94,6 +97,8 @@ crates.io and has no registry credential, trusted-publishing permission, or
 Work 6 must add publication as a separate guarded flow. It may authorize a
 publish only from the exact Rust component output and immutable target revision,
 never from the generic root release or a specification-only change. It must
-package and dry-run without credentials first, publish once, download the
-registry artifact, and verify its checksum, provenance, normalized manifest,
-and file contents before finalizing the component release.
+detect and validate an already-existing draft for the exact Rust component tag
+before relying on fresh path-qualified Release Please outputs, package and
+dry-run without credentials first, publish once, download the registry artifact,
+and verify its checksum, provenance, normalized manifest, and file contents
+before finalizing the component release.

@@ -12,7 +12,7 @@ pub fn build_official_client() -> Result<Client, ClientBuildError> {
 mod tests {
     use std::{error::Error, time::Duration};
 
-    use opendart::{ApiKey, Client, Representation, operations::Company};
+    use opendart::{ApiKey, Client, operations::Company};
     use tokio::{io::AsyncReadExt, net::TcpListener, task::JoinHandle};
 
     async fn start_client_hello_capture() -> (String, JoinHandle<Vec<u8>>) {
@@ -51,10 +51,8 @@ mod tests {
             .collect()
     }
 
-    fn company_request() -> opendart::PreparedRequest {
-        Company::new("00126380")
-            .prepare(Representation::Json)
-            .unwrap()
+    fn company_request() -> opendart::PreparedRequest<opendart::responses::CompanyJsonResponse> {
+        Company::new("00126380").prepare_json().unwrap()
     }
 
     async fn resolution_error(client: &reqwest::Client, host: &str) -> String {

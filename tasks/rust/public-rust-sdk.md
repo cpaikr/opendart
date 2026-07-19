@@ -23,7 +23,7 @@ generator model without depending on Rust source.
   repository-owned values.
 - The private Go SDK model and deterministic Rust emitter now generate the
   complete checked-in operation inventory, request serializers, routing
-  metadata, and conservative wire shapes. Repository verification rejects
+  metadata, and conservative typed response decoders. Repository verification rejects
   stale output and unsupported contract constructs.
 - The transport-independent inspector and optional safe-default HTTP client are
   implemented with bounded parsing, replaying binary streams, centralized
@@ -60,7 +60,7 @@ generator model without depending on Rust source.
   async transport trait. A project with strict transport requirements can
   execute that value through its own adapter.
 - Do not infer strong response scalar types that the source contract does not
-  establish. Generated wire shapes preserve unknown values and fields; they
+  establish. Generated response types preserve unknown values and fields; they
   are not application domain models.
 - Publish the crate to crates.io with SemVer independent from the specification
   release version. Every crate release records the exact Git revision,
@@ -104,7 +104,7 @@ canonical OpenAPI 3.2 + x-opendart evidence
     -> private Go OpenAPI boundary
     -> repository-owned SDK model
     -> deterministic Rust emitter
-    -> checked-in generated request and wire code
+    -> checked-in generated request and typed response code
     -> public opendart crate
          |-> prepared-request API -> caller-owned executor
          `-> optional reqwest client -> ordinary SDK caller
@@ -181,7 +181,7 @@ target constraints and acceptance details for their workstreams.
   generation.
 - Add the SDK model, validation, name-collision checks, and Rust emitter.
 - Generate checked-in operation metadata, request input types, serializers,
-  representation routing, and conservative wire shapes.
+  representation routing, and conservative typed response decoders.
 - Add a direct `opendart-tool` generation command and make repository verify
   fail when generated Rust is stale, incomplete, or contains unsupported
   constructs.
@@ -205,8 +205,8 @@ target constraints and acceptance details for their workstreams.
 ### 5. Close full coverage and package the crate — complete
 
 - Generate every physical operation and verify logical-operation pairing,
-  request serialization, response routing, unknown-field retention, and source
-  provenance.
+  request serialization, typed response routing, raw unknown-field retention,
+  and source provenance.
 - Complete crate-level guides for ordinary and advanced callers. Mark generated
   modules clearly and keep implementation-only details private.
 - Run package-content, MSRV, stable, all-features, documentation, and offline
@@ -220,6 +220,8 @@ target constraints and acceptance details for their workstreams.
 
 - Publish a prerelease crate, verify installation from crates.io in a clean
   fixture, and inspect docs.rs output and package provenance.
+- Recover an already-existing draft for the exact Rust component tag and target
+  revision before relying on fresh path-qualified Release Please outputs.
 - Adopt only the prepared-request and wire-inspection layer in strict
   collectors. Keep their executor, persistence, and application policy local.
 - Publish the first non-prerelease SDK version only after the generated
@@ -255,7 +257,7 @@ target constraints and acceptance details for their workstreams.
   before an explicit bounded interpretation step.
 - The SDK never exposes an API key or authenticated URL through `Debug`,
   `Display`, serialization, errors, logs, snapshots, or generated examples.
-- Generated wire types preserve uncertainty and unknown fields rather than
+- Generated response types preserve uncertainty and unknown fields rather than
   asserting unsupported domain meaning.
 - The default-feature crate supports ordinary calls; the no-default-feature
   crate remains transport- and runtime-independent.
@@ -310,9 +312,12 @@ adopt the crate from work 5.
   NACK, timeout, truncation, feature-unification, and credential-safety
   behavior. Stable/MSRV, all-feature, no-default-feature, package, docs,
   adversarial dependency, race-enabled Go, and offline verification gates pass.
-- 2026-07-19: Closed generated mapping/response-route coverage and public
-  unknown-field tests; added source provenance, exact package inventory,
-  stable/MSRV/offline CI, and a no-runtime dependency-graph gate. Promoted the
-  SDK to the current architecture with independent Rust Release Please
-  ownership while retaining a hard prohibition on crates.io authority. Full Go,
-  Cargo, package, repository verification, and cross-module review pass.
+- 2026-07-19: Closed generated mapping/typed-response coverage and public raw
+  escape-hatch tests; separated semantic source-release and exact-artifact
+  provenance; added exact package inventory, stable/MSRV/offline CI, and a
+  no-runtime dependency-graph gate. XML response arrays normalize the source's
+  singleton-element encoding while JSON arrays remain strict, with absent,
+  singleton, and repeated XML coverage. Promoted the SDK to the current
+  architecture with independent Rust Release Please ownership while retaining
+  a hard prohibition on crates.io authority. Full Go, Cargo, package,
+  repository verification, and cross-module review pass.

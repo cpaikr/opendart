@@ -113,6 +113,15 @@ Generate only what the canonical evidence supports:
 - unknown-field retention where additional properties are allowed or source
   evolution is plausible.
 
+Emit a distinct public `#[non_exhaustive]` response type for each structured
+physical representation. Object properties are public for reading; additive
+properties remain private and are exposed through `additional_field` and
+`additional_fields`. Arrays become `Vec<T>`, source-established strings become
+`String`, `OpenDartStatus` becomes `SourceStatus`, and unresolved scalars remain
+`SourceValue`. Requiredness is preserved rather than inferred. Generated,
+path-aware decoders are private and are bound into `PreparedRequest<T>` by the
+corresponding `prepare_json` or `prepare_xml` method.
+
 Represent an undocumented scalar with `SourceValue` or an equivalent
 source-faithful form. Do not guess `String`, numeric, date, or enum types from
 examples or descriptions. Strong domain conversions belong in consumer code or
@@ -147,7 +156,7 @@ The command:
 1. Loads and validates the complete canonical document.
 2. Builds and validates the normalized SDK model.
 3. Renders into a new staging directory.
-4. Runs deterministic formatting or emits formatter-stable Rust.
+4. Emits deterministic generator-owned Rust formatting.
 5. Validates the complete staged output and ownership marker.
 6. Replaces only the owned generated subtree with rollback on publication
    failure.
@@ -165,6 +174,12 @@ Generated files are reviewed source artifacts. Each includes:
 - the deterministic SDK-projection checksum; and
 - stable formatting independent of local paths or timestamps.
 
+The generated module is intentionally marked `#[rustfmt::skip]`. Generator
+freshness, rather than the locally selected rustfmt version, enforces its
+canonical compact formatting and avoids toolchain-only projection churn.
+`cargo fmt --check` covers handwritten Rust; Cargo checks, Clippy, tests, and
+rustdoc still compile and validate the generated subtree.
+
 The SDK projection contains only normalized canonical inputs that affect the
 generated Rust contract, its public documentation, or runtime behavior. A
 description not emitted into SDK docs, provenance, or other specification
@@ -174,10 +189,12 @@ not silently exclude an unknown construct.
 
 Full source provenance is release metadata rather than an SDK-model input or
 generated-file freshness signal. A crate release records the exact Git revision,
-specification release when one exists, and canonical bundle checksum selected
-for that release in the handwritten provenance module. That metadata advances
-only in a crate release PR, so an SDK-irrelevant specification change neither
-touches the Rust component nor creates a crate release.
+the semantic specification source release when one exists, and the independently
+selected canonical bundle checksum in the handwritten provenance module. The
+release guard compares the canonical source inputs with the named tag; the tag
+does not claim byte identity with the selected generated bundle. That metadata
+advances only in a crate release PR, so an SDK-irrelevant specification change
+neither touches the Rust component nor creates a crate release.
 
 Extend `opendart-tool verify` to render the Rust output in a confined temporary
 location and compare it byte for byte with the committed tree. Verification is

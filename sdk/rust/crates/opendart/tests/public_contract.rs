@@ -3,21 +3,23 @@
 use std::fmt::Display;
 
 use opendart::{
-    ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedRequest, Representation,
-    RequestMethod, SourceReply, SourceValueKind, WireInspector,
+    ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedBinaryRequest,
+    PreparedRequest, Representation, RequestMethod, SourceReply, SourceValueKind, WireInspector,
     operations::{AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttMultiAcnt, List},
+    responses::CompanyJsonResponse,
     source_provenance,
 };
 use static_assertions::assert_not_impl_any;
 
 assert_not_impl_any!(ApiKey: Clone, Display);
 assert_not_impl_any!(AuthorizedRequest<'static>: Clone, Display);
-assert_not_impl_any!(PreparedRequest: Clone);
+assert_not_impl_any!(PreparedRequest<CompanyJsonResponse>: Clone);
+assert_not_impl_any!(PreparedBinaryRequest: Clone);
 
 #[test]
 fn representative_json_request_is_deterministic_and_credential_free() {
     let prepared = AccnutAdtorNmNdAdtOpinion::new("00126380", "2025", "11011")
-        .prepare(Representation::Json)
+        .prepare_json()
         .expect("representative input should prepare");
 
     assert_eq!(prepared.method(), RequestMethod::Get);
@@ -37,12 +39,8 @@ fn representative_json_request_is_deterministic_and_credential_free() {
 #[test]
 fn representation_selection_changes_only_the_physical_contract() {
     let operation = Company::new("00126380");
-    let json = operation
-        .prepare(Representation::Json)
-        .expect("JSON should be supported");
-    let xml = operation
-        .prepare(Representation::Xml)
-        .expect("XML should be supported");
+    let json = operation.prepare_json().expect("JSON should be supported");
+    let xml = operation.prepare_xml().expect("XML should be supported");
 
     assert_ne!(json.identity().physical(), xml.identity().physical());
     assert_eq!(json.identity().logical(), xml.identity().logical());
@@ -53,20 +51,19 @@ fn representation_selection_changes_only_the_physical_contract() {
 #[test]
 fn fixed_binary_operation_routes_zip_and_xml_source_error() {
     let prepared = CorpCode::new()
-        .prepare(Representation::Zip)
+        .prepare_zip()
         .expect("ZIP should be supported");
     assert_eq!(prepared.relative_path(), "/api/corpCode.xml");
     assert_eq!(
         prepared.expected_representations(),
         &[Representation::Zip, Representation::Xml]
     );
-    assert!(CorpCode::new().prepare(Representation::Xml).is_err());
 }
 
 #[test]
 fn multi_company_request_enforces_cardinality_and_comma_serialization() {
     let prepared = FnlttMultiAcnt::new(["00334624", "00126380"], "2025", "11011")
-        .prepare(Representation::Json)
+        .prepare_json()
         .expect("documented multi-company input should prepare");
     assert_eq!(
         prepared.encoded_query(),
@@ -75,27 +72,27 @@ fn multi_company_request_enforces_cardinality_and_comma_serialization() {
 
     assert!(
         FnlttMultiAcnt::new(Vec::<String>::new(), "2025", "11011")
-            .prepare(Representation::Json)
+            .prepare_json()
             .is_err()
     );
     assert!(
         FnlttMultiAcnt::new([""], "2025", "11011")
-            .prepare(Representation::Json)
+            .prepare_json()
             .is_err()
     );
     assert!(
         FnlttMultiAcnt::new(vec!["00126380"; 101], "2025", "11011")
-            .prepare(Representation::Json)
+            .prepare_json()
             .is_err()
     );
     assert!(
         FnlttMultiAcnt::new(vec!["00126380"; 100], "2025", "11011")
-            .prepare(Representation::Json)
+            .prepare_json()
             .is_ok()
     );
 
     let escaped = FnlttMultiAcnt::new(["a,b", "회사 /+"], "2025", "11011")
-        .prepare(Representation::Json)
+        .prepare_json()
         .expect("reserved list data should remain distinct from delimiters");
     assert_eq!(
         escaped.encoded_query(),
@@ -109,7 +106,7 @@ fn authorization_is_explicit_and_redacted() {
     let encoded = "secret+%2F%2B+credential";
     let key = ApiKey::new(sentinel).expect("non-empty key should be accepted");
     let prepared = Company::new("00126380")
-        .prepare(Representation::Json)
+        .prepare_json()
         .expect("request should prepare");
     let authorized = prepared.authorize(&key);
 
@@ -133,14 +130,14 @@ fn authorization_is_explicit_and_redacted() {
 #[test]
 fn empty_inputs_fail_without_echoing_values() {
     let error = Company::new("")
-        .prepare(Representation::Json)
+        .prepare_json()
         .expect_err("empty required input must fail");
     assert!(error.to_string().contains("corp_code"));
     assert!(ApiKey::new("").is_err());
 
     let error = List::new()
         .with_page_no("")
-        .prepare(Representation::Json)
+        .prepare_json()
         .expect_err("a supplied optional query value must not be empty");
     assert!(error.to_string().contains("page_no"));
 }
@@ -154,7 +151,7 @@ fn operation_identity_debug_contains_only_stable_identifiers() {
     }
 
     let prepared = Company::new("00126380")
-        .prepare(Representation::Json)
+        .prepare_json()
         .expect("request should prepare");
     assert_identity(prepared.identity());
 }
@@ -197,10 +194,30 @@ fn bounded_inspection_retains_unknown_json_and_xml_evidence() {
 }
 
 #[test]
+fn additive_non_success_status_fields_remain_public_evidence() {
+    let inspector = WireInspector::new(256).expect("the public inspector requires a bound");
+    let SourceReply::Status(status) = inspector
+        .inspect_json(br#"{"status":"013","message":"none","request_id":"abc"}"#)
+        .expect("valid JSON should be inspectable")
+    else {
+        panic!("non-success status must not become a success payload");
+    };
+
+    assert_eq!(status.code.as_str(), "013");
+    assert_eq!(
+        status
+            .evidence
+            .get("request_id")
+            .and_then(opendart::SourceValue::as_str),
+        Some("abc")
+    );
+}
+
+#[test]
 fn source_provenance_identifies_the_reviewed_contract_snapshot() {
     let provenance = source_provenance();
     assert_eq!(provenance.crate_version(), env!("CARGO_PKG_VERSION"));
-    assert_eq!(provenance.specification_release(), Some("v0.1.0"));
+    assert_eq!(provenance.specification_source_release(), Some("v0.1.0"));
     assert_eq!(provenance.canonical_bundle_sha256().len(), 64);
     assert_eq!(provenance.sdk_projection_sha256().len(), 64);
     assert!(provenance.generator_schema() > 0);

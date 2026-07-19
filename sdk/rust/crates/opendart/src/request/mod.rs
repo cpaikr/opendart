@@ -1,10 +1,12 @@
 use std::fmt;
+#[cfg(not(feature = "client-reqwest"))]
+use std::marker::PhantomData;
 
 use form_urlencoded::{Serializer, byte_serialize};
 use secrecy::{ExposeSecret, SecretString};
 use zeroize::Zeroizing;
 
-use crate::AuthorizationError;
+use crate::{AuthorizationError, ResponseDecodeError, SourceValue};
 
 /// Stable physical and logical identities for one callable OpenDART operation.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -65,8 +67,10 @@ pub enum Authentication {
     ApiKeyQuery,
 }
 
-/// An immutable, credential-free OpenDART request prepared without network I/O.
-pub struct PreparedRequest {
+pub(crate) type ResponseDecoder<T> = fn(SourceValue) -> Result<T, ResponseDecodeError>;
+
+/// Shared immutable request facts hidden behind typed structured and binary plans.
+pub(crate) struct RequestParts {
     method: RequestMethod,
     relative_path: &'static str,
     encoded_query: String,
@@ -75,6 +79,20 @@ pub struct PreparedRequest {
     expected_representations: &'static [Representation],
     generator_schema: u32,
     projection_identity: &'static str,
+}
+
+/// An immutable structured request bound to its generated success payload.
+pub struct PreparedRequest<T> {
+    parts: RequestParts,
+    #[cfg(feature = "client-reqwest")]
+    decoder: ResponseDecoder<T>,
+    #[cfg(not(feature = "client-reqwest"))]
+    _response: PhantomData<fn() -> T>,
+}
+
+/// An immutable ZIP request whose successful body remains a replaying stream.
+pub struct PreparedBinaryRequest {
+    parts: RequestParts,
 }
 
 pub(crate) enum QueryValue<'a> {
@@ -87,7 +105,7 @@ pub(crate) struct QueryParameter<'a> {
     pub(crate) value: QueryValue<'a>,
 }
 
-impl PreparedRequest {
+impl RequestParts {
     pub(crate) fn new(
         relative_path: &'static str,
         identity: OperationIdentity,
@@ -131,68 +149,9 @@ impl PreparedRequest {
         }
     }
 
-    /// Returns the HTTP method.
-    #[must_use]
-    pub const fn method(&self) -> RequestMethod {
-        self.method
-    }
-
-    /// Returns the trusted credential-free relative path.
-    #[must_use]
-    pub const fn relative_path(&self) -> &'static str {
-        self.relative_path
-    }
-
-    /// Returns the deterministically encoded, credential-free query string.
-    #[must_use]
-    pub fn encoded_query(&self) -> &str {
-        &self.encoded_query
-    }
-
-    /// Returns the required credential placement.
-    #[must_use]
-    pub const fn authentication(&self) -> Authentication {
-        self.authentication
-    }
-
-    /// Returns the stable operation identity.
-    #[must_use]
-    pub const fn identity(&self) -> OperationIdentity {
-        self.identity
-    }
-
-    /// Returns the representations expected from this physical operation.
-    #[must_use]
-    pub const fn expected_representations(&self) -> &'static [Representation] {
-        self.expected_representations
-    }
-
-    /// Returns the SDK generator schema version used to prepare this request.
-    #[must_use]
-    pub const fn generator_schema(&self) -> u32 {
-        self.generator_schema
-    }
-
-    /// Returns the SDK projection identity used for safe diagnostics.
-    #[must_use]
-    pub const fn projection_identity(&self) -> &'static str {
-        self.projection_identity
-    }
-
-    /// Adds the API credential at the explicit adapter boundary.
-    #[must_use]
-    pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
-        AuthorizedRequest {
-            prepared: self,
-            api_key,
-        }
-    }
-}
-
-impl fmt::Debug for PreparedRequest {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn debug(&self, name: &str, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
-            .debug_struct("PreparedRequest")
+            .debug_struct(name)
             .field("method", &self.method)
             .field("relative_path", &self.relative_path)
             .field(
@@ -209,6 +168,188 @@ impl fmt::Debug for PreparedRequest {
             .field("generator_schema", &self.generator_schema)
             .field("projection_identity", &self.projection_identity)
             .finish()
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn identity(&self) -> OperationIdentity {
+        self.identity
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn method(&self) -> RequestMethod {
+        self.method
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
+        AuthorizedRequest {
+            prepared: self,
+            api_key,
+        }
+    }
+}
+
+impl<T> PreparedRequest<T> {
+    pub(crate) const fn new(parts: RequestParts, decoder: ResponseDecoder<T>) -> Self {
+        #[cfg(feature = "client-reqwest")]
+        {
+            Self { parts, decoder }
+        }
+        #[cfg(not(feature = "client-reqwest"))]
+        {
+            let _ = decoder;
+            Self {
+                parts,
+                _response: PhantomData,
+            }
+        }
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) fn decode(&self, value: SourceValue) -> Result<T, ResponseDecodeError> {
+        (self.decoder)(value)
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn parts(&self) -> &RequestParts {
+        &self.parts
+    }
+
+    /// Returns the HTTP method.
+    #[must_use]
+    pub const fn method(&self) -> RequestMethod {
+        self.parts.method
+    }
+
+    /// Returns the trusted credential-free relative path.
+    #[must_use]
+    pub const fn relative_path(&self) -> &'static str {
+        self.parts.relative_path
+    }
+
+    /// Returns the deterministically encoded, credential-free query string.
+    #[must_use]
+    pub fn encoded_query(&self) -> &str {
+        &self.parts.encoded_query
+    }
+
+    /// Returns the required credential placement.
+    #[must_use]
+    pub const fn authentication(&self) -> Authentication {
+        self.parts.authentication
+    }
+
+    /// Returns the stable operation identity.
+    #[must_use]
+    pub const fn identity(&self) -> OperationIdentity {
+        self.parts.identity
+    }
+
+    /// Returns the representations expected from this physical operation.
+    #[must_use]
+    pub const fn expected_representations(&self) -> &'static [Representation] {
+        self.parts.expected_representations
+    }
+
+    /// Returns the SDK generator schema version used to prepare this request.
+    #[must_use]
+    pub const fn generator_schema(&self) -> u32 {
+        self.parts.generator_schema
+    }
+
+    /// Returns the SDK projection identity used for safe diagnostics.
+    #[must_use]
+    pub const fn projection_identity(&self) -> &'static str {
+        self.parts.projection_identity
+    }
+
+    /// Adds the API credential at the explicit adapter boundary.
+    #[must_use]
+    pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
+        AuthorizedRequest {
+            prepared: &self.parts,
+            api_key,
+        }
+    }
+}
+
+impl PreparedBinaryRequest {
+    pub(crate) const fn new(parts: RequestParts) -> Self {
+        Self { parts }
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn parts(&self) -> &RequestParts {
+        &self.parts
+    }
+
+    /// Returns the HTTP method.
+    #[must_use]
+    pub const fn method(&self) -> RequestMethod {
+        self.parts.method
+    }
+
+    /// Returns the trusted credential-free relative path.
+    #[must_use]
+    pub const fn relative_path(&self) -> &'static str {
+        self.parts.relative_path
+    }
+
+    /// Returns the deterministically encoded, credential-free query string.
+    #[must_use]
+    pub fn encoded_query(&self) -> &str {
+        &self.parts.encoded_query
+    }
+
+    /// Returns the required credential placement.
+    #[must_use]
+    pub const fn authentication(&self) -> Authentication {
+        self.parts.authentication
+    }
+
+    /// Returns the stable operation identity.
+    #[must_use]
+    pub const fn identity(&self) -> OperationIdentity {
+        self.parts.identity
+    }
+
+    /// Returns the representations expected from this physical operation.
+    #[must_use]
+    pub const fn expected_representations(&self) -> &'static [Representation] {
+        self.parts.expected_representations
+    }
+
+    /// Returns the SDK generator schema version used to prepare this request.
+    #[must_use]
+    pub const fn generator_schema(&self) -> u32 {
+        self.parts.generator_schema
+    }
+
+    /// Returns the SDK projection identity used for safe diagnostics.
+    #[must_use]
+    pub const fn projection_identity(&self) -> &'static str {
+        self.parts.projection_identity
+    }
+
+    /// Adds the API credential at the explicit adapter boundary.
+    #[must_use]
+    pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
+        AuthorizedRequest {
+            prepared: &self.parts,
+            api_key,
+        }
+    }
+}
+
+impl<T> fmt::Debug for PreparedRequest<T> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.parts.debug("PreparedRequest", formatter)
+    }
+}
+
+impl fmt::Debug for PreparedBinaryRequest {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.parts.debug("PreparedBinaryRequest", formatter)
     }
 }
 
@@ -228,11 +369,6 @@ impl ApiKey {
             secret: value.into(),
         })
     }
-
-    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
-    pub(crate) fn with_exposed_secret<T>(&self, adapter: impl FnOnce(&str) -> T) -> T {
-        adapter(self.secret.expose_secret())
-    }
 }
 
 impl fmt::Debug for ApiKey {
@@ -243,7 +379,7 @@ impl fmt::Debug for ApiKey {
 
 /// A non-cloneable request whose relative URI contains an API credential.
 pub struct AuthorizedRequest<'a> {
-    prepared: &'a PreparedRequest,
+    prepared: &'a RequestParts,
     api_key: &'a ApiKey,
 }
 
@@ -273,8 +409,8 @@ impl AuthorizedRequest<'_> {
     /// separate attempt, authorize the credential-free [`PreparedRequest`] again.
     ///
     /// ```compile_fail
-    /// # use opendart::{ApiKey, Representation, operations::Company};
-    /// # let prepared = Company::new("00126380").prepare(Representation::Json)?;
+    /// # use opendart::{ApiKey, operations::Company};
+    /// # let prepared = Company::new("00126380").prepare_json()?;
     /// # let key = ApiKey::new("example-key")?;
     /// let authorized = prepared.authorize(&key);
     /// authorized.with_exposed_relative_uri(|_| ());
