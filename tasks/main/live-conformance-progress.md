@@ -58,6 +58,11 @@ not append session transcripts.
   `internal/liveconformance`, and `internal/liveprobe`; representative fake HTTP
   coverage exercises JSON, XML, ZIP, pacing, body bounds, no retries, alternate
   ZIP error routing, and report sanitization.
+- Completed the implementation review gate. Applied operation-level OpenAPI
+  parameter precedence, nil-definition hardening, normalized-path rejection,
+  identical producer/notifier allowlists, unsupported-media sanitization, and
+  failed-report round-trip coverage. Kept the single sequential execution path,
+  bounded representation adapters, and narrow repository-owned projection.
 - Baseline validation passed: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.
@@ -68,6 +73,5 @@ None.
 
 ## Next action
 
-Complete the runner-foundation code-review gate, apply safe findings, run the
-full repository validation, and open the first PR to `sub` for Codex and
-CodeRabbit review.
+Run the full repository validation, then open the runner-foundation PR to
+`sub` for Codex and CodeRabbit review.
