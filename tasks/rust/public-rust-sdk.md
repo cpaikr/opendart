@@ -21,10 +21,11 @@ generator model without depending on Rust source.
   behavior, including a positive-control protocol retry fixture, and the Go
   OpenAPI boundary now exposes complete SDK-surface evidence through only
   repository-owned values.
-- The isolated Cargo workspace and unpublished `opendart` crate now establish
-  the reviewed transport-independent public contract. The repository still has
-  no SDK generator, complete operation inventory, optional client
-  implementation, or crates.io release flow.
+- The private Go SDK model and deterministic Rust emitter now generate the
+  complete checked-in operation inventory, request serializers, routing
+  metadata, and conservative wire shapes. Repository verification rejects
+  stale output and unsupported contract constructs. The optional client and
+  crates.io release flow remain to be implemented.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -169,7 +170,7 @@ target constraints and acceptance details for their workstreams.
 - Review the public API before generating the complete surface. Remove any
   transport, application-policy, or third-party types that do not belong.
 
-### 3. Add the normalized model and deterministic Rust emitter
+### 3. Add the normalized model and deterministic Rust emitter — complete
 
 - Extend `internal/openapi` with the narrow repository-owned data needed by SDK
   generation.
@@ -261,10 +262,8 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Start ordered work 3 by replacing the representative handwritten operation
-inventory with a validated language-neutral SDK model and deterministic Rust
-emitter. Add direct generation and stale-output verification before expanding
-the runtime client.
+Start ordered work 4 by completing bounded JSON/XML and ZIP discrimination,
+then layer the safe-default optional HTTP client on the prepared-request core.
 
 ## Progress log
 
@@ -290,3 +289,11 @@ the runtime client.
   query serialization, and credential redaction. Stable/MSRV, all-feature,
   no-default-feature, lint, documentation, package, and dependency-tree gates
   pass; the no-default normal graph contains no HTTP client or async runtime.
+- 2026-07-19: Added the fail-closed language-neutral SDK model, deterministic
+  Rust emitter, direct generation command, atomic owned-tree replacement, and
+  offline freshness phase. The generated public surface replaces the
+  representative operations with complete physical/logical identity mapping,
+  exact request vectors, conservative response metadata, open source-status
+  values, XML/HTTP routing evidence, and selected source descriptions. Go,
+  stable/MSRV Rust, no-default-feature, formatting, strict lint, documentation,
+  package, and freshness gates pass.
