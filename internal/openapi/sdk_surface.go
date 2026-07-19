@@ -29,7 +29,7 @@ type SDKSurfaceOperation struct {
 	GuideURL           string
 	SourceCheckedAt    string
 	Parameters         []SDKSurfaceParameter
-	SecuritySchemes    []string
+	Security           []SDKSurfaceSecurityRequirement
 	Responses          []SDKSurfaceResponse
 }
 
@@ -42,9 +42,25 @@ type SDKSurfaceParameter struct {
 	Style     string
 	Explode   bool
 	Types     []string
+	ItemTypes []string
 	MinItems  *int64
 	MaxItems  *int64
 	HasSchema bool
+}
+
+// SDKSurfaceSecurityRequirement preserves one alternative security
+// requirement and the definitions needed to place its credentials.
+type SDKSurfaceSecurityRequirement struct {
+	Schemes []SDKSurfaceSecurityScheme
+}
+
+// SDKSurfaceSecurityScheme contains the repository-owned credential placement
+// facts for one referenced OpenAPI security scheme.
+type SDKSurfaceSecurityScheme struct {
+	Identifier string
+	Type       string
+	Location   string
+	Name       string
 }
 
 // SDKSurfaceResponse preserves the response selector and source HTTP-status
@@ -100,11 +116,12 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 				return SDKSurface{}, fmt.Errorf("%s has incomplete x-opendart identity or source metadata", identity)
 			}
 
-			parameters := make([]SDKSurfaceParameter, 0, len(pathItem.Parameters)+len(operation.Parameters))
-			for _, parameter := range append(append([]*v3.Parameter(nil), pathItem.Parameters...), operation.Parameters...) {
-				if parameter == nil {
-					return SDKSurface{}, fmt.Errorf("%s has a nil parameter", identity)
-				}
+			effectiveParameters, err := effectiveSDKParameters(identity, pathItem.Parameters, operation.Parameters)
+			if err != nil {
+				return SDKSurface{}, err
+			}
+			parameters := make([]SDKSurfaceParameter, 0, len(effectiveParameters))
+			for _, parameter := range effectiveParameters {
 				evidence := SDKSurfaceParameter{
 					Name:     parameter.Name,
 					Location: parameter.In,
@@ -121,22 +138,46 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 					}
 					evidence.HasSchema = true
 					evidence.Types = append([]string(nil), schema.Type...)
+					if schema.Items != nil {
+						if !schema.Items.IsA() || schema.Items.A == nil || schema.Items.A.Schema() == nil {
+							return SDKSurface{}, fmt.Errorf("%s parameter %q has unsupported items schema", identity, parameter.Name)
+						}
+						evidence.ItemTypes = append([]string(nil), schema.Items.A.Schema().Type...)
+					}
 					evidence.MinItems = copyInt64(schema.MinItems)
 					evidence.MaxItems = copyInt64(schema.MaxItems)
 				}
 				parameters = append(parameters, evidence)
 			}
 
-			securitySchemes := make([]string, 0)
-			for _, requirement := range operation.Security {
-				if requirement == nil || requirement.Requirements == nil {
-					continue
-				}
-				for scheme := range requirement.Requirements.KeysFromOldest() {
-					securitySchemes = append(securitySchemes, scheme)
-				}
+			securityRequirements := operation.Security
+			if securityRequirements == nil {
+				securityRequirements = d.model.Model.Security
 			}
-			sort.Strings(securitySchemes)
+			security := make([]SDKSurfaceSecurityRequirement, 0, len(securityRequirements))
+			for _, requirement := range securityRequirements {
+				if requirement == nil || requirement.Requirements == nil {
+					return SDKSurface{}, fmt.Errorf("%s has an invalid security requirement", identity)
+				}
+				schemes := make([]SDKSurfaceSecurityScheme, 0)
+				for scheme := range requirement.Requirements.KeysFromOldest() {
+					if d.model.Model.Components == nil || d.model.Model.Components.SecuritySchemes == nil {
+						return SDKSurface{}, fmt.Errorf("%s references security scheme %q without components", identity, scheme)
+					}
+					definition, ok := d.model.Model.Components.SecuritySchemes.Get(scheme)
+					if !ok || definition == nil {
+						return SDKSurface{}, fmt.Errorf("%s references unknown security scheme %q", identity, scheme)
+					}
+					schemes = append(schemes, SDKSurfaceSecurityScheme{
+						Identifier: scheme,
+						Type:       definition.Type,
+						Location:   definition.In,
+						Name:       definition.Name,
+					})
+				}
+				sort.Slice(schemes, func(i, j int) bool { return schemes[i].Identifier < schemes[j].Identifier })
+				security = append(security, SDKSurfaceSecurityRequirement{Schemes: schemes})
+			}
 
 			if operation.Responses == nil {
 				return SDKSurface{}, fmt.Errorf("%s has no responses", identity)
@@ -172,7 +213,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 				GuideURL:           guideURL,
 				SourceCheckedAt:    sourceCheckedAt,
 				Parameters:         parameters,
-				SecuritySchemes:    securitySchemes,
+				Security:           security,
 				Responses:          responses,
 			})
 		}
@@ -184,6 +225,46 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 		return operations[i].Path < operations[j].Path
 	})
 	return SDKSurface{Operations: operations}, nil
+}
+
+func effectiveSDKParameters(identity string, inherited, operation []*v3.Parameter) ([]*v3.Parameter, error) {
+	effective := make([]*v3.Parameter, 0, len(inherited)+len(operation))
+	positions := make(map[string]int, len(inherited)+len(operation))
+	keyFor := func(parameter *v3.Parameter) (string, error) {
+		if parameter == nil {
+			return "", fmt.Errorf("%s has a nil parameter", identity)
+		}
+		return parameter.In + "\x00" + parameter.Name, nil
+	}
+	for _, parameter := range inherited {
+		key, err := keyFor(parameter)
+		if err != nil {
+			return nil, err
+		}
+		if _, exists := positions[key]; exists {
+			return nil, fmt.Errorf("%s has duplicate inherited parameter %q", identity, parameter.Name)
+		}
+		positions[key] = len(effective)
+		effective = append(effective, parameter)
+	}
+	operationKeys := make(map[string]bool, len(operation))
+	for _, parameter := range operation {
+		key, err := keyFor(parameter)
+		if err != nil {
+			return nil, err
+		}
+		if operationKeys[key] {
+			return nil, fmt.Errorf("%s has duplicate operation parameter %q", identity, parameter.Name)
+		}
+		operationKeys[key] = true
+		if position, exists := positions[key]; exists {
+			effective[position] = parameter
+			continue
+		}
+		positions[key] = len(effective)
+		effective = append(effective, parameter)
+	}
+	return effective, nil
 }
 
 func inspectSDKResponse(identity, selector string, response *v3.Response) (SDKSurfaceResponse, error) {

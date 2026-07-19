@@ -3,6 +3,8 @@ package openapi_test
 import (
 	"path/filepath"
 	"runtime"
+	"slices"
+	"sort"
 	"testing"
 
 	"github.com/cpaikr/opendart/internal/guide"
@@ -43,7 +45,7 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 		}
 		physical[operation.OperationID] = true
 		logical[operation.LogicalOperationID] = true
-		if len(operation.SecuritySchemes) == 0 || len(operation.Responses) == 0 {
+		if len(operation.Security) == 0 || len(operation.Responses) == 0 {
 			t.Fatalf("missing security or response routing for %s", operation.OperationID)
 		}
 		for _, parameter := range operation.Parameters {
@@ -55,10 +57,19 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 	if len(logical) != catalog.LogicalEndpoints {
 		t.Fatalf("SDK surface logical operations = %d, canonical logical endpoints = %d", len(logical), catalog.LogicalEndpoints)
 	}
+	physicalIDs := boolSetKeys(physical)
+	logicalIDs := boolSetKeys(logical)
+	if !slices.Equal(physicalIDs, catalog.PhysicalOperationIDs()) {
+		t.Fatalf("SDK surface physical identities differ from the canonical catalog")
+	}
+	if !slices.Equal(logicalIDs, catalog.LogicalOperationIDs()) {
+		t.Fatalf("SDK surface logical identities differ from the canonical catalog")
+	}
 
 	multiCompany := findSDKOperation(t, surface, "get_fnlttMultiAcnt_json")
 	corpCode := findSDKParameter(t, multiCompany, "corp_code")
-	if !corpCode.Required || corpCode.Style != "form" || corpCode.Explode || len(corpCode.Types) != 1 || corpCode.Types[0] != "array" {
+	if !corpCode.Required || corpCode.Style != "form" || corpCode.Explode ||
+		!slices.Equal(corpCode.Types, []string{"array"}) || !slices.Equal(corpCode.ItemTypes, []string{"string"}) {
 		t.Fatalf("multi-company serialization evidence = %#v", corpCode)
 	}
 	if corpCode.MinItems == nil || *corpCode.MinItems != 1 || corpCode.MaxItems == nil || *corpCode.MaxItems != 100 {
@@ -73,6 +84,13 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 	if freshCorpCode.MinItems == nil || *freshCorpCode.MinItems != 1 {
 		t.Fatal("mutating repository-owned SDK evidence changed the hidden OpenAPI model")
 	}
+	if len(multiCompany.Security) != 1 || len(multiCompany.Security[0].Schemes) != 1 {
+		t.Fatalf("authentication requirements = %#v", multiCompany.Security)
+	}
+	scheme := multiCompany.Security[0].Schemes[0]
+	if scheme.Identifier != "crtfcKey" || scheme.Type != "apiKey" || scheme.Location != "query" || scheme.Name != "crtfc_key" {
+		t.Fatalf("authentication scheme evidence = %#v", scheme)
+	}
 
 	zipOperation := findSDKOperation(t, surface, "get_corpCode_xml")
 	if len(zipOperation.Responses) != 1 || zipOperation.Responses[0].Selector != "default" || zipOperation.Responses[0].HTTPStatusEvidence != "not-documented" {
@@ -84,6 +102,15 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 		media[1].Name != "application/zip" || media[1].ContentTypeStatus != "inferred-from-documented-output-format" {
 		t.Fatalf("ZIP/XML routing evidence = %#v", media)
 	}
+}
+
+func boolSetKeys(values map[string]bool) []string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func findSDKOperation(t *testing.T, surface openapi.SDKSurface, operationID string) openapi.SDKSurfaceOperation {

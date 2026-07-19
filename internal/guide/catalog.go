@@ -47,6 +47,20 @@ type CatalogReport struct {
 	ResponseFields   int            `json:"responseFields"`
 	MessageCodes     int            `json:"messageCodes"`
 	GroupCounts      map[string]int `json:"groupCounts"`
+	physicalIDs      []string
+	logicalIDs       []string
+}
+
+// PhysicalOperationIDs returns a copy of the validated canonical operationId
+// set without adding volatile identities to the bounded JSON report.
+func (r CatalogReport) PhysicalOperationIDs() []string {
+	return append([]string(nil), r.physicalIDs...)
+}
+
+// LogicalOperationIDs returns a copy of the validated canonical logical
+// identity set without adding volatile identities to the bounded JSON report.
+func (r CatalogReport) LogicalOperationIDs() []string {
+	return append([]string(nil), r.logicalIDs...)
 }
 
 // CatalogDiagnostic identifies a failed invariant without embedding source
@@ -320,7 +334,12 @@ func (v *catalogValidator) validate() (CatalogReport, error) {
 			return CatalogReport{}, err
 		}
 	}
-	return CatalogReport{Root: v.rootFile, OpenAPI: catalogOpenAPIVersion, LogicalEndpoints: len(logical), PhysicalPaths: len(paths), RequestArguments: requestArgumentCount, ResponseFields: responseFields, MessageCodes: messageCodes, GroupCounts: groupCounts}, nil
+	return CatalogReport{
+		Root: v.rootFile, OpenAPI: catalogOpenAPIVersion,
+		LogicalEndpoints: len(logical), PhysicalPaths: len(paths), RequestArguments: requestArgumentCount,
+		ResponseFields: responseFields, MessageCodes: messageCodes, GroupCounts: groupCounts,
+		physicalIDs: sortedBoolKeys(operationIDs), logicalIDs: logicalIDs,
+	}, nil
 }
 
 func (v *catalogValidator) validateMarker() error {
