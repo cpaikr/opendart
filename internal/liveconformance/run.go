@@ -240,23 +240,111 @@ func parseXML(body []byte) (Response, error) {
 	if err != nil || root != "result" {
 		return Response{}, errors.New("XML is invalid")
 	}
+	records, err := parseXMLRecords(body)
+	if err != nil {
+		return Response{}, errors.New("XML is invalid")
+	}
 	status := firstElementValue(values, "result/status")
 	if status == "" {
 		return Response{}, errors.New("XML status is missing")
 	}
-	return Response{Representation: "application/xml", APIStatus: status, XMLValues: values}, nil
+	return Response{Representation: "application/xml", APIStatus: status, XMLValues: values, XMLRecords: records}, nil
+}
+
+func parseXMLRecords(body []byte) (map[string][]map[string]string, error) {
+	records, err := parseXMLRecordsDecoded(body)
+	if err == nil || utf8.Valid(body) {
+		return records, err
+	}
+	decoded, _, decodeErr := transform.Bytes(korean.EUCKR.NewDecoder(), body)
+	if decodeErr != nil || !utf8.Valid(decoded) || bytes.ContainsRune(decoded, utf8.RuneError) {
+		return nil, errors.New("XML encoding is invalid")
+	}
+	return parseXMLRecordsDecoded(decoded)
+}
+
+func parseXMLRecordsDecoded(body []byte) (map[string][]map[string]string, error) {
+	type frame struct {
+		name   string
+		text   strings.Builder
+		fields map[string]string
+	}
+	decoder := xml.NewDecoder(bytes.NewReader(body))
+	decoder.CharsetReader = koreanCharsetReader
+	stack := make([]frame, 0)
+	records := make(map[string][]map[string]string)
+	for {
+		token, err := decoder.Token()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, errors.New("XML is invalid")
+		}
+		switch current := token.(type) {
+		case xml.StartElement:
+			if len(stack) >= maximumXMLDepth {
+				return nil, errors.New("XML nesting is too deep")
+			}
+			stack = append(stack, frame{name: current.Name.Local, fields: make(map[string]string)})
+		case xml.CharData:
+			if len(stack) > 0 {
+				stack[len(stack)-1].text.Write([]byte(current))
+			}
+		case xml.EndElement:
+			if len(stack) == 0 || stack[len(stack)-1].name != current.Name.Local {
+				return nil, errors.New("XML nesting is invalid")
+			}
+			last := stack[len(stack)-1]
+			pathParts := make([]string, len(stack))
+			for index := range stack {
+				pathParts[index] = stack[index].name
+			}
+			path := strings.Join(pathParts, "/")
+			if last.name == "list" && (path == "result/list" || path == "result/group/list") {
+				records[path] = append(records[path], last.fields)
+			}
+			stack = stack[:len(stack)-1]
+			if len(stack) > 0 {
+				if value := strings.TrimSpace(last.text.String()); value != "" {
+					stack[len(stack)-1].fields[last.name] = value
+				}
+			}
+		}
+	}
+	if len(stack) != 0 {
+		return nil, errors.New("XML root is missing")
+	}
+	return records, nil
 }
 
 func parseXMLValues(body []byte) (string, map[string][]string, error) {
 	root, values, err := parseXMLValuesDecoded(body)
-	if err == nil || utf8.Valid(body) {
+	if err == nil {
+		if xmlValuesContainRuneError(values) {
+			return "", nil, errors.New("XML encoding is invalid")
+		}
+		return root, values, nil
+	}
+	if utf8.Valid(body) {
 		return root, values, err
 	}
 	decoded, _, decodeErr := transform.Bytes(korean.EUCKR.NewDecoder(), body)
-	if decodeErr != nil || !utf8.Valid(decoded) {
+	if decodeErr != nil || !utf8.Valid(decoded) || bytes.ContainsRune(decoded, utf8.RuneError) {
 		return "", nil, errors.New("XML encoding is invalid")
 	}
 	return parseXMLValuesDecoded(decoded)
+}
+
+func xmlValuesContainRuneError(values map[string][]string) bool {
+	for _, candidates := range values {
+		for _, value := range candidates {
+			if strings.ContainsRune(value, utf8.RuneError) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func parseXMLValuesDecoded(body []byte) (string, map[string][]string, error) {
@@ -413,7 +501,13 @@ func failReport(report Report, credential string, failure Failure) (Report, erro
 
 func validateReport(report Report, credential string) error {
 	primaryCeiling := report.RequestBudget.Ceiling - report.RequestBudget.DiscoveryCeiling
-	if report.SchemaVersion != ReportSchemaVersion || report.Kind != ReportKind || report.CredentialSource != CredentialSource || report.CredentialPersisted || report.RequestBudget.Ceiling < 0 || report.RequestBudget.Ceiling > AbsoluteRequestLimit || report.RequestBudget.DiscoveryCeiling < 0 || report.RequestBudget.DiscoveryCeiling > report.RequestBudget.Ceiling || report.RequestBudget.Used < 0 || report.RequestBudget.Used > report.RequestBudget.Ceiling || report.RequestBudget.DiscoveryUsed < 0 || report.RequestBudget.DiscoveryUsed > report.RequestBudget.DiscoveryCeiling || len(report.Cases) != report.RequestBudget.Used-report.RequestBudget.DiscoveryUsed || len(report.Cases) > primaryCeiling {
+	metadataValid := report.SchemaVersion == ReportSchemaVersion && report.Kind == ReportKind && report.CredentialSource == CredentialSource && !report.CredentialPersisted
+	budgetValid := report.RequestBudget.Ceiling >= 0 && report.RequestBudget.Ceiling <= AbsoluteRequestLimit &&
+		report.RequestBudget.DiscoveryCeiling >= 0 && report.RequestBudget.DiscoveryCeiling <= report.RequestBudget.Ceiling &&
+		report.RequestBudget.Used >= 0 && report.RequestBudget.Used <= report.RequestBudget.Ceiling &&
+		report.RequestBudget.DiscoveryUsed >= 0 && report.RequestBudget.DiscoveryUsed <= report.RequestBudget.DiscoveryCeiling
+	caseCountValid := len(report.Cases) == report.RequestBudget.Used-report.RequestBudget.DiscoveryUsed && len(report.Cases) <= primaryCeiling
+	if !metadataValid || !budgetValid || !caseCountValid {
 		return errors.New("report invariants failed")
 	}
 	if _, err := time.Parse("2006-01-02T15:04:05.000Z", report.ObservedAt); err != nil {

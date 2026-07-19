@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/liveconformance"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/releaseguard"
 )
@@ -89,6 +90,20 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		if strings.Contains(string(encoded), forbidden) {
 			t.Fatalf("report contains %q: %s", forbidden, encoded)
 		}
+	}
+}
+
+func TestLiveConformanceFailurePreservesSanitizedContext(t *testing.T) {
+	cause := &liveconformance.Error{Failure: liveconformance.Failure{Code: "invalid-primary-assertion", Stage: "preflight", Operation: "GET /company.json application/json"}}
+	got := liveConformanceFailure(cause)
+	if got.Phase != phaseLiveConformance || got.Artifact != "live conformance inventory" || got.Rule != "invalid-primary-assertion" || got.Operation != cause.Failure.Operation || !errors.Is(got, cause) {
+		t.Fatalf("failure = %#v", got)
+	}
+
+	nested := failure("nested-phase", "nested-artifact", "nested-rule", errors.New("detail"))
+	got = liveConformanceFailure(nested)
+	if got.Phase != phaseLiveConformance || got.Artifact != "nested-artifact" || got.Rule != "nested-rule" {
+		t.Fatalf("nested failure = %#v", got)
 	}
 }
 

@@ -127,25 +127,21 @@ func primaryLogicalCases() []logicalCase {
 
 func disclosureDiscoveryRequests() []DiscoveryRequest {
 	requests := make([]DiscoveryRequest, 0, 32)
-	for year := 2023; year <= 2025; year++ {
-		for quarter := 1; quarter <= 4; quarter++ {
-			beginMonth := 1 + (quarter-1)*3
-			endMonth := beginMonth + 2
-			begin := strconv.Itoa(year) + twoDigits(beginMonth) + "01"
-			endDay := "31"
-			if endMonth == 6 || endMonth == 9 {
-				endDay = "30"
-			}
-			end := strconv.Itoa(year) + twoDigits(endMonth) + endDay
-			for page := 1; page <= 2; page++ {
-				id := strings.Join([]string{"b001", strconv.Itoa(year), "q" + strconv.Itoa(quarter), "p" + strconv.Itoa(page)}, "-")
-				requests = append(requests, DiscoveryRequest{ID: id, Parameters: parameters("pblntf_detail_ty", "B001", "bgn_de", begin, "end_de", end, "page_no", strconv.Itoa(page), "page_count", "100")})
-			}
+	for month := 1; month <= 12; month++ {
+		lastDay := 31
+		if month == 2 {
+			lastDay = 28
+		} else if month == 4 || month == 6 || month == 9 || month == 11 {
+			lastDay = 30
+		}
+		for half, days := range [][2]int{{1, 15}, {16, lastDay}} {
+			id := strings.Join([]string{"b001", "2025", "m" + twoDigits(month), "h" + strconv.Itoa(half+1)}, "-")
+			requests = append(requests, DiscoveryRequest{ID: id, Parameters: parameters("pblntf_detail_ty", "B001", "bgn_de", "2025"+twoDigits(month)+twoDigits(days[0]), "end_de", "2025"+twoDigits(month)+twoDigits(days[1]), "page_no", "1", "page_count", "100")})
 		}
 	}
 	for _, detailType := range []string{"C001", "C002", "C004", "C005"} {
-		for page := 1; page <= 2; page++ {
-			requests = append(requests, DiscoveryRequest{ID: strings.ToLower(detailType) + "-2025-q1-p" + strconv.Itoa(page), Parameters: parameters("pblntf_detail_ty", detailType, "bgn_de", "20250101", "end_de", "20250331", "page_no", strconv.Itoa(page), "page_count", "100")})
+		for half, days := range [][2]int{{1, 15}, {16, 31}} {
+			requests = append(requests, DiscoveryRequest{ID: strings.ToLower(detailType) + "-2025-m01-h" + strconv.Itoa(half+1), Parameters: parameters("pblntf_detail_ty", detailType, "bgn_de", "202501"+twoDigits(days[0]), "end_de", "202501"+twoDigits(days[1]), "page_no", "1", "page_count", "100")})
 		}
 	}
 	return requests

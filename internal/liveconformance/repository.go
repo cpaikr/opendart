@@ -30,7 +30,7 @@ func PreflightRepository(repositoryRoot string) (PreflightReport, error) {
 		return PreflightReport{}, err
 	}
 	if err := validateReportContract(plan); err != nil {
-		return PreflightReport{}, preflightError("report-sanitization", "")
+		return PreflightReport{}, &Error{Failure: Failure{Code: "report-sanitization", Stage: "preflight"}, cause: err}
 	}
 	return PreflightReport{Valid: true, PrimaryCases: len(plan.cases), RequestCeiling: plan.requestBudget}, nil
 }

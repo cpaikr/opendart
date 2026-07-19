@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"golang.org/x/text/encoding/korean"
@@ -18,7 +19,8 @@ func TestCanonicalRepositoryPreflight(t *testing.T) {
 	repositoryRoot := filepath.Clean(filepath.Join("..", ".."))
 	report, err := PreflightRepository(repositoryRoot)
 	if err != nil {
-		if typed, ok := err.(*Error); ok {
+		var typed *Error
+		if errors.As(err, &typed) {
 			t.Fatalf("PreflightRepository() failure = %+v", typed.Failure)
 		}
 		t.Fatalf("PreflightRepository() error = %v", err)
@@ -34,6 +36,13 @@ func TestCanonicalRepositoryPreflight(t *testing.T) {
 	discoveries := PrimaryDiscoveries()
 	if len(discoveries) != 1 || len(discoveries[0].Requests) != 32 || len(discoveries[0].Targets) != 84 {
 		t.Fatalf("discoveries = %#v", discoveries)
+	}
+	for _, request := range discoveries[0].Requests {
+		begin, beginErr := time.Parse("20060102", request.Parameters["bgn_de"][0])
+		end, endErr := time.Parse("20060102", request.Parameters["end_de"][0])
+		if beginErr != nil || endErr != nil || end.Before(begin) || end.Sub(begin) > 15*24*time.Hour || request.Parameters["page_no"][0] != "1" {
+			t.Fatalf("discovery request is not a closed short window: %#v", request)
+		}
 	}
 	for _, testCase := range cases {
 		identity := testCase.operationIdentity()
@@ -74,6 +83,7 @@ func TestCanonicalPreflightRejectsDiscoveryPageGapsAndDuplicates(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			discoveries := PrimaryDiscoveries()
+			discoveries[0].Requests[1].Parameters = cloneParameters(discoveries[0].Requests[0].Parameters)
 			discoveries[0].Requests[1].Parameters["page_no"] = []string{test.page}
 			_, err := Preflight(document, PrimaryCases(), PrimaryAssertions(), discoveries...)
 			var conformanceError *Error
@@ -86,10 +96,10 @@ func TestCanonicalPreflightRejectsDiscoveryPageGapsAndDuplicates(t *testing.T) {
 
 func TestDiscoveredEventAssertionsBindIdentityAndDS006Nesting(t *testing.T) {
 	jsonResponse := Response{Representation: "application/json", JSON: map[string]any{"group": []any{map[string]any{"list": []any{map[string]any{"corp_code": "00999999", "rcept_no": "20250101000001"}}}}}}
-	xmlResponse := Response{Representation: "application/xml", XMLValues: map[string][]string{
-		"result/group/list/corp_code": {"00999999"},
-		"result/group/list/rcept_no":  {"20250101000001"},
-	}}
+	xmlResponse, err := parseXML([]byte(`<result><status>000</status><group><list><corp_code>00999999</corp_code><rcept_no>20250101000001</rcept_no></list></group></result>`))
+	if err != nil {
+		t.Fatal(err)
+	}
 	assertion := eventIdentityAssertion("00999999", "group/list")
 	for _, response := range []Response{jsonResponse, xmlResponse} {
 		if evidence, ok := assertion(response); !ok || evidence.Count != 1 {
@@ -98,6 +108,23 @@ func TestDiscoveredEventAssertionsBindIdentityAndDS006Nesting(t *testing.T) {
 		if _, ok := eventIdentityAssertion("00888888", "group/list")(response); ok {
 			t.Fatal("DS006 identity assertion accepted the wrong corporation")
 		}
+	}
+}
+
+func TestDiscoveredEventAssertionRequiresIdentityAndReceiptInSameRecord(t *testing.T) {
+	response := Response{Representation: "application/json", JSON: map[string]any{"list": []any{
+		map[string]any{"corp_code": "00999999"},
+		map[string]any{"rcept_no": "20250101000001"},
+	}}}
+	if _, ok := eventIdentityAssertion("00999999", "list")(response); ok {
+		t.Fatal("identity and receipt from different rows passed")
+	}
+}
+
+func TestSamsungIndexAssertionUsesIndexFields(t *testing.T) {
+	response := Response{Representation: "application/json", JSON: map[string]any{"list": []any{map[string]any{"corp_code": samsungCorpCode, "idx_cl_code": "M210000"}}}}
+	if evidence, ok := samsungIndexAssertion(response); !ok || evidence.Count != 1 {
+		t.Fatalf("samsungIndexAssertion() = %+v, %v", evidence, ok)
 	}
 }
 

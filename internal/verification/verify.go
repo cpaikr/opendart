@@ -140,7 +140,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 		return Report{}, err
 	}
 	if err := deps.checkLive(absoluteRoot); err != nil {
-		return Report{}, failure(phaseLiveConformance, "live conformance inventory", "coverage-budget-sanitization", err)
+		return Report{}, liveConformanceFailure(err)
 	}
 	if err := deps.checkEvidence(auditorEvidence); err != nil {
 		return Report{}, failure(phaseAuditorEvidence, auditorEvidence, "sanitized-evidence-manifest", err)
@@ -165,6 +165,27 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 			MessageCodes:     catalog.MessageCodes,
 		},
 	}, nil
+}
+
+func liveConformanceFailure(err error) *Error {
+	artifact, rule, operation, location := "live conformance inventory", "coverage-budget-sanitization", "", ""
+	var verificationError *Error
+	if errors.As(err, &verificationError) {
+		artifact, rule = verificationError.Artifact, verificationError.Rule
+		operation, location = verificationError.Operation, verificationError.Location
+	} else {
+		var conformanceError *liveconformance.Error
+		if errors.As(err, &conformanceError) {
+			rule = conformanceError.Failure.Code
+			operation = conformanceError.Failure.Operation
+			if conformanceError.Failure.CaseID != "" {
+				artifact = conformanceError.Failure.CaseID
+			} else if conformanceError.Failure.DiscoveryID != "" {
+				artifact = string(conformanceError.Failure.DiscoveryID)
+			}
+		}
+	}
+	return contextualFailure(phaseLiveConformance, artifact, rule, operation, location, err)
 }
 
 func lintArtifact(deps dependencies, phase, artifact string) error {

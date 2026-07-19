@@ -217,6 +217,24 @@ func TestDiscoveryIsBudgetedReusableAndDistinctFromPrimaryFailure(t *testing.T) 
 	}
 }
 
+func TestDiscoveryExcludesCorrectedFilingsFromPrimaryDateCoordinates(t *testing.T) {
+	query := url.Values{"pblntf_detail_ty": {"B001"}, "bgn_de": {"20250101"}, "end_de": {"20250115"}}
+	response := Response{Representation: "application/json", JSON: map[string]any{"list": []any{map[string]any{
+		"corp_code": "00999999", "report_nm": "[기재정정]주요사항보고서(감자 결정)", "rcept_dt": "20250110",
+	}}}}
+	targets := []DiscoveryTarget{{CaseID: "event-json", DetailTypes: []string{"B001"}, Aliases: []string{"감자 결정"}}}
+	coordinates := make(map[string]discoveredCoordinate)
+	collectDiscoveryCoordinates(response, query, targets, coordinates)
+	if len(coordinates) != 0 {
+		t.Fatalf("corrected filing produced coordinates: %#v", coordinates)
+	}
+	response.JSON["list"].([]any)[0].(map[string]any)["report_nm"] = "주요사항보고서(감자 결정)"
+	collectDiscoveryCoordinates(response, query, targets, coordinates)
+	if coordinate, ok := coordinates["event-json"]; !ok || coordinate.corpCode != "00999999" || coordinate.beginDate != "20250101" || coordinate.endDate != "20250115" {
+		t.Fatalf("original filing coordinates = %#v", coordinates)
+	}
+}
+
 func TestExecutionMakesOneAttemptAndSanitizesFailure(t *testing.T) {
 	plan, err := Preflight(representativeSpecification(), representativeCases(), representativeAssertions())
 	if err != nil {
@@ -294,6 +312,11 @@ func TestXMLAndZIPParsingRequireReviewedContent(t *testing.T) {
 	deepXML := strings.Repeat("<node>", maximumXMLDepth+1) + strings.Repeat("</node>", maximumXMLDepth+1)
 	if _, _, err := parseXMLValues([]byte(deepXML)); err == nil {
 		t.Fatal("deeply nested XML passed")
+	}
+	malformedEncoding := append([]byte(`<result><status>000</status><message>`), 0xff)
+	malformedEncoding = append(malformedEncoding, []byte(`</message></result>`)...)
+	if _, err := parseXML(malformedEncoding); err == nil {
+		t.Fatal("replacement-rune XML fallback passed")
 	}
 }
 

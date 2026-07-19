@@ -87,9 +87,11 @@ not append session transcripts.
   EUC-KR/CP949 labels or bytes. XML API-error envelopes remain alternate ZIP
   responses and cannot pass a primary case.
 - Completed the ordered-work-4 review corrections: discovered assertions bind
-  the exact resolved corporation, DS006 assertions follow its nested
-  `group/list` structure in JSON and XML, and discovery partitions require
-  unique contiguous declarations plus consistent response pagination.
+  the exact resolved corporation and receipt within one record, DS006
+  assertions follow its nested `group/list` structure in JSON and XML, index
+  assertions use fields their schemas expose, corrected filings cannot supply
+  initial-receipt coordinates, and short discovery partitions require unique
+  contiguous declarations plus consistent response pagination.
 - Baseline validation passed: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.

@@ -143,7 +143,7 @@ func collectDiscoveryCoordinates(response Response, query url.Values, targets []
 		corpCode, _ := row["corp_code"].(string)
 		reportName, _ := row["report_nm"].(string)
 		received, _ := row["rcept_dt"].(string)
-		if !corporationCode.MatchString(corpCode) || !receiptDate.MatchString(received) {
+		if !corporationCode.MatchString(corpCode) || !receiptDate.MatchString(received) || correctedReportName(reportName) {
 			continue
 		}
 		name := normalizeReportName(reportName)
@@ -160,6 +160,16 @@ func collectDiscoveryCoordinates(response Response, query url.Values, targets []
 			}
 		}
 	}
+}
+
+func correctedReportName(value string) bool {
+	value = strings.TrimSpace(value)
+	for _, prefix := range []string{"[기재정정]", "[첨부정정]", "[첨부추가]", "[발행조건확정]"} {
+		if strings.HasPrefix(value, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func normalizeReportName(value string) string {

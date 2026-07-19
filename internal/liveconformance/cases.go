@@ -60,6 +60,8 @@ func PrimaryAssertions() map[AssertionID]Assertion {
 			check = companyAssertion
 		case "DS003-2020001":
 			check = taxonomyAssertion
+		case "DS003-2022001", "DS003-2022002":
+			check = samsungIndexAssertion
 		default:
 			if strings.HasSuffix(definition.stem, "V2") {
 				check = samsungRootAssertion
@@ -118,6 +120,14 @@ func taxonomyAssertion(response Response) (ComparisonEvidence, bool) {
 	return ComparisonEvidence{Kind: "taxonomy-statement-identity", Count: count}, count > 0
 }
 
+func samsungIndexAssertion(response Response) (ComparisonEvidence, bool) {
+	count := matchingRecordCount(response, "list", map[string]func(string) bool{
+		"corp_code":   func(value string) bool { return value == samsungCorpCode },
+		"idx_cl_code": func(value string) bool { return value == "M210000" },
+	})
+	return ComparisonEvidence{Kind: "samsung-index-identity", Count: count}, count > 0
+}
+
 func discoveredEventAssertion(container string) func(Response) (ComparisonEvidence, bool) {
 	return func(response Response) (ComparisonEvidence, bool) {
 		corpCodes := nonemptyFieldCount(response, container, "corp_code", corporationCode)
@@ -129,11 +139,42 @@ func discoveredEventAssertion(container string) func(Response) (ComparisonEviden
 
 func eventIdentityAssertion(corpCode, container string) func(Response) (ComparisonEvidence, bool) {
 	return func(response Response) (ComparisonEvidence, bool) {
-		identities := exactFieldCount(response, container, "corp_code", corpCode)
-		receipts := nonemptyFieldCount(response, container, "rcept_no", regexp.MustCompile(`^[0-9]{14}$`))
-		count := min(identities, receipts)
+		count := matchingRecordCount(response, container, map[string]func(string) bool{
+			"corp_code": func(value string) bool { return value == corpCode },
+			"rcept_no":  regexp.MustCompile(`^[0-9]{14}$`).MatchString,
+		})
 		return ComparisonEvidence{Kind: "discovered-event-identity", Count: count}, count > 0
 	}
+}
+
+func matchingRecordCount(response Response, container string, predicates map[string]func(string) bool) int {
+	records := make([]map[string]string, 0)
+	if response.Representation == "application/xml" {
+		records = response.XMLRecords["result/"+container]
+	} else {
+		for _, value := range jsonContainerValues(response.JSON, container) {
+			row, _ := value.(map[string]any)
+			record := make(map[string]string, len(predicates))
+			for field := range predicates {
+				record[field], _ = row[field].(string)
+			}
+			records = append(records, record)
+		}
+	}
+	count := 0
+	for _, record := range records {
+		matched := true
+		for field, predicate := range predicates {
+			if !predicate(record[field]) {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			count++
+		}
+	}
+	return count
 }
 
 func corporationArchiveAssertion(response Response) (ComparisonEvidence, bool) {
@@ -208,6 +249,17 @@ func jsonFieldValues(root map[string]any, container, field string) []string {
 		value, _ := root[field].(string)
 		return []string{value}
 	}
+	nodes := jsonContainerValues(root, container)
+	values := make([]string, 0)
+	for _, node := range nodes {
+		row, _ := node.(map[string]any)
+		value, _ := row[field].(string)
+		values = append(values, value)
+	}
+	return values
+}
+
+func jsonContainerValues(root map[string]any, container string) []any {
 	nodes := []any{root}
 	for _, component := range strings.Split(container, "/") {
 		next := make([]any, 0)
@@ -228,17 +280,13 @@ func jsonFieldValues(root map[string]any, container, field string) []string {
 		}
 		nodes = next
 	}
-	values := make([]string, 0)
+	values := make([]any, 0)
 	for _, node := range nodes {
 		items, ok := node.([]any)
 		if !ok {
 			items = []any{node}
 		}
-		for _, item := range items {
-			row, _ := item.(map[string]any)
-			value, _ := row[field].(string)
-			values = append(values, value)
-		}
+		values = append(values, items...)
 	}
 	return values
 }
@@ -277,10 +325,4 @@ func parameters(values ...string) map[string][]string {
 
 func cloneParameters(source map[string][]string) map[string][]string {
 	return cloneCase(Case{Parameters: source}).Parameters
-}
-func min(left, right int) int {
-	if left < right {
-		return left
-	}
-	return right
 }

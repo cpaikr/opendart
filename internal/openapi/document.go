@@ -661,7 +661,7 @@ func validateArchiveXML(data []byte) error {
 		return err
 	}
 	decoded, _, err := transform.Bytes(korean.EUCKR.NewDecoder(), data)
-	if err != nil || !utf8.Valid(decoded) {
+	if err != nil || !utf8.Valid(decoded) || bytes.ContainsRune(decoded, utf8.RuneError) {
 		return errors.New("XML encoding is invalid")
 	}
 	return consumeXML(decoded)
@@ -671,11 +671,15 @@ func consumeXML(data []byte) error {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
 	decoder.CharsetReader = openDARTXMLCharsetReader
 	for {
-		if _, err := decoder.Token(); err != nil {
+		token, err := decoder.Token()
+		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
 			return err
+		}
+		if text, ok := token.(xml.CharData); ok && bytes.ContainsRune(text, utf8.RuneError) {
+			return errors.New("XML encoding is invalid")
 		}
 	}
 }

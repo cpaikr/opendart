@@ -72,6 +72,7 @@ type Response struct {
 	APIStatus        string
 	JSON             map[string]any
 	XMLValues        map[string][]string
+	XMLRecords       map[string][]map[string]string
 	Archive          ArchiveSummary
 	ArchiveDocuments []ArchiveDocument
 }
@@ -139,6 +140,7 @@ type Failure struct {
 
 type Error struct {
 	Failure Failure
+	cause   error
 }
 
 func (e *Error) Error() string {
@@ -146,6 +148,10 @@ func (e *Error) Error() string {
 		return fmt.Sprintf("live conformance %s failed (%s)", e.Failure.Stage, e.Failure.Code)
 	}
 	return fmt.Sprintf("live conformance %s failed for case %s (%s)", e.Failure.Stage, e.Failure.CaseID, e.Failure.Code)
+}
+
+func (e *Error) Unwrap() error {
+	return e.cause
 }
 
 type specification interface {

@@ -430,6 +430,40 @@ func TestRunLiveConformancePreflightDoesNotCallLiveRunner(t *testing.T) {
 	}
 }
 
+func TestRunLiveConformancePreflightFailureIsFixed(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	liveCalled := false
+	code := runLiveConformanceWith(context.Background(), []string{"--preflight-only"}, &stdout, &stderr,
+		func(string) (liveconformance.PreflightReport, error) {
+			return liveconformance.PreflightReport{}, errors.New("unsafe preflight detail")
+		},
+		func(context.Context, string) (liveconformance.Report, error) {
+			liveCalled = true
+			return liveconformance.Report{}, nil
+		})
+	if code != 1 || liveCalled || stdout.Len() != 0 || stderr.String() != "live-conformance: preflight failed\n" || strings.Contains(stderr.String(), "unsafe") {
+		t.Fatalf("code = %d, liveCalled = %v, stdout = %q, stderr = %q", code, liveCalled, stdout.String(), stderr.String())
+	}
+}
+
+func TestRunLiveConformanceEmitsSuccessfulReport(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	report := liveconformance.Report{SchemaVersion: liveconformance.ReportSchemaVersion, Kind: liveconformance.ReportKind, Outcome: "passed"}
+	code := runLiveConformanceWith(context.Background(), []string{"--repository-root", "repository"}, &stdout, &stderr,
+		func(string) (liveconformance.PreflightReport, error) { return liveconformance.PreflightReport{}, nil },
+		func(_ context.Context, root string) (liveconformance.Report, error) {
+			if root != "repository" {
+				t.Fatalf("root = %q", root)
+			}
+			return report, nil
+		})
+	if code != 0 || stderr.Len() != 0 || !strings.Contains(stdout.String(), `"outcome": "passed"`) || !strings.Contains(stdout.String(), liveconformance.ReportKind) {
+		t.Fatalf("code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestRunLiveConformanceEmitsSanitizedFailureReport(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
