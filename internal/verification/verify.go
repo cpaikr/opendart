@@ -7,6 +7,7 @@ import (
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
 	"github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/liveconformance"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/releaseguard"
 )
@@ -17,6 +18,7 @@ const (
 	phaseBundleLint      = "bundle-lint"
 	phaseBundleFreshness = "bundle-freshness"
 	phaseAuditorEvidence = "auditor-evidence"
+	phaseLiveConformance = "live-conformance-preflight"
 	phaseReleaseGuard    = "release-guard"
 )
 
@@ -25,6 +27,7 @@ var passedPhases = []string{
 	phaseSourceLint,
 	phaseBundleFreshness,
 	phaseBundleLint,
+	phaseLiveConformance,
 	phaseAuditorEvidence,
 	phaseReleaseGuard,
 }
@@ -83,6 +86,7 @@ type dependencies struct {
 	validateCatalog func(guide.CatalogOptions) (guide.CatalogReport, error)
 	lint            func(string) ([]openapispec.LintDiagnostic, error)
 	checkFresh      func(string, string) error
+	checkLive       func(string) error
 	checkEvidence   func(string) error
 	checkRelease    func(string) error
 }
@@ -94,8 +98,12 @@ func Verify(repositoryRoot string) (Report, error) {
 		validateCatalog: guide.ValidateCatalog,
 		lint:            openapispec.Lint,
 		checkFresh:      openapispec.CheckBundleFresh,
-		checkEvidence:   auditorprobe.ValidateEvidenceFile,
-		checkRelease:    releaseguard.Check,
+		checkLive: func(root string) error {
+			_, err := liveconformance.PreflightRepository(root)
+			return err
+		},
+		checkEvidence: auditorprobe.ValidateEvidenceFile,
+		checkRelease:  releaseguard.Check,
 	})
 }
 
@@ -130,6 +138,9 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	}
 	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
 		return Report{}, err
+	}
+	if err := deps.checkLive(absoluteRoot); err != nil {
+		return Report{}, failure(phaseLiveConformance, "live conformance inventory", "coverage-budget-sanitization", err)
 	}
 	if err := deps.checkEvidence(auditorEvidence); err != nil {
 		return Report{}, failure(phaseAuditorEvidence, auditorEvidence, "sanitized-evidence-manifest", err)

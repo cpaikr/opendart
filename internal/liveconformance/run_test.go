@@ -139,6 +139,84 @@ func TestPreflightSerializesOpenAPIFormArrays(t *testing.T) {
 	}
 }
 
+func TestDiscoveryIsBudgetedReusableAndDistinctFromPrimaryFailure(t *testing.T) {
+	spec := representativeSpecification()
+	listParameters := []openapispec.Parameter{
+		{Name: "bgn_de", Location: "query", SchemaTypes: []string{"string"}},
+		{Name: "end_de", Location: "query", SchemaTypes: []string{"string"}},
+		{Name: "pblntf_detail_ty", Location: "query", SchemaTypes: []string{"string"}},
+		{Name: "page_no", Location: "query", SchemaTypes: []string{"string"}},
+		{Name: "page_count", Location: "query", SchemaTypes: []string{"string"}},
+	}
+	spec.catalog.Operations = []openapispec.Operation{
+		spec.catalog.Operations[0],
+		{Method: http.MethodGet, Path: "/list.json", OperationID: "get_list_json", LogicalOperationID: "DS001-2019001", Servers: []string{TrustedServer}, SecurityRequirements: []string{"crtfcKey"}, Parameters: listParameters, PrimaryRepresentation: "application/json"},
+	}
+	cases := []Case{
+		{ID: "company-json", Method: http.MethodGet, Path: "/company.json", Representation: "application/json", Parameters: parameters("corp_code", samsungCorpCode), Assertion: "company-discovered", Discovery: "event"},
+		{ID: "list-json", Method: http.MethodGet, Path: "/list.json", Representation: "application/json", Parameters: parameters("bgn_de", "20240101", "end_de", "20240331", "pblntf_detail_ty", "B001", "page_no", "1", "page_count", "100"), Assertion: "list-content"},
+	}
+	assertions := map[AssertionID]Assertion{
+		"company-discovered": {Representations: []string{"application/json"}, Check: func(response Response) (ComparisonEvidence, bool) {
+			matched := exactFieldCount(response, "", "corp_code", "00999999")
+			return ComparisonEvidence{Kind: "discovered-company", Count: matched}, matched > 0
+		}},
+		"list-content": {Representations: []string{"application/json"}, Check: discoveryEnvelopeAssertion},
+	}
+	discovery := Discovery{ID: "event", MaxRequests: 1,
+		Requests: []DiscoveryRequest{{ID: "event-page", Parameters: parameters("bgn_de", "20240101", "end_de", "20240331", "pblntf_detail_ty", "B001", "page_no", "1", "page_count", "100")}},
+		Targets:  []DiscoveryTarget{{CaseID: "company-json", DetailTypes: []string{"B001"}, Aliases: []string{"감자 결정"}}},
+	}
+	plan, err := Preflight(spec, cases, assertions, discovery)
+	if err != nil {
+		t.Fatal(err)
+	}
+	attempt := 0
+	report, err := execute(context.Background(), plan, dependencies{
+		credential: func() (string, error) { return testCredential, nil }, now: time.Now,
+		wait: func(time.Duration) error { return nil },
+		do: func(request *http.Request) (*http.Response, error) {
+			attempt++
+			if attempt == 1 {
+				return response("application/json", []byte(`{"status":"000","page_no":"1","total_page":"1","list":[{"corp_code":"00999999","report_nm":"주요사항보고서(감자 결정)","rcept_dt":"20240201"}]}`)), nil
+			}
+			if request.URL.Path == "/api/company.json" {
+				if request.URL.Query().Get("corp_code") != "00999999" {
+					t.Fatalf("resolved query = %s", request.URL.RawQuery)
+				}
+				return response("application/json", []byte(`{"status":"000","list":[{"corp_code":"00999999","rcept_no":"20240201000001"}]}`)), nil
+			}
+			return response("application/json", []byte(`{"status":"000","page_no":"1","total_page":"1","list":[{"corp_code":"00999999"}]}`)), nil
+		},
+	})
+	if err != nil || report.Outcome != "passed" || report.RequestBudget != (RequestBudget{Ceiling: 3, Used: 3, DiscoveryCeiling: 1, DiscoveryUsed: 1}) {
+		t.Fatalf("report = %#v, error = %v", report, err)
+	}
+
+	discovery.Targets[0].Aliases = []string{"없는 공시"}
+	plan, err = Preflight(spec, cases, assertions, discovery)
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, err = execute(context.Background(), plan, dependencies{
+		credential: func() (string, error) { return testCredential, nil }, now: time.Now,
+		wait: func(time.Duration) error { return nil },
+		do: func(*http.Request) (*http.Response, error) {
+			return response("application/json", []byte(`{"status":"000","page_no":"1","total_page":"1","list":[{"corp_code":"00999999","report_nm":"주요사항보고서(감자 결정)","rcept_dt":"20240201"}]}`)), nil
+		},
+	})
+	if err == nil || report.Failure == nil || report.Failure.Code != "discovery-incomplete" || report.Failure.DiscoveryID != "event" || len(report.Cases) != 0 {
+		t.Fatalf("report = %#v, error = %v", report, err)
+	}
+	encoded, marshalErr := json.Marshal(report)
+	if marshalErr != nil {
+		t.Fatal(marshalErr)
+	}
+	if _, decodeErr := DecodeReport(bytes.NewReader(encoded)); decodeErr != nil {
+		t.Fatalf("discovery failure did not round-trip: %v", decodeErr)
+	}
+}
+
 func TestExecutionMakesOneAttemptAndSanitizesFailure(t *testing.T) {
 	plan, err := Preflight(representativeSpecification(), representativeCases(), representativeAssertions())
 	if err != nil {

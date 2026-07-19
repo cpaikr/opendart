@@ -13,6 +13,7 @@ import (
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/liveconformance"
 	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/verification"
@@ -41,6 +42,8 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runBundle(args[1:], stdout, stderr)
 	case "verify":
 		return runVerify(args[1:], stdout, stderr)
+	case "live-conformance":
+		return runLiveConformance(ctx, args[1:], stdout, stderr)
 	case "probe-multi-company":
 		return runProbeMultiCompany(ctx, args[1:], stdout, stderr)
 	case "probe-auditor-evidence":
@@ -137,6 +140,49 @@ func runBundle(args []string, stdout, stderr io.Writer) int {
 }
 
 type verificationRunner func(string) (verification.Report, error)
+
+type livePreflightRunner func(string) (liveconformance.PreflightReport, error)
+type liveRunner func(context.Context, string) (liveconformance.Report, error)
+
+func runLiveConformance(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	return runLiveConformanceWith(ctx, args, stdout, stderr, liveconformance.PreflightRepository, liveconformance.RunRepository)
+}
+
+func runLiveConformanceWith(ctx context.Context, args []string, stdout, stderr io.Writer, preflight livePreflightRunner, runner liveRunner) int {
+	flags := flag.NewFlagSet("live-conformance", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	repositoryRoot := flags.String("repository-root", ".", "repository root")
+	preflightOnly := flags.Bool("preflight-only", false, "run credential-free coverage, budget, and sanitization gates")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("live-conformance", flags, stderr); code != 0 {
+		return code
+	}
+	if *preflightOnly {
+		report, err := preflight(*repositoryRoot)
+		if err != nil {
+			return writeCommandError(stderr, "live-conformance", errors.New("preflight failed"), 1)
+		}
+		if err := writeJSON(stdout, report); err != nil {
+			return writeCommandError(stderr, "write live conformance preflight report", err, 1)
+		}
+		return 0
+	}
+	report, err := runner(ctx, *repositoryRoot)
+	if err != nil {
+		if report.Kind == liveconformance.ReportKind {
+			if encodeErr := writeJSON(stdout, report); encodeErr != nil {
+				return 1
+			}
+		}
+		return writeCommandError(stderr, "live-conformance", errors.New("execution failed"), 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write live conformance report", err, 1)
+	}
+	return 0
+}
 
 func runVerify(args []string, stdout, stderr io.Writer) int {
 	return runVerifyWith(args, stdout, stderr, verification.Verify)
@@ -393,6 +439,7 @@ func usage(output io.Writer) error {
 		"  lint           apply strict OpenAPI policy",
 		"  bundle         write the portable OpenAPI bundle",
 		"  verify         run credential-free repository verification",
+		"  live-conformance  run the reviewed live matrix (use --preflight-only offline)",
 		"  probe-multi-company  run the focused credentialed serialization probe",
 		"  probe-auditor-evidence  emit the focused sanitized auditor evidence manifest",
 	} {

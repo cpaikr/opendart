@@ -42,6 +42,10 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseBundleFreshness+":"+filepath.Base(source)+":"+filepath.Base(bundle))
 			return nil
 		},
+		checkLive: func(root string) error {
+			calls = append(calls, phaseLiveConformance+":"+filepath.Base(root))
+			return nil
+		},
 		checkEvidence: func(path string) error {
 			calls = append(calls, phaseAuditorEvidence+":"+filepath.Base(path))
 			return nil
@@ -61,6 +65,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"lint:openapi.yaml",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
+		"live-conformance-preflight:repository",
 		"auditor-evidence:auditor-2026-07-18.json",
 		"release-guard:repository",
 	}
@@ -101,8 +106,9 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 		{name: "source lint diagnostic", fail: phaseSourceLint, wantPhase: phaseSourceLint, wantArtifact: "source.yaml", wantRule: "operation-summary", wantCallCount: 2},
 		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 4},
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 3},
-		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 5},
-		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 6},
+		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance inventory", wantRule: "coverage-budget-sanitization", wantCallCount: 5},
+		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 6},
+		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 7},
 	}
 
 	for _, test := range tests {
@@ -132,6 +138,13 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					calls++
 					if test.fail == phaseBundleFreshness {
 						return fmt.Errorf("%w: unsafe detail", openapispec.ErrBundleStale)
+					}
+					return nil
+				},
+				checkLive: func(string) error {
+					calls++
+					if test.fail == phaseLiveConformance {
+						return cause
 					}
 					return nil
 				},
@@ -202,6 +215,7 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 			return nil, nil
 		},
 		checkFresh:    func(string, string) error { return openapispec.ErrBundleMissing },
+		checkLive:     func(string) error { return nil },
 		checkEvidence: func(string) error { return nil },
 		checkRelease:  func(string) error { return nil },
 	}

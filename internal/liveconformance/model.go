@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	ReportSchemaVersion  = 1
+	ReportSchemaVersion  = 2
 	ReportKind           = "opendart-live-conformance"
 	TrustedServer        = "https://opendart.fss.or.kr/api"
 	CredentialSource     = "OPENDART_API_KEY"
@@ -33,6 +33,29 @@ type Case struct {
 	Representation string
 	Parameters     map[string][]string
 	Assertion      AssertionID
+	Discovery      DiscoveryID
+}
+
+type DiscoveryID string
+
+// Discovery declares a fixed, bounded set of already-valid OpenAPI requests
+// whose results may supply coordinates to multiple primary cases.
+type Discovery struct {
+	ID          DiscoveryID
+	MaxRequests int
+	Requests    []DiscoveryRequest
+	Targets     []DiscoveryTarget
+}
+
+type DiscoveryRequest struct {
+	ID         string
+	Parameters map[string][]string
+}
+
+type DiscoveryTarget struct {
+	CaseID      string
+	DetailTypes []string
+	Aliases     []string
 }
 
 func (c Case) operationIdentity() string {
@@ -70,8 +93,10 @@ type ComparisonEvidence struct {
 }
 
 type RequestBudget struct {
-	Ceiling int `json:"ceiling"`
-	Used    int `json:"used"`
+	Ceiling          int `json:"ceiling"`
+	Used             int `json:"used"`
+	DiscoveryCeiling int `json:"discoveryCeiling"`
+	DiscoveryUsed    int `json:"discoveryUsed"`
 }
 
 type Report struct {
@@ -105,10 +130,11 @@ type CaseResult struct {
 }
 
 type Failure struct {
-	Code      string `json:"code"`
-	Stage     string `json:"stage"`
-	CaseID    string `json:"caseId,omitempty"`
-	Operation string `json:"operation,omitempty"`
+	Code        string      `json:"code"`
+	Stage       string      `json:"stage"`
+	CaseID      string      `json:"caseId,omitempty"`
+	DiscoveryID DiscoveryID `json:"discoveryId,omitempty"`
+	Operation   string      `json:"operation,omitempty"`
 }
 
 type Error struct {
@@ -129,18 +155,26 @@ type specification interface {
 }
 
 type preparedCase struct {
-	definition Case
-	operation  openapispec.Operation
-	query      url.Values
-	assertion  Assertion
+	definition          Case
+	operation           openapispec.Operation
+	query               url.Values
+	assertion           Assertion
+	allowEmptyDiscovery bool
 }
 
 // Plan is returned only after every operation, request, trust, assertion, and
 // budget invariant has passed without reading a credential or using a network.
 type Plan struct {
-	specification specification
-	cases         []preparedCase
-	requestBudget int
+	specification   specification
+	cases           []preparedCase
+	discoveries     []preparedDiscovery
+	requestBudget   int
+	discoveryBudget int
+}
+
+type preparedDiscovery struct {
+	definition Discovery
+	requests   []preparedCase
 }
 
 type dependencies struct {

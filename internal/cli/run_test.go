@@ -13,6 +13,7 @@ import (
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/liveconformance"
 	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/verification"
@@ -49,7 +50,7 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "probe-multi-company", "probe-auditor-evidence"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "live-conformance", "probe-multi-company", "probe-auditor-evidence"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
@@ -409,8 +410,42 @@ func TestRunVerifyEmitsReportAndForwardsRepositoryRoot(t *testing.T) {
 	}
 }
 
+func TestRunLiveConformancePreflightDoesNotCallLiveRunner(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	liveCalled := false
+	code := runLiveConformanceWith(context.Background(), []string{"--repository-root", "repository", "--preflight-only"}, &stdout, &stderr,
+		func(root string) (liveconformance.PreflightReport, error) {
+			if root != "repository" {
+				t.Fatalf("root = %q", root)
+			}
+			return liveconformance.PreflightReport{Valid: true, PrimaryCases: 167, RequestCeiling: 200}, nil
+		},
+		func(context.Context, string) (liveconformance.Report, error) {
+			liveCalled = true
+			return liveconformance.Report{}, nil
+		})
+	if code != 0 || liveCalled || stderr.Len() != 0 || !strings.Contains(stdout.String(), `"valid": true`) {
+		t.Fatalf("code = %d, liveCalled = %v, stdout = %q, stderr = %q", code, liveCalled, stdout.String(), stderr.String())
+	}
+}
+
+func TestRunLiveConformanceEmitsSanitizedFailureReport(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	report := liveconformance.Report{SchemaVersion: liveconformance.ReportSchemaVersion, Kind: liveconformance.ReportKind, Outcome: "failed"}
+	code := runLiveConformanceWith(context.Background(), nil, &stdout, &stderr,
+		func(string) (liveconformance.PreflightReport, error) { return liveconformance.PreflightReport{}, nil },
+		func(context.Context, string) (liveconformance.Report, error) {
+			return report, errors.New("secret authenticated URL")
+		})
+	if code != 1 || !strings.Contains(stdout.String(), liveconformance.ReportKind) || stderr.String() != "live-conformance: execution failed\n" || strings.Contains(stderr.String(), "secret") {
+		t.Fatalf("code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestNewCommandsRejectPositionalArguments(t *testing.T) {
-	for _, command := range []string{"catalog", "lint", "bundle", "verify"} {
+	for _, command := range []string{"catalog", "lint", "bundle", "verify", "live-conformance"} {
 		t.Run(command, func(t *testing.T) {
 			var stderr bytes.Buffer
 			if code := Run([]string{command, "unexpected"}, &bytes.Buffer{}, &stderr); code != 2 {

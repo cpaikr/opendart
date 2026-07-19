@@ -16,8 +16,11 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/cpaikr/opendart/internal/liveprobe"
+	"golang.org/x/text/encoding/korean"
+	"golang.org/x/text/transform"
 )
 
 const maximumXMLDepth = 128
@@ -50,22 +53,26 @@ func (plan *Plan) Run(ctx context.Context) (Report, error) {
 }
 
 func execute(ctx context.Context, plan *Plan, deps dependencies) (Report, error) {
-	report := newReport(deps.now(), plan.requestBudget)
+	report := newReport(deps.now(), plan.requestBudget, plan.discoveryBudget)
 	credential, err := deps.credential()
 	if err != nil || len(credential) != 40 {
 		return failReport(report, credential, Failure{Code: "credential-unavailable", Stage: "credential"})
 	}
-	for index, prepared := range plan.cases {
+	resolvedCases, discoveryFailure := executeDiscoveries(ctx, plan, deps, credential, &report)
+	if discoveryFailure != nil {
+		return failReport(report, credential, *discoveryFailure)
+	}
+	for index, prepared := range resolvedCases {
 		if report.RequestBudget.Used >= report.RequestBudget.Ceiling {
 			return failReport(report, credential, caseFailure("request-budget-exhausted", "budget", prepared))
 		}
-		result, failure := executeCase(ctx, plan.specification, deps.do, credential, prepared)
+		result, _, failure := executeCase(ctx, plan.specification, deps.do, credential, prepared)
 		report.RequestBudget.Used++
 		report.Cases = append(report.Cases, result)
 		if failure != nil {
 			return failReport(report, credential, *failure)
 		}
-		if index+1 < len(plan.cases) {
+		if index+1 < len(resolvedCases) {
 			if err := deps.wait(RequestPacing); err != nil {
 				return failReport(report, credential, caseFailure("pacing-interrupted", "pacing", prepared))
 			}
@@ -78,7 +85,7 @@ func execute(ctx context.Context, plan *Plan, deps dependencies) (Report, error)
 	return report, nil
 }
 
-func executeCase(ctx context.Context, spec specification, do func(*http.Request) (*http.Response, error), credential string, prepared preparedCase) (CaseResult, *Failure) {
+func executeCase(ctx context.Context, spec specification, do func(*http.Request) (*http.Response, error), credential string, prepared preparedCase) (CaseResult, Response, *Failure) {
 	result := CaseResult{
 		CaseID:             prepared.definition.ID,
 		OperationID:        prepared.operation.OperationID,
@@ -93,14 +100,14 @@ func executeCase(ctx context.Context, spec specification, do func(*http.Request)
 	requestURL, err := trustedRequestURL(prepared, credential)
 	if err != nil {
 		failure := caseFailure("request-construction", "request", prepared)
-		return result, &failure
+		return result, Response{}, &failure
 	}
 	requestContext, cancel := context.WithTimeout(ctx, RequestTimeout)
 	defer cancel()
 	request, err := http.NewRequestWithContext(requestContext, prepared.operation.Method, requestURL.String(), nil)
 	if err != nil {
 		failure := caseFailure("request-construction", "request", prepared)
-		return result, &failure
+		return result, Response{}, &failure
 	}
 	request.Header.Set("Accept", prepared.operation.PrimaryRepresentation)
 	request.Header.Set("User-Agent", "opendart-live-conformance/1.0")
@@ -110,17 +117,17 @@ func executeCase(ctx context.Context, spec specification, do func(*http.Request)
 			_ = response.Body.Close()
 		}
 		failure := caseFailure("transport-failure", "request", prepared)
-		return result, &failure
+		return result, Response{}, &failure
 	}
 	if response == nil {
 		failure := caseFailure("transport-failure", "request", prepared)
-		return result, &failure
+		return result, Response{}, &failure
 	}
 	result.HTTPStatus = response.StatusCode
 	body, err := readBoundedBody(response.Body)
 	if err != nil {
 		failure := caseFailure("bounded-body-failure", "response", prepared)
-		return result, &failure
+		return result, Response{}, &failure
 	}
 	result.BodyBytes = len(body)
 	digest := sha256.Sum256(body)
@@ -129,36 +136,48 @@ func executeCase(ctx context.Context, spec specification, do func(*http.Request)
 	mediaType, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		failure := caseFailure("invalid-media-type", "response", prepared)
-		return result, &failure
+		return result, Response{}, &failure
 	}
 	normalizedMediaType := strings.ToLower(mediaType)
-	if !allowedRepresentation(normalizedMediaType) {
+	canonicalMediaType := canonicalResponseMediaType(prepared.operation.PrimaryRepresentation, normalizedMediaType, body)
+	if !allowedRepresentation(canonicalMediaType) {
 		failure := caseFailure("invalid-media-type", "response", prepared)
-		return result, &failure
+		return result, Response{}, &failure
 	}
-	result.MediaType = normalizedMediaType
-	if err := spec.ValidateResponse(prepared.operation.Method, prepared.operation.Path, contentType, response.StatusCode, body); err != nil {
+	result.MediaType = canonicalMediaType
+	if err := spec.ValidateResponse(prepared.operation.Method, prepared.operation.Path, canonicalMediaType, response.StatusCode, body); err != nil {
 		failure := caseFailure("openapi-response-validation", "response", prepared)
-		return result, &failure
+		return result, Response{}, &failure
 	}
 	parsed, err := parseResponse(result.MediaType, body)
 	if err != nil {
 		failure := caseFailure("representation-parse", "response", prepared)
-		return result, &failure
+		return result, parsed, &failure
 	}
 	result.APIStatus = parsed.APIStatus
-	if response.StatusCode != http.StatusOK || result.MediaType != prepared.operation.PrimaryRepresentation || structuredRepresentation(result.MediaType) && parsed.APIStatus != "000" {
+	validAPIStatus := parsed.APIStatus == "000" || prepared.allowEmptyDiscovery && parsed.APIStatus == "013"
+	if response.StatusCode != http.StatusOK || result.MediaType != prepared.operation.PrimaryRepresentation || structuredRepresentation(result.MediaType) && !validAPIStatus {
 		failure := caseFailure("unsuccessful-envelope", "response", prepared)
-		return result, &failure
+		return result, parsed, &failure
 	}
 	evidence, passed := prepared.assertion.Check(parsed)
 	result.Comparison = evidence
 	if !passed {
 		failure := caseFailure("assertion-failed", "assertion", prepared)
-		return result, &failure
+		return result, parsed, &failure
 	}
 	result.Outcome = "passed"
-	return result, nil
+	return result, parsed, nil
+}
+
+func canonicalResponseMediaType(expected, observed string, body []byte) string {
+	if observed == expected {
+		return observed
+	}
+	if expected == "application/zip" && (observed == "application/x-msdownload" || observed == "application/octet-stream") && len(body) >= 4 && bytes.Equal(body[:4], []byte{'P', 'K', 3, 4}) {
+		return "application/zip"
+	}
+	return observed
 }
 
 func trustedRequestURL(prepared preparedCase, credential string) (*url.URL, error) {
@@ -229,7 +248,20 @@ func parseXML(body []byte) (Response, error) {
 }
 
 func parseXMLValues(body []byte) (string, map[string][]string, error) {
+	root, values, err := parseXMLValuesDecoded(body)
+	if err == nil || utf8.Valid(body) {
+		return root, values, err
+	}
+	decoded, _, decodeErr := transform.Bytes(korean.EUCKR.NewDecoder(), body)
+	if decodeErr != nil || !utf8.Valid(decoded) {
+		return "", nil, errors.New("XML encoding is invalid")
+	}
+	return parseXMLValuesDecoded(decoded)
+}
+
+func parseXMLValuesDecoded(body []byte) (string, map[string][]string, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(body))
+	decoder.CharsetReader = koreanCharsetReader
 	stack := make([]string, 0)
 	text := make([]strings.Builder, 0)
 	values := make(map[string][]string)
@@ -277,6 +309,17 @@ func parseXMLValues(body []byte) (string, map[string][]string, error) {
 		return "", nil, errors.New("XML root is missing")
 	}
 	return root, values, nil
+}
+
+func koreanCharsetReader(label string, input io.Reader) (io.Reader, error) {
+	switch strings.ToLower(strings.TrimSpace(label)) {
+	case "utf-8", "utf8", "us-ascii":
+		return input, nil
+	case "euc-kr", "ks_c_5601-1987", "cp949":
+		return transform.NewReader(input, korean.EUCKR.NewDecoder()), nil
+	default:
+		return nil, errors.New("XML encoding is unsupported")
+	}
 }
 
 func parseZIP(body []byte) (Response, error) {
@@ -332,7 +375,11 @@ func structuredRepresentation(representation string) bool {
 	return representation == "application/json" || representation == "application/xml"
 }
 
-func newReport(now time.Time, requestCeiling int) Report {
+func newReport(now time.Time, requestCeiling int, discoveryCeiling ...int) Report {
+	discoveryRequests := 0
+	if len(discoveryCeiling) == 1 {
+		discoveryRequests = discoveryCeiling[0]
+	}
 	return Report{
 		SchemaVersion:       ReportSchemaVersion,
 		Kind:                ReportKind,
@@ -340,7 +387,7 @@ func newReport(now time.Time, requestCeiling int) Report {
 		ObservedAt:          now.UTC().Truncate(time.Millisecond).Format("2006-01-02T15:04:05.000Z"),
 		CredentialSource:    CredentialSource,
 		CredentialPersisted: false,
-		RequestBudget:       RequestBudget{Ceiling: requestCeiling},
+		RequestBudget:       RequestBudget{Ceiling: requestCeiling, DiscoveryCeiling: discoveryRequests},
 		Cases:               []CaseResult{},
 	}
 }
@@ -365,14 +412,15 @@ func failReport(report Report, credential string, failure Failure) (Report, erro
 }
 
 func validateReport(report Report, credential string) error {
-	if report.SchemaVersion != ReportSchemaVersion || report.Kind != ReportKind || report.CredentialSource != CredentialSource || report.CredentialPersisted || report.RequestBudget.Ceiling < 0 || report.RequestBudget.Ceiling > AbsoluteRequestLimit || report.RequestBudget.Used < 0 || report.RequestBudget.Used > report.RequestBudget.Ceiling || len(report.Cases) != report.RequestBudget.Used {
+	primaryCeiling := report.RequestBudget.Ceiling - report.RequestBudget.DiscoveryCeiling
+	if report.SchemaVersion != ReportSchemaVersion || report.Kind != ReportKind || report.CredentialSource != CredentialSource || report.CredentialPersisted || report.RequestBudget.Ceiling < 0 || report.RequestBudget.Ceiling > AbsoluteRequestLimit || report.RequestBudget.DiscoveryCeiling < 0 || report.RequestBudget.DiscoveryCeiling > report.RequestBudget.Ceiling || report.RequestBudget.Used < 0 || report.RequestBudget.Used > report.RequestBudget.Ceiling || report.RequestBudget.DiscoveryUsed < 0 || report.RequestBudget.DiscoveryUsed > report.RequestBudget.DiscoveryCeiling || len(report.Cases) != report.RequestBudget.Used-report.RequestBudget.DiscoveryUsed || len(report.Cases) > primaryCeiling {
 		return errors.New("report invariants failed")
 	}
 	if _, err := time.Parse("2006-01-02T15:04:05.000Z", report.ObservedAt); err != nil {
 		return errors.New("report timestamp is invalid")
 	}
 	if report.Outcome == "passed" {
-		if report.Failure != nil || report.RequestBudget.Used != report.RequestBudget.Ceiling {
+		if report.Failure != nil || len(report.Cases) != primaryCeiling {
 			return errors.New("passed report is incomplete")
 		}
 		for _, result := range report.Cases {
