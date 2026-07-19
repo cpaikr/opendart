@@ -228,7 +228,18 @@ func TestDiscoveryExcludesCorrectedFilingsFromPrimaryDateCoordinates(t *testing.
 	if len(coordinates) != 0 {
 		t.Fatalf("corrected filing produced coordinates: %#v", coordinates)
 	}
-	response.JSON["list"].([]any)[0].(map[string]any)["report_nm"] = "주요사항보고서(감자 결정)"
+	list, ok := response.JSON["list"].([]any)
+	if !ok || len(list) == 0 {
+		t.Fatalf("response list = %#v", response.JSON["list"])
+	}
+	row, ok := list[0].(map[string]any)
+	if !ok {
+		t.Fatalf("response row = %#v", list[0])
+	}
+	if _, ok := row["report_nm"].(string); !ok {
+		t.Fatalf("report name = %#v", row["report_nm"])
+	}
+	row["report_nm"] = "주요사항보고서(감자 결정)"
 	collectDiscoveryCoordinates(response, query, targets, coordinates)
 	if coordinate, ok := coordinates["event-json"]; !ok || coordinate.corpCode != "00999999" || coordinate.beginDate != "20250101" || coordinate.endDate != "20250115" {
 		t.Fatalf("original filing coordinates = %#v", coordinates)
