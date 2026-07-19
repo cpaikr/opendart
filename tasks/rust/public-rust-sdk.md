@@ -183,7 +183,7 @@ target constraints and acceptance details for their workstreams.
 - Demonstrate complete physical-operation coverage without hard-coded endpoint
   totals.
 
-### 4. Complete the wire inspector and optional HTTP client
+### 4. Complete the wire inspector and optional HTTP client — complete
 
 - Implement bounded JSON/XML envelope inspection and a byte-replaying
   discriminator for ZIP success versus alternate XML source errors.
@@ -262,8 +262,8 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Start ordered work 4 by completing bounded JSON/XML and ZIP discrimination,
-then layer the safe-default optional HTTP client on the prepared-request core.
+Start ordered work 5 by closing the generated operation coverage and packaging
+the crate with current product documentation, CI, and release ownership.
 
 ## Progress log
 
@@ -297,3 +297,11 @@ then layer the safe-default optional HTTP client on the prepared-request core.
   values, XML/HTTP routing evidence, and selected source descriptions. Go,
   stable/MSRV Rust, no-default-feature, formatting, strict lint, documentation,
   package, and freshness gates pass.
+- 2026-07-19: Added bounded, uncertainty-preserving JSON/XML inspection and a
+  lossless ZIP-versus-XML discriminator. The optional client owns credentials,
+  deadlines, metadata sanitization, and replayable streams while one private
+  factory enforces no retries, redirects, ambient proxies, content decoding, or
+  backend ambiguity. Local transport fixtures prove redirect, proxy, protocol
+  NACK, timeout, truncation, feature-unification, and credential-safety
+  behavior. Stable/MSRV, all-feature, no-default-feature, package, docs,
+  adversarial dependency, race-enabled Go, and offline verification gates pass.

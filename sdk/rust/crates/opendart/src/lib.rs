@@ -7,14 +7,30 @@ mod generated;
 mod request;
 mod wire;
 
+#[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
+mod client;
+#[cfg(all(
+    opendart_compat,
+    feature = "client-reqwest",
+    not(target_family = "wasm")
+))]
+#[path = "../../../compat/reqwest-feature-unification/opendart_bridge.rs"]
+pub mod compatibility;
+
 pub use generated::{mapping, operations, wire_shapes};
 
+#[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
+pub use client::{
+    BinaryReply, BodyChunk, BodyStream, BodyStreamError, Client, ClientBuildError, ClientBuilder,
+    ClientError, TransportError, TransportFailureKind,
+};
 pub use error::{AuthorizationError, PrepareError};
 pub use request::{
     ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedRequest, Representation,
     RequestMethod,
 };
 pub use wire::{
-    HttpVersion, ResponseHeader, ResponseMetadata, SourceReply, SourceResponse, SourceStatus,
-    SourceValue, SourceValueKind, StatusEnvelope,
+    BodyLimitError, EnvelopeError, EnvelopeFormat, HttpVersion, ResponseHeader, ResponseMetadata,
+    SourceReply, SourceResponse, SourceStatus, SourceValue, SourceValueKind, StatusEnvelope,
+    WireInspectError, WireInspector,
 };

@@ -58,6 +58,14 @@ crate coverage plus a dedicated dependency-unification fixture that enables
 protocol-NACK, fixed-backend, fixed-resolver, and raw-body cases. Tests use only
 loopback fixtures and no OpenDART credential.
 
+The Hickory graph has a higher MSRV than the published crate, so its persistent
+build proof is a nested stable-only workspace:
+
+```sh
+RUSTFLAGS="--cfg opendart_compat" cargo test --locked \
+  --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml
+```
+
 The [live-conformance task](../../tasks/main/live-conformance.md) remains
 separate, protected observation work. A crate release does not depend on an
 unreviewed live call or expose its

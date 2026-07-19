@@ -83,7 +83,7 @@ The initial feature model is:
 ```toml
 [features]
 default = ["client-reqwest"]
-client-reqwest = ["dep:reqwest"]
+client-reqwest = ["dep:bytes", "dep:futures-core", "dep:reqwest", "dep:tokio"]
 ```
 
 The exact feature name is fixed during the public-seam gate, but the invariant
