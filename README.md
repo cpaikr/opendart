@@ -63,34 +63,13 @@ and historical availability remain `probe-required` unless empirical evidence
 states otherwise. This keeps guide-sourced facts separate from observations and
 collection analysis.
 
-## Use the Rust SDK
+## Rust SDK
 
-The `opendart` crate prepares every supported operation through generated,
-typed request inputs. Its transport-independent core supports callers that own
-HTTP execution; the default `client-reqwest` feature adds a bounded, one-attempt
-client for ordinary use.
-
-```rust
-use opendart::{operations::Company, ApiKey, Client};
-
-# async fn example() -> Result<(), Box<dyn std::error::Error>> {
-let request = Company::new("00126380").prepare_json()?;
-let client = Client::builder(ApiKey::new("example-key")?).build()?;
-let response = client.execute(&request).await?;
-println!("{}", response.metadata.status());
-if let opendart::SourceReply::Success(company) = response.reply {
-    println!("company name evidence: {:?}", company.corp_name);
-}
-# Ok(())
-# }
-```
-
-Status envelopes, including code `013`, remain source evidence rather than SDK
-success or retry policy. Binary operations use `Client::execute_binary`.
-Strict callers can disable default features and use `PreparedRequest`,
-authorization, and `WireInspector` with their own executor. See the
-[crate guide](sdk/rust/crates/opendart/README.md) and
-[SDK workspace guide](sdk/rust/README.md).
+The first-party `opendart` crate provides generated typed requests, bounded
+source-envelope inspection, a one-attempt convenience client, and a
+transport-independent core. Usage examples and the supported caller contract
+live in the [crate guide](sdk/rust/crates/opendart/README.md); repository build
+and package gates live in the [SDK workspace guide](sdk/rust/README.md).
 
 ## Refresh and verify
 

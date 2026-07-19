@@ -193,9 +193,10 @@ target constraints and acceptance details for their workstreams.
 - Implement bounded JSON/XML envelope inspection and a byte-replaying
   discriminator for ZIP success versus alternate XML source errors.
 - Add the optional `reqwest` client on top of the prepared-request core.
-- Enforce explicit no-retry, no-redirect, no-ambient-proxy, fixed Rustls and DNS
-  resolver selection, and no-automatic-decompression behavior in one private
-  client factory.
+- Enforce explicit no-retry, no-redirect, no-ambient-proxy, fixed native-TLS
+  and DNS resolver selection, a TLS 1.2 minimum, and no-automatic-decompression
+  behavior in one private client factory. Native TLS preserves the fixed
+  OpenDART origin's current static-RSA compatibility requirement.
 - Add configurable connect, read, and total timeouts; buffered-body limits; a
   user agent; and streaming download behavior without exposing knobs that
   violate the one-interaction contract.
@@ -290,7 +291,7 @@ adopt the crate from work 5.
   MSRV policy, locked dependencies, package metadata, and the unpublished
   `opendart` crate. The reviewed handwritten seam covers physical/logical
   identity, deterministic credential-free preparation, borrowed redacted
-  authorization, response metadata, open source status, opaque values, and
+  authorization, response metadata, open source-status values, opaque values, and
   focused errors. Representative JSON/XML, ZIP-with-XML-error, and
   multi-company operations prove representation routing, cardinality, exact
   query serialization, and credential redaction. Stable/MSRV, all-feature,

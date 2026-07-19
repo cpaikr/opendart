@@ -94,10 +94,29 @@ impl Client {
         }
 
         let reply = match format {
-            EnvelopeFormat::Json => self.inspector.inspect_json(&body),
-            EnvelopeFormat::Xml => self.inspector.inspect_xml(&body),
-        }
-        .map_err(|error| map_inspect_error(operation, metadata.clone(), error))?;
+            EnvelopeFormat::Json => self
+                .inspector
+                .inspect_json(&body)
+                .map_err(|error| map_inspect_error(operation, metadata.clone(), error))?,
+            EnvelopeFormat::Xml => {
+                let (root, reply) = self
+                    .inspector
+                    .inspect_xml_with_root(&body)
+                    .map_err(|error| map_inspect_error(operation, metadata.clone(), error))?;
+                let expected = prepared
+                    .parts()
+                    .expected_xml_root()
+                    .unwrap_or("<generated>");
+                if root != expected {
+                    return Err(ClientError::ResponseDecode {
+                        operation,
+                        metadata,
+                        source: ResponseDecodeError::UnexpectedXmlRoot { expected },
+                    });
+                }
+                reply
+            }
+        };
         Ok(SourceResponse { metadata, reply })
     }
 
@@ -125,7 +144,8 @@ impl Client {
             terminal: false,
         };
         let raw: RawStream = Box::pin(stream);
-        let reply = classify_binary(raw, self.inspector).await;
+        let reply =
+            classify_binary(raw, self.inspector, prepared.parts().expected_xml_root()).await;
         Ok(SourceResponse {
             metadata,
             reply: reply.map_err_operation(operation),
@@ -328,7 +348,8 @@ fn build_http_client(config: &FactoryConfig) -> Result<reqwest::Client, reqwest:
         .retry(reqwest::retry::never())
         .redirect(reqwest::redirect::Policy::none())
         .no_proxy()
-        .tls_backend_rustls()
+        .tls_backend_native()
+        .tls_version_min(reqwest::tls::Version::TLS_1_2)
         .no_hickory_dns()
         .no_gzip()
         .no_brotli()
@@ -785,6 +806,7 @@ impl Stream for ReqwestBodyStream {
 async fn classify_binary(
     mut remaining: RawStream,
     inspector: WireInspector,
+    expected_xml_root: Option<&'static str>,
 ) -> BinaryReply<BodyStream> {
     let mut replay = VecDeque::new();
     let mut prefix = Vec::new();
@@ -856,8 +878,12 @@ async fn classify_binary(
             }
         }
         if !terminal && prefix.len() <= inspector.max_envelope_bytes() {
-            if let Ok(SourceReply::Status(status)) = inspector.inspect_xml(&prefix) {
-                return BinaryReply::Status(status);
+            if let Ok((root, SourceReply::Status(status))) =
+                inspector.inspect_xml_with_root(&prefix)
+            {
+                if expected_xml_root.is_none_or(|expected| root == expected) {
+                    return BinaryReply::Status(status);
+                }
             }
         }
     }
@@ -1035,6 +1061,7 @@ mod tests {
                 let BinaryReply::Archive(stream) = classify_binary(
                     chunks(&[&body[..split], &body[split..]]),
                     WireInspector::new(128).unwrap(),
+                    Some("result"),
                 )
                 .await
                 else {
@@ -1046,8 +1073,12 @@ mod tests {
 
         for limit in 1..=3 {
             let body = b"PK\x03\x04archive";
-            let BinaryReply::Archive(stream) =
-                classify_binary(chunks(&[body]), WireInspector::new(limit).unwrap()).await
+            let BinaryReply::Archive(stream) = classify_binary(
+                chunks(&[body]),
+                WireInspector::new(limit).unwrap(),
+                Some("result"),
+            )
+            .await
             else {
                 panic!("the envelope limit must not weaken ZIP discrimination");
             };
@@ -1068,6 +1099,7 @@ mod tests {
             let BinaryReply::Unrecognized(stream) = classify_binary(
                 chunks(&[&body[..1], &body[1..]]),
                 WireInspector::new(128).unwrap(),
+                Some("result"),
             )
             .await
             else {
@@ -1077,8 +1109,12 @@ mod tests {
         }
 
         let oversized = b"   <result><status>013</status></result>";
-        let BinaryReply::Unrecognized(stream) =
-            classify_binary(chunks(&[oversized]), WireInspector::new(8).unwrap()).await
+        let BinaryReply::Unrecognized(stream) = classify_binary(
+            chunks(&[oversized]),
+            WireInspector::new(8).unwrap(),
+            Some("result"),
+        )
+        .await
         else {
             panic!("oversized XML candidate was over-classified");
         };
@@ -1091,12 +1127,25 @@ mod tests {
         let BinaryReply::Status(status) = classify_binary(
             chunks(&[&body[..2], &body[2..13], &body[13..]]),
             WireInspector::new(128).unwrap(),
+            Some("result"),
         )
         .await
         else {
             panic!("bounded status envelope was not recognized");
         };
         assert_eq!(status.code.as_str(), "013");
+
+        let wrong_root = b"<other><status>013</status><message>none</message></other>";
+        let BinaryReply::Unrecognized(stream) = classify_binary(
+            chunks(&[wrong_root]),
+            WireInspector::new(128).unwrap(),
+            Some("result"),
+        )
+        .await
+        else {
+            panic!("wrong-root XML was accepted as an alternate status envelope");
+        };
+        assert_eq!(collect(stream).await.0, wrong_root);
     }
 
     #[tokio::test]
@@ -1106,7 +1155,7 @@ mod tests {
             Err(TransportFailureKind::Timeout),
         ])));
         let BinaryReply::Unrecognized(stream) =
-            classify_binary(stream, WireInspector::new(128).unwrap()).await
+            classify_binary(stream, WireInspector::new(128).unwrap(), Some("result")).await
         else {
             panic!("truncated prefix was over-classified");
         };
@@ -1478,6 +1527,33 @@ mod tests {
             } if path == "$/list"
         ));
         server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn xml_execution_rejects_unexpected_document_roots_before_classification() {
+        for body in [
+            br#"<other><status>000</status><corp_name>wrong</corp_name></other>"#.as_slice(),
+            br#"<other><status>013</status><message>none</message></other>"#.as_slice(),
+        ] {
+            let (origin, server) =
+                serve_once(response(&[("content-type", "application/xml")], body)).await;
+            let client = Client::builder(ApiKey::new("key").unwrap())
+                .test_origin(origin)
+                .build()
+                .unwrap();
+            let prepared = Company::new("00126380").prepare_xml().unwrap();
+
+            let error = client.execute(&prepared).await.unwrap_err();
+            assert_eq!(error.metadata().map(ResponseMetadata::status), Some(200));
+            assert!(matches!(
+                error,
+                ClientError::ResponseDecode {
+                    source: ResponseDecodeError::UnexpectedXmlRoot { expected: "result" },
+                    ..
+                }
+            ));
+            server.await.unwrap();
+        }
     }
 
     #[test]

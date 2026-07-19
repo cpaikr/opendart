@@ -104,7 +104,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn official_factory_emits_a_rustls_client_hello_when_native_tls_is_unified() {
+    async fn official_factory_emits_the_required_native_tls_client_hello() {
         let (origin, server) = start_client_hello_capture().await;
         let official = Client::builder(ApiKey::new("tls-fixture").unwrap())
             .connect_timeout(Duration::from_secs(1))
@@ -130,13 +130,19 @@ mod tests {
         let native = reqwest::Client::builder()
             .no_proxy()
             .no_hickory_dns()
+            .tls_backend_native()
+            .tls_version_min(reqwest::tls::Version::TLS_1_2)
             .timeout(Duration::from_secs(2))
             .build()
             .unwrap();
         let _ = native.get(origin).send().await;
         let native_suites = cipher_suites(&server.await.unwrap());
 
-        assert_eq!(official_suites, rustls_suites);
-        assert_ne!(official_suites, native_suites);
+        assert_eq!(official_suites, native_suites);
+        assert!(
+            official_suites.contains(&0x009c),
+            "OpenDART requires TLS_RSA_WITH_AES_128_GCM_SHA256"
+        );
+        assert_ne!(official_suites, rustls_suites);
     }
 }

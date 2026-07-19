@@ -47,7 +47,7 @@ Begin the compatibility gate with a minimal explicit dependency equivalent to:
 version = "0.13.4"
 optional = true
 default-features = false
-features = ["rustls", "stream"]
+features = ["native-tls", "stream"]
 ```
 
 Retain `stream` only if the public binary-body interface requires
@@ -77,7 +77,8 @@ let client = reqwest::Client::builder()
     .retry(reqwest::retry::never())
     .redirect(reqwest::redirect::Policy::none())
     .no_proxy()
-    .tls_backend_rustls()
+    .tls_backend_native()
+    .tls_version_min(reqwest::tls::Version::TLS_1_2)
     .no_hickory_dns()
     .no_gzip()
     .no_brotli()
@@ -103,7 +104,9 @@ intentional guards against Cargo feature unification changing runtime behavior.
 - Retry policy is always `reqwest::retry::never()`.
 - Redirect policy is always `Policy::none()`.
 - Ambient system and environment proxy discovery is disabled.
-- The TLS backend is always Rustls.
+- The TLS backend is always native TLS with a TLS 1.2 minimum. This backend is
+  required for the fixed OpenDART origin's current
+  `TLS_RSA_WITH_AES_128_GCM_SHA256` compatibility requirement.
 - Cargo feature unification cannot switch the default resolver to Hickory DNS.
 - Gzip, Brotli, Zstandard, and deflate auto-decoding are disabled.
 - Automatic `Referer` generation is disabled.
@@ -258,10 +261,11 @@ feature unification.
 
 ### TLS and DNS feature unification
 
-Use a test package or dev-dependency that enables `native-tls` and
-`hickory-dns` on the unified `reqwest` dependency. Assert through observable
-local TLS and name-resolution fixtures that the official client still uses
-Rustls and the non-Hickory resolver. Feature inspection alone is insufficient.
+Use a test package or dev-dependency that enables both `native-tls` and `rustls`
+plus `hickory-dns` on the unified `reqwest` dependency. Assert through
+observable local TLS and name-resolution fixtures that the official client
+still uses native TLS, offers cipher suite `0x009c`, enforces a TLS 1.2 floor,
+and uses the non-Hickory resolver. Feature inspection alone is insufficient.
 
 ### Timeout and incomplete body
 

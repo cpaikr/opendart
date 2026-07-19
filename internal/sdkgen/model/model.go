@@ -274,6 +274,7 @@ func normalizePhysical(source openapispec.SDKSurfaceOperation) (PhysicalOperatio
 		return PhysicalOperation{}, nil, err
 	}
 	expectedMap := make(map[Representation]bool)
+	expectedXMLRoot := ""
 	responses := make([]Response, 0, len(source.Responses))
 	for _, response := range source.Responses {
 		media := make([]ResponseMedia, 0, len(response.MediaTypes))
@@ -286,6 +287,15 @@ func normalizePhysical(source openapispec.SDKSurfaceOperation) (PhysicalOperatio
 			shape, err := normalizeShape(item.Schema, item.Name)
 			if err != nil {
 				return PhysicalOperation{}, nil, reject("unsupported-response-schema", source.OperationID, "responses/"+response.Selector+"/"+item.Name, err.Error())
+			}
+			if item.Name == "application/xml" {
+				if shape.XMLName == "" || shape.XMLNodeType != "element" {
+					return PhysicalOperation{}, nil, reject("unsupported-xml-root", source.OperationID, "responses/"+response.Selector+"/"+item.Name, "top-level XML schema must name an element")
+				}
+				if expectedXMLRoot != "" && expectedXMLRoot != shape.XMLName {
+					return PhysicalOperation{}, nil, reject("inconsistent-xml-root", source.OperationID, "responses/"+response.Selector+"/"+item.Name, shape.XMLName)
+				}
+				expectedXMLRoot = shape.XMLName
 			}
 			media = append(media, ResponseMedia{Name: item.Name, ContentTypeStatus: item.ContentTypeStatus, Shape: shape})
 		}

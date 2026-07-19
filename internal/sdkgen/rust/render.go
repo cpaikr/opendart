@@ -22,6 +22,9 @@ func Render(source model.Model) (map[string][]byte, error) {
 	if err := validateRustSymbols(source); err != nil {
 		return nil, err
 	}
+	if err := validateXMLRoots(source); err != nil {
+		return nil, err
+	}
 	files := map[string][]byte{
 		ownership.Filename: []byte(ownership.Marker(source.SchemaVersion)),
 		"mod.rs":           []byte(renderModule(source)),
@@ -119,7 +122,10 @@ func renderOperationGroup(source model.Model, operations []model.LogicalOperatio
 	if hasBinaryVariant(operations) {
 		requestImports = append(requestImports, "PreparedBinaryRequest")
 	}
-	requestImports = append(requestImports, "PreparedRequest", "Representation")
+	if hasStructuredVariant(operations) {
+		requestImports = append(requestImports, "PreparedRequest")
+	}
+	requestImports = append(requestImports, "Representation")
 	fmt.Fprintf(&output, "use crate::{%s};\n", strings.Join(requestImports, ", "))
 	fmt.Fprintf(&output, "use super::super::responses::%s as response;\n", operations[0].Group)
 	output.WriteString("use super::super::{GENERATOR_SCHEMA, PROJECTION_CHECKSUM};\n\n")
@@ -248,23 +254,24 @@ func renderLogicalOperation(output *strings.Builder, operation model.LogicalOper
 	}
 	for _, variant := range operation.Variants {
 		physicalOperation := physical[variant.OperationID]
+		xmlRoot := expectedXMLRoot(physicalOperation)
 		method := preparationMethod(variant.Representation)
 		fmt.Fprintf(output, "    /// Prepares the %s physical representation without performing I/O.\n", strings.ToUpper(string(variant.Representation)))
 		if variant.Representation == model.RepresentationZIP {
 			fmt.Fprintf(output, "    pub fn %s(&self) -> Result<PreparedBinaryRequest, PrepareError> {\n", method)
 			fmt.Fprintf(output, "        let identity = OperationIdentity::new(%s, Self::LOGICAL_OPERATION_ID);\n", quote(variant.OperationID))
-			fmt.Fprintf(output, "        let parts = self.prepare_parts(%s, identity, %s)?;\n", quote(physicalOperation.Path), expectedConstant(physicalOperation.ExpectedRepresentations))
+			fmt.Fprintf(output, "        let parts = self.prepare_parts(%s, identity, %s, %s)?;\n", quote(physicalOperation.Path), expectedConstant(physicalOperation.ExpectedRepresentations), rustOption(xmlRoot))
 			output.WriteString("        Ok(PreparedBinaryRequest::new(parts))\n")
 		} else {
 			responseName := responseRootName(operation.RustName, variant.Representation)
 			fmt.Fprintf(output, "    pub fn %s(&self) -> Result<PreparedRequest<response::%s>, PrepareError> {\n", method, responseName)
 			fmt.Fprintf(output, "        let identity = OperationIdentity::new(%s, Self::LOGICAL_OPERATION_ID);\n", quote(variant.OperationID))
-			fmt.Fprintf(output, "        let parts = self.prepare_parts(%s, identity, %s)?;\n", quote(physicalOperation.Path), expectedConstant(physicalOperation.ExpectedRepresentations))
+			fmt.Fprintf(output, "        let parts = self.prepare_parts(%s, identity, %s, %s)?;\n", quote(physicalOperation.Path), expectedConstant(physicalOperation.ExpectedRepresentations), rustOption(xmlRoot))
 			fmt.Fprintf(output, "        Ok(PreparedRequest::new(parts, response::%s))\n", responseDecoderName(responseName))
 		}
 		output.WriteString("    }\n\n")
 	}
-	output.WriteString("    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {\n")
+	output.WriteString("    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {\n")
 	for _, parameter := range operation.Parameters {
 		if parameter.Required && parameter.Shape == model.ScalarString {
 			fmt.Fprintf(output, "        require_nonempty(identity, %s, &self.%s)?;\n", quote(parameter.WireName), parameter.RustName)
@@ -291,7 +298,7 @@ func renderLogicalOperation(output *strings.Builder, operation model.LogicalOper
 			renderQueryParameter(output, parameter)
 		}
 	}
-	output.WriteString("        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))\n")
+	output.WriteString("        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))\n")
 	output.WriteString("    }\n}\n\n")
 }
 
@@ -583,6 +590,58 @@ func hasBinaryVariant(operations []model.LogicalOperation) bool {
 		}
 	}
 	return false
+}
+
+func hasStructuredVariant(operations []model.LogicalOperation) bool {
+	for _, operation := range operations {
+		for _, variant := range operation.Variants {
+			if variant.Representation != model.RepresentationZIP {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func validateXMLRoots(source model.Model) error {
+	for _, operation := range source.Physical {
+		root := ""
+		for _, response := range operation.Responses {
+			for _, media := range response.Media {
+				if media.Name != "application/xml" {
+					continue
+				}
+				if media.Shape.XMLName == "" || media.Shape.XMLNodeType != "element" {
+					return fmt.Errorf("render Rust SDK: response %s has invalid XML root metadata", operation.OperationID)
+				}
+				if root != "" && root != media.Shape.XMLName {
+					return fmt.Errorf("render Rust SDK: response %s has inconsistent XML roots", operation.OperationID)
+				}
+				root = media.Shape.XMLName
+			}
+		}
+	}
+	return nil
+}
+
+func expectedXMLRoot(operation model.PhysicalOperation) string {
+	root := ""
+	for _, response := range operation.Responses {
+		for _, media := range response.Media {
+			if media.Name != "application/xml" {
+				continue
+			}
+			root = media.Shape.XMLName
+		}
+	}
+	return root
+}
+
+func rustOption(value string) string {
+	if value == "" {
+		return "None"
+	}
+	return "Some(" + quote(value) + ")"
 }
 
 type responseDependencies struct {

@@ -116,9 +116,16 @@ impl WireInspector {
     /// formatting. Child values live only in one-field objects within `$content`
     /// so nested evidence is never duplicated.
     pub fn inspect_xml(&self, body: &[u8]) -> Result<SourceReply<SourceValue>, WireInspectError> {
+        self.inspect_xml_with_root(body).map(|(_, reply)| reply)
+    }
+
+    pub(crate) fn inspect_xml_with_root(
+        &self,
+        body: &[u8],
+    ) -> Result<(String, SourceReply<SourceValue>), WireInspectError> {
         self.check_size(body)?;
-        let value = xml_value(body).map_err(|()| envelope_error(EnvelopeFormat::Xml))?;
-        Ok(classify_status(value))
+        let (root, value) = xml_value(body).map_err(|()| envelope_error(EnvelopeFormat::Xml))?;
+        Ok((root, classify_status(value)))
     }
 
     fn check_size(&self, body: &[u8]) -> Result<(), BodyLimitError> {
@@ -420,7 +427,7 @@ impl XmlContent {
     }
 }
 
-fn xml_value(body: &[u8]) -> Result<SourceValue, ()> {
+fn xml_value(body: &[u8]) -> Result<(String, SourceValue), ()> {
     let mut reader = Reader::from_reader(body);
     reader.config_mut().trim_text(false);
     let mut stack: Vec<XmlFrame> = Vec::new();
@@ -559,7 +566,7 @@ fn xml_value(body: &[u8]) -> Result<SourceValue, ()> {
     if !stack.is_empty() {
         return Err(());
     }
-    root.map(|(_, value)| value).ok_or(())
+    root.ok_or(())
 }
 
 fn attach_xml_value(
@@ -799,6 +806,20 @@ mod tests {
             .inspect_xml(b"<p><b>x</b>before  after</p>")
             .unwrap();
         assert_ne!(SourceReply::Success(value), reordered);
+    }
+
+    #[test]
+    fn internal_xml_inspection_retains_the_document_root() {
+        let (root, reply) = inspector(128)
+            .inspect_xml_with_root(b"<other><status>000</status><value>x</value></other>")
+            .unwrap();
+        assert_eq!(root, "other");
+        assert!(matches!(reply, SourceReply::Success(_)));
+        assert!(
+            inspector(128)
+                .inspect_xml(b"<other><status>000</status><value>x</value></other>")
+                .is_ok()
+        );
     }
 
     #[test]

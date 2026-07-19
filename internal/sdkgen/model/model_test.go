@@ -123,6 +123,35 @@ func TestBuildFailsClosedOnUnsupportedOrContradictoryInputs(t *testing.T) {
 	}
 }
 
+func TestBuildRejectsInvalidTopLevelXMLMetadata(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		edit func(*openapispec.SDKSurfaceSchema)
+	}{
+		{name: "missing root", edit: func(schema *openapispec.SDKSurfaceSchema) { schema.XMLName = "" }},
+		{name: "non-element root", edit: func(schema *openapispec.SDKSurfaceSchema) { schema.XMLNodeType = "attribute" }},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			surface := canonicalSurface(t)
+			for operationIndex := range surface.Operations {
+				for responseIndex := range surface.Operations[operationIndex].Responses {
+					for mediaIndex := range surface.Operations[operationIndex].Responses[responseIndex].MediaTypes {
+						media := &surface.Operations[operationIndex].Responses[responseIndex].MediaTypes[mediaIndex]
+						if media.Name != "application/xml" {
+							continue
+						}
+						test.edit(&media.Schema)
+						_, err := model.Build(surface)
+						assertModelRule(t, err, "unsupported-xml-root")
+						return
+					}
+				}
+			}
+			t.Fatal("canonical surface has no XML response")
+		})
+	}
+}
+
 func TestBuildRejectsIncompatibleLogicalMetadataAndRoutingMatrix(t *testing.T) {
 	t.Run("logical metadata", func(t *testing.T) {
 		surface := canonicalSurface(t)

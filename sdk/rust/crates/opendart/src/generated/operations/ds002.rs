@@ -48,18 +48,18 @@ impl IrdsSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::IrdsSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_irdsSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/irdsSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/irdsSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_irds_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::IrdsSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_irdsSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/irdsSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/irdsSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_irds_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -68,7 +68,7 @@ impl IrdsSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -110,18 +110,18 @@ impl AlotMatter {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::AlotMatterJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_alotMatter_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/alotMatter.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/alotMatter.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_alot_matter_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::AlotMatterXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_alotMatter_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/alotMatter.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/alotMatter.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_alot_matter_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -130,7 +130,7 @@ impl AlotMatter {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -172,18 +172,18 @@ impl TesstkAcqsDspsSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::TesstkAcqsDspsSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_tesstkAcqsDspsSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/tesstkAcqsDspsSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/tesstkAcqsDspsSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_tesstk_acqs_dsps_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::TesstkAcqsDspsSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_tesstkAcqsDspsSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/tesstkAcqsDspsSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/tesstkAcqsDspsSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_tesstk_acqs_dsps_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -192,7 +192,7 @@ impl TesstkAcqsDspsSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -234,18 +234,18 @@ impl HyslrSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HyslrSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hyslrSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hyslrSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/hyslrSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_hyslr_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HyslrSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hyslrSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hyslrSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/hyslrSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_hyslr_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -254,7 +254,7 @@ impl HyslrSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -296,18 +296,18 @@ impl HyslrChgSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HyslrChgSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hyslrChgSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hyslrChgSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/hyslrChgSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_hyslr_chg_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HyslrChgSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hyslrChgSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hyslrChgSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/hyslrChgSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_hyslr_chg_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -316,7 +316,7 @@ impl HyslrChgSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -358,18 +358,18 @@ impl MrhlSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::MrhlSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_mrhlSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/mrhlSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/mrhlSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_mrhl_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::MrhlSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_mrhlSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/mrhlSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/mrhlSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_mrhl_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -378,7 +378,7 @@ impl MrhlSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -420,18 +420,18 @@ impl ExctvSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::ExctvSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_exctvSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/exctvSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/exctvSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_exctv_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::ExctvSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_exctvSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/exctvSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/exctvSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_exctv_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -440,7 +440,7 @@ impl ExctvSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -482,18 +482,18 @@ impl EmpSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::EmpSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_empSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/empSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/empSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_emp_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::EmpSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_empSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/empSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/empSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_emp_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -502,7 +502,7 @@ impl EmpSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -544,18 +544,18 @@ impl HmvAuditIndvdlBySttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HmvAuditIndvdlBySttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditIndvdlBySttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_hmv_audit_indvdl_by_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HmvAuditIndvdlBySttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditIndvdlBySttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_hmv_audit_indvdl_by_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -564,7 +564,7 @@ impl HmvAuditIndvdlBySttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -606,18 +606,18 @@ impl HmvAuditAllSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HmvAuditAllSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditAllSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hmvAuditAllSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/hmvAuditAllSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_hmv_audit_all_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HmvAuditAllSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditAllSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hmvAuditAllSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/hmvAuditAllSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_hmv_audit_all_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -626,7 +626,7 @@ impl HmvAuditAllSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -668,18 +668,18 @@ impl IndvdlByPay {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::IndvdlByPayJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_indvdlByPay_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/indvdlByPay.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/indvdlByPay.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_indvdl_by_pay_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::IndvdlByPayXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_indvdlByPay_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/indvdlByPay.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/indvdlByPay.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_indvdl_by_pay_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -688,7 +688,7 @@ impl IndvdlByPay {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -730,18 +730,18 @@ impl OtrCprInvstmntSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::OtrCprInvstmntSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_otrCprInvstmntSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/otrCprInvstmntSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/otrCprInvstmntSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_otr_cpr_invstmnt_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::OtrCprInvstmntSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_otrCprInvstmntSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/otrCprInvstmntSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/otrCprInvstmntSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_otr_cpr_invstmnt_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -750,7 +750,7 @@ impl OtrCprInvstmntSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -792,18 +792,18 @@ impl StockTotqySttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::StockTotqySttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_stockTotqySttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/stockTotqySttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/stockTotqySttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_stock_totqy_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::StockTotqySttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_stockTotqySttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/stockTotqySttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/stockTotqySttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_stock_totqy_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -812,7 +812,7 @@ impl StockTotqySttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -854,18 +854,18 @@ impl DetScritsIsuAcmslt {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::DetScritsIsuAcmsltJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_detScritsIsuAcmslt_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/detScritsIsuAcmslt.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/detScritsIsuAcmslt.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_det_scrits_isu_acmslt_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::DetScritsIsuAcmsltXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_detScritsIsuAcmslt_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/detScritsIsuAcmslt.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/detScritsIsuAcmslt.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_det_scrits_isu_acmslt_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -874,7 +874,7 @@ impl DetScritsIsuAcmslt {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -916,18 +916,18 @@ impl EntrprsBilScritsNrdmpBlce {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::EntrprsBilScritsNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_entrprsBilScritsNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/entrprsBilScritsNrdmpBlce.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/entrprsBilScritsNrdmpBlce.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_entrprs_bil_scrits_nrdmp_blce_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::EntrprsBilScritsNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_entrprsBilScritsNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/entrprsBilScritsNrdmpBlce.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/entrprsBilScritsNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_entrprs_bil_scrits_nrdmp_blce_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -936,7 +936,7 @@ impl EntrprsBilScritsNrdmpBlce {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -978,18 +978,18 @@ impl SrtpdPsndbtNrdmpBlce {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::SrtpdPsndbtNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_srtpdPsndbtNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/srtpdPsndbtNrdmpBlce.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/srtpdPsndbtNrdmpBlce.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_srtpd_psndbt_nrdmp_blce_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::SrtpdPsndbtNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_srtpdPsndbtNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/srtpdPsndbtNrdmpBlce.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/srtpdPsndbtNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_srtpd_psndbt_nrdmp_blce_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -998,7 +998,7 @@ impl SrtpdPsndbtNrdmpBlce {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1040,18 +1040,18 @@ impl CprndNrdmpBlce {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::CprndNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_cprndNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/cprndNrdmpBlce.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/cprndNrdmpBlce.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_cprnd_nrdmp_blce_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::CprndNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_cprndNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/cprndNrdmpBlce.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/cprndNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_cprnd_nrdmp_blce_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1060,7 +1060,7 @@ impl CprndNrdmpBlce {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1102,18 +1102,18 @@ impl NewCaplScritsNrdmpBlce {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::NewCaplScritsNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_newCaplScritsNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/newCaplScritsNrdmpBlce.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/newCaplScritsNrdmpBlce.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_new_capl_scrits_nrdmp_blce_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::NewCaplScritsNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_newCaplScritsNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/newCaplScritsNrdmpBlce.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/newCaplScritsNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_new_capl_scrits_nrdmp_blce_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1122,7 +1122,7 @@ impl NewCaplScritsNrdmpBlce {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1164,18 +1164,18 @@ impl CndlCaplScritsNrdmpBlce {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::CndlCaplScritsNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_cndlCaplScritsNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/cndlCaplScritsNrdmpBlce.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/cndlCaplScritsNrdmpBlce.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_cndl_capl_scrits_nrdmp_blce_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::CndlCaplScritsNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_cndlCaplScritsNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/cndlCaplScritsNrdmpBlce.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/cndlCaplScritsNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_cndl_capl_scrits_nrdmp_blce_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1184,7 +1184,7 @@ impl CndlCaplScritsNrdmpBlce {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1226,18 +1226,18 @@ impl AccnutAdtorNmNdAdtOpinion {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::AccnutAdtorNmNdAdtOpinionJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_accnutAdtorNmNdAdtOpinion_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/accnutAdtorNmNdAdtOpinion.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/accnutAdtorNmNdAdtOpinion.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_accnut_adtor_nm_nd_adt_opinion_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::AccnutAdtorNmNdAdtOpinionXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_accnutAdtorNmNdAdtOpinion_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/accnutAdtorNmNdAdtOpinion.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/accnutAdtorNmNdAdtOpinion.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_accnut_adtor_nm_nd_adt_opinion_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1246,7 +1246,7 @@ impl AccnutAdtorNmNdAdtOpinion {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1288,18 +1288,18 @@ impl AdtServcCnclsSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::AdtServcCnclsSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_adtServcCnclsSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/adtServcCnclsSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/adtServcCnclsSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_adt_servc_cncls_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::AdtServcCnclsSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_adtServcCnclsSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/adtServcCnclsSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/adtServcCnclsSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_adt_servc_cncls_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1308,7 +1308,7 @@ impl AdtServcCnclsSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1350,18 +1350,18 @@ impl AccnutAdtorNonAdtServcCnclsSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::AccnutAdtorNonAdtServcCnclsSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_accnutAdtorNonAdtServcCnclsSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/accnutAdtorNonAdtServcCnclsSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/accnutAdtorNonAdtServcCnclsSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_accnut_adtor_non_adt_servc_cncls_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::AccnutAdtorNonAdtServcCnclsSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_accnutAdtorNonAdtServcCnclsSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/accnutAdtorNonAdtServcCnclsSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/accnutAdtorNonAdtServcCnclsSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_accnut_adtor_non_adt_servc_cncls_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1370,7 +1370,7 @@ impl AccnutAdtorNonAdtServcCnclsSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1412,18 +1412,18 @@ impl OutcmpnyDrctrNdChangeSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::OutcmpnyDrctrNdChangeSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_outcmpnyDrctrNdChangeSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/outcmpnyDrctrNdChangeSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/outcmpnyDrctrNdChangeSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_outcmpny_drctr_nd_change_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::OutcmpnyDrctrNdChangeSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_outcmpnyDrctrNdChangeSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/outcmpnyDrctrNdChangeSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/outcmpnyDrctrNdChangeSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_outcmpny_drctr_nd_change_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1432,7 +1432,7 @@ impl OutcmpnyDrctrNdChangeSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1474,18 +1474,18 @@ impl UnrstExctvMendngSttus {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::UnrstExctvMendngSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_unrstExctvMendngSttus_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/unrstExctvMendngSttus.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/unrstExctvMendngSttus.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_unrst_exctv_mendng_sttus_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::UnrstExctvMendngSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_unrstExctvMendngSttus_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/unrstExctvMendngSttus.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/unrstExctvMendngSttus.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_unrst_exctv_mendng_sttus_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1494,7 +1494,7 @@ impl UnrstExctvMendngSttus {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1536,18 +1536,18 @@ impl DrctrAdtAllMendngSttusGmtsckConfmAmount {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::DrctrAdtAllMendngSttusGmtsckConfmAmountJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_drctrAdtAllMendngSttusGmtsckConfmAmount_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusGmtsckConfmAmount.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusGmtsckConfmAmount.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_drctr_adt_all_mendng_sttus_gmtsck_confm_amount_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::DrctrAdtAllMendngSttusGmtsckConfmAmountXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_drctrAdtAllMendngSttusGmtsckConfmAmount_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusGmtsckConfmAmount.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusGmtsckConfmAmount.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_drctr_adt_all_mendng_sttus_gmtsck_confm_amount_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1556,7 +1556,7 @@ impl DrctrAdtAllMendngSttusGmtsckConfmAmount {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1598,18 +1598,18 @@ impl DrctrAdtAllMendngSttusMendngPymntamtTyCl {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::DrctrAdtAllMendngSttusMendngPymntamtTyClJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_drctrAdtAllMendngSttusMendngPymntamtTyCl_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusMendngPymntamtTyCl.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusMendngPymntamtTyCl.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_drctr_adt_all_mendng_sttus_mendng_pymntamt_ty_cl_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::DrctrAdtAllMendngSttusMendngPymntamtTyClXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_drctrAdtAllMendngSttusMendngPymntamtTyCl_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusMendngPymntamtTyCl.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusMendngPymntamtTyCl.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_drctr_adt_all_mendng_sttus_mendng_pymntamt_ty_cl_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1618,7 +1618,7 @@ impl DrctrAdtAllMendngSttusMendngPymntamtTyCl {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1660,18 +1660,18 @@ impl PssrpCptalUseDtls {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::PssrpCptalUseDtlsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_pssrpCptalUseDtls_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/pssrpCptalUseDtls.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/pssrpCptalUseDtls.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_pssrp_cptal_use_dtls_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::PssrpCptalUseDtlsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_pssrpCptalUseDtls_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/pssrpCptalUseDtls.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/pssrpCptalUseDtls.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_pssrp_cptal_use_dtls_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1680,7 +1680,7 @@ impl PssrpCptalUseDtls {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1722,18 +1722,18 @@ impl PrvsrpCptalUseDtls {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::PrvsrpCptalUseDtlsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_prvsrpCptalUseDtls_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/prvsrpCptalUseDtls.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/prvsrpCptalUseDtls.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_prvsrp_cptal_use_dtls_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::PrvsrpCptalUseDtlsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_prvsrpCptalUseDtls_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/prvsrpCptalUseDtls.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/prvsrpCptalUseDtls.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_prvsrp_cptal_use_dtls_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1742,7 +1742,7 @@ impl PrvsrpCptalUseDtls {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1784,18 +1784,18 @@ impl HmvAuditIndvdlBySttusV2 {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HmvAuditIndvdlBySttusV2JsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditIndvdlBySttusV2_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttusV2.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttusV2.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_hmv_audit_indvdl_by_sttus_v2_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HmvAuditIndvdlBySttusV2XmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditIndvdlBySttusV2_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttusV2.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttusV2.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_hmv_audit_indvdl_by_sttus_v2_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1804,7 +1804,7 @@ impl HmvAuditIndvdlBySttusV2 {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -1846,18 +1846,18 @@ impl IndvdlByPayV2 {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::IndvdlByPayV2JsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_indvdlByPayV2_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/indvdlByPayV2.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/indvdlByPayV2.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_indvdl_by_pay_v2_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::IndvdlByPayV2XmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_indvdlByPayV2_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/indvdlByPayV2.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/indvdlByPayV2.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_indvdl_by_pay_v2_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
@@ -1866,7 +1866,7 @@ impl IndvdlByPayV2 {
             QueryParameter { name: "bsns_year", value: QueryValue::Scalar(self.bsns_year.as_str()) },
             QueryParameter { name: "reprt_code", value: QueryValue::Scalar(self.reprt_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 

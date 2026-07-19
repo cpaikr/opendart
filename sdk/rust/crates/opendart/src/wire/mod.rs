@@ -169,6 +169,12 @@ pub enum SourceValueKind {
 #[derive(Clone, Debug, Eq, PartialEq, thiserror::Error)]
 #[non_exhaustive]
 pub enum ResponseDecodeError {
+    /// The XML document root did not match the selected operation contract.
+    #[error("response XML root does not match the expected {expected} element")]
+    UnexpectedXmlRoot {
+        /// Root element required by the generated operation metadata.
+        expected: &'static str,
+    },
     /// A required documented field was absent.
     #[error("response is missing the required field at {path}")]
     MissingRequired {

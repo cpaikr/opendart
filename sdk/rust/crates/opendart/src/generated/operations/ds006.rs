@@ -48,18 +48,18 @@ impl EstkRs {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::EstkRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_estkRs_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/estkRs.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/estkRs.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_estk_rs_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::EstkRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_estkRs_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/estkRs.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/estkRs.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_estk_rs_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bgn_de", &self.bgn_de)?;
         require_nonempty(identity, "end_de", &self.end_de)?;
@@ -68,7 +68,7 @@ impl EstkRs {
             QueryParameter { name: "bgn_de", value: QueryValue::Scalar(self.bgn_de.as_str()) },
             QueryParameter { name: "end_de", value: QueryValue::Scalar(self.end_de.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -110,18 +110,18 @@ impl BdRs {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::BdRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_bdRs_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/bdRs.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/bdRs.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_bd_rs_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::BdRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_bdRs_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/bdRs.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/bdRs.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_bd_rs_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bgn_de", &self.bgn_de)?;
         require_nonempty(identity, "end_de", &self.end_de)?;
@@ -130,7 +130,7 @@ impl BdRs {
             QueryParameter { name: "bgn_de", value: QueryValue::Scalar(self.bgn_de.as_str()) },
             QueryParameter { name: "end_de", value: QueryValue::Scalar(self.end_de.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -172,18 +172,18 @@ impl StkdpRs {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::StkdpRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_stkdpRs_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/stkdpRs.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/stkdpRs.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_stkdp_rs_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::StkdpRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_stkdpRs_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/stkdpRs.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/stkdpRs.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_stkdp_rs_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bgn_de", &self.bgn_de)?;
         require_nonempty(identity, "end_de", &self.end_de)?;
@@ -192,7 +192,7 @@ impl StkdpRs {
             QueryParameter { name: "bgn_de", value: QueryValue::Scalar(self.bgn_de.as_str()) },
             QueryParameter { name: "end_de", value: QueryValue::Scalar(self.end_de.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -234,18 +234,18 @@ impl MgRs {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::MgRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_mgRs_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/mgRs.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/mgRs.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_mg_rs_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::MgRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_mgRs_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/mgRs.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/mgRs.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_mg_rs_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bgn_de", &self.bgn_de)?;
         require_nonempty(identity, "end_de", &self.end_de)?;
@@ -254,7 +254,7 @@ impl MgRs {
             QueryParameter { name: "bgn_de", value: QueryValue::Scalar(self.bgn_de.as_str()) },
             QueryParameter { name: "end_de", value: QueryValue::Scalar(self.end_de.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -296,18 +296,18 @@ impl ExtrRs {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::ExtrRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_extrRs_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/extrRs.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/extrRs.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_extr_rs_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::ExtrRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_extrRs_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/extrRs.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/extrRs.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_extr_rs_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bgn_de", &self.bgn_de)?;
         require_nonempty(identity, "end_de", &self.end_de)?;
@@ -316,7 +316,7 @@ impl ExtrRs {
             QueryParameter { name: "bgn_de", value: QueryValue::Scalar(self.bgn_de.as_str()) },
             QueryParameter { name: "end_de", value: QueryValue::Scalar(self.end_de.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -358,18 +358,18 @@ impl DvRs {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::DvRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_dvRs_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/dvRs.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/dvRs.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_dv_rs_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::DvRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_dvRs_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/dvRs.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/dvRs.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_dv_rs_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         require_nonempty(identity, "bgn_de", &self.bgn_de)?;
         require_nonempty(identity, "end_de", &self.end_de)?;
@@ -378,7 +378,7 @@ impl DvRs {
             QueryParameter { name: "bgn_de", value: QueryValue::Scalar(self.bgn_de.as_str()) },
             QueryParameter { name: "end_de", value: QueryValue::Scalar(self.end_de.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 

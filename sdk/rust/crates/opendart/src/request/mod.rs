@@ -77,6 +77,8 @@ pub(crate) struct RequestParts {
     authentication: Authentication,
     identity: OperationIdentity,
     expected_representations: &'static [Representation],
+    #[cfg(feature = "client-reqwest")]
+    expected_xml_root: Option<&'static str>,
     generator_schema: u32,
     projection_identity: &'static str,
 }
@@ -111,6 +113,7 @@ impl RequestParts {
         identity: OperationIdentity,
         parameters: &[QueryParameter<'_>],
         expected_representations: &'static [Representation],
+        expected_xml_root: Option<&'static str>,
         generator_schema: u32,
         projection_identity: &'static str,
     ) -> Self {
@@ -137,6 +140,8 @@ impl RequestParts {
             })
             .collect::<Vec<_>>()
             .join("&");
+        #[cfg(not(feature = "client-reqwest"))]
+        let _ = expected_xml_root;
         Self {
             method: RequestMethod::Get,
             relative_path,
@@ -144,6 +149,8 @@ impl RequestParts {
             authentication: Authentication::ApiKeyQuery,
             identity,
             expected_representations,
+            #[cfg(feature = "client-reqwest")]
+            expected_xml_root,
             generator_schema,
             projection_identity,
         }
@@ -181,6 +188,10 @@ impl RequestParts {
     }
 
     #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn expected_xml_root(&self) -> Option<&'static str> {
+        self.expected_xml_root
+    }
+
     pub(crate) fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
         AuthorizedRequest {
             prepared: self,
@@ -266,10 +277,7 @@ impl<T> PreparedRequest<T> {
     /// Adds the API credential at the explicit adapter boundary.
     #[must_use]
     pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
-        AuthorizedRequest {
-            prepared: &self.parts,
-            api_key,
-        }
+        self.parts.authorize(api_key)
     }
 }
 
@@ -334,10 +342,7 @@ impl PreparedBinaryRequest {
     /// Adds the API credential at the explicit adapter boundary.
     #[must_use]
     pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
-        AuthorizedRequest {
-            prepared: &self.parts,
-            api_key,
-        }
+        self.parts.authorize(api_key)
     }
 }
 
@@ -423,24 +428,30 @@ impl AuthorizedRequest<'_> {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn with_exposed_relative_uri<T>(self, adapter: impl FnOnce(&str) -> T) -> T {
-        let mut serializer = Serializer::new(String::new());
-        serializer.append_pair("crtfc_key", self.api_key.secret.expose_secret());
+        let exposed = self.api_key.secret.expose_secret();
+        let credential_capacity = "crtfc_key="
+            .len()
+            .saturating_add(exposed.len().saturating_mul(3));
+        let mut serializer = Serializer::new(String::with_capacity(credential_capacity));
+        serializer.append_pair("crtfc_key", exposed);
         let credential_query = Zeroizing::new(serializer.finish());
-        let relative_uri = if self.prepared.encoded_query.is_empty() {
-            format!(
-                "{}?{}",
-                self.prepared.relative_path,
-                credential_query.as_str()
-            )
-        } else {
-            format!(
-                "{}?{}&{}",
-                self.prepared.relative_path,
-                self.prepared.encoded_query,
-                credential_query.as_str()
-            )
-        };
-        let relative_uri = Zeroizing::new(relative_uri);
+        let separator_capacity = usize::from(!self.prepared.encoded_query.is_empty());
+        let relative_capacity = self
+            .prepared
+            .relative_path
+            .len()
+            .saturating_add(1)
+            .saturating_add(self.prepared.encoded_query.len())
+            .saturating_add(separator_capacity)
+            .saturating_add(credential_query.len());
+        let mut relative_uri = Zeroizing::new(String::with_capacity(relative_capacity));
+        relative_uri.push_str(self.prepared.relative_path);
+        relative_uri.push('?');
+        if !self.prepared.encoded_query.is_empty() {
+            relative_uri.push_str(&self.prepared.encoded_query);
+            relative_uri.push('&');
+        }
+        relative_uri.push_str(credential_query.as_str());
         adapter(relative_uri.as_str())
     }
 }

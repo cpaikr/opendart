@@ -141,18 +141,18 @@ impl List {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::ListJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_list_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/list.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/list.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_list_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::ListXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_list_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/list.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/list.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_list_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         if let Some(value) = &self.corp_code { require_nonempty(identity, "corp_code", value)?; }
         if let Some(value) = &self.bgn_de { require_nonempty(identity, "bgn_de", value)?; }
         if let Some(value) = &self.end_de { require_nonempty(identity, "end_de", value)?; }
@@ -176,7 +176,7 @@ impl List {
         if let Some(value) = &self.sort_mth { parameters.push(QueryParameter { name: "sort_mth", value: QueryValue::Scalar(value) }); }
         if let Some(value) = &self.page_no { parameters.push(QueryParameter { name: "page_no", value: QueryValue::Scalar(value) }); }
         if let Some(value) = &self.page_count { parameters.push(QueryParameter { name: "page_count", value: QueryValue::Scalar(value) }); }
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -206,23 +206,23 @@ impl Company {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::CompanyJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_company_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/company.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/company.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_company_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::CompanyXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_company_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/company.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/company.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_company_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         let parameters = vec![
             QueryParameter { name: "corp_code", value: QueryValue::Scalar(self.corp_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -252,16 +252,16 @@ impl Document {
     /// Prepares the ZIP physical representation without performing I/O.
     pub fn prepare_zip(&self) -> Result<PreparedBinaryRequest, PrepareError> {
         let identity = OperationIdentity::new("get_document_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/document.xml", identity, ZIP_OR_XML)?;
+        let parts = self.prepare_parts("/api/document.xml", identity, ZIP_OR_XML, Some("result"))?;
         Ok(PreparedBinaryRequest::new(parts))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "rcept_no", &self.rcept_no)?;
         let parameters = vec![
             QueryParameter { name: "rcept_no", value: QueryValue::Scalar(self.rcept_no.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -281,13 +281,13 @@ impl CorpCode {
     /// Prepares the ZIP physical representation without performing I/O.
     pub fn prepare_zip(&self) -> Result<PreparedBinaryRequest, PrepareError> {
         let identity = OperationIdentity::new("get_corpCode_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/corpCode.xml", identity, ZIP_OR_XML)?;
+        let parts = self.prepare_parts("/api/corpCode.xml", identity, ZIP_OR_XML, Some("result"))?;
         Ok(PreparedBinaryRequest::new(parts))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         let parameters = [];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 

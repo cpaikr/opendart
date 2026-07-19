@@ -57,9 +57,11 @@ The initial dependency and repository policy is:
 - License: MIT, using the repository `LICENSE` in the packaged crate.
 - Rust: edition 2024, Cargo resolver 3, and MSRV 1.85.0. Repository verification
   pins stable Rust 1.97.1 initially and runs a separate MSRV job.
-- HTTP: `reqwest` 0.13.4 with default features disabled and only `rustls` and
+- HTTP: `reqwest` 0.13.4 with default features disabled and only `native-tls` and
   `stream` enabled by the crate. `stream` is retained for the required fallible,
-  byte-replaying binary response interface.
+  byte-replaying binary response interface. Native TLS is required because the
+  fixed OpenDART origin currently requires the TLS 1.2 static-RSA suite
+  `TLS_RSA_WITH_AES_128_GCM_SHA256`, which Rustls intentionally does not offer.
 - Wire parsing: `serde_json` 1.0 and `quick-xml` 0.41 behind repository-owned
   bounded inspectors. XML document types are rejected and depth is limited by
   the SDK; the parser is never asked to resolve external entities.
@@ -72,7 +74,7 @@ The initial dependency and repository policy is:
 
 A throwaway Cargo fixture enabled `reqwest` HTTP/2, native TLS, Hickory DNS, and
 all compression features together. It proved that the selected builder exposes
-explicit no-retry, no-redirect, no-proxy, Rustls, non-Hickory, and no-decoding
+explicit no-retry, no-redirect, no-proxy, native-TLS, non-Hickory, and no-decoding
 controls under feature unification. A local HTTP/2 `REFUSED_STREAM` fixture
 observed the default original request plus its protocol retries, while
 `retry(reqwest::retry::never())` observed one stream. Local redirect and gzip
@@ -83,8 +85,8 @@ The same fixture proved conservative JSON scalar and unknown-field retention,
 explicit XML document-type/depth rejection, and secret debug redaction. It
 passed on stable Rust. A persistent adversarial build and runtime proof now
 lives in `sdk/rust/compat/reqwest-feature-unification`. It observes the official
-factory's Rustls ClientHello and offline system-resolver failure signature
-against native TLS and Hickory positive controls through a repository-only
+factory's native-TLS ClientHello, required upstream cipher-suite offer, and
+offline system-resolver failure signature against Rustls and Hickory controls through a repository-only
 bridge outside the published crate source tree. The fixture's deliberate
 Hickory graph requires Rust 1.88, so it runs on pinned stable outside the main
 workspace; the published crate does not enable Hickory, and the main workspace's

@@ -95,8 +95,13 @@ func TestRenderUsesRepresentationAwareArrayDecoding(t *testing.T) {
 		}},
 	}
 	media := func(name string) []model.Response {
+		shape := arrayShape
+		if name == "application/xml" {
+			shape.XMLName = "result"
+			shape.XMLNodeType = "element"
+		}
 		return []model.Response{{Selector: "default", Media: []model.ResponseMedia{{
-			Name: name, ContentTypeStatus: "inferred-from-documented-output-format", Shape: arrayShape,
+			Name: name, ContentTypeStatus: "inferred-from-documented-output-format", Shape: shape,
 		}}}}
 	}
 	source := model.Model{
@@ -131,6 +136,40 @@ func TestRenderUsesRepresentationAwareArrayDecoding(t *testing.T) {
 	}
 	if !strings.Contains(responses, "ObjectDecoder::new_xml(value, path)") {
 		t.Fatal("XML object decoder does not normalize an empty element")
+	}
+}
+
+func TestRenderOmitsStructuredRequestImportForBinaryOnlyGroup(t *testing.T) {
+	source := model.Model{
+		SchemaVersion: model.SchemaVersion,
+		Checksum:      strings.Repeat("a", 64),
+		Logical: []model.LogicalOperation{{
+			ID: "archive", RustName: "Archive", Group: "group",
+			Variants: []model.PhysicalReference{{OperationID: "archive.xml", Representation: model.RepresentationZIP}},
+		}},
+		Physical: []model.PhysicalOperation{{
+			OperationID: "archive.xml", LogicalID: "archive", RustConstant: "ARCHIVE_XML", Path: "/api/archive.xml",
+			PrimaryRepresentation: model.RepresentationZIP, ExpectedRepresentations: []model.Representation{model.RepresentationZIP, model.RepresentationXML},
+			Responses: []model.Response{{Selector: "default", Media: []model.ResponseMedia{
+				{Name: "application/zip", Shape: model.ResponseShape{Kind: "binary"}},
+				{Name: "application/xml", Shape: model.ResponseShape{Kind: "object", XMLName: "result", XMLNodeType: "element"}},
+			}}},
+		}},
+	}
+
+	files, err := Render(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	operation := string(files["operations/group.rs"])
+	if strings.Contains(operation, "PreparedRequest") {
+		t.Fatalf("binary-only operation imports a structured request:\n%s", operation)
+	}
+	if !strings.Contains(operation, "PreparedBinaryRequest") {
+		t.Fatalf("binary-only operation omits its request type:\n%s", operation)
+	}
+	if !strings.Contains(operation, `Some("result")`) {
+		t.Fatalf("binary operation omits its alternate XML root:\n%s", operation)
 	}
 }
 

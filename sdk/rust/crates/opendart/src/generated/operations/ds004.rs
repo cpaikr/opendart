@@ -36,23 +36,23 @@ impl Majorstock {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::MajorstockJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_majorstock_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/majorstock.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/majorstock.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_majorstock_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::MajorstockXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_majorstock_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/majorstock.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/majorstock.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_majorstock_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         let parameters = vec![
             QueryParameter { name: "corp_code", value: QueryValue::Scalar(self.corp_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
@@ -82,23 +82,23 @@ impl Elestock {
     /// Prepares the JSON physical representation without performing I/O.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::ElestockJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_elestock_json", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/elestock.json", identity, JSON_ONLY)?;
+        let parts = self.prepare_parts("/api/elestock.json", identity, JSON_ONLY, None)?;
         Ok(PreparedRequest::new(parts, response::decode_elestock_json_response))
     }
 
     /// Prepares the XML physical representation without performing I/O.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::ElestockXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_elestock_xml", Self::LOGICAL_OPERATION_ID);
-        let parts = self.prepare_parts("/api/elestock.xml", identity, XML_ONLY)?;
+        let parts = self.prepare_parts("/api/elestock.xml", identity, XML_ONLY, Some("result"))?;
         Ok(PreparedRequest::new(parts, response::decode_elestock_xml_response))
     }
 
-    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation]) -> Result<RequestParts, PrepareError> {
+    fn prepare_parts(&self, path: &'static str, identity: OperationIdentity, expected: &'static [Representation], expected_xml_root: Option<&'static str>) -> Result<RequestParts, PrepareError> {
         require_nonempty(identity, "corp_code", &self.corp_code)?;
         let parameters = vec![
             QueryParameter { name: "corp_code", value: QueryValue::Scalar(self.corp_code.as_str()) },
         ];
-        Ok(RequestParts::new(path, identity, &parameters, expected, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
+        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))
     }
 }
 
