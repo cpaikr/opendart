@@ -81,10 +81,14 @@ encoding header retained.
 
 The same fixture proved conservative JSON scalar and unknown-field retention,
 explicit XML document-type/depth rejection, and secret debug redaction. It
-passed on stable Rust. Its deliberate Hickory feature-unification build requires
-Rust 1.88 through Hickory's current optional graph, so that safety fixture runs
-on pinned stable; the published crate does not enable Hickory, and default and
-no-default crate builds form the MSRV contract.
+passed on stable Rust. A persistent adversarial build and runtime proof now
+lives in `sdk/rust/compat/reqwest-feature-unification`. It observes the official
+factory's Rustls ClientHello and offline system-resolver failure signature
+against native TLS and Hickory positive controls through a repository-only
+bridge outside the published crate source tree. The fixture's deliberate
+Hickory graph requires Rust 1.88, so it runs on pinned stable outside the main
+workspace; the published crate does not enable Hickory, and the main workspace's
+all-target default and no-default graphs form the MSRV contract.
 
 `internal/openapi.InspectSDKSurface` now proves that the existing private
 OpenAPI model exposes every canonical physical operation, stable logical
