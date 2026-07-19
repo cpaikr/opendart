@@ -572,6 +572,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "uploads only the bounded sanitized report",
 		},
 		{
+			name: "live artifact is not attempt scoped", artifact: liveWorkflowArtifact,
+			old: "name: live-conformance-report-${{ github.run_attempt }}", replacement: "name: live-conformance-report",
+			invariant: "uploads only the bounded sanitized report",
+		},
+		{
 			name: "live unpinned upload", artifact: liveWorkflowArtifact,
 			old: uploadArtifactAction, replacement: "actions/upload-artifact@v7",
 			invariant: "uploads only the bounded sanitized report",
@@ -585,6 +590,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "notifier accepts branch", artifact: notifyWorkflowArtifact,
 			old: "github.event.workflow_run.head_branch == github.event.repository.default_branch", replacement: "github.event.workflow_run.head_branch != ''",
 			invariant: "accepts only manual trusted default-branch producer runs",
+		},
+		{
+			name: "notifier artifact is not attempt scoped", artifact: notifyWorkflowArtifact,
+			old: "name: live-conformance-report-${{ github.event.workflow_run.run_attempt }}", replacement: "name: live-conformance-report",
+			invariant: "downloads only the producer report with fixed-failure fallback",
 		},
 		{
 			name: "notifier protected environment", artifact: notifyWorkflowArtifact,
