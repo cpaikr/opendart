@@ -2,7 +2,9 @@ package liveconformance
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
+	"path"
 	"slices"
 	"sort"
 	"strings"
@@ -34,7 +36,7 @@ func Preflight(spec specification, cases []Case, assertions map[AssertionID]Asse
 
 	operations := make(map[string]openapispec.Operation, len(catalog.Operations))
 	for _, operation := range catalog.Operations {
-		if operation.Method == "" || !strings.HasPrefix(operation.Path, "/") || strings.ContainsAny(operation.Path, "?#") || !safeIdentifier.MatchString(operation.OperationID) || !safeIdentifier.MatchString(operation.LogicalOperationID) || !allowedRepresentation(operation.PrimaryRepresentation) {
+		if operation.Method != http.MethodGet || !validOperationPath(operation.Path) || !safeIdentifier.MatchString(operation.OperationID) || !safeIdentifier.MatchString(operation.LogicalOperationID) || !allowedRepresentation(operation.PrimaryRepresentation) {
 			return nil, preflightError("invalid-operation-identity", operation.Identity())
 		}
 		if !slices.Equal(operation.Servers, []string{TrustedServer}) {
@@ -86,6 +88,10 @@ func Preflight(spec specification, cases []Case, assertions map[AssertionID]Asse
 		return prepared[i].operation.Identity() < prepared[j].operation.Identity()
 	})
 	return &Plan{specification: spec, cases: prepared, requestBudget: len(prepared)}, nil
+}
+
+func validOperationPath(value string) bool {
+	return safePath.MatchString(value) && !strings.Contains(value, "//") && path.Clean(value) == value
 }
 
 func serializeParameters(operation openapispec.Operation, values map[string][]string) (url.Values, error) {

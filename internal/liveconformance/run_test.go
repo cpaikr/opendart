@@ -91,6 +91,14 @@ func TestPreflightFailsBeforeExecutionForCoverageParametersAndTrust(t *testing.T
 		{name: "unknown parameter", code: "invalid-case-parameters", mutate: func(_ *fakeSpecification, cases *[]Case) { (*cases)[0].Parameters["secret"] = []string{"value"} }},
 		{name: "missing parameter", code: "invalid-case-parameters", mutate: func(_ *fakeSpecification, cases *[]Case) { delete((*cases)[0].Parameters, "corp_code") }},
 		{name: "untrusted server", code: "untrusted-server", mutate: func(spec *fakeSpecification, _ *[]Case) { spec.catalog.Servers = []string{"https://proxy.invalid"} }},
+		{name: "dot segment", code: "invalid-operation-identity", mutate: func(spec *fakeSpecification, cases *[]Case) {
+			spec.catalog.Operations[0].Path = "/../outside"
+			(*cases)[0].Path = "/../outside"
+		}},
+		{name: "backslash", code: "invalid-operation-identity", mutate: func(spec *fakeSpecification, cases *[]Case) {
+			spec.catalog.Operations[0].Path = `/company\\outside`
+			(*cases)[0].Path = `/company\\outside`
+		}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -103,6 +111,22 @@ func TestPreflightFailsBeforeExecutionForCoverageParametersAndTrust(t *testing.T
 				t.Fatalf("Preflight() error = %#v, request validations = %d", err, spec.requestValidations)
 			}
 		})
+	}
+}
+
+func TestPreflightSerializesOpenAPIFormArrays(t *testing.T) {
+	spec := representativeSpecification()
+	spec.catalog.Operations = []openapispec.Operation{spec.catalog.Operations[0]}
+	spec.catalog.Operations[0].Parameters[0] = openapispec.Parameter{
+		Name: "corp_code", Location: "query", Required: true, Style: "form", Explode: false, SchemaTypes: []string{"array"},
+	}
+	cases := representativeCases()[:1]
+	cases[0].Parameters["corp_code"] = []string{"00334624", "00126380"}
+	if _, err := Preflight(spec, cases, representativeAssertions()); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(spec.lastQuery["corp_code"], []string{"00334624,00126380"}) {
+		t.Fatalf("serialized query = %#v", spec.lastQuery)
 	}
 }
 
@@ -129,6 +153,37 @@ func TestExecutionMakesOneAttemptAndSanitizesFailure(t *testing.T) {
 	if bytes.Contains(encoded, []byte(testCredential)) || bytes.Contains(encoded, []byte("arbitrary transport")) {
 		t.Fatalf("failure report leaked unsafe diagnostics: %s", encoded)
 	}
+	if _, decodeErr := DecodeReport(bytes.NewReader(encoded)); decodeErr != nil {
+		t.Fatalf("producer failure did not round-trip through strict decoder: %v", decodeErr)
+	}
+}
+
+func TestExecutionUsesFixedFailureWhenAllowlistedReportValidationFails(t *testing.T) {
+	spec := representativeSpecification()
+	cases := representativeCases()
+	cases = []Case{cases[0]}
+	cases[0].ID = testCredential
+	spec.catalog.Operations = []openapispec.Operation{spec.catalog.Operations[0]}
+	plan, err := Preflight(spec, cases, representativeAssertions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, err := execute(context.Background(), plan, dependencies{
+		credential: func() (string, error) { return testCredential, nil },
+		now:        time.Now,
+		wait:       func(time.Duration) error { return nil },
+		do: func(*http.Request) (*http.Response, error) {
+			return response("application/json", []byte(`{"status":"000","corp_code":"00126380"}`)), nil
+		},
+	})
+	var conformanceError *Error
+	if !errors.As(err, &conformanceError) || report.Failure == nil || report.Failure.Code != "report-sanitization" || report.RequestBudget != (RequestBudget{}) || len(report.Cases) != 0 {
+		t.Fatalf("report=%#v error=%v", report, err)
+	}
+	encoded, _ := json.Marshal(report)
+	if bytes.Contains(encoded, []byte(testCredential)) {
+		t.Fatalf("fixed failure leaked credential: %s", encoded)
+	}
 }
 
 func TestExecutionRejectsOversizedBodyAndZIPXMLAlternate(t *testing.T) {
@@ -139,6 +194,7 @@ func TestExecutionRejectsOversizedBodyAndZIPXMLAlternate(t *testing.T) {
 		code        string
 	}{
 		{name: "oversized", contentType: "application/json", body: bytes.Repeat([]byte("x"), MaximumBodyBytes+1), code: "bounded-body-failure"},
+		{name: "unsupported media", contentType: "text/html; charset=utf-8", body: []byte(`<html><body>upstream error</body></html>`), code: "invalid-media-type"},
 		{name: "ZIP XML API error", contentType: "application/xml", body: []byte(`<result><status>010</status><message>bad key</message></result>`), code: "unsuccessful-envelope"},
 	}
 	for _, test := range tests {
@@ -161,6 +217,13 @@ func TestExecutionRejectsOversizedBodyAndZIPXMLAlternate(t *testing.T) {
 			if !errors.As(err, &conformanceError) || report.Failure == nil || report.Failure.Code != test.code {
 				t.Fatalf("report=%#v error=%v", report, err)
 			}
+			encoded, marshalErr := json.Marshal(report)
+			if marshalErr != nil {
+				t.Fatal(marshalErr)
+			}
+			if _, decodeErr := DecodeReport(bytes.NewReader(encoded)); decodeErr != nil {
+				t.Fatalf("producer failure did not round-trip through strict decoder: %v", decodeErr)
+			}
 		})
 	}
 }
@@ -169,6 +232,7 @@ type fakeSpecification struct {
 	catalog             openapispec.OperationCatalog
 	requestValidations  int
 	responseValidations int
+	lastQuery           url.Values
 }
 
 func representativeSpecification() *fakeSpecification {
@@ -191,6 +255,7 @@ func (s *fakeSpecification) Operations() (openapispec.OperationCatalog, error) {
 
 func (s *fakeSpecification) ValidateRequest(_ string, _ string, query url.Values) error {
 	s.requestValidations++
+	s.lastQuery = cloneValues(query)
 	if len(query) == 0 {
 		return errors.New("query is empty")
 	}

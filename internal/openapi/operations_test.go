@@ -79,6 +79,36 @@ func TestValidateRequestChecksCanonicalQueryParametersOffline(t *testing.T) {
 	if err := document.ValidateRequest(http.MethodGet, "/fnlttMultiAcnt.json", query); err == nil || !strings.Contains(err.Error(), "required") {
 		t.Fatalf("missing required parameter error = %v", err)
 	}
+	query.Set("bsns_year", "2018")
+	codes := make([]string, 101)
+	for index := range codes {
+		codes[index] = "00126380"
+	}
+	query.Set("corp_code", strings.Join(codes, ","))
+	if err := document.ValidateRequest(http.MethodGet, "/fnlttMultiAcnt.json", query); err == nil {
+		t.Fatal("array request above maxItems passed validation")
+	}
+}
+
+func TestOperationsApplyOperationParameterOverrides(t *testing.T) {
+	document, err := Load(fixturePath(t, "openapi.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer document.Close()
+	catalog, err := document.Operations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, operation := range catalog.Operations {
+		if operation.Method == http.MethodPut && operation.Path == "/companies/{corp_code}.xml" {
+			if len(operation.Parameters) != 1 || operation.Parameters[0].Name != "corp_code" {
+				t.Fatalf("effective parameters = %#v", operation.Parameters)
+			}
+			return
+		}
+	}
+	t.Fatal("templated PUT operation is missing")
 }
 
 func operationByPath(t *testing.T, operations []Operation, path string) Operation {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"regexp"
 	"strings"
 )
@@ -13,6 +14,8 @@ import (
 const MaximumReportBytes = 1 << 20
 
 var safeIdentifier = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]*$`)
+var safePath = regexp.MustCompile(`^/[A-Za-z0-9._~/-]+$`)
+var apiStatus = regexp.MustCompile(`^[0-9]{3}$`)
 
 // DecodeReport applies the same bounded, strict, allowlisted contract that an
 // isolated notifier uses before treating producer output as data.
@@ -37,9 +40,6 @@ func DecodeReport(reader io.Reader) (Report, error) {
 	if err := validateReport(report, ""); err != nil {
 		return Report{}, errors.New("validate live conformance report")
 	}
-	if err := validateAllowlistedFields(report); err != nil {
-		return Report{}, err
-	}
 	return report, nil
 }
 
@@ -50,19 +50,20 @@ func validateAllowlistedFields(report Report) error {
 			return fmt.Errorf("live conformance report case %d has an invalid identity", index)
 		}
 		seenCases[result.CaseID] = true
-		if result.Method == "" || !strings.HasPrefix(result.Path, "/") || strings.ContainsAny(result.Path, "?#") || !allowedRepresentation(result.Representation) || !safeIdentifier.MatchString(string(result.AssertionID)) {
+		if result.Method != http.MethodGet || !validOperationPath(result.Path) || !allowedRepresentation(result.Representation) || !safeIdentifier.MatchString(string(result.AssertionID)) {
 			return fmt.Errorf("live conformance report case %d has invalid request coordinates", index)
 		}
 		if result.Outcome != "passed" && result.Outcome != "failed" {
 			return fmt.Errorf("live conformance report case %d has invalid outcome", index)
 		}
-		if result.HTTPStatus < 0 || result.HTTPStatus > 599 || result.BodyBytes < 0 || result.BodyBytes > MaximumBodyBytes || len(result.APIStatus) > 3 || result.SchemaLocation == "" || strings.ContainsAny(result.SchemaLocation, "?\n\r") {
+		expectedSchemaLocation := result.Path + "#responses/default/content/" + escapePointer(result.Representation)
+		if result.HTTPStatus != 0 && (result.HTTPStatus < 100 || result.HTTPStatus > 599) || result.BodyBytes < 0 || result.BodyBytes > MaximumBodyBytes || result.APIStatus != "" && !apiStatus.MatchString(result.APIStatus) || result.SchemaLocation != expectedSchemaLocation {
 			return fmt.Errorf("live conformance report case %d has invalid response evidence", index)
 		}
 		if result.MediaType != "" && !allowedRepresentation(result.MediaType) {
 			return fmt.Errorf("live conformance report case %d has invalid media type", index)
 		}
-		if (result.BodyBytes == 0) != (result.BodySHA256 == "") || result.BodySHA256 != "" && !validSHA256(result.BodySHA256) {
+		if result.BodyBytes > 0 && result.BodySHA256 == "" || result.BodySHA256 != "" && !validSHA256(result.BodySHA256) {
 			return fmt.Errorf("live conformance report case %d has invalid body hash", index)
 		}
 		if result.Comparison.Kind != "" && (!safeIdentifier.MatchString(result.Comparison.Kind) || result.Comparison.Count < 0) {
@@ -70,11 +71,29 @@ func validateAllowlistedFields(report Report) error {
 		}
 	}
 	if report.Failure != nil {
-		if !allowedFailureCode(report.Failure.Code) || !safeIdentifier.MatchString(report.Failure.Stage) || strings.ContainsAny(report.Failure.Operation, "?\n\r") || strings.Contains(report.Failure.Operation, "://") {
+		if !allowedFailureCode(report.Failure.Code) || !allowedFailureStage(report.Failure.Code, report.Failure.Stage) || report.Failure.CaseID != "" && !safeIdentifier.MatchString(report.Failure.CaseID) || strings.ContainsAny(report.Failure.Operation, "?\n\r") || strings.Contains(report.Failure.Operation, "://") {
 			return errors.New("live conformance report failure is invalid")
 		}
 	}
 	return nil
+}
+
+func allowedFailureStage(code, stage string) bool {
+	expected := map[string]string{
+		"credential-unavailable":      "credential",
+		"request-budget-exhausted":    "budget",
+		"request-construction":        "request",
+		"transport-failure":           "request",
+		"bounded-body-failure":        "response",
+		"invalid-media-type":          "response",
+		"openapi-response-validation": "response",
+		"representation-parse":        "response",
+		"unsuccessful-envelope":       "response",
+		"assertion-failed":            "assertion",
+		"pacing-interrupted":          "pacing",
+		"report-sanitization":         "report",
+	}
+	return expected[code] == stage
 }
 
 func allowedRepresentation(value string) bool {

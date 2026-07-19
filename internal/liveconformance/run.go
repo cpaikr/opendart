@@ -122,7 +122,12 @@ func executeCase(ctx context.Context, spec specification, do func(*http.Request)
 		failure := caseFailure("invalid-media-type", "response", prepared)
 		return result, &failure
 	}
-	result.MediaType = strings.ToLower(mediaType)
+	normalizedMediaType := strings.ToLower(mediaType)
+	if !allowedRepresentation(normalizedMediaType) {
+		failure := caseFailure("invalid-media-type", "response", prepared)
+		return result, &failure
+	}
+	result.MediaType = normalizedMediaType
 	if err := spec.ValidateResponse(prepared.operation.Method, prepared.operation.Path, contentType, response.StatusCode, body); err != nil {
 		failure := caseFailure("openapi-response-validation", "response", prepared)
 		return result, &failure
@@ -152,14 +157,14 @@ func trustedRequestURL(prepared preparedCase, credential string) (*url.URL, erro
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(prepared.operation.Path, "/") || strings.Contains(prepared.operation.Path, "?") || strings.Contains(prepared.operation.Path, "#") {
+	if !validOperationPath(prepared.operation.Path) {
 		return nil, errors.New("operation path is invalid")
 	}
 	base.Path = strings.TrimSuffix(base.Path, "/") + prepared.operation.Path
 	query := cloneValues(prepared.query)
 	query.Set("crtfc_key", credential)
 	base.RawQuery = query.Encode()
-	if base.Scheme != "https" || base.Host != "opendart.fss.or.kr" || !strings.HasPrefix(base.Path, "/api/") || base.User != nil {
+	if base.Scheme != "https" || base.Host != "opendart.fss.or.kr" || !strings.HasPrefix(base.Path, "/api/") || !validOperationPath(strings.TrimPrefix(base.Path, "/api")) || base.User != nil {
 		return nil, errors.New("request target is not trusted")
 	}
 	return base, nil
@@ -347,7 +352,7 @@ func validateReport(report Report, credential string) error {
 	if credential != "" && bytes.Contains(encoded, []byte(credential)) {
 		return errors.New("report contains credential")
 	}
-	return nil
+	return validateAllowlistedFields(report)
 }
 
 func caseFailure(code, stage string, prepared preparedCase) Failure {

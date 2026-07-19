@@ -65,6 +65,9 @@ func (d *Document) Operations() (OperationCatalog, error) {
 	catalog := OperationCatalog{Servers: serverURLs(model.Servers)}
 	if model.Components != nil && model.Components.SecuritySchemes != nil {
 		for name, scheme := range model.Components.SecuritySchemes.FromOldest() {
+			if scheme == nil {
+				return OperationCatalog{}, fmt.Errorf("enumerate security scheme %q: definition is missing", name)
+			}
 			catalog.SecuritySchemes = append(catalog.SecuritySchemes, SecurityScheme{
 				Name:          name,
 				Type:          scheme.Type,
@@ -77,6 +80,9 @@ func (d *Document) Operations() (OperationCatalog, error) {
 		return catalog, nil
 	}
 	for pathValue, pathItem := range model.Paths.PathItems.FromOldest() {
+		if pathItem == nil {
+			return OperationCatalog{}, fmt.Errorf("enumerate path %q: path item is missing", pathValue)
+		}
 		for _, candidate := range pathOperations(pathItem) {
 			if candidate.operation == nil {
 				continue
@@ -142,28 +148,9 @@ func projectOperation(model *v3.Document, pathValue string, pathItem *v3.PathIte
 	if len(servers) == 0 {
 		servers = model.Servers
 	}
-	parameters := append([]*v3.Parameter(nil), pathItem.Parameters...)
-	parameters = append(parameters, operation.Parameters...)
-	projectedParameters := make([]Parameter, 0, len(parameters))
-	seenParameters := make(map[string]bool, len(parameters))
-	for _, parameter := range parameters {
-		identity := parameter.In + "\x00" + parameter.Name
-		if seenParameters[identity] {
-			return Operation{}, fmt.Errorf("parameter %q in %q is duplicated", parameter.Name, parameter.In)
-		}
-		seenParameters[identity] = true
-		var schemaTypes []string
-		if parameter.Schema != nil && parameter.Schema.Schema() != nil {
-			schemaTypes = append(schemaTypes, parameter.Schema.Schema().Type...)
-		}
-		projectedParameters = append(projectedParameters, Parameter{
-			Name:        parameter.Name,
-			Location:    parameter.In,
-			Required:    parameter.Required != nil && *parameter.Required,
-			Style:       parameter.Style,
-			Explode:     parameter.IsExploded(),
-			SchemaTypes: schemaTypes,
-		})
+	projectedParameters, err := projectParameters(pathItem.Parameters, operation.Parameters)
+	if err != nil {
+		return Operation{}, err
 	}
 	sort.Slice(projectedParameters, func(i, j int) bool {
 		if projectedParameters[i].Location == projectedParameters[j].Location {
@@ -186,6 +173,43 @@ func projectOperation(model *v3.Document, pathValue string, pathItem *v3.PathIte
 		PrimaryRepresentation:  primary,
 		AlternateResponseMedia: alternates,
 	}, nil
+}
+
+func projectParameters(pathParameters, operationParameters []*v3.Parameter) ([]Parameter, error) {
+	projected := make([]Parameter, 0, len(pathParameters)+len(operationParameters))
+	indexes := make(map[string]int, len(pathParameters)+len(operationParameters))
+	for _, source := range [][]*v3.Parameter{pathParameters, operationParameters} {
+		seenInSource := make(map[string]bool, len(source))
+		for _, parameter := range source {
+			if parameter == nil {
+				return nil, errors.New("parameter definition is missing")
+			}
+			identity := parameter.In + "\x00" + parameter.Name
+			if seenInSource[identity] {
+				return nil, fmt.Errorf("parameter %q in %q is duplicated", parameter.Name, parameter.In)
+			}
+			seenInSource[identity] = true
+			var schemaTypes []string
+			if parameter.Schema != nil && parameter.Schema.Schema() != nil {
+				schemaTypes = append(schemaTypes, parameter.Schema.Schema().Type...)
+			}
+			value := Parameter{
+				Name:        parameter.Name,
+				Location:    parameter.In,
+				Required:    parameter.Required != nil && *parameter.Required,
+				Style:       parameter.Style,
+				Explode:     parameter.IsExploded(),
+				SchemaTypes: schemaTypes,
+			}
+			if index, exists := indexes[identity]; exists {
+				projected[index] = value
+			} else {
+				indexes[identity] = len(projected)
+				projected = append(projected, value)
+			}
+		}
+	}
+	return projected, nil
 }
 
 func responseRepresentations(operation *v3.Operation) (string, []string, error) {
@@ -261,6 +285,10 @@ func logicalOperationID(extensions interface {
 func serverURLs(servers []*v3.Server) []string {
 	result := make([]string, 0, len(servers))
 	for _, server := range servers {
+		if server == nil {
+			result = append(result, "")
+			continue
+		}
 		result = append(result, server.URL)
 	}
 	return result
