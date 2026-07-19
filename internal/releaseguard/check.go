@@ -229,14 +229,14 @@ func checkSpecificationSourceRelease(repositoryRoot string, provenanceSource []b
 			Cause:     err,
 		}
 	}
-	arguments := []string{"-C", repositoryRoot, "diff", "--quiet", "--no-ext-diff", reference, "--"}
-	arguments = append(arguments, canonicalSpecificationSources...)
-	if err := exec.Command("git", arguments...).Run(); err != nil {
-		return &Error{
-			Artifact:  rustProvenanceArtifact,
-			Invariant: "semantic source release matches the canonical specification inputs",
-			Detail:    tag,
-			Cause:     err,
+	for _, source := range canonicalSpecificationSources {
+		if err := exec.Command("git", "-C", repositoryRoot, "cat-file", "-e", reference+":"+source).Run(); err != nil {
+			return &Error{
+				Artifact:  rustProvenanceArtifact,
+				Invariant: "semantic source release contains the canonical specification inputs",
+				Detail:    tag + ":" + source,
+				Cause:     err,
+			}
 		}
 	}
 	return nil

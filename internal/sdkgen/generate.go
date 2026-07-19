@@ -240,15 +240,14 @@ func readOwnedTreeWithMarker(root string, acceptPreviousSchema bool) (map[string
 		return nil, err
 	}
 	marker, exists := files[ownership.Filename]
-	if !exists || string(marker) != ownership.Marker(model.SchemaVersion) && !(acceptPreviousSchema && validPreviousOwnershipMarker(marker)) {
+	if !exists || (string(marker) != ownership.Marker(model.SchemaVersion) && !(acceptPreviousSchema && validPreviousOwnershipMarker(marker))) {
 		return nil, ErrGeneratedUnowned
 	}
 	return files, nil
 }
 
 func validPreviousOwnershipMarker(marker []byte) bool {
-	const prefix = "opendart-sdk-generator-schema="
-	value, found := strings.CutPrefix(string(marker), prefix)
+	value, found := strings.CutPrefix(string(marker), ownership.MarkerPrefix)
 	if !found || !strings.HasSuffix(value, "\n") {
 		return false
 	}

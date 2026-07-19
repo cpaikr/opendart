@@ -222,7 +222,7 @@ impl MajorstockXmlResponseListItem {
 }
 
 fn decode_majorstock_xml_response_at_list_item(value: SourceValue, path: String) -> Result<MajorstockXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
     let corp_name = object.optional("corp_name", decode_source_value)?;
     let ctr_stkqy = object.optional("ctr_stkqy", decode_source_value)?;
@@ -260,7 +260,7 @@ fn decode_majorstock_xml_response_at_list(value: SourceValue, path: String) -> R
 }
 
 fn decode_majorstock_xml_response_at(value: SourceValue, path: String) -> Result<MajorstockXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_majorstock_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -510,7 +510,7 @@ impl ElestockXmlResponseListItem {
 }
 
 fn decode_elestock_xml_response_at_list_item(value: SourceValue, path: String) -> Result<ElestockXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
     let corp_name = object.optional("corp_name", decode_source_value)?;
     let isu_exctv_ofcps = object.optional("isu_exctv_ofcps", decode_source_value)?;
@@ -546,7 +546,7 @@ fn decode_elestock_xml_response_at_list(value: SourceValue, path: String) -> Res
 }
 
 fn decode_elestock_xml_response_at(value: SourceValue, path: String) -> Result<ElestockXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_elestock_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;

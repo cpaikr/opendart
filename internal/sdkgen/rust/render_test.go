@@ -126,6 +126,12 @@ func TestRenderUsesRepresentationAwareArrayDecoding(t *testing.T) {
 	if !strings.Contains(responses, "decode_xml_array(value, path, decode_source_value)") {
 		t.Fatal("XML array decoder does not normalize a singleton element")
 	}
+	if !strings.Contains(responses, "ObjectDecoder::new(value, path)") {
+		t.Fatal("JSON object decoder no longer requires an explicit source object")
+	}
+	if !strings.Contains(responses, "ObjectDecoder::new_xml(value, path)") {
+		t.Fatal("XML object decoder does not normalize an empty element")
+	}
 }
 
 func TestRenderRejectsPublicRustSymbolCollisions(t *testing.T) {

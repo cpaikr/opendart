@@ -510,7 +510,7 @@ impl EstkRsXmlResponseGroupItemListItem {
 }
 
 fn decode_estk_rs_xml_response_at_group_item_list_item(value: SourceValue, path: String) -> Result<EstkRsXmlResponseGroupItemListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let actnmn = object.optional("actnmn", decode_source_value)?;
     let actsen = object.optional("actsen", decode_source_value)?;
     let amt = object.optional("amt", decode_source_value)?;
@@ -592,7 +592,7 @@ fn decode_estk_rs_xml_response_at_group_item_list(value: SourceValue, path: Stri
 }
 
 fn decode_estk_rs_xml_response_at_group_item(value: SourceValue, path: String) -> Result<EstkRsXmlResponseGroupItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_estk_rs_xml_response_at_group_item_list)?;
     let title = object.optional("title", decode_source_value)?;
     let additional_fields = object.finish();
@@ -608,7 +608,7 @@ fn decode_estk_rs_xml_response_at_group(value: SourceValue, path: String) -> Res
 }
 
 fn decode_estk_rs_xml_response_at(value: SourceValue, path: String) -> Result<EstkRsXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let group = object.optional("group", decode_estk_rs_xml_response_at_group)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1214,7 +1214,7 @@ impl BdRsXmlResponseGroupItemListItem {
 }
 
 fn decode_bd_rs_xml_response_at_group_item_list_item(value: SourceValue, path: String) -> Result<BdRsXmlResponseGroupItemListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let actnmn = object.optional("actnmn", decode_source_value)?;
     let actsen = object.optional("actsen", decode_source_value)?;
     let amt = object.optional("amt", decode_source_value)?;
@@ -1334,7 +1334,7 @@ fn decode_bd_rs_xml_response_at_group_item_list(value: SourceValue, path: String
 }
 
 fn decode_bd_rs_xml_response_at_group_item(value: SourceValue, path: String) -> Result<BdRsXmlResponseGroupItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_bd_rs_xml_response_at_group_item_list)?;
     let title = object.optional("title", decode_source_value)?;
     let additional_fields = object.finish();
@@ -1350,7 +1350,7 @@ fn decode_bd_rs_xml_response_at_group(value: SourceValue, path: String) -> Resul
 }
 
 fn decode_bd_rs_xml_response_at(value: SourceValue, path: String) -> Result<BdRsXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let group = object.optional("group", decode_bd_rs_xml_response_at_group)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1828,7 +1828,7 @@ impl StkdpRsXmlResponseGroupItemListItem {
 }
 
 fn decode_stkdp_rs_xml_response_at_group_item_list_item(value: SourceValue, path: String) -> Result<StkdpRsXmlResponseGroupItemListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let actnmn = object.optional("actnmn", decode_source_value)?;
     let actsen = object.optional("actsen", decode_source_value)?;
     let amt = object.optional("amt", decode_source_value)?;
@@ -1904,7 +1904,7 @@ fn decode_stkdp_rs_xml_response_at_group_item_list(value: SourceValue, path: Str
 }
 
 fn decode_stkdp_rs_xml_response_at_group_item(value: SourceValue, path: String) -> Result<StkdpRsXmlResponseGroupItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_stkdp_rs_xml_response_at_group_item_list)?;
     let title = object.optional("title", decode_source_value)?;
     let additional_fields = object.finish();
@@ -1920,7 +1920,7 @@ fn decode_stkdp_rs_xml_response_at_group(value: SourceValue, path: String) -> Re
 }
 
 fn decode_stkdp_rs_xml_response_at(value: SourceValue, path: String) -> Result<StkdpRsXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let group = object.optional("group", decode_stkdp_rs_xml_response_at_group)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -2342,7 +2342,7 @@ impl MgRsXmlResponseGroupItemListItem {
 }
 
 fn decode_mg_rs_xml_response_at_group_item_list_item(value: SourceValue, path: String) -> Result<MgRsXmlResponseGroupItemListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let ap_gmtsck = object.optional("ap_gmtsck", decode_source_value)?;
     let aprskh_pd_bgd = object.optional("aprskh_pd_bgd", decode_source_value)?;
     let aprskh_pd_edd = object.optional("aprskh_pd_edd", decode_source_value)?;
@@ -2410,7 +2410,7 @@ fn decode_mg_rs_xml_response_at_group_item_list(value: SourceValue, path: String
 }
 
 fn decode_mg_rs_xml_response_at_group_item(value: SourceValue, path: String) -> Result<MgRsXmlResponseGroupItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_mg_rs_xml_response_at_group_item_list)?;
     let title = object.optional("title", decode_source_value)?;
     let additional_fields = object.finish();
@@ -2426,7 +2426,7 @@ fn decode_mg_rs_xml_response_at_group(value: SourceValue, path: String) -> Resul
 }
 
 fn decode_mg_rs_xml_response_at(value: SourceValue, path: String) -> Result<MgRsXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let group = object.optional("group", decode_mg_rs_xml_response_at_group)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -2848,7 +2848,7 @@ impl ExtrRsXmlResponseGroupItemListItem {
 }
 
 fn decode_extr_rs_xml_response_at_group_item_list_item(value: SourceValue, path: String) -> Result<ExtrRsXmlResponseGroupItemListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let ap_gmtsck = object.optional("ap_gmtsck", decode_source_value)?;
     let aprskh_pd_bgd = object.optional("aprskh_pd_bgd", decode_source_value)?;
     let aprskh_pd_edd = object.optional("aprskh_pd_edd", decode_source_value)?;
@@ -2916,7 +2916,7 @@ fn decode_extr_rs_xml_response_at_group_item_list(value: SourceValue, path: Stri
 }
 
 fn decode_extr_rs_xml_response_at_group_item(value: SourceValue, path: String) -> Result<ExtrRsXmlResponseGroupItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_extr_rs_xml_response_at_group_item_list)?;
     let title = object.optional("title", decode_source_value)?;
     let additional_fields = object.finish();
@@ -2932,7 +2932,7 @@ fn decode_extr_rs_xml_response_at_group(value: SourceValue, path: String) -> Res
 }
 
 fn decode_extr_rs_xml_response_at(value: SourceValue, path: String) -> Result<ExtrRsXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let group = object.optional("group", decode_extr_rs_xml_response_at_group)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -3354,7 +3354,7 @@ impl DvRsXmlResponseGroupItemListItem {
 }
 
 fn decode_dv_rs_xml_response_at_group_item_list_item(value: SourceValue, path: String) -> Result<DvRsXmlResponseGroupItemListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let ap_gmtsck = object.optional("ap_gmtsck", decode_source_value)?;
     let aprskh_pd_bgd = object.optional("aprskh_pd_bgd", decode_source_value)?;
     let aprskh_pd_edd = object.optional("aprskh_pd_edd", decode_source_value)?;
@@ -3422,7 +3422,7 @@ fn decode_dv_rs_xml_response_at_group_item_list(value: SourceValue, path: String
 }
 
 fn decode_dv_rs_xml_response_at_group_item(value: SourceValue, path: String) -> Result<DvRsXmlResponseGroupItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_dv_rs_xml_response_at_group_item_list)?;
     let title = object.optional("title", decode_source_value)?;
     let additional_fields = object.finish();
@@ -3438,7 +3438,7 @@ fn decode_dv_rs_xml_response_at_group(value: SourceValue, path: String) -> Resul
 }
 
 fn decode_dv_rs_xml_response_at(value: SourceValue, path: String) -> Result<DvRsXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let group = object.optional("group", decode_dv_rs_xml_response_at_group)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;

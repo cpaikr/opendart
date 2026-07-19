@@ -185,7 +185,7 @@ func TestCheckRejectsRustPackageBundleProvenanceMismatch(t *testing.T) {
 	}
 }
 
-func TestCheckRejectsSpecificationSourceReleaseMismatch(t *testing.T) {
+func TestCheckAllowsSpecificationSourcesToAdvanceAfterSelectedRelease(t *testing.T) {
 	root := copyReleaseArtifacts(t)
 	path := filepath.Join(root, "openapi", "components", "schemas.yaml")
 	source, err := os.ReadFile(path)
@@ -196,10 +196,8 @@ func TestCheckRejectsSpecificationSourceReleaseMismatch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = Check(root)
-	var guardError *Error
-	if !errors.As(err, &guardError) || guardError.Artifact != rustProvenanceArtifact || !strings.Contains(guardError.Invariant, "semantic source release matches") {
-		t.Fatalf("Check() error = %#v", err)
+	if err := Check(root); err != nil {
+		t.Fatalf("Check() rejected post-release specification evolution: %v", err)
 	}
 }
 

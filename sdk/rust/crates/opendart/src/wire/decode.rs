@@ -22,6 +22,22 @@ impl ObjectDecoder {
         Ok(Self { fields, path })
     }
 
+    pub(crate) fn new_xml(value: SourceValue, path: String) -> Result<Self, ResponseDecodeError> {
+        let actual = value.kind();
+        let fields = match value.0 {
+            SourceValueRepr::Object(fields) => fields,
+            SourceValueRepr::String(value) if value.is_empty() => BTreeMap::new(),
+            _ => {
+                return Err(ResponseDecodeError::WrongKind {
+                    path,
+                    expected: SourceValueKind::Object,
+                    actual,
+                });
+            }
+        };
+        Ok(Self { fields, path })
+    }
+
     // Canonical inputs currently mark response fields optional, but generated
     // decoders use this as soon as a future contract establishes a required field.
     #[allow(dead_code)]

@@ -418,10 +418,12 @@ func renderResponseGroup(source model.Model, operations []model.LogicalOperation
 			rootName := responseRootName(operation.RustName, variant.Representation)
 			rootDecoder := responseDecoderName(rootName)
 			arrayDecoder := "decode_array"
+			objectConstructor := "new"
 			if variant.Representation == model.RepresentationXML {
 				arrayDecoder = "decode_xml_array"
+				objectConstructor = "new_xml"
 			}
-			renderResponseObject(&output, rootName, rootDecoder+"_at", shape, arrayDecoder)
+			renderResponseObject(&output, rootName, rootDecoder+"_at", shape, arrayDecoder, objectConstructor)
 			fmt.Fprintf(&output, "pub(crate) fn %s(value: SourceValue) -> Result<%s, ResponseDecodeError> {\n", rootDecoder, rootName)
 			fmt.Fprintf(&output, "    %s(value, \"$\".to_owned())\n", rootDecoder+"_at")
 			output.WriteString("}\n\n")
@@ -455,7 +457,7 @@ func primaryResponseShape(operation model.PhysicalOperation) (model.ResponseShap
 	return *selected, nil
 }
 
-func renderResponseObject(output *strings.Builder, name, decoder string, shape model.ResponseShape, arrayDecoder string) {
+func renderResponseObject(output *strings.Builder, name, decoder string, shape model.ResponseShape, arrayDecoder, objectConstructor string) {
 	renderRustDoc(output, "", shape.Description, "Generated OpenDART response object.")
 	fmt.Fprintf(output, "#[derive(Clone, Debug, PartialEq)]\n#[non_exhaustive]\npub struct %s {\n", name)
 	for _, property := range shape.Properties {
@@ -476,11 +478,11 @@ func renderResponseObject(output *strings.Builder, name, decoder string, shape m
 	for _, property := range shape.Properties {
 		childName := responseChildTypeName(name, property.RustName)
 		childDecoder := decoder + "_" + property.RustName
-		renderResponseNode(output, childName, childDecoder, property.Shape, arrayDecoder)
+		renderResponseNode(output, childName, childDecoder, property.Shape, arrayDecoder, objectConstructor)
 	}
 
 	fmt.Fprintf(output, "fn %s(value: SourceValue, path: String) -> Result<%s, ResponseDecodeError> {\n", decoder, name)
-	output.WriteString("    let mut object = ObjectDecoder::new(value, path)?;\n")
+	fmt.Fprintf(output, "    let mut object = ObjectDecoder::%s(value, path)?;\n", objectConstructor)
 	for _, property := range shape.Properties {
 		method := "optional"
 		if responsePropertyRequired(shape, property.Name) {
@@ -496,14 +498,14 @@ func renderResponseObject(output *strings.Builder, name, decoder string, shape m
 	output.WriteString("        additional_fields,\n    })\n}\n\n")
 }
 
-func renderResponseNode(output *strings.Builder, name, decoder string, shape model.ResponseShape, arrayDecoder string) {
+func renderResponseNode(output *strings.Builder, name, decoder string, shape model.ResponseShape, arrayDecoder, objectConstructor string) {
 	switch shape.Kind {
 	case "object":
-		renderResponseObject(output, name, decoder, shape, arrayDecoder)
+		renderResponseObject(output, name, decoder, shape, arrayDecoder, objectConstructor)
 	case "array":
 		itemName := name + "Item"
 		itemDecoder := decoder + "_item"
-		renderResponseNode(output, itemName, itemDecoder, *shape.Items, arrayDecoder)
+		renderResponseNode(output, itemName, itemDecoder, *shape.Items, arrayDecoder, objectConstructor)
 		fmt.Fprintf(output, "fn %s(value: SourceValue, path: String) -> Result<Vec<%s>, ResponseDecodeError> {\n", decoder, responseShapeType(itemName, *shape.Items))
 		fmt.Fprintf(output, "    %s(value, path, %s)\n", arrayDecoder, responseNodeDecoder(itemDecoder, *shape.Items))
 		output.WriteString("}\n\n")

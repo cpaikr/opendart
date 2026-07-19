@@ -342,7 +342,7 @@ impl FnlttSinglAcntXmlResponseListItem {
 }
 
 fn decode_fnltt_singl_acnt_xml_response_at_list_item(value: SourceValue, path: String) -> Result<FnlttSinglAcntXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let account_nm = object.optional("account_nm", decode_source_value)?;
     let bfefrmtrm_amount = object.optional("bfefrmtrm_amount", decode_source_value)?;
     let bfefrmtrm_dt = object.optional("bfefrmtrm_dt", decode_source_value)?;
@@ -398,7 +398,7 @@ fn decode_fnltt_singl_acnt_xml_response_at_list(value: SourceValue, path: String
 }
 
 fn decode_fnltt_singl_acnt_xml_response_at(value: SourceValue, path: String) -> Result<FnlttSinglAcntXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_fnltt_singl_acnt_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -750,7 +750,7 @@ impl FnlttMultiAcntXmlResponseListItem {
 }
 
 fn decode_fnltt_multi_acnt_xml_response_at_list_item(value: SourceValue, path: String) -> Result<FnlttMultiAcntXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let account_nm = object.optional("account_nm", decode_source_value)?;
     let bfefrmtrm_amount = object.optional("bfefrmtrm_amount", decode_source_value)?;
     let bfefrmtrm_dt = object.optional("bfefrmtrm_dt", decode_source_value)?;
@@ -806,7 +806,7 @@ fn decode_fnltt_multi_acnt_xml_response_at_list(value: SourceValue, path: String
 }
 
 fn decode_fnltt_multi_acnt_xml_response_at(value: SourceValue, path: String) -> Result<FnlttMultiAcntXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_fnltt_multi_acnt_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1170,7 +1170,7 @@ impl FnlttSinglAcntAllXmlResponseListItem {
 }
 
 fn decode_fnltt_singl_acnt_all_xml_response_at_list_item(value: SourceValue, path: String) -> Result<FnlttSinglAcntAllXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let account_detail = object.optional("account_detail", decode_source_value)?;
     let account_id = object.optional("account_id", decode_source_value)?;
     let account_nm = object.optional("account_nm", decode_source_value)?;
@@ -1224,7 +1224,7 @@ fn decode_fnltt_singl_acnt_all_xml_response_at_list(value: SourceValue, path: St
 }
 
 fn decode_fnltt_singl_acnt_all_xml_response_at(value: SourceValue, path: String) -> Result<FnlttSinglAcntAllXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_fnltt_singl_acnt_all_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1442,7 +1442,7 @@ impl XbrlTaxonomyXmlResponseListItem {
 }
 
 fn decode_xbrl_taxonomy_xml_response_at_list_item(value: SourceValue, path: String) -> Result<XbrlTaxonomyXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let account_id = object.optional("account_id", decode_source_value)?;
     let account_nm = object.optional("account_nm", decode_source_value)?;
     let bsns_de = object.optional("bsns_de", decode_source_value)?;
@@ -1470,7 +1470,7 @@ fn decode_xbrl_taxonomy_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_xbrl_taxonomy_xml_response_at(value: SourceValue, path: String) -> Result<XbrlTaxonomyXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_xbrl_taxonomy_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1710,7 +1710,7 @@ impl FnlttSinglIndxXmlResponseListItem {
 }
 
 fn decode_fnltt_singl_indx_xml_response_at_list_item(value: SourceValue, path: String) -> Result<FnlttSinglIndxXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let bsns_year = object.optional("bsns_year", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
     let idx_cl_code = object.optional("idx_cl_code", decode_source_value)?;
@@ -1742,7 +1742,7 @@ fn decode_fnltt_singl_indx_xml_response_at_list(value: SourceValue, path: String
 }
 
 fn decode_fnltt_singl_indx_xml_response_at(value: SourceValue, path: String) -> Result<FnlttSinglIndxXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_fnltt_singl_indx_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1982,7 +1982,7 @@ impl FnlttCmpnyIndxXmlResponseListItem {
 }
 
 fn decode_fnltt_cmpny_indx_xml_response_at_list_item(value: SourceValue, path: String) -> Result<FnlttCmpnyIndxXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let bsns_year = object.optional("bsns_year", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
     let idx_cl_code = object.optional("idx_cl_code", decode_source_value)?;
@@ -2014,7 +2014,7 @@ fn decode_fnltt_cmpny_indx_xml_response_at_list(value: SourceValue, path: String
 }
 
 fn decode_fnltt_cmpny_indx_xml_response_at(value: SourceValue, path: String) -> Result<FnlttCmpnyIndxXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_fnltt_cmpny_indx_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;

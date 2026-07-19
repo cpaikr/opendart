@@ -270,7 +270,7 @@ impl ListXmlResponseListItem {
 }
 
 fn decode_list_xml_response_at_list_item(value: SourceValue, path: String) -> Result<ListXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
     let corp_name = object.optional("corp_name", decode_source_value)?;
@@ -300,7 +300,7 @@ fn decode_list_xml_response_at_list(value: SourceValue, path: String) -> Result<
 }
 
 fn decode_list_xml_response_at(value: SourceValue, path: String) -> Result<ListXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_list_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let page_count = object.optional("page_count", decode_source_value)?;
@@ -498,7 +498,7 @@ impl CompanyXmlResponse {
 }
 
 fn decode_company_xml_response_at(value: SourceValue, path: String) -> Result<CompanyXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let acc_mt = object.optional("acc_mt", decode_source_value)?;
     let adres = object.optional("adres", decode_source_value)?;
     let bizr_no = object.optional("bizr_no", decode_source_value)?;

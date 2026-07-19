@@ -191,7 +191,8 @@ Full source provenance is release metadata rather than an SDK-model input or
 generated-file freshness signal. A crate release records the exact Git revision,
 the semantic specification source release when one exists, and the independently
 selected canonical bundle checksum in the handwritten provenance module. The
-release guard compares the canonical source inputs with the named tag; the tag
+release guard verifies that the named tag contains the canonical source inputs
+without requiring the evolving working tree to equal that older tag; the tag
 does not claim byte identity with the selected generated bundle. That metadata
 advances only in a crate release PR, so an SDK-irrelevant specification change
 neither touches the Rust component nor creates a crate release.

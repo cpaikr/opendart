@@ -180,7 +180,7 @@ impl AstInhtrfEtcPtbkOptXmlResponseListItem {
 }
 
 fn decode_ast_inhtrf_etc_ptbk_opt_xml_response_at_list_item(value: SourceValue, path: String) -> Result<AstInhtrfEtcPtbkOptXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let ast_inhtrf_prc = object.optional("ast_inhtrf_prc", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
@@ -204,7 +204,7 @@ fn decode_ast_inhtrf_etc_ptbk_opt_xml_response_at_list(value: SourceValue, path:
 }
 
 fn decode_ast_inhtrf_etc_ptbk_opt_xml_response_at(value: SourceValue, path: String) -> Result<AstInhtrfEtcPtbkOptXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_ast_inhtrf_etc_ptbk_opt_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -412,7 +412,7 @@ impl DfOcrXmlResponseListItem {
 }
 
 fn decode_df_ocr_xml_response_at_list_item(value: SourceValue, path: String) -> Result<DfOcrXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
     let corp_name = object.optional("corp_name", decode_source_value)?;
@@ -442,7 +442,7 @@ fn decode_df_ocr_xml_response_at_list(value: SourceValue, path: String) -> Resul
 }
 
 fn decode_df_ocr_xml_response_at(value: SourceValue, path: String) -> Result<DfOcrXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_df_ocr_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -722,7 +722,7 @@ impl BsnSpXmlResponseListItem {
 }
 
 fn decode_bsn_sp_xml_response_at_list_item(value: SourceValue, path: String) -> Result<BsnSpXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let bddd = object.optional("bddd", decode_source_value)?;
     let bsnsp_af = object.optional("bsnsp_af", decode_source_value)?;
@@ -772,7 +772,7 @@ fn decode_bsn_sp_xml_response_at_list(value: SourceValue, path: String) -> Resul
 }
 
 fn decode_bsn_sp_xml_response_at(value: SourceValue, path: String) -> Result<BsnSpXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_bsn_sp_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -976,7 +976,7 @@ impl CtrcvsBgrqXmlResponseListItem {
 }
 
 fn decode_ctrcvs_bgrq_xml_response_at_list_item(value: SourceValue, path: String) -> Result<CtrcvsBgrqXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let apcnt = object.optional("apcnt", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
@@ -1006,7 +1006,7 @@ fn decode_ctrcvs_bgrq_xml_response_at_list(value: SourceValue, path: String) -> 
 }
 
 fn decode_ctrcvs_bgrq_xml_response_at(value: SourceValue, path: String) -> Result<CtrcvsBgrqXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_ctrcvs_bgrq_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1218,7 +1218,7 @@ impl DsRsOcrXmlResponseListItem {
 }
 
 fn decode_ds_rs_ocr_xml_response_at_list_item(value: SourceValue, path: String) -> Result<DsRsOcrXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
@@ -1248,7 +1248,7 @@ fn decode_ds_rs_ocr_xml_response_at_list(value: SourceValue, path: String) -> Re
 }
 
 fn decode_ds_rs_ocr_xml_response_at(value: SourceValue, path: String) -> Result<DsRsOcrXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_ds_rs_ocr_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1564,7 +1564,7 @@ impl PiicDecsnXmlResponseListItem {
 }
 
 fn decode_piic_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<PiicDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let bfic_tisstk_estk = object.optional("bfic_tisstk_estk", decode_source_value)?;
     let bfic_tisstk_ostk = object.optional("bfic_tisstk_ostk", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
@@ -1614,7 +1614,7 @@ fn decode_piic_decsn_xml_response_at_list(value: SourceValue, path: String) -> R
 }
 
 fn decode_piic_decsn_xml_response_at(value: SourceValue, path: String) -> Result<PiicDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_piic_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -1914,7 +1914,7 @@ impl FricDecsnXmlResponseListItem {
 }
 
 fn decode_fric_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<FricDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let bddd = object.optional("bddd", decode_source_value)?;
     let bfic_tisstk_estk = object.optional("bfic_tisstk_estk", decode_source_value)?;
@@ -1964,7 +1964,7 @@ fn decode_fric_decsn_xml_response_at_list(value: SourceValue, path: String) -> R
 }
 
 fn decode_fric_decsn_xml_response_at(value: SourceValue, path: String) -> Result<FricDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_fric_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -2406,7 +2406,7 @@ impl PifricDecsnXmlResponseListItem {
 }
 
 fn decode_pifric_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<PifricDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
     let corp_name = object.optional("corp_name", decode_source_value)?;
@@ -2486,7 +2486,7 @@ fn decode_pifric_decsn_xml_response_at_list(value: SourceValue, path: String) ->
 }
 
 fn decode_pifric_decsn_xml_response_at(value: SourceValue, path: String) -> Result<PifricDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_pifric_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -2944,7 +2944,7 @@ impl CrDecsnXmlResponseListItem {
 }
 
 fn decode_cr_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<CrDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let atcr_cpt = object.optional("atcr_cpt", decode_source_value)?;
     let atcr_tisstk_estk = object.optional("atcr_tisstk_estk", decode_source_value)?;
@@ -3028,7 +3028,7 @@ fn decode_cr_decsn_xml_response_at_list(value: SourceValue, path: String) -> Res
 }
 
 fn decode_cr_decsn_xml_response_at(value: SourceValue, path: String) -> Result<CrDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_cr_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -3232,7 +3232,7 @@ impl BnkMngtPcbgXmlResponseListItem {
 }
 
 fn decode_bnk_mngt_pcbg_xml_response_at_list_item(value: SourceValue, path: String) -> Result<BnkMngtPcbgXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let cfd = object.optional("cfd", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
@@ -3262,7 +3262,7 @@ fn decode_bnk_mngt_pcbg_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_bnk_mngt_pcbg_xml_response_at(value: SourceValue, path: String) -> Result<BnkMngtPcbgXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_bnk_mngt_pcbg_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -3478,7 +3478,7 @@ impl LwstLgXmlResponseListItem {
 }
 
 fn decode_lwst_lg_xml_response_at_list_item(value: SourceValue, path: String) -> Result<LwstLgXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let ac_ap = object.optional("ac_ap", decode_source_value)?;
     let cfd = object.optional("cfd", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
@@ -3512,7 +3512,7 @@ fn decode_lwst_lg_xml_response_at_list(value: SourceValue, path: String) -> Resu
 }
 
 fn decode_lwst_lg_xml_response_at(value: SourceValue, path: String) -> Result<LwstLgXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_lwst_lg_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -3822,7 +3822,7 @@ impl OvLstDecsnXmlResponseListItem {
 }
 
 fn decode_ov_lst_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<OvLstDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let bddd = object.optional("bddd", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
@@ -3874,7 +3874,7 @@ fn decode_ov_lst_decsn_xml_response_at_list(value: SourceValue, path: String) ->
 }
 
 fn decode_ov_lst_decsn_xml_response_at(value: SourceValue, path: String) -> Result<OvLstDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_ov_lst_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -4124,7 +4124,7 @@ impl OvDlstDecsnXmlResponseListItem {
 }
 
 fn decode_ov_dlst_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<OvDlstDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let bddd = object.optional("bddd", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
@@ -4164,7 +4164,7 @@ fn decode_ov_dlst_decsn_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_ov_dlst_decsn_xml_response_at(value: SourceValue, path: String) -> Result<OvDlstDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_ov_dlst_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -4382,7 +4382,7 @@ impl OvLstXmlResponseListItem {
 }
 
 fn decode_ov_lst_xml_response_at_list_item(value: SourceValue, path: String) -> Result<OvLstXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let cfd = object.optional("cfd", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
@@ -4414,7 +4414,7 @@ fn decode_ov_lst_xml_response_at_list(value: SourceValue, path: String) -> Resul
 }
 
 fn decode_ov_lst_xml_response_at(value: SourceValue, path: String) -> Result<OvLstXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_ov_lst_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -4632,7 +4632,7 @@ impl OvDlstXmlResponseListItem {
 }
 
 fn decode_ov_dlst_xml_response_at_list_item(value: SourceValue, path: String) -> Result<OvDlstXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let cfd = object.optional("cfd", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
@@ -4664,7 +4664,7 @@ fn decode_ov_dlst_xml_response_at_list(value: SourceValue, path: String) -> Resu
 }
 
 fn decode_ov_dlst_xml_response_at(value: SourceValue, path: String) -> Result<OvDlstXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_ov_dlst_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -5178,7 +5178,7 @@ impl CvbdIsDecsnXmlResponseListItem {
 }
 
 fn decode_cvbd_is_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<CvbdIsDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let abmg = object.optional("abmg", decode_source_value)?;
     let act_mktprcfl_cvprc_lwtrsprc = object.optional("act_mktprcfl_cvprc_lwtrsprc", decode_source_value)?;
     let act_mktprcfl_cvprc_lwtrsprc_bs = object.optional("act_mktprcfl_cvprc_lwtrsprc_bs", decode_source_value)?;
@@ -5282,7 +5282,7 @@ fn decode_cvbd_is_decsn_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_cvbd_is_decsn_xml_response_at(value: SourceValue, path: String) -> Result<CvbdIsDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_cvbd_is_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -5814,7 +5814,7 @@ impl BdwtIsDecsnXmlResponseListItem {
 }
 
 fn decode_bdwt_is_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<BdwtIsDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let abmg = object.optional("abmg", decode_source_value)?;
     let act_mktprcfl_cvprc_lwtrsprc = object.optional("act_mktprcfl_cvprc_lwtrsprc", decode_source_value)?;
     let act_mktprcfl_cvprc_lwtrsprc_bs = object.optional("act_mktprcfl_cvprc_lwtrsprc_bs", decode_source_value)?;
@@ -5924,7 +5924,7 @@ fn decode_bdwt_is_decsn_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_bdwt_is_decsn_xml_response_at(value: SourceValue, path: String) -> Result<BdwtIsDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_bdwt_is_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -6382,7 +6382,7 @@ impl ExbdIsDecsnXmlResponseListItem {
 }
 
 fn decode_exbd_is_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<ExbdIsDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let bd_fta = object.optional("bd_fta", decode_source_value)?;
     let bd_intr_ex = object.optional("bd_intr_ex", decode_source_value)?;
@@ -6478,7 +6478,7 @@ fn decode_exbd_is_decsn_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_exbd_is_decsn_xml_response_at(value: SourceValue, path: String) -> Result<ExbdIsDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_exbd_is_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -6682,7 +6682,7 @@ impl BnkMngtPcspXmlResponseListItem {
 }
 
 fn decode_bnk_mngt_pcsp_xml_response_at_list_item(value: SourceValue, path: String) -> Result<BnkMngtPcspXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let cfd = object.optional("cfd", decode_source_value)?;
     let corp_cls = object.optional("corp_cls", decode_source_value)?;
     let corp_code = object.optional("corp_code", decode_source_value)?;
@@ -6712,7 +6712,7 @@ fn decode_bnk_mngt_pcsp_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_bnk_mngt_pcsp_xml_response_at(value: SourceValue, path: String) -> Result<BnkMngtPcspXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_bnk_mngt_pcsp_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -7114,7 +7114,7 @@ impl WdCocobdIsDecsnXmlResponseListItem {
 }
 
 fn decode_wd_cocobd_is_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<WdCocobdIsDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let bd_fta = object.optional("bd_fta", decode_source_value)?;
     let bd_intr_ex = object.optional("bd_intr_ex", decode_source_value)?;
@@ -7194,7 +7194,7 @@ fn decode_wd_cocobd_is_decsn_xml_response_at_list(value: SourceValue, path: Stri
 }
 
 fn decode_wd_cocobd_is_decsn_xml_response_at(value: SourceValue, path: String) -> Result<WdCocobdIsDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_wd_cocobd_is_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -7566,7 +7566,7 @@ impl TsstkAqDecsnXmlResponseListItem {
 }
 
 fn decode_tsstk_aq_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<TsstkAqDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aq_dd = object.optional("aq_dd", decode_source_value)?;
     let aq_mth = object.optional("aq_mth", decode_source_value)?;
@@ -7636,7 +7636,7 @@ fn decode_tsstk_aq_decsn_xml_response_at_list(value: SourceValue, path: String) 
 }
 
 fn decode_tsstk_aq_decsn_xml_response_at(value: SourceValue, path: String) -> Result<TsstkAqDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_tsstk_aq_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -8050,7 +8050,7 @@ impl TsstkDpDecsnXmlResponseListItem {
 }
 
 fn decode_tsstk_dp_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<TsstkDpDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aq_wtn_div_estk = object.optional("aq_wtn_div_estk", decode_source_value)?;
     let aq_wtn_div_estk_rt = object.optional("aq_wtn_div_estk_rt", decode_source_value)?;
@@ -8126,7 +8126,7 @@ fn decode_tsstk_dp_decsn_xml_response_at_list(value: SourceValue, path: String) 
 }
 
 fn decode_tsstk_dp_decsn_xml_response_at(value: SourceValue, path: String) -> Result<TsstkDpDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_tsstk_dp_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -8442,7 +8442,7 @@ impl TsstkAqTrctrCnsDecsnXmlResponseListItem {
 }
 
 fn decode_tsstk_aq_trctr_cns_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<TsstkAqTrctrCnsDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aq_wtn_div_estk = object.optional("aq_wtn_div_estk", decode_source_value)?;
     let aq_wtn_div_estk_rt = object.optional("aq_wtn_div_estk_rt", decode_source_value)?;
@@ -8500,7 +8500,7 @@ fn decode_tsstk_aq_trctr_cns_decsn_xml_response_at_list(value: SourceValue, path
 }
 
 fn decode_tsstk_aq_trctr_cns_decsn_xml_response_at(value: SourceValue, path: String) -> Result<TsstkAqTrctrCnsDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_tsstk_aq_trctr_cns_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -8826,7 +8826,7 @@ impl TsstkAqTrctrCcDecsnXmlResponseListItem {
 }
 
 fn decode_tsstk_aq_trctr_cc_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<TsstkAqTrctrCcDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aq_wtn_div_estk = object.optional("aq_wtn_div_estk", decode_source_value)?;
     let aq_wtn_div_estk_rt = object.optional("aq_wtn_div_estk_rt", decode_source_value)?;
@@ -8886,7 +8886,7 @@ fn decode_tsstk_aq_trctr_cc_decsn_xml_response_at_list(value: SourceValue, path:
 }
 
 fn decode_tsstk_aq_trctr_cc_decsn_xml_response_at(value: SourceValue, path: String) -> Result<TsstkAqTrctrCcDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_tsstk_aq_trctr_cc_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -9368,7 +9368,7 @@ impl BsnInhDecsnXmlResponseListItem {
 }
 
 fn decode_bsn_inh_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<BsnInhDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let absn_inh_atn = object.optional("absn_inh_atn", decode_source_value)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aprskh_ctref = object.optional("aprskh_ctref", decode_source_value)?;
@@ -9476,7 +9476,7 @@ fn decode_bsn_inh_decsn_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_bsn_inh_decsn_xml_response_at(value: SourceValue, path: String) -> Result<BsnInhDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_bsn_inh_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -9908,7 +9908,7 @@ impl BsnTrfDecsnXmlResponseListItem {
 }
 
 fn decode_bsn_trf_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<BsnTrfDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aprskh_ctref = object.optional("aprskh_ctref", decode_source_value)?;
     let aprskh_lmt = object.optional("aprskh_lmt", decode_source_value)?;
@@ -10002,7 +10002,7 @@ fn decode_bsn_trf_decsn_xml_response_at_list(value: SourceValue, path: String) -
 }
 
 fn decode_bsn_trf_decsn_xml_response_at(value: SourceValue, path: String) -> Result<BsnTrfDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_bsn_trf_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -10416,7 +10416,7 @@ impl TgastInhDecsnXmlResponseListItem {
 }
 
 fn decode_tgast_inh_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<TgastInhDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aprskh_ctref = object.optional("aprskh_ctref", decode_source_value)?;
     let aprskh_ex_pc_mth_pd_pl = object.optional("aprskh_ex_pc_mth_pd_pl", decode_source_value)?;
@@ -10508,7 +10508,7 @@ fn decode_tgast_inh_decsn_xml_response_at_list(value: SourceValue, path: String)
 }
 
 fn decode_tgast_inh_decsn_xml_response_at(value: SourceValue, path: String) -> Result<TgastInhDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_tgast_inh_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -10922,7 +10922,7 @@ impl TgastTrfDecsnXmlResponseListItem {
 }
 
 fn decode_tgast_trf_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<TgastTrfDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aprskh_ctref = object.optional("aprskh_ctref", decode_source_value)?;
     let aprskh_ex_pc_mth_pd_pl = object.optional("aprskh_ex_pc_mth_pd_pl", decode_source_value)?;
@@ -11014,7 +11014,7 @@ fn decode_tgast_trf_decsn_xml_response_at_list(value: SourceValue, path: String)
 }
 
 fn decode_tgast_trf_decsn_xml_response_at(value: SourceValue, path: String) -> Result<TgastTrfDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_tgast_trf_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -11462,7 +11462,7 @@ impl OtcprStkInvscrInhDecsnXmlResponseListItem {
 }
 
 fn decode_otcpr_stk_invscr_inh_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<OtcprStkInvscrInhDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let atinh_eqrt = object.optional("atinh_eqrt", decode_source_value)?;
     let atinh_owstkcnt = object.optional("atinh_owstkcnt", decode_source_value)?;
@@ -11560,7 +11560,7 @@ fn decode_otcpr_stk_invscr_inh_decsn_xml_response_at_list(value: SourceValue, pa
 }
 
 fn decode_otcpr_stk_invscr_inh_decsn_xml_response_at(value: SourceValue, path: String) -> Result<OtcprStkInvscrInhDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_otcpr_stk_invscr_inh_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -11984,7 +11984,7 @@ impl OtcprStkInvscrTrfDecsnXmlResponseListItem {
 }
 
 fn decode_otcpr_stk_invscr_trf_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<OtcprStkInvscrTrfDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let attrf_eqrt = object.optional("attrf_eqrt", decode_source_value)?;
     let attrf_owstkcnt = object.optional("attrf_owstkcnt", decode_source_value)?;
@@ -12074,7 +12074,7 @@ fn decode_otcpr_stk_invscr_trf_decsn_xml_response_at_list(value: SourceValue, pa
 }
 
 fn decode_otcpr_stk_invscr_trf_decsn_xml_response_at(value: SourceValue, path: String) -> Result<OtcprStkInvscrTrfDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_otcpr_stk_invscr_trf_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -12506,7 +12506,7 @@ impl StkrtbdInhDecsnXmlResponseListItem {
 }
 
 fn decode_stkrtbd_inh_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<StkrtbdInhDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let bddd = object.optional("bddd", decode_source_value)?;
     let bdiscmp_cmpnm = object.optional("bdiscmp_cmpnm", decode_source_value)?;
@@ -12600,7 +12600,7 @@ fn decode_stkrtbd_inh_decsn_xml_response_at_list(value: SourceValue, path: Strin
 }
 
 fn decode_stkrtbd_inh_decsn_xml_response_at(value: SourceValue, path: String) -> Result<StkrtbdInhDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_stkrtbd_inh_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -13032,7 +13032,7 @@ impl StkrtbdTrfDecsnXmlResponseListItem {
 }
 
 fn decode_stkrtbd_trf_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<StkrtbdTrfDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aqd = object.optional("aqd", decode_source_value)?;
     let bddd = object.optional("bddd", decode_source_value)?;
@@ -13126,7 +13126,7 @@ fn decode_stkrtbd_trf_decsn_xml_response_at_list(value: SourceValue, path: Strin
 }
 
 fn decode_stkrtbd_trf_decsn_xml_response_at(value: SourceValue, path: String) -> Result<StkrtbdTrfDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_stkrtbd_trf_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -13746,7 +13746,7 @@ impl CmpMgDecsnXmlResponseListItem {
 }
 
 fn decode_cmp_mg_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<CmpMgDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aprskh_ctref = object.optional("aprskh_ctref", decode_source_value)?;
     let aprskh_plnprc = object.optional("aprskh_plnprc", decode_source_value)?;
@@ -13896,7 +13896,7 @@ fn decode_cmp_mg_decsn_xml_response_at_list(value: SourceValue, path: String) ->
 }
 
 fn decode_cmp_mg_decsn_xml_response_at(value: SourceValue, path: String) -> Result<CmpMgDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_cmp_mg_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -14388,7 +14388,7 @@ impl CmpDvDecsnXmlResponseListItem {
 }
 
 fn decode_cmp_dv_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<CmpDvDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let abcr_crrt = object.optional("abcr_crrt", decode_source_value)?;
     let abcr_nstkascnd = object.optional("abcr_nstkascnd", decode_source_value)?;
     let abcr_nstkasstd = object.optional("abcr_nstkasstd", decode_source_value)?;
@@ -14498,7 +14498,7 @@ fn decode_cmp_dv_decsn_xml_response_at_list(value: SourceValue, path: String) ->
 }
 
 fn decode_cmp_dv_decsn_xml_response_at(value: SourceValue, path: String) -> Result<CmpDvDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_cmp_dv_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -15276,7 +15276,7 @@ impl CmpDvmgDecsnXmlResponseListItem {
 }
 
 fn decode_cmp_dvmg_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<CmpDvmgDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let abcr_crrt = object.optional("abcr_crrt", decode_source_value)?;
     let abcr_nstkascnd = object.optional("abcr_nstkascnd", decode_source_value)?;
     let abcr_nstkasstd = object.optional("abcr_nstkasstd", decode_source_value)?;
@@ -15468,7 +15468,7 @@ fn decode_cmp_dvmg_decsn_xml_response_at_list(value: SourceValue, path: String) 
 }
 
 fn decode_cmp_dvmg_decsn_xml_response_at(value: SourceValue, path: String) -> Result<CmpDvmgDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_cmp_dvmg_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;
@@ -16014,7 +16014,7 @@ impl StkExtrDecsnXmlResponseListItem {
 }
 
 fn decode_stk_extr_decsn_xml_response_at_list_item(value: SourceValue, path: String) -> Result<StkExtrDecsnXmlResponseListItem, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let adt_a_atn = object.optional("adt_a_atn", decode_source_value)?;
     let aprskh_ctref = object.optional("aprskh_ctref", decode_source_value)?;
     let aprskh_lmt = object.optional("aprskh_lmt", decode_source_value)?;
@@ -16138,7 +16138,7 @@ fn decode_stk_extr_decsn_xml_response_at_list(value: SourceValue, path: String) 
 }
 
 fn decode_stk_extr_decsn_xml_response_at(value: SourceValue, path: String) -> Result<StkExtrDecsnXmlResponse, ResponseDecodeError> {
-    let mut object = ObjectDecoder::new(value, path)?;
+    let mut object = ObjectDecoder::new_xml(value, path)?;
     let list = object.optional("list", decode_stk_extr_decsn_xml_response_at_list)?;
     let message = object.optional("message", decode_source_value)?;
     let status = object.optional("status", decode_source_status)?;

@@ -369,6 +369,11 @@ impl ApiKey {
             secret: value.into(),
         })
     }
+
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
+    pub(crate) fn with_exposed_secret<T>(&self, adapter: impl FnOnce(&str) -> T) -> T {
+        adapter(self.secret.expose_secret())
+    }
 }
 
 impl fmt::Debug for ApiKey {

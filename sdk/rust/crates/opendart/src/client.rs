@@ -74,7 +74,7 @@ impl Client {
         let sent = self.send(prepared.parts()).await?;
         let deadline = sent.deadline;
         let mut response = sent.response;
-        let metadata = response_metadata(&response);
+        let metadata = response_metadata(&response, &self.api_key);
         let mut body = Vec::new();
 
         loop {
@@ -117,7 +117,7 @@ impl Client {
         }
 
         let sent = self.send(prepared.parts()).await?;
-        let metadata = response_metadata(&sent.response);
+        let metadata = response_metadata(&sent.response, &self.api_key);
         let operation = prepared.identity();
         let stream = ReqwestBodyStream {
             inner: Box::pin(sent.response.bytes_stream()),
@@ -545,7 +545,7 @@ fn structured_format<T>(prepared: &PreparedRequest<T>) -> Result<EnvelopeFormat,
     }
 }
 
-fn response_metadata(response: &reqwest::Response) -> ResponseMetadata {
+fn response_metadata(response: &reqwest::Response, api_key: &ApiKey) -> ResponseMetadata {
     let status = response.status().as_u16();
     let version = match response.version() {
         reqwest::Version::HTTP_09 => HttpVersion::Http09,
@@ -555,13 +555,57 @@ fn response_metadata(response: &reqwest::Response) -> ResponseMetadata {
         reqwest::Version::HTTP_3 => HttpVersion::Http3,
         other => HttpVersion::Other(format!("{other:?}")),
     };
-    let headers = response
-        .headers()
-        .iter()
-        .filter(|(name, _)| safe_response_header(name.as_str()))
-        .map(|(name, value)| ResponseHeader::new(name.as_str(), value.as_bytes()))
-        .collect();
+    let headers = api_key.with_exposed_secret(|secret| {
+        let form_encoded = form_urlencoded::byte_serialize(secret.as_bytes()).collect::<String>();
+        let percent_encoded = percent_encode(secret.as_bytes());
+        response
+            .headers()
+            .iter()
+            .filter_map(|(name, value)| {
+                let bytes = value.as_bytes();
+                if !safe_response_header(name.as_str())
+                    || contains_bytes(bytes, secret.as_bytes())
+                    || contains_ascii_case_insensitive(bytes, form_encoded.as_bytes())
+                    || contains_ascii_case_insensitive(bytes, percent_encoded.as_bytes())
+                    || contains_ascii_case_insensitive(bytes, b"crtfc_key")
+                {
+                    None
+                } else {
+                    Some(ResponseHeader::new(name.as_str(), bytes))
+                }
+            })
+            .collect()
+    });
     ResponseMetadata::new(status, version, headers)
+}
+
+fn percent_encode(value: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+    let mut encoded = String::with_capacity(value.len().saturating_mul(3));
+    for byte in value {
+        if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~') {
+            encoded.push(char::from(*byte));
+        } else {
+            encoded.push('%');
+            encoded.push(char::from(HEX[usize::from(byte >> 4)]));
+            encoded.push(char::from(HEX[usize::from(byte & 0x0f)]));
+        }
+    }
+    encoded
+}
+
+fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
+    !needle.is_empty()
+        && haystack
+            .windows(needle.len())
+            .any(|window| window == needle)
+}
+
+fn contains_ascii_case_insensitive(haystack: &[u8], needle: &[u8]) -> bool {
+    !needle.is_empty()
+        && haystack
+            .windows(needle.len())
+            .any(|window| window.eq_ignore_ascii_case(needle))
 }
 
 fn safe_response_header(name: &str) -> bool {
@@ -1104,11 +1148,17 @@ mod tests {
     #[tokio::test]
     async fn client_sends_one_authorized_request_and_sanitizes_metadata() {
         let sentinel = "secret /+ credential";
+        let form_encoded = "secret+%2F%2B+credential";
+        let percent_encoded = "secret%20%2F%2B%20credential";
         let body = br#"{"status":"000","corp_name":"Example Corp","value":1.20e3}"#;
         let unsafe_location = "https://elsewhere.invalid/?crtfc%5Fkey=%73ecret";
         let (origin, server) = serve_once(response(
             &[
                 ("content-type", "application/json"),
+                ("content-language", sentinel),
+                ("content-encoding", form_encoded),
+                ("retry-after", percent_encoded),
+                ("date", "crtfc_key"),
                 ("location", unsafe_location),
                 ("content-location", unsafe_location),
                 ("link", unsafe_location),
@@ -1150,6 +1200,10 @@ mod tests {
             "set-cookie",
             "x-crtfc%5fkey",
             "x-source-uri",
+            "content-language",
+            "content-encoding",
+            "retry-after",
+            "date",
         ] {
             assert!(
                 !result
@@ -1363,6 +1417,10 @@ mod tests {
                 None,
             ),
             (
+                br#"<result><status>000</status><list/></result>"#.as_slice(),
+                Some(1),
+            ),
+            (
                 br#"<result><status>000</status><list><corp_code>A</corp_code></list></result>"#
                     .as_slice(),
                 Some(1),
@@ -1386,6 +1444,11 @@ mod tests {
                 panic!("payload-bearing status must remain success evidence");
             };
             assert_eq!(value.list.as_ref().map(Vec::len), expected_length);
+            if body == br#"<result><status>000</status><list/></result>"# {
+                let empty = &value.list.as_ref().unwrap()[0];
+                assert!(empty.corp_code.is_none());
+                assert_eq!(empty.additional_fields().count(), 0);
+            }
             server.await.unwrap();
         }
     }

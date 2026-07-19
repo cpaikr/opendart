@@ -65,10 +65,11 @@ crate package identifies:
 
 Generated freshness uses the SDK projection. A specification change outside
 that projection does not rewrite or release the crate. The release guard proves
-that the current canonical specification inputs match the selected source tag.
-Full bundle provenance changes only when a crate release deliberately selects
-a new generated artifact; that bundle need not be byte-identical to the bundle
-originally generated at the source tag.
+that the selected source tag exists and contains the canonical specification
+inputs; generic verification does not freeze the current source tree to that
+older tag. Full bundle provenance changes only when a crate release deliberately
+selects a new generated artifact; that bundle need not be byte-identical to the
+bundle originally generated at the source tag.
 
 ## Rust compatibility
 
