@@ -17,6 +17,8 @@ pub struct CompanyOverview {
 }
 
 impl CompanyOverview {
+    const LOGICAL_OPERATION_ID: &'static str = "DS001-2019002";
+
     /// Creates a company-overview input. Contract validation occurs during preparation.
     pub fn new(corp_code: impl Into<String>) -> Self {
         Self {
@@ -35,17 +37,17 @@ impl CompanyOverview {
         let (path, identity, expected) = match representation {
             Representation::Json => (
                 "/api/company.json",
-                OperationIdentity::new("get_company_json", "DS001-2019002"),
+                OperationIdentity::new("get_company_json", Self::LOGICAL_OPERATION_ID),
                 JSON_ONLY,
             ),
             Representation::Xml => (
                 "/api/company.xml",
-                OperationIdentity::new("get_company_xml", "DS001-2019002"),
+                OperationIdentity::new("get_company_xml", Self::LOGICAL_OPERATION_ID),
                 XML_ONLY,
             ),
             _ => {
                 return Err(PrepareError::UnsupportedRepresentation {
-                    logical_operation: "DS001-2019002",
+                    logical_operation: Self::LOGICAL_OPERATION_ID,
                     representation,
                 });
             }
@@ -72,6 +74,8 @@ pub struct AuditorOpinion {
 }
 
 impl AuditorOpinion {
+    const LOGICAL_OPERATION_ID: &'static str = "DS002-2020009";
+
     /// Creates an auditor-opinion input. Contract validation occurs during preparation.
     pub fn new(
         corp_code: impl Into<String>,
@@ -90,17 +94,23 @@ impl AuditorOpinion {
         let (path, identity, expected) = match representation {
             Representation::Json => (
                 "/api/accnutAdtorNmNdAdtOpinion.json",
-                OperationIdentity::new("get_accnutAdtorNmNdAdtOpinion_json", "DS002-2020009"),
+                OperationIdentity::new(
+                    "get_accnutAdtorNmNdAdtOpinion_json",
+                    Self::LOGICAL_OPERATION_ID,
+                ),
                 JSON_ONLY,
             ),
             Representation::Xml => (
                 "/api/accnutAdtorNmNdAdtOpinion.xml",
-                OperationIdentity::new("get_accnutAdtorNmNdAdtOpinion_xml", "DS002-2020009"),
+                OperationIdentity::new(
+                    "get_accnutAdtorNmNdAdtOpinion_xml",
+                    Self::LOGICAL_OPERATION_ID,
+                ),
                 XML_ONLY,
             ),
             _ => {
                 return Err(PrepareError::UnsupportedRepresentation {
-                    logical_operation: "DS002-2020009",
+                    logical_operation: Self::LOGICAL_OPERATION_ID,
                     representation,
                 });
             }
@@ -168,6 +178,8 @@ pub struct MultiCompanyAccounts {
 }
 
 impl MultiCompanyAccounts {
+    const LOGICAL_OPERATION_ID: &'static str = "DS003-2019017";
+
     /// Creates a multi-company input. Contract validation occurs during preparation.
     pub fn new<I, S>(
         corp_codes: I,
@@ -196,17 +208,17 @@ impl MultiCompanyAccounts {
         let (path, identity, expected) = match representation {
             Representation::Json => (
                 "/api/fnlttMultiAcnt.json",
-                OperationIdentity::new("get_fnlttMultiAcnt_json", "DS003-2019017"),
+                OperationIdentity::new("get_fnlttMultiAcnt_json", Self::LOGICAL_OPERATION_ID),
                 JSON_ONLY,
             ),
             Representation::Xml => (
                 "/api/fnlttMultiAcnt.xml",
-                OperationIdentity::new("get_fnlttMultiAcnt_xml", "DS003-2019017"),
+                OperationIdentity::new("get_fnlttMultiAcnt_xml", Self::LOGICAL_OPERATION_ID),
                 XML_ONLY,
             ),
             _ => {
                 return Err(PrepareError::UnsupportedRepresentation {
-                    logical_operation: "DS003-2019017",
+                    logical_operation: Self::LOGICAL_OPERATION_ID,
                     representation,
                 });
             }

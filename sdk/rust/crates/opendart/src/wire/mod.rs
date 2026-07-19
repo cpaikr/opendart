@@ -19,6 +19,8 @@ pub enum HttpVersion {
 }
 
 /// One sanitized response header retained without requiring UTF-8.
+///
+/// Values are constructed only by crate-owned sanitization and never by callers.
 #[derive(Clone, Eq, PartialEq)]
 pub struct ResponseHeader {
     name: String,
@@ -26,12 +28,8 @@ pub struct ResponseHeader {
 }
 
 impl ResponseHeader {
-    /// Creates a header from a normalized name and credential-free raw value.
-    ///
-    /// Strict executors must remove credential-bearing values before constructing public
-    /// metadata. The optional SDK client performs that sanitization internally.
-    #[must_use]
-    pub fn new(name: impl Into<String>, value: impl Into<Vec<u8>>) -> Self {
+    #[cfg(test)]
+    fn new(name: impl Into<String>, value: impl Into<Vec<u8>>) -> Self {
         let name = name.into();
         let value = value.into();
         Self { name, value }
@@ -61,6 +59,8 @@ impl fmt::Debug for ResponseHeader {
 }
 
 /// Sanitized source response metadata independent of any HTTP client library.
+///
+/// The SDK constructs this value only after removing credential-bearing metadata.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct ResponseMetadata {
@@ -70,9 +70,8 @@ pub struct ResponseMetadata {
 }
 
 impl ResponseMetadata {
-    /// Creates metadata from an HTTP status, version, and already sanitized headers.
-    #[must_use]
-    pub fn new(status: u16, version: HttpVersion, headers: Vec<ResponseHeader>) -> Self {
+    #[cfg(test)]
+    fn new(status: u16, version: HttpVersion, headers: Vec<ResponseHeader>) -> Self {
         Self {
             status,
             version,

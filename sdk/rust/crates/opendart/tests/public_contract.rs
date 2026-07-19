@@ -82,6 +82,11 @@ fn multi_company_request_enforces_cardinality_and_comma_serialization() {
             .prepare(Representation::Json)
             .is_err()
     );
+    assert!(
+        MultiCompanyAccounts::new(vec!["00126380"; 100], "2025", "11011")
+            .prepare(Representation::Json)
+            .is_ok()
+    );
 
     let escaped = MultiCompanyAccounts::new(["a,b", "회사 /+"], "2025", "11011")
         .prepare(Representation::Json)

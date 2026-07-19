@@ -1,6 +1,6 @@
 use std::fmt;
 
-use form_urlencoded::Serializer;
+use form_urlencoded::{Serializer, byte_serialize};
 use secrecy::{ExposeSecret, SecretString};
 use zeroize::Zeroizing;
 
@@ -313,11 +313,5 @@ impl fmt::Debug for AuthorizedRequest<'_> {
 }
 
 fn encode_query_value(value: &str) -> String {
-    let mut serializer = Serializer::new(String::new());
-    serializer.append_pair("value", value);
-    serializer
-        .finish()
-        .strip_prefix("value=")
-        .expect("the fixed query name is present")
-        .to_owned()
+    byte_serialize(value.as_bytes()).collect()
 }
