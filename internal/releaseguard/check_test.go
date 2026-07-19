@@ -42,8 +42,8 @@ func TestCheckRejectsRustReleaseManifestUntilPublicationRecoveryExists(t *testin
 	}
 	updated := strings.Replace(
 		string(source),
-		`".": "0.1.0"`,
-		`".": "0.1.0", "sdk/rust/crates/opendart": "0.1.0"`,
+		`"openapi/generated": "0.1.0"`,
+		`"openapi/generated": "0.1.0", "sdk/rust/crates/opendart": "0.1.0"`,
 		1,
 	)
 	if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
@@ -233,18 +233,23 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 	}{
 		{
 			name: "manifest component scope", artifact: manifestArtifact,
-			old: `".": "0.1.0"`, replacement: `".": "0.1.0", "extra": "0.1.0"`,
-			invariant: "contains the root and optional bootstrapped Rust component",
+			old: `"openapi/generated": "0.1.0"`, replacement: `"openapi/generated": "0.1.0", "extra": "0.1.0"`,
+			invariant: "contains the specification and optional bootstrapped Rust component",
 		},
 		{
 			name: "manifest SemVer", artifact: manifestArtifact,
 			old: `"0.1.0"`, replacement: `"01.1.0"`,
-			invariant: "root version is SemVer",
+			invariant: "specification version is SemVer",
 		},
 		{
 			name: "config package scope", artifact: configArtifact,
 			old: `"packages": {`, replacement: `"packages": { "extra": {},`,
-			invariant: "contains only the root and Rust packages",
+			invariant: "contains only the specification and Rust packages",
+		},
+		{
+			name: "specification component path", artifact: configArtifact,
+			old: `"openapi/generated": {`, replacement: `".": {`,
+			invariant: "contains only the specification and Rust packages",
 		},
 		{
 			name: "config top-level option allowlist", artifact: configArtifact,
@@ -290,11 +295,6 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "pre-major patch policy", artifact: configArtifact,
 			old: `"bump-patch-for-minor-pre-major": true`, replacement: `"bump-patch-for-minor-pre-major": false`,
 			invariant: "root package bump-patch-for-minor-pre-major",
-		},
-		{
-			name: "exclusions", artifact: configArtifact,
-			old: `"internal"`, replacement: `"internal", "scripts"`,
-			invariant: "root package exclude-paths",
 		},
 		{
 			name: "draft release", artifact: configArtifact,
@@ -478,23 +478,28 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "released commit checkout", artifact: releaseWorkflowArtifact,
-			old: "ref: ${{ steps.release.outputs.sha || steps.draft.outputs.sha }}", replacement: "ref: main",
+			old: "ref: ${{ steps.release.outputs['openapi/generated--sha'] || steps.draft.outputs.sha }}", replacement: "ref: main",
 			invariant: "released checkout uses the created or recovered SHA",
 		},
 		{
+			name: "generic release output", artifact: releaseWorkflowArtifact,
+			old: "steps.release.outputs['openapi/generated--release_created']", replacement: "steps.release.outputs.release_created",
+			invariant: "runs only for a created or recovered release",
+		},
+		{
 			name: "released commit uses checkout action", artifact: releaseWorkflowArtifact,
-			old:         "      - name: Check out released commit\n        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}\n        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
-			replacement: "      - name: Check out released commit\n        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}\n        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+			old:         "      - name: Check out released commit\n        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}\n        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+			replacement: "      - name: Check out released commit\n        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}\n        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
 			invariant:   "released checkout uses the created or recovered SHA",
 		},
 		{
 			name: "release asset condition", artifact: releaseWorkflowArtifact,
-			old: "if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}", replacement: "if: ${{ steps.release.outputs.release_created == 'true' }}",
+			old: "if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}", replacement: "if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' }}",
 			invariant: "runs only for a created or recovered release",
 		},
 		{
 			name: "release asset condition extra clause", artifact: releaseWorkflowArtifact,
-			old: "if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}", replacement: "if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' || always() }}",
+			old: "if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}", replacement: "if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' || always() }}",
 			invariant: "runs only for a created or recovered release",
 		},
 		{

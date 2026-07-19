@@ -40,9 +40,9 @@ their source does not make them automatically safe.
 
 ## Eligibility and ownership
 
-Root specification eligibility requires a material bundle change that matches a
-fresh build. Formatting, tooling, CI, test, and prose changes are not releasable.
-The root component excludes repository-only paths, including `sdk/`.
+Specification eligibility requires a material change beneath the
+`openapi/generated` component path that matches a fresh bundle build.
+Formatting, tooling, CI, test, prose, and SDK changes are not releasable.
 
 Rust eligibility requires a material change beneath the crate component path.
 Its Release Please component owns `Cargo.toml`, the crate `CHANGELOG.md`, the

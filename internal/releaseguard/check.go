@@ -18,23 +18,24 @@ import (
 )
 
 const (
-	releaseWorkflowArtifact = ".github/workflows/release-please.yml"
-	verifyWorkflowArtifact  = ".github/workflows/verify.yml"
-	liveWorkflowArtifact    = ".github/workflows/live-conformance.yml"
-	notifyWorkflowArtifact  = ".github/workflows/live-conformance-notify.yml"
-	configArtifact          = "release-please-config.json"
-	manifestArtifact        = ".release-please-manifest.json"
-	rustPackagePath         = "sdk/rust/crates/opendart"
-	rustCargoArtifact       = "sdk/rust/crates/opendart/Cargo.toml"
-	rustLockArtifact        = "sdk/rust/Cargo.lock"
-	rustProvenanceArtifact  = "sdk/rust/crates/opendart/src/provenance.rs"
-	rustPackageListArtifact = "sdk/rust/package-files.txt"
-	canonicalBundleArtifact = "openapi/generated/openapi.bundle.yaml"
-	releasePleaseAction     = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
-	checkoutAction          = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
-	setupGoAction           = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
-	uploadArtifactAction    = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
-	downloadArtifactAction  = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
+	releaseWorkflowArtifact  = ".github/workflows/release-please.yml"
+	verifyWorkflowArtifact   = ".github/workflows/verify.yml"
+	liveWorkflowArtifact     = ".github/workflows/live-conformance.yml"
+	notifyWorkflowArtifact   = ".github/workflows/live-conformance-notify.yml"
+	configArtifact           = "release-please-config.json"
+	manifestArtifact         = ".release-please-manifest.json"
+	specificationPackagePath = "openapi/generated"
+	rustPackagePath          = "sdk/rust/crates/opendart"
+	rustCargoArtifact        = "sdk/rust/crates/opendart/Cargo.toml"
+	rustLockArtifact         = "sdk/rust/Cargo.lock"
+	rustProvenanceArtifact   = "sdk/rust/crates/opendart/src/provenance.rs"
+	rustPackageListArtifact  = "sdk/rust/package-files.txt"
+	canonicalBundleArtifact  = "openapi/generated/openapi.bundle.yaml"
+	releasePleaseAction      = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
+	checkoutAction           = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+	setupGoAction            = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
+	uploadArtifactAction     = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+	downloadArtifactAction   = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
 
 	liveRunScript   = "go run ./cmd/opendart-tool live-conformance --repository-root . > live-conformance-report.json"
 	notifyRunScript = `go run ./cmd/opendart-tool live-conformance-notify \
@@ -45,7 +46,7 @@ const (
   --run-id "${NOTIFY_RUN_ID}" \
   --run-attempt "${NOTIFY_RUN_ATTEMPT}"`
 
-	draftRecoveryScript = `version="$(jq -r '.["."]' .release-please-manifest.json)"
+	draftRecoveryScript = `version="$(jq -r '.["openapi/generated"]' .release-please-manifest.json)"
 tag_name="v${version}"
 release="$(gh release view "${tag_name}" --json isDraft,targetCommitish 2>/dev/null || true)"
 if test -n "${release}" && test "$(jq -r .isDraft <<<"${release}")" = true; then
@@ -365,9 +366,9 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 	}
 
 	manifestKeys := sortedKeys(manifest)
-	bootstrapManifest := reflect.DeepEqual(manifestKeys, []string{"."})
-	releasedManifest := reflect.DeepEqual(manifestKeys, []string{".", rustPackagePath})
-	if err := require(manifestArtifact, "contains the root and optional bootstrapped Rust component", bootstrapManifest || releasedManifest, ""); err != nil {
+	bootstrapManifest := reflect.DeepEqual(manifestKeys, []string{specificationPackagePath})
+	releasedManifest := reflect.DeepEqual(manifestKeys, []string{specificationPackagePath, rustPackagePath})
+	if err := require(manifestArtifact, "contains the specification and optional bootstrapped Rust component", bootstrapManifest || releasedManifest, ""); err != nil {
 		return err
 	}
 	if releasedManifest {
@@ -376,10 +377,10 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 			Invariant: "omits the Rust component until work 6 validates path-qualified outputs and existing-draft recovery",
 		}
 	}
-	if err := require(manifestArtifact, "root version is SemVer", semanticVersion.MatchString(manifest["."]), ""); err != nil {
+	if err := require(manifestArtifact, "specification version is SemVer", semanticVersion.MatchString(manifest[specificationPackagePath]), ""); err != nil {
 		return err
 	}
-	if err := require(configArtifact, "contains only the root and Rust packages", reflect.DeepEqual(sortedKeys(config.Packages), []string{".", rustPackagePath}), ""); err != nil {
+	if err := require(configArtifact, "contains only the specification and Rust packages", reflect.DeepEqual(sortedKeys(config.Packages), []string{specificationPackagePath, rustPackagePath}), ""); err != nil {
 		return err
 	}
 	if err := require(
@@ -390,7 +391,7 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 	); err != nil {
 		return err
 	}
-	root := config.Packages["."]
+	root := config.Packages[specificationPackagePath]
 	if _, exists := root["releaseType"]; exists {
 		return &Error{Artifact: configArtifact, Invariant: "uses kebab-case release-type"}
 	}
@@ -399,7 +400,6 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 		"bump-patch-for-minor-pre-major",
 		"changelog-path",
 		"draft",
-		"exclude-paths",
 		"force-tag-creation",
 		"include-component-in-tag",
 		"include-v-in-release-name",
@@ -425,7 +425,7 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 		{key: "include-component-in-tag", value: false},
 		{key: "include-v-in-tag", value: true},
 		{key: "include-v-in-release-name", value: true},
-		{key: "changelog-path", value: "CHANGELOG.md"},
+		{key: "changelog-path", value: "/CHANGELOG.md"},
 		{key: "bump-minor-pre-major", value: true},
 		{key: "bump-patch-for-minor-pre-major", value: true},
 		{key: "draft", value: true},
@@ -435,13 +435,6 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 		if !reflect.DeepEqual(root[expected.key], expected.value) {
 			return &Error{Artifact: configArtifact, Invariant: "root package " + expected.key, Detail: fmt.Sprintf("want %v", expected.value)}
 		}
-	}
-	expectedExclusions := []any{
-		".agents", ".codex", ".github", "ARCHITECTURE.md", "cmd", "docs",
-		"go.mod", "go.sum", "internal", "sdk",
-	}
-	if err := require(configArtifact, "root package exclude-paths", reflect.DeepEqual(root["exclude-paths"], expectedExclusions), "exact repository-only exclusions are required"); err != nil {
-		return err
 	}
 	rustPackage := config.Packages[rustPackagePath]
 	expectedRustKeys := []string{
@@ -758,7 +751,7 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	}
 	if releasedCheckoutIndex <= releaseIndex ||
 		!isCheckoutAction(releasedCheckout.Uses) ||
-		releasedCheckout.With["ref"] != "${{ steps.release.outputs.sha || steps.draft.outputs.sha }}" {
+		releasedCheckout.With["ref"] != "${{ steps.release.outputs['openapi/generated--sha'] || steps.draft.outputs.sha }}" {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "released checkout uses the created or recovered SHA"}
 	}
 
@@ -1096,7 +1089,7 @@ func checkCheckoutCredentials(artifact string, workflow workflow) error {
 func releaseOrRecovery(condition string) bool {
 	return exactWorkflowExpression(
 		condition,
-		"steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true'",
+		"steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true'",
 	)
 }
 
@@ -1139,7 +1132,7 @@ func expectedReleaseStepEnv(name string) map[string]string {
 	case "Upload release assets", "Publish immutable release":
 		return map[string]string{
 			"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}",
-			"TAG_NAME": "${{ steps.release.outputs.tag_name || steps.draft.outputs.tag_name }}",
+			"TAG_NAME": "${{ steps.release.outputs['openapi/generated--tag_name'] || steps.draft.outputs.tag_name }}",
 		}
 	default:
 		return nil

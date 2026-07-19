@@ -90,8 +90,9 @@ request behavior, not only the source OpenAPI label.
 
 ## Release Please boundary
 
-The root component excludes `sdk/`. The separate Rust-aware component is rooted
-at `sdk/rust/crates/opendart`, owns its `Cargo.toml` and `CHANGELOG.md`, uses
+The specification component is rooted at `openapi/generated`, so repository and
+SDK commits cannot create a specification release. The separate Rust-aware
+component is rooted at `sdk/rust/crates/opendart`, owns its `Cargo.toml` and `CHANGELOG.md`, uses
 component-qualified tags, and updates the matching `opendart` entry in the
 workspace lock through an explicit TOML extra file.
 
@@ -102,10 +103,10 @@ until work 6 implements the complete publication and recovery flow. Therefore a
 Rust Release Please PR must not be merged before work 6; the same guard also
 stops the release workflow if such a merge bypasses the required PR check.
 
-The current Release Please workflow still finalizes only the root specification
+The current Release Please workflow still finalizes only the specification
 release assets. A Rust component can prepare a draft release proposal, but no
-workflow has crates.io credentials or runs `cargo publish`. Generic root release
-outputs never authorize Rust publication.
+workflow has crates.io credentials or runs `cargo publish`. Path-qualified
+specification outputs never authorize Rust publication.
 
 ## Work 6: crates.io publication
 
