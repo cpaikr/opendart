@@ -14,6 +14,13 @@ generator model without depending on Rust source.
 
 ## Current state
 
+- ADR 0002 accepts the first-party Rust SDK product boundary and fixes the
+  initial package, MSRV, resolver, dependency, feature, public-seam, and
+  independent-versioning decisions.
+- The compatibility gate proves the selected JSON, XML, secret, and `reqwest`
+  behavior, including a positive-control protocol retry fixture, and the Go
+  OpenAPI boundary now exposes complete SDK-surface evidence through only
+  repository-owned values.
 - The repository publishes only the OpenAPI bundle and its checksum. It has no
   Cargo workspace, public runtime package, SDK generator, or crates.io release
   flow.
@@ -132,7 +139,7 @@ target constraints and acceptance details for their workstreams.
 
 ## Ordered work
 
-### 1. Record the product-boundary decision and prove dependencies
+### 1. Record the product-boundary decision and prove dependencies — complete
 
 - Add a proposed ADR covering the public SDK boundary, private Go generator,
   independent package versioning, and transport-independent core.
@@ -253,10 +260,9 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Start ordered work 1 by drafting ADR 0002 and running the narrow dependency and
-public-seam compatibility gate. Do not add generated endpoint code or release
-automation until that gate fixes the crate boundary, MSRV, selected `reqwest`
-line, and conservative wire representation.
+Start ordered work 2 by creating the isolated Cargo workspace and handwritten
+public-contract skeleton. Prove the no-default-feature dependency boundary and
+review the representative public API before generating the endpoint surface.
 
 ## Progress log
 
@@ -264,3 +270,11 @@ line, and conservative wire representation.
   generation, transport-safety, verification, and release workstreams. No SDK
   implementation or product-boundary documentation has been promoted to
   current state.
+- 2026-07-19: Accepted ADR 0002 after the dependency and public-seam
+  compatibility gate. Selected Rust 1.85.0, edition 2024/resolver 3,
+  `reqwest` 0.13.4, `serde_json` 1.0, `quick-xml` 0.41, and `secrecy` 0.10;
+  confirmed the `opendart` registry name, MIT packaging, docs.rs policy,
+  protocol retry/redirect/raw-body controls, conservative wire parsing, secret
+  redaction, and complete repository-owned OpenAPI surface access. The
+  throwaway Cargo fixture was removed after its stable-Rust gate passed; the
+  canonical coverage proof remains as a Go test.
