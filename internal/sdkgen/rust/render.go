@@ -51,7 +51,7 @@ func header(source model.Model) string {
 
 func renderModule(source model.Model) string {
 	return header(source) + fmt.Sprintf(
-		"pub(crate) const GENERATOR_SCHEMA: u32 = %d;\npub(crate) const PROJECTION_CHECKSUM: &str = %s;\n\n/// Canonical public-name and identity mappings.\npub mod mapping;\n/// Generated logical-operation input types.\npub mod operations;\n/// Conservative response-routing shape metadata.\npub mod wire_shapes;\n",
+		"pub(crate) const GENERATOR_SCHEMA: u32 = %d;\npub(crate) const PROJECTION_CHECKSUM: &str = %s;\n\n/// Generator-owned logical-operation input types.\n///\n/// Types in this module are supported public API. The generated file layout is not.\npub mod operations;\n#[cfg(test)]\npub(crate) mod mapping;\n#[cfg(test)]\npub(crate) mod wire_shapes;\n\n#[cfg(test)]\nmod generated_inventory_tests {\n    use std::collections::{BTreeMap, BTreeSet};\n\n    use super::{\n        mapping::OPERATION_MAPPINGS,\n        wire_shapes::{AdditionalPropertiesPolicy, RESPONSE_SHAPES},\n    };\n\n    #[test]\n    fn mappings_and_response_routes_cover_the_same_physical_inventory() {\n        let mut physical = BTreeSet::new();\n        let mut logical_names = BTreeMap::new();\n        for mapping in OPERATION_MAPPINGS {\n            assert!(physical.insert(mapping.operation_id), \"duplicate physical mapping: {}\", mapping.operation_id);\n            if let Some(previous) = logical_names.insert(mapping.logical_operation_id, mapping.rust_name) {\n                assert_eq!(previous, mapping.rust_name, \"logical operation has multiple public names: {}\", mapping.logical_operation_id);\n            }\n        }\n\n        let mut routed = BTreeSet::new();\n        for shape in RESPONSE_SHAPES {\n            assert!(physical.contains(shape.operation_id), \"response route has no operation mapping: {}\", shape.operation_id);\n            assert!(!shape.selector.is_empty());\n            assert!(!shape.http_status_evidence.is_empty());\n            assert!(!shape.media_type.is_empty());\n            assert!(!shape.content_type_status.is_empty());\n            assert_eq!(shape.nodes.first().map(|node| node.path), Some(\"$\"));\n            for node in shape.nodes {\n                let _ = (\n                    node.description,\n                    node.kind,\n                    node.required,\n                    node.additional_properties,\n                    node.xml_name,\n                    node.xml_node_type,\n                    node.known_statuses,\n                );\n            }\n            routed.insert(shape.operation_id);\n        }\n        let _ = AdditionalPropertiesPolicy::Forbidden;\n        assert_eq!(physical, routed);\n    }\n}\n",
 		source.SchemaVersion, quote(source.Checksum),
 	)
 }
@@ -60,9 +60,9 @@ func renderMapping(source model.Model) string {
 	var output strings.Builder
 	output.WriteString(header(source))
 	output.WriteString("/// Stable public-name mapping back to the canonical OpenAPI identities.\n")
-	output.WriteString("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub struct OperationMapping {\n")
+	output.WriteString("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub(crate) struct OperationMapping {\n")
 	output.WriteString("    /// Generated public Rust input type name.\n    pub rust_name: &'static str,\n    /// Canonical physical OpenAPI operation ID.\n    pub operation_id: &'static str,\n    /// Stable logical OpenDART operation ID.\n    pub logical_operation_id: &'static str,\n}\n\n")
-	output.WriteString("/// Complete canonical physical-operation mapping.\npub const OPERATION_MAPPINGS: &[OperationMapping] = &[\n")
+	output.WriteString("/// Complete canonical physical-operation mapping.\npub(crate) const OPERATION_MAPPINGS: &[OperationMapping] = &[\n")
 	logicalNames := make(map[string]string, len(source.Logical))
 	for _, operation := range source.Logical {
 		logicalNames[operation.ID] = operation.RustName
@@ -371,12 +371,12 @@ func renderWireShapes(source model.Model) string {
 	var output strings.Builder
 	output.WriteString(header(source))
 	output.WriteString("/// Conservative kind established by the canonical source schema.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n")
-	output.WriteString("pub enum WireShapeKind {\n    /// An object with named properties.\n    Object,\n    /// An ordered array.\n    Array,\n    /// A source-established string.\n    String,\n    /// A scalar whose type is not established.\n    Opaque,\n    /// Uninterpreted binary entity bytes.\n    Binary,\n}\n\n")
+	output.WriteString("pub(crate) enum WireShapeKind {\n    /// An object with named properties.\n    Object,\n    /// An ordered array.\n    Array,\n    /// A source-established string.\n    String,\n    /// A scalar whose type is not established.\n    Opaque,\n    /// Uninterpreted binary entity bytes.\n    Binary,\n}\n\n")
 	output.WriteString("/// Source policy for fields not named by an object schema.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n")
-	output.WriteString("pub enum AdditionalPropertiesPolicy {\n    /// The canonical schema does not close or explicitly open the object.\n    Unspecified,\n    /// Additional properties are explicitly allowed.\n    Allowed,\n    /// Additional properties are explicitly forbidden.\n    Forbidden,\n}\n\n")
-	output.WriteString("/// One flattened node in a conservative response-shape tree.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub struct WireShapeNode {\n")
+	output.WriteString("pub(crate) enum AdditionalPropertiesPolicy {\n    /// The canonical schema does not close or explicitly open the object.\n    Unspecified,\n    /// Additional properties are explicitly allowed.\n    Allowed,\n    /// Additional properties are explicitly forbidden.\n    Forbidden,\n}\n\n")
+	output.WriteString("/// One flattened node in a conservative response-shape tree.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub(crate) struct WireShapeNode {\n")
 	output.WriteString("    /// Stable source-field path from the media root.\n    pub path: &'static str,\n    /// Selected canonical source description, or an empty string when absent.\n    pub description: &'static str,\n    /// Conservative source-established value kind.\n    pub kind: WireShapeKind,\n    /// Whether the parent object requires this property.\n    pub required: bool,\n    /// Additional-property policy when this node is an object.\n    pub additional_properties: AdditionalPropertiesPolicy,\n    /// OpenAPI XML element name, or an empty string when unspecified.\n    pub xml_name: &'static str,\n    /// OpenAPI 3.2 XML node type, or an empty string when unspecified.\n    pub xml_node_type: &'static str,\n    /// Documented values when this is the open OpenDART status field.\n    pub known_statuses: &'static [&'static str],\n}\n\n")
-	output.WriteString("/// Response routing and conservative wire-shape metadata for one media type.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub struct ResponseShape {\n")
+	output.WriteString("/// Response routing and conservative wire-shape metadata for one media type.\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub(crate) struct ResponseShape {\n")
 	output.WriteString("    /// Canonical physical OpenAPI operation ID.\n    pub operation_id: &'static str,\n    /// OpenAPI response selector such as `default`.\n    pub selector: &'static str,\n    /// Canonical evidence for interpreting the HTTP response status.\n    pub http_status_evidence: &'static str,\n    /// Declared response media type.\n    pub media_type: &'static str,\n    /// Canonical evidence classification for the content type.\n    pub content_type_status: &'static str,\n    /// Flattened conservative shape tree.\n    pub nodes: &'static [WireShapeNode],\n}\n\n")
 	for _, operation := range source.Physical {
 		for responseIndex, response := range operation.Responses {
@@ -393,7 +393,7 @@ func renderWireShapes(source model.Model) string {
 			}
 		}
 	}
-	output.WriteString("\n/// Complete generated response-routing inventory.\npub const RESPONSE_SHAPES: &[ResponseShape] = &[\n")
+	output.WriteString("\n/// Complete generated response-routing inventory.\npub(crate) const RESPONSE_SHAPES: &[ResponseShape] = &[\n")
 	for _, operation := range source.Physical {
 		for responseIndex, response := range operation.Responses {
 			for mediaIndex, media := range response.Media {

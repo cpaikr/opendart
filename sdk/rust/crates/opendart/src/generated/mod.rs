@@ -5,9 +5,57 @@
 pub(crate) const GENERATOR_SCHEMA: u32 = 1;
 pub(crate) const PROJECTION_CHECKSUM: &str = "c22df6ce91eb19359a67b73d736be5fb790b009c7a11708fe5fffbcd643ecaab";
 
-/// Canonical public-name and identity mappings.
-pub mod mapping;
-/// Generated logical-operation input types.
+/// Generator-owned logical-operation input types.
+///
+/// Types in this module are supported public API. The generated file layout is not.
 pub mod operations;
-/// Conservative response-routing shape metadata.
-pub mod wire_shapes;
+#[cfg(test)]
+pub(crate) mod mapping;
+#[cfg(test)]
+pub(crate) mod wire_shapes;
+
+#[cfg(test)]
+mod generated_inventory_tests {
+    use std::collections::{BTreeMap, BTreeSet};
+
+    use super::{
+        mapping::OPERATION_MAPPINGS,
+        wire_shapes::{AdditionalPropertiesPolicy, RESPONSE_SHAPES},
+    };
+
+    #[test]
+    fn mappings_and_response_routes_cover_the_same_physical_inventory() {
+        let mut physical = BTreeSet::new();
+        let mut logical_names = BTreeMap::new();
+        for mapping in OPERATION_MAPPINGS {
+            assert!(physical.insert(mapping.operation_id), "duplicate physical mapping: {}", mapping.operation_id);
+            if let Some(previous) = logical_names.insert(mapping.logical_operation_id, mapping.rust_name) {
+                assert_eq!(previous, mapping.rust_name, "logical operation has multiple public names: {}", mapping.logical_operation_id);
+            }
+        }
+
+        let mut routed = BTreeSet::new();
+        for shape in RESPONSE_SHAPES {
+            assert!(physical.contains(shape.operation_id), "response route has no operation mapping: {}", shape.operation_id);
+            assert!(!shape.selector.is_empty());
+            assert!(!shape.http_status_evidence.is_empty());
+            assert!(!shape.media_type.is_empty());
+            assert!(!shape.content_type_status.is_empty());
+            assert_eq!(shape.nodes.first().map(|node| node.path), Some("$"));
+            for node in shape.nodes {
+                let _ = (
+                    node.description,
+                    node.kind,
+                    node.required,
+                    node.additional_properties,
+                    node.xml_name,
+                    node.xml_node_type,
+                    node.known_statuses,
+                );
+            }
+            routed.insert(shape.operation_id);
+        }
+        let _ = AdditionalPropertiesPolicy::Forbidden;
+        assert_eq!(physical, routed);
+    }
+}

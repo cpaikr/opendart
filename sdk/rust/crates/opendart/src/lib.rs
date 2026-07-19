@@ -4,6 +4,7 @@
 mod error;
 #[rustfmt::skip]
 mod generated;
+mod provenance;
 mod request;
 mod wire;
 
@@ -17,7 +18,8 @@ mod client;
 #[path = "../../../compat/reqwest-feature-unification/opendart_bridge.rs"]
 pub mod compatibility;
 
-pub use generated::{mapping, operations, wire_shapes};
+pub use generated::operations;
+pub use provenance::{SourceProvenance, source_provenance};
 
 #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
 pub use client::{

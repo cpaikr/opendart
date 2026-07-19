@@ -4,8 +4,9 @@ use std::fmt::Display;
 
 use opendart::{
     ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedRequest, Representation,
-    RequestMethod,
+    RequestMethod, SourceReply, SourceValueKind, WireInspector,
     operations::{AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttMultiAcnt, List},
+    source_provenance,
 };
 use static_assertions::assert_not_impl_any;
 
@@ -156,4 +157,51 @@ fn operation_identity_debug_contains_only_stable_identifiers() {
         .prepare(Representation::Json)
         .expect("request should prepare");
     assert_identity(prepared.identity());
+}
+
+#[test]
+fn bounded_inspection_retains_unknown_json_and_xml_evidence() {
+    let inspector = WireInspector::new(512).expect("the public inspector requires a bound");
+    let SourceReply::Success(json) = inspector
+        .inspect_json(br#"{"status":"000","future":1.20e3,"flag":true,"none":null}"#)
+        .expect("valid JSON should be inspectable")
+    else {
+        panic!("payload fields must prevent status-only classification");
+    };
+    assert_eq!(
+        json.get("future")
+            .and_then(opendart::SourceValue::as_number_str),
+        Some("1.20e3")
+    );
+    assert_eq!(
+        json.get("none").map(opendart::SourceValue::kind),
+        Some(SourceValueKind::Null)
+    );
+
+    let SourceReply::Success(xml) = inspector
+        .inspect_xml(br#"<result future="yes"><item>A</item><item>B</item></result>"#)
+        .expect("valid XML should be inspectable")
+    else {
+        panic!("unknown XML fields must remain success evidence");
+    };
+    assert_eq!(
+        xml.get("@future").and_then(opendart::SourceValue::as_str),
+        Some("yes")
+    );
+    assert_eq!(
+        xml.get("item")
+            .and_then(opendart::SourceValue::as_array)
+            .map(<[_]>::len),
+        Some(2)
+    );
+}
+
+#[test]
+fn source_provenance_identifies_the_reviewed_contract_snapshot() {
+    let provenance = source_provenance();
+    assert_eq!(provenance.crate_version(), env!("CARGO_PKG_VERSION"));
+    assert_eq!(provenance.specification_release(), Some("v0.1.0"));
+    assert_eq!(provenance.canonical_bundle_sha256().len(), 64);
+    assert_eq!(provenance.sdk_projection_sha256().len(), 64);
+    assert!(provenance.generator_schema() > 0);
 }

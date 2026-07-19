@@ -10,8 +10,8 @@ documentation = "https://docs.rs/opendart"
 readme = "README.md"
 keywords = ["opendart", "dart", "finance", "openapi"]
 categories = ["api-bindings"]
-publish = false
-include = ["src/**", "tests/**", "Cargo.toml", "README.md", "LICENSE"]
+publish = ["crates-io"]
+include = ["src/**", "tests/**", "Cargo.toml", "README.md", "CHANGELOG.md", "LICENSE"]
 
 [features]
 default = ["client-reqwest"]
