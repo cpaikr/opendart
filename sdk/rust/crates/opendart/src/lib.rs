@@ -2,10 +2,12 @@
 #![forbid(unsafe_code)]
 
 mod error;
+#[rustfmt::skip]
+mod generated;
 mod request;
 mod wire;
 
-pub mod operations;
+pub use generated::{mapping, operations, wire_shapes};
 
 pub use error::{AuthorizationError, PrepareError};
 pub use request::{

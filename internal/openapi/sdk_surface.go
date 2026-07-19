@@ -3,9 +3,12 @@ package openapi
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"reflect"
 	"sort"
 	"strings"
 
+	"github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"go.yaml.in/yaml/v4"
@@ -17,11 +20,29 @@ type SDKSurface struct {
 	Operations []SDKSurfaceOperation
 }
 
+// SDKSurfaceError reports a generator-boundary rule with stable operation and
+// source-pointer context, without exposing third-party model values.
+type SDKSurfaceError struct {
+	Rule      string
+	Operation string
+	Location  string
+	Detail    string
+}
+
+func (e *SDKSurfaceError) Error() string {
+	return fmt.Sprintf("SDK surface rejected input rule=%s operation=%s location=%s detail=%s", e.Rule, e.Operation, e.Location, e.Detail)
+}
+
+func rejectSDKSurface(rule, operation, location, detail string) *SDKSurfaceError {
+	return &SDKSurfaceError{Rule: rule, Operation: operation, Location: location, Detail: detail}
+}
+
 // SDKSurfaceOperation contains only repository-owned values needed to prove
 // that one physical operation is visible to a future normalized SDK model.
 type SDKSurfaceOperation struct {
 	Method             string
 	Path               string
+	RelativeTarget     string
 	OperationID        string
 	LogicalOperationID string
 	APIGroupCode       string
@@ -36,16 +57,42 @@ type SDKSurfaceOperation struct {
 // SDKSurfaceParameter records the request serialization and schema facts that
 // must cross the private OpenAPI boundary during SDK generation.
 type SDKSurfaceParameter struct {
-	Name      string
-	Location  string
-	Required  bool
-	Style     string
-	Explode   bool
-	Types     []string
-	ItemTypes []string
-	MinItems  *int64
-	MaxItems  *int64
-	HasSchema bool
+	Name            string
+	Location        string
+	Required        bool
+	Style           string
+	Explode         bool
+	AllowEmptyValue bool
+	AllowReserved   bool
+	Types           []string
+	ItemTypes       []string
+	MinItems        *int64
+	MaxItems        *int64
+	HasSchema       bool
+}
+
+// SDKSurfaceSchema is the conservative, repository-owned response-shape
+// projection used by SDK generators. It deliberately excludes examples,
+// defaults, formats, and narrative constraints.
+type SDKSurfaceSchema struct {
+	Reference            string
+	Description          string
+	Types                []string
+	Required             []string
+	Properties           []SDKSurfaceProperty
+	Items                *SDKSurfaceSchema
+	AdditionalProperties *bool
+	XMLName              string
+	XMLNodeType          string
+	OpenStatus           bool
+	StatusValues         []string
+}
+
+// SDKSurfaceProperty retains one named object property in source order after
+// deterministic normalization.
+type SDKSurfaceProperty struct {
+	Name   string
+	Schema SDKSurfaceSchema
 }
 
 // SDKSurfaceSecurityRequirement preserves one alternative security
@@ -61,6 +108,7 @@ type SDKSurfaceSecurityScheme struct {
 	Type       string
 	Location   string
 	Name       string
+	Scopes     []string
 }
 
 // SDKSurfaceResponse preserves the response selector and source HTTP-status
@@ -76,6 +124,7 @@ type SDKSurfaceResponse struct {
 type SDKSurfaceMediaType struct {
 	Name              string
 	ContentTypeStatus string
+	Schema            SDKSurfaceSchema
 }
 
 // InspectSDKSurface walks every physical operation and returns a deterministic
@@ -98,6 +147,13 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 			identity := strings.ToUpper(method) + " " + pathName
 			if strings.TrimSpace(operation.OperationId) == "" {
 				return SDKSurface{}, fmt.Errorf("%s has no operationId", identity)
+			}
+			if operation.RequestBody != nil {
+				return SDKSurface{}, rejectSDKSurface("unsupported-request-body", operation.OperationId, pathName+"/"+method+"/requestBody", "generated requests are bodyless")
+			}
+			relativeTarget, err := sdkRelativeTarget(d.model.Model.Servers, pathItem.Servers, operation.Servers, pathName)
+			if err != nil {
+				return SDKSurface{}, fmt.Errorf("%s has invalid server target: %w", identity, err)
 			}
 			if operation.Extensions == nil {
 				return SDKSurface{}, fmt.Errorf("%s has no x-opendart metadata", identity)
@@ -123,10 +179,12 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 			parameters := make([]SDKSurfaceParameter, 0, len(effectiveParameters))
 			for _, parameter := range effectiveParameters {
 				evidence := SDKSurfaceParameter{
-					Name:     parameter.Name,
-					Location: parameter.In,
-					Style:    parameter.Style,
-					Explode:  parameter.IsExploded(),
+					Name:            parameter.Name,
+					Location:        parameter.In,
+					Style:           parameter.Style,
+					Explode:         parameter.IsExploded(),
+					AllowEmptyValue: parameter.AllowEmptyValue,
+					AllowReserved:   parameter.AllowReserved,
 				}
 				if parameter.Required != nil {
 					evidence.Required = *parameter.Required
@@ -136,13 +194,20 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 					if schema == nil {
 						return SDKSurface{}, fmt.Errorf("%s parameter %q schema cannot be resolved", identity, parameter.Name)
 					}
+					if keyword := unsupportedSDKParameterSchema(schema, false); keyword != "" {
+						return SDKSurface{}, rejectSDKSurface("unsupported-request-schema", operation.OperationId, pathName+"/"+method+"/parameters/"+parameter.Name+"/schema", keyword)
+					}
 					evidence.HasSchema = true
 					evidence.Types = append([]string(nil), schema.Type...)
 					if schema.Items != nil {
 						if !schema.Items.IsA() || schema.Items.A == nil || schema.Items.A.Schema() == nil {
 							return SDKSurface{}, fmt.Errorf("%s parameter %q has unsupported items schema", identity, parameter.Name)
 						}
-						evidence.ItemTypes = append([]string(nil), schema.Items.A.Schema().Type...)
+						itemSchema := schema.Items.A.Schema()
+						if keyword := unsupportedSDKParameterSchema(itemSchema, true); keyword != "" {
+							return SDKSurface{}, rejectSDKSurface("unsupported-request-schema", operation.OperationId, pathName+"/"+method+"/parameters/"+parameter.Name+"/schema/items", keyword)
+						}
+						evidence.ItemTypes = append([]string(nil), itemSchema.Type...)
 					}
 					evidence.MinItems = copyInt64(schema.MinItems)
 					evidence.MaxItems = copyInt64(schema.MaxItems)
@@ -160,7 +225,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 					return SDKSurface{}, fmt.Errorf("%s has an invalid security requirement", identity)
 				}
 				schemes := make([]SDKSurfaceSecurityScheme, 0)
-				for scheme := range requirement.Requirements.KeysFromOldest() {
+				for scheme, scopes := range requirement.Requirements.FromOldest() {
 					if d.model.Model.Components == nil || d.model.Model.Components.SecuritySchemes == nil {
 						return SDKSurface{}, fmt.Errorf("%s references security scheme %q without components", identity, scheme)
 					}
@@ -173,6 +238,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 						Type:       definition.Type,
 						Location:   definition.In,
 						Name:       definition.Name,
+						Scopes:     append([]string(nil), scopes...),
 					})
 				}
 				sort.Slice(schemes, func(i, j int) bool { return schemes[i].Identifier < schemes[j].Identifier })
@@ -184,7 +250,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 			}
 			responses := make([]SDKSurfaceResponse, 0)
 			if operation.Responses.Default != nil {
-				response, err := inspectSDKResponse(identity, "default", operation.Responses.Default)
+				response, err := inspectSDKResponse(identity, operation.OperationId, pathName+"/"+method+"/responses/default", "default", operation.Responses.Default)
 				if err != nil {
 					return SDKSurface{}, err
 				}
@@ -192,7 +258,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 			}
 			if operation.Responses.Codes != nil {
 				for selector, source := range operation.Responses.Codes.FromOldest() {
-					response, err := inspectSDKResponse(identity, selector, source)
+					response, err := inspectSDKResponse(identity, operation.OperationId, pathName+"/"+method+"/responses/"+selector, selector, source)
 					if err != nil {
 						return SDKSurface{}, err
 					}
@@ -206,6 +272,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 			operations = append(operations, SDKSurfaceOperation{
 				Method:             strings.ToUpper(method),
 				Path:               pathName,
+				RelativeTarget:     relativeTarget,
 				OperationID:        operation.OperationId,
 				LogicalOperationID: logicalOperationID,
 				APIGroupCode:       apiGroupCode,
@@ -225,6 +292,35 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 		return operations[i].Path < operations[j].Path
 	})
 	return SDKSurface{Operations: operations}, nil
+}
+
+func sdkRelativeTarget(document, pathItem, operation []*v3.Server, operationPath string) (string, error) {
+	servers := operation
+	if servers == nil {
+		servers = pathItem
+	}
+	if servers == nil {
+		servers = document
+	}
+	if len(servers) != 1 || servers[0] == nil {
+		return "", errors.New("exactly one server is required")
+	}
+	server := servers[0]
+	if (server.Variables != nil && !server.Variables.IsZero()) || strings.ContainsAny(server.URL, "{}") {
+		return "", errors.New("server variables are unsupported")
+	}
+	parsed, err := url.Parse(server.URL)
+	if err != nil {
+		return "", errors.New("server URL is malformed")
+	}
+	if parsed.Scheme != "https" || parsed.Hostname() != "opendart.fss.or.kr" || parsed.Port() != "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return "", errors.New("server URL is outside the trusted OpenDART origin")
+	}
+	base := strings.TrimSuffix(parsed.EscapedPath(), "/")
+	if base == "" || !strings.HasPrefix(operationPath, "/") || strings.Contains(operationPath, "..") {
+		return "", errors.New("server and operation paths cannot form a trusted relative target")
+	}
+	return base + operationPath, nil
 }
 
 func effectiveSDKParameters(identity string, inherited, operation []*v3.Parameter) ([]*v3.Parameter, error) {
@@ -267,7 +363,7 @@ func effectiveSDKParameters(identity string, inherited, operation []*v3.Paramete
 	return effective, nil
 }
 
-func inspectSDKResponse(identity, selector string, response *v3.Response) (SDKSurfaceResponse, error) {
+func inspectSDKResponse(identity, operationID, location, selector string, response *v3.Response) (SDKSurfaceResponse, error) {
 	if response == nil || response.Content == nil {
 		return SDKSurfaceResponse{}, fmt.Errorf("%s response %q has no content", identity, selector)
 	}
@@ -284,13 +380,170 @@ func inspectSDKResponse(identity, selector string, response *v3.Response) (SDKSu
 		if contentTypeStatus == "" {
 			return SDKSurfaceResponse{}, fmt.Errorf("%s response %q media type %q has no x-opendart routing evidence", identity, selector, name)
 		}
-		mediaTypes = append(mediaTypes, SDKSurfaceMediaType{Name: name, ContentTypeStatus: contentTypeStatus})
+		schema, err := inspectSDKSchema(media.Schema, make(map[string]bool))
+		if err != nil {
+			return SDKSurfaceResponse{}, rejectSDKSurface("unsupported-response-schema", operationID, location+"/content/"+name+"/schema", err.Error())
+		}
+		mediaTypes = append(mediaTypes, SDKSurfaceMediaType{Name: name, ContentTypeStatus: contentTypeStatus, Schema: schema})
 	}
 	sort.Slice(mediaTypes, func(i, j int) bool { return mediaTypes[i].Name < mediaTypes[j].Name })
 	if len(mediaTypes) == 0 {
 		return SDKSurfaceResponse{}, fmt.Errorf("%s response %q has no media types", identity, selector)
 	}
 	return SDKSurfaceResponse{Selector: selector, HTTPStatusEvidence: httpStatus, MediaTypes: mediaTypes}, nil
+}
+
+func inspectSDKSchema(proxy interface {
+	Schema() *base.Schema
+	GetReference() string
+}, visiting map[string]bool) (SDKSurfaceSchema, error) {
+	if proxy == nil || proxy.Schema() == nil {
+		return SDKSurfaceSchema{}, errors.New("schema cannot be resolved")
+	}
+	reference := proxy.GetReference()
+	if reference != "" {
+		if visiting[reference] {
+			return SDKSurfaceSchema{}, fmt.Errorf("recursive schema reference %q is unsupported", reference)
+		}
+		visiting[reference] = true
+		defer delete(visiting, reference)
+	}
+	source := proxy.Schema()
+	if len(source.AllOf) != 0 || len(source.OneOf) != 0 || len(source.AnyOf) != 0 || source.Not != nil ||
+		len(source.PrefixItems) != 0 || source.Contains != nil || source.If != nil || source.Then != nil || source.Else != nil ||
+		source.PatternProperties != nil || source.UnevaluatedProperties != nil {
+		return SDKSurfaceSchema{}, errors.New("unsupported composed or conditional schema construct")
+	}
+	projected := SDKSurfaceSchema{
+		Reference:   reference,
+		Description: source.Description,
+		Types:       append([]string(nil), source.Type...),
+		Required:    append([]string(nil), source.Required...),
+		OpenStatus:  strings.HasSuffix(reference, "#/OpenDartStatus"),
+	}
+	if keyword := unsupportedSDKResponseSchema(source, projected.OpenStatus); keyword != "" {
+		return SDKSurfaceSchema{}, fmt.Errorf("unsupported schema keyword %q", keyword)
+	}
+	if source.XML != nil {
+		if source.XML.Namespace != "" || source.XML.Prefix != "" || source.XML.Attribute || source.XML.Wrapped || (source.XML.Extensions != nil && !source.XML.Extensions.IsZero()) ||
+			(source.XML.NodeType != "" && source.XML.NodeType != "element") {
+			return SDKSurfaceSchema{}, errors.New("unsupported XML schema metadata")
+		}
+		projected.XMLName = source.XML.Name
+		projected.XMLNodeType = source.XML.NodeType
+	}
+	sort.Strings(projected.Types)
+	sort.Strings(projected.Required)
+	if source.AdditionalProperties != nil {
+		switch {
+		case source.AdditionalProperties.IsB():
+			value := source.AdditionalProperties.B
+			projected.AdditionalProperties = &value
+		case source.AdditionalProperties.IsA():
+			return SDKSurfaceSchema{}, errors.New("typed additionalProperties are unsupported")
+		}
+	}
+	if projected.OpenStatus {
+		for _, value := range source.Enum {
+			if value == nil || value.Kind != yaml.ScalarNode {
+				return SDKSurfaceSchema{}, errors.New("OpenDartStatus contains a non-scalar value")
+			}
+			projected.StatusValues = append(projected.StatusValues, value.Value)
+		}
+		sort.Strings(projected.StatusValues)
+	}
+	if source.Properties != nil {
+		for name, property := range source.Properties.FromOldest() {
+			child, err := inspectSDKSchema(property, visiting)
+			if err != nil {
+				return SDKSurfaceSchema{}, fmt.Errorf("property %q: %w", name, err)
+			}
+			projected.Properties = append(projected.Properties, SDKSurfaceProperty{Name: name, Schema: child})
+		}
+		sort.Slice(projected.Properties, func(i, j int) bool { return projected.Properties[i].Name < projected.Properties[j].Name })
+	}
+	if source.Items != nil {
+		if !source.Items.IsA() || source.Items.A == nil {
+			return SDKSurfaceSchema{}, errors.New("boolean array items are unsupported")
+		}
+		items, err := inspectSDKSchema(source.Items.A, visiting)
+		if err != nil {
+			return SDKSurfaceSchema{}, fmt.Errorf("array items: %w", err)
+		}
+		projected.Items = &items
+	}
+	return projected, nil
+}
+
+func unsupportedSDKParameterSchema(source *base.Schema, item bool) string {
+	allowed := map[string]bool{
+		"Type": true, "Title": true, "Description": true, "Format": true,
+		"Examples": true, "Example": true, "ExternalDocs": true, "Deprecated": true,
+		"Extensions": true, "ParentProxy": true,
+	}
+	if !item {
+		allowed["Items"] = true
+		allowed["MinItems"] = true
+		allowed["MaxItems"] = true
+	}
+	return firstUnsupportedSchemaField(source, allowed, func(field string) bool {
+		return field == "Extensions" && !supportedSDKSchemaExtensions(source.Extensions)
+	})
+}
+
+func unsupportedSDKResponseSchema(source *base.Schema, openStatus bool) string {
+	allowed := map[string]bool{
+		"Type": true, "Properties": true, "Items": true, "Required": true,
+		"AdditionalProperties": true, "Title": true, "Description": true, "Format": true,
+		"Examples": true, "Example": true, "ExternalDocs": true, "Deprecated": true,
+		"XML": true, "Extensions": true, "ParentProxy": true,
+	}
+	if openStatus {
+		allowed["Enum"] = true
+	}
+	return firstUnsupportedSchemaField(source, allowed, func(field string) bool {
+		if field != "Extensions" {
+			return false
+		}
+		return !supportedSDKSchemaExtensions(source.Extensions)
+	})
+}
+
+func supportedSDKSchemaExtensions(extensions *orderedmap.Map[string, *yaml.Node]) bool {
+	if extensions == nil {
+		return true
+	}
+	for name := range extensions.KeysFromOldest() {
+		switch name {
+		case "x-opendart", "x-opendart-code-descriptions", "x-opendart-documented-type", "x-opendart-korean-name", "x-opendart-normalization", "x-opendart-source-diagnostics":
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func firstUnsupportedSchemaField(source *base.Schema, allowed map[string]bool, unsupportedAllowed func(string) bool) string {
+	value := reflect.ValueOf(source).Elem()
+	typeOf := value.Type()
+	for index := 0; index < value.NumField(); index++ {
+		field := typeOf.Field(index)
+		if field.PkgPath != "" || value.Field(index).IsZero() {
+			continue
+		}
+		if field.Name == "Extensions" && source.Extensions != nil && source.Extensions.IsZero() {
+			continue
+		}
+		if allowed[field.Name] && (unsupportedAllowed == nil || !unsupportedAllowed(field.Name)) {
+			continue
+		}
+		keyword := strings.Split(field.Tag.Get("json"), ",")[0]
+		if keyword == "" || keyword == "-" {
+			keyword = field.Name
+		}
+		return keyword
+	}
+	return ""
 }
 
 func sdkExtensionScalar(extensions *orderedmap.Map[string, *yaml.Node], key string) string {

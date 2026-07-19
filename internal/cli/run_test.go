@@ -15,6 +15,7 @@ import (
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/sdkgen"
 	"github.com/cpaikr/opendart/internal/verification"
 )
 
@@ -49,7 +50,7 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "probe-multi-company", "probe-auditor-evidence"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-sdk", "verify", "probe-multi-company", "probe-auditor-evidence"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
@@ -359,6 +360,33 @@ func TestRunBundleRequiresOutputAndForwardsPaths(t *testing.T) {
 	})
 }
 
+func TestRunGenerateSDKRequiresRustAndForwardsPaths(t *testing.T) {
+	var root, output string
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runGenerateSDKWith([]string{"--language", "rust", "--root", "spec.yaml", "--output", "generated"}, &stdout, &stderr, func(receivedRoot, receivedOutput string) (sdkgen.Report, error) {
+		root, output = receivedRoot, receivedOutput
+		return sdkgen.Report{Language: "rust", SchemaVersion: 1, Checksum: "checksum", Output: receivedOutput}, nil
+	})
+	if code != 0 || stderr.Len() != 0 || root != "spec.yaml" || output != "generated" {
+		t.Fatalf("code = %d, root = %q, output = %q, stderr = %q", code, root, output, stderr.String())
+	}
+	var report sdkgen.Report
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil || report.Checksum != "checksum" {
+		t.Fatalf("report = %#v, error = %v", report, err)
+	}
+
+	for _, args := range [][]string{{"--language", "python", "--output", "generated"}, {"--language", "rust"}} {
+		stderr.Reset()
+		if code := runGenerateSDKWith(args, &bytes.Buffer{}, &stderr, func(string, string) (sdkgen.Report, error) {
+			t.Fatal("runner should not be called for invalid options")
+			return sdkgen.Report{}, nil
+		}); code != 2 {
+			t.Fatalf("args = %#v, code = %d, stderr = %q", args, code, stderr.String())
+		}
+	}
+}
+
 func TestRunVerifyEmitsReportAndForwardsRepositoryRoot(t *testing.T) {
 	var received string
 	var stdout bytes.Buffer
@@ -410,7 +438,7 @@ func TestRunVerifyEmitsReportAndForwardsRepositoryRoot(t *testing.T) {
 }
 
 func TestNewCommandsRejectPositionalArguments(t *testing.T) {
-	for _, command := range []string{"catalog", "lint", "bundle", "verify"} {
+	for _, command := range []string{"catalog", "lint", "bundle", "generate-sdk", "verify"} {
 		t.Run(command, func(t *testing.T) {
 			var stderr bytes.Buffer
 			if code := Run([]string{command, "unexpected"}, &bytes.Buffer{}, &stderr); code != 2 {

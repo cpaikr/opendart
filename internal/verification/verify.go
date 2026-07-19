@@ -9,15 +9,18 @@ import (
 	"github.com/cpaikr/opendart/internal/guide"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/releaseguard"
+	"github.com/cpaikr/opendart/internal/sdkgen"
+	"github.com/cpaikr/opendart/internal/sdkgen/model"
 )
 
 const (
-	phaseCatalog         = "catalog"
-	phaseSourceLint      = "source-lint"
-	phaseBundleLint      = "bundle-lint"
-	phaseBundleFreshness = "bundle-freshness"
-	phaseAuditorEvidence = "auditor-evidence"
-	phaseReleaseGuard    = "release-guard"
+	phaseCatalog          = "catalog"
+	phaseSourceLint       = "source-lint"
+	phaseBundleLint       = "bundle-lint"
+	phaseBundleFreshness  = "bundle-freshness"
+	phaseRustSDKFreshness = "rust-sdk-freshness"
+	phaseAuditorEvidence  = "auditor-evidence"
+	phaseReleaseGuard     = "release-guard"
 )
 
 var passedPhases = []string{
@@ -25,6 +28,7 @@ var passedPhases = []string{
 	phaseSourceLint,
 	phaseBundleFreshness,
 	phaseBundleLint,
+	phaseRustSDKFreshness,
 	phaseAuditorEvidence,
 	phaseReleaseGuard,
 }
@@ -85,6 +89,7 @@ type dependencies struct {
 	checkFresh      func(string, string) error
 	checkEvidence   func(string) error
 	checkRelease    func(string) error
+	checkRustSDK    func(string, string) error
 }
 
 // Verify runs the complete repository gate using only committed local files.
@@ -96,6 +101,7 @@ func Verify(repositoryRoot string) (Report, error) {
 		checkFresh:      openapispec.CheckBundleFresh,
 		checkEvidence:   auditorprobe.ValidateEvidenceFile,
 		checkRelease:    releaseguard.Check,
+		checkRustSDK:    sdkgen.CheckRustFresh,
 	})
 }
 
@@ -110,6 +116,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	source := filepath.Join(absoluteRoot, "openapi", "openapi.yaml")
 	bundle := filepath.Join(absoluteRoot, "openapi", "generated", "openapi.bundle.yaml")
 	auditorEvidence := filepath.Join(absoluteRoot, "docs", "api", "evidence", "auditor-2026-07-18.json")
+	rustSDKOutput := filepath.Join(absoluteRoot, "sdk", "rust", "crates", "opendart", "src", "generated")
 
 	catalog, err := deps.validateCatalog(guide.CatalogOptions{Root: source})
 	if err != nil {
@@ -130,6 +137,29 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	}
 	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
 		return Report{}, err
+	}
+	if err := deps.checkRustSDK(source, rustSDKOutput); err != nil {
+		rule := "sdk-generation"
+		switch {
+		case errors.Is(err, sdkgen.ErrGeneratedMissing):
+			rule = "generated-missing"
+		case errors.Is(err, sdkgen.ErrGeneratedStale):
+			rule = "generated-stale"
+		case errors.Is(err, sdkgen.ErrGeneratedUnexpected):
+			rule = "generated-unexpected"
+		case errors.Is(err, sdkgen.ErrGeneratedUnowned):
+			rule = "generated-ownership"
+		}
+		operation, location := "", ""
+		var modelError *model.Error
+		if errors.As(err, &modelError) {
+			rule, operation, location = modelError.Rule, modelError.Operation, modelError.Location
+		}
+		var surfaceError *openapispec.SDKSurfaceError
+		if errors.As(err, &surfaceError) {
+			rule, operation, location = surfaceError.Rule, surfaceError.Operation, surfaceError.Location
+		}
+		return Report{}, contextualFailure(phaseRustSDKFreshness, rustSDKOutput, rule, operation, location, err)
 	}
 	if err := deps.checkEvidence(auditorEvidence); err != nil {
 		return Report{}, failure(phaseAuditorEvidence, auditorEvidence, "sanitized-evidence-manifest", err)
