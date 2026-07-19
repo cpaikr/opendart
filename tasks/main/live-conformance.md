@@ -12,6 +12,9 @@ credential-free [guide drift](guide-drift.md).
 
 ## Current state
 
+Implementation progress is maintained in the task-local
+[live-conformance progress](live-conformance-progress.md) document.
+
 - The focused multi-company probe is ported to the Go CLI with its existing
   request matrix, assertions, sanitized report, expanded offline HTTP coverage,
   and direct operational entry point.
@@ -99,7 +102,6 @@ credential-free [guide drift](guide-drift.md).
 
 ## Next action
 
-When general live-conformance work is explicitly started, implement operation
-enumeration, request validation, and the shared HTTP and reporting seams before
-curating the complete case inventory. Do not configure a credentialed workflow
-yet.
+Implement operation enumeration, request validation, and the shared HTTP and
+reporting seams before curating the complete case inventory. Do not configure a
+credentialed workflow yet.
