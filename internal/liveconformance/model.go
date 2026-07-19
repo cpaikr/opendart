@@ -18,7 +18,7 @@ const (
 	TrustedServer        = "https://opendart.fss.or.kr/api"
 	CredentialSource     = "OPENDART_API_KEY"
 	MaximumBodyBytes     = 8 << 20
-	MaximumArchiveBytes  = MaximumBodyBytes
+	MaximumArchiveBytes  = 64 << 20
 	AbsoluteRequestLimit = 200
 	RequestTimeout       = 30 * time.Second
 	RequestPacing        = 100 * time.Millisecond
