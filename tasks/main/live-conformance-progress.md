@@ -6,7 +6,8 @@ not append session transcripts.
 
 ## Current slice
 
-- Integration branch: `sub`; ordered work 5 is merged.
+- Integration target: `rust`; `sub` is the historical source branch for the
+  completed ordered work 3 through 5 slice.
 - Completed scope: the manual protected producer, isolated notifier, and
   offline enforcement of credential, artifact, permission, deduplication,
   recovery, and sanitization boundaries.
@@ -22,9 +23,10 @@ not append session transcripts.
   response, not another physical operation.
 - Extend `internal/openapi` only through repository-owned types. Keep pinned
   libopenapi types private and preserve the Rust worktree's ownership boundary.
-- Rust currently has no changes in the shared seams. After this slice lands,
-  Rust must rebase the landed `internal/openapi` projection before its ordered
-  work 3; later live changes must extend rather than fork that projection.
+- Rust SDK generation had already changed the shared CLI and verification seams
+  without the landed live ancestry. The corrective two-parent reconciliation
+  preserves both command families, both offline gates, and the repository-owned
+  `internal/openapi` projections without rewriting either branch's history.
 - Require all preflight validation to complete before the credential is read or
   any request is attempted. The derived ceiling includes primary attempts and
   declared discovery maxima; the runner performs one attempt per request.
@@ -126,6 +128,9 @@ not append session transcripts.
 - Ordered-work-5 validation passes: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.
+- Reconciled the completed `sub` slice into `rust` while preserving individual
+  source commits. The combined CLI exposes SDK generation and live commands;
+  repository verification runs Rust SDK freshness before live preflight.
 
 ## Blockers
 
@@ -134,6 +139,7 @@ not implementation blockers.
 
 ## Next action
 
-None within this task. Stop before protected environment or credential setup,
-the first workflow dispatch or live OpenDART request, weekly scheduling,
-ordered work 6, or guide-drift implementation.
+Ordered work 6 in [live-conformance.md](live-conformance.md) is deferred pending
+explicit authorization. Stop before protected environment or credential setup,
+the first workflow dispatch or live OpenDART request, weekly scheduling, or
+guide-drift implementation.

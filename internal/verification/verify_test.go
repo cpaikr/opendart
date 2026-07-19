@@ -111,6 +111,12 @@ func TestLiveConformanceFailurePreservesSanitizedContext(t *testing.T) {
 	if got.Phase != phaseLiveConformance || got.Artifact != "nested-artifact" || got.Rule != "nested-rule" {
 		t.Fatalf("nested failure = %#v", got)
 	}
+
+	unknown := errors.New("unclassified detail")
+	got = liveConformanceFailure(unknown)
+	if got.Phase != phaseLiveConformance || got.Artifact != "live conformance repository" || got.Rule != "unknown-rule" || !errors.Is(got, unknown) {
+		t.Fatalf("unclassified failure = %#v", got)
+	}
 }
 
 func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
@@ -132,7 +138,7 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 3},
 		{name: "Rust SDK freshness", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 5},
 		{name: "Rust SDK model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 5},
-		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance inventory", wantRule: "coverage-budget-sanitization", wantCallCount: 6},
+		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 6},
 		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 7},
 		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 8},
 	}

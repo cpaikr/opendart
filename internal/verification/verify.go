@@ -198,7 +198,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 }
 
 func liveConformanceFailure(err error) *Error {
-	artifact, rule, operation, location := "live conformance inventory", "coverage-budget-sanitization", "", ""
+	artifact, rule, operation, location := "live conformance repository", "", "", ""
 	var verificationError *Error
 	if errors.As(err, &verificationError) {
 		artifact, rule = verificationError.Artifact, verificationError.Rule
@@ -206,6 +206,7 @@ func liveConformanceFailure(err error) *Error {
 	} else {
 		var conformanceError *liveconformance.Error
 		if errors.As(err, &conformanceError) {
+			artifact = "live conformance inventory"
 			rule = conformanceError.Failure.Code
 			operation = conformanceError.Failure.Operation
 			if conformanceError.Failure.CaseID != "" {
