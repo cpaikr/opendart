@@ -37,6 +37,7 @@ func TestDecodeReportAcceptsOnlyStrictSanitizedSchema(t *testing.T) {
 	}{
 		{name: "unknown raw body", content: bytes.Replace(encoded, []byte(`"bodyBytes":12`), []byte(`"rawBody":"secret","bodyBytes":12`), 1)},
 		{name: "authenticated path", content: bytes.Replace(encoded, []byte(`"path":"/company.json"`), []byte(`"path":"/company.json?crtfc_key=secret"`), 1)},
+		{name: "missing success evidence", content: bytes.Replace(encoded, []byte(`"kind":"company-identity","count":1`), []byte(`"kind":"","count":0`), 1)},
 		{name: "trailing document", content: append(append([]byte(nil), encoded...), []byte(`{}`)...)},
 		{name: "oversized", content: bytes.Repeat([]byte("x"), MaximumReportBytes+1)},
 	} {
