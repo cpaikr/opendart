@@ -93,6 +93,8 @@ impl PreparedRequest {
         identity: OperationIdentity,
         parameters: &[QueryParameter<'_>],
         expected_representations: &'static [Representation],
+        generator_schema: u32,
+        projection_identity: &'static str,
     ) -> Self {
         debug_assert!(relative_path.starts_with("/api/"));
         debug_assert!(!relative_path.contains(['?', '#']));
@@ -124,8 +126,8 @@ impl PreparedRequest {
             authentication: Authentication::ApiKeyQuery,
             identity,
             expected_representations,
-            generator_schema: 1,
-            projection_identity: "handwritten-contract-v1",
+            generator_schema,
+            projection_identity,
         }
     }
 
@@ -266,8 +268,8 @@ impl AuthorizedRequest<'_> {
     /// separate attempt, authorize the credential-free [`PreparedRequest`] again.
     ///
     /// ```compile_fail
-    /// # use opendart::{ApiKey, Representation, operations::CompanyOverview};
-    /// # let prepared = CompanyOverview::new("00126380").prepare(Representation::Json)?;
+    /// # use opendart::{ApiKey, Representation, operations::Company};
+    /// # let prepared = Company::new("00126380").prepare(Representation::Json)?;
     /// # let key = ApiKey::new("example-key")?;
     /// let authorized = prepared.authorize(&key);
     /// authorized.with_exposed_relative_uri(|_| ());

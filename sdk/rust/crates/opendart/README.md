@@ -6,13 +6,13 @@ performing network I/O or imposing retry, collection, persistence, or domain
 policy.
 
 This repository is building the crate in ordered, reviewed slices. The current
-handwritten surface establishes the transport-independent contract before the
-complete generated operation inventory and optional HTTP client are added.
+generated surface exposes the complete canonical operation inventory through a
+transport-independent contract; the optional HTTP client is added separately.
 
 ```rust
-use opendart::{ApiKey, Representation, operations::CompanyOverview};
+use opendart::{ApiKey, Representation, operations::Company};
 
-let operation = CompanyOverview::new("00126380");
+let operation = Company::new("00126380");
 let prepared = operation.prepare(Representation::Json)?;
 assert_eq!(prepared.relative_path(), "/api/company.json");
 

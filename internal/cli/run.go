@@ -15,6 +15,7 @@ import (
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/sdkgen"
 	"github.com/cpaikr/opendart/internal/verification"
 )
 
@@ -39,6 +40,8 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runLint(args[1:], stdout, stderr)
 	case "bundle":
 		return runBundle(args[1:], stdout, stderr)
+	case "generate-sdk":
+		return runGenerateSDK(args[1:], stdout, stderr)
 	case "verify":
 		return runVerify(args[1:], stdout, stderr)
 	case "probe-multi-company":
@@ -137,6 +140,40 @@ func runBundle(args []string, stdout, stderr io.Writer) int {
 }
 
 type verificationRunner func(string) (verification.Report, error)
+
+type sdkGenerationRunner func(string, string) (sdkgen.Report, error)
+
+func runGenerateSDK(args []string, stdout, stderr io.Writer) int {
+	return runGenerateSDKWith(args, stdout, stderr, sdkgen.GenerateRust)
+}
+
+func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGenerationRunner) int {
+	flags := flag.NewFlagSet("generate-sdk", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	language := flags.String("language", "", "SDK language (rust)")
+	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
+	output := flags.String("output", "", "owned generated source directory")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("generate-sdk", flags, stderr); code != 0 {
+		return code
+	}
+	if *language != "rust" {
+		return writeCommandError(stderr, "generate-sdk", errors.New("--language must be rust"), 2)
+	}
+	if strings.TrimSpace(*output) == "" {
+		return writeCommandError(stderr, "generate-sdk", errors.New("--output is required"), 2)
+	}
+	report, err := runner(*root, *output)
+	if err != nil {
+		return writeCommandError(stderr, "generate-sdk", err, 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write generate-sdk report", err, 1)
+	}
+	return 0
+}
 
 func runVerify(args []string, stdout, stderr io.Writer) int {
 	return runVerifyWith(args, stdout, stderr, verification.Verify)
@@ -392,6 +429,7 @@ func usage(output io.Writer) error {
 		"  catalog        validate generated catalog and reference invariants",
 		"  lint           apply strict OpenAPI policy",
 		"  bundle         write the portable OpenAPI bundle",
+		"  generate-sdk   generate one owned language SDK source subtree",
 		"  verify         run credential-free repository verification",
 		"  probe-multi-company  run the focused credentialed serialization probe",
 		"  probe-auditor-evidence  emit the focused sanitized auditor evidence manifest",

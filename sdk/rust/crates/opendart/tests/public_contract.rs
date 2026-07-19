@@ -5,7 +5,7 @@ use std::fmt::Display;
 use opendart::{
     ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedRequest, Representation,
     RequestMethod,
-    operations::{AuditorOpinion, CompanyOverview, CorpCodeFile, MultiCompanyAccounts},
+    operations::{AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttMultiAcnt, List},
 };
 use static_assertions::assert_not_impl_any;
 
@@ -15,7 +15,7 @@ assert_not_impl_any!(PreparedRequest: Clone);
 
 #[test]
 fn representative_json_request_is_deterministic_and_credential_free() {
-    let prepared = AuditorOpinion::new("00126380", "2025", "11011")
+    let prepared = AccnutAdtorNmNdAdtOpinion::new("00126380", "2025", "11011")
         .prepare(Representation::Json)
         .expect("representative input should prepare");
 
@@ -35,7 +35,7 @@ fn representative_json_request_is_deterministic_and_credential_free() {
 
 #[test]
 fn representation_selection_changes_only_the_physical_contract() {
-    let operation = CompanyOverview::new("00126380");
+    let operation = Company::new("00126380");
     let json = operation
         .prepare(Representation::Json)
         .expect("JSON should be supported");
@@ -51,7 +51,7 @@ fn representation_selection_changes_only_the_physical_contract() {
 
 #[test]
 fn fixed_binary_operation_routes_zip_and_xml_source_error() {
-    let prepared = CorpCodeFile::new()
+    let prepared = CorpCode::new()
         .prepare(Representation::Zip)
         .expect("ZIP should be supported");
     assert_eq!(prepared.relative_path(), "/api/corpCode.xml");
@@ -59,12 +59,12 @@ fn fixed_binary_operation_routes_zip_and_xml_source_error() {
         prepared.expected_representations(),
         &[Representation::Zip, Representation::Xml]
     );
-    assert!(CorpCodeFile::new().prepare(Representation::Xml).is_err());
+    assert!(CorpCode::new().prepare(Representation::Xml).is_err());
 }
 
 #[test]
 fn multi_company_request_enforces_cardinality_and_comma_serialization() {
-    let prepared = MultiCompanyAccounts::new(["00334624", "00126380"], "2025", "11011")
+    let prepared = FnlttMultiAcnt::new(["00334624", "00126380"], "2025", "11011")
         .prepare(Representation::Json)
         .expect("documented multi-company input should prepare");
     assert_eq!(
@@ -73,22 +73,22 @@ fn multi_company_request_enforces_cardinality_and_comma_serialization() {
     );
 
     assert!(
-        MultiCompanyAccounts::new(Vec::<String>::new(), "2025", "11011")
+        FnlttMultiAcnt::new(Vec::<String>::new(), "2025", "11011")
             .prepare(Representation::Json)
             .is_err()
     );
     assert!(
-        MultiCompanyAccounts::new(vec!["00126380"; 101], "2025", "11011")
+        FnlttMultiAcnt::new(vec!["00126380"; 101], "2025", "11011")
             .prepare(Representation::Json)
             .is_err()
     );
     assert!(
-        MultiCompanyAccounts::new(vec!["00126380"; 100], "2025", "11011")
+        FnlttMultiAcnt::new(vec!["00126380"; 100], "2025", "11011")
             .prepare(Representation::Json)
             .is_ok()
     );
 
-    let escaped = MultiCompanyAccounts::new(["a,b", "회사 /+"], "2025", "11011")
+    let escaped = FnlttMultiAcnt::new(["a,b", "회사 /+"], "2025", "11011")
         .prepare(Representation::Json)
         .expect("reserved list data should remain distinct from delimiters");
     assert_eq!(
@@ -102,7 +102,7 @@ fn authorization_is_explicit_and_redacted() {
     let sentinel = "secret /+ credential";
     let encoded = "secret+%2F%2B+credential";
     let key = ApiKey::new(sentinel).expect("non-empty key should be accepted");
-    let prepared = CompanyOverview::new("00126380")
+    let prepared = Company::new("00126380")
         .prepare(Representation::Json)
         .expect("request should prepare");
     let authorized = prepared.authorize(&key);
@@ -126,11 +126,17 @@ fn authorization_is_explicit_and_redacted() {
 
 #[test]
 fn empty_inputs_fail_without_echoing_values() {
-    let error = CompanyOverview::new("")
+    let error = Company::new("")
         .prepare(Representation::Json)
         .expect_err("empty required input must fail");
     assert!(error.to_string().contains("corp_code"));
     assert!(ApiKey::new("").is_err());
+
+    let error = List::new()
+        .with_page_no("")
+        .prepare(Representation::Json)
+        .expect_err("a supplied optional query value must not be empty");
+    assert!(error.to_string().contains("page_no"));
 }
 
 #[test]
@@ -141,7 +147,7 @@ fn operation_identity_debug_contains_only_stable_identifiers() {
         assert!(diagnostic.contains(identity.logical()));
     }
 
-    let prepared = CompanyOverview::new("00126380")
+    let prepared = Company::new("00126380")
         .prepare(Representation::Json)
         .expect("request should prepare");
     assert_identity(prepared.identity());
