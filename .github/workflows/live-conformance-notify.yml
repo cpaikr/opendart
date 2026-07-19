@@ -40,7 +40,7 @@ jobs:
         continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: live-conformance-report
+          name: live-conformance-report-${{ github.event.workflow_run.run_attempt }}
           path: .
           github-token: ${{ github.token }}
           run-id: ${{ github.event.workflow_run.id }}

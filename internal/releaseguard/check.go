@@ -672,7 +672,7 @@ func checkLiveWorkflow(live workflow, source string) error {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "exposes the API key only to the canonical request boundary"}
 	}
 	expectedUpload := map[string]any{
-		"name": "live-conformance-report", "path": "live-conformance-report.json",
+		"name": "live-conformance-report-${{ github.run_attempt }}", "path": "live-conformance-report.json",
 		"if-no-files-found": "error", "retention-days": 7, "compression-level": 0,
 		"overwrite": false, "include-hidden-files": false,
 	}
@@ -744,7 +744,7 @@ func checkNotifyWorkflow(notify workflow, source string) error {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "uses the approved Go setup"}
 	}
 	expectedDownload := map[string]any{
-		"name": "live-conformance-report", "path": ".", "github-token": "${{ github.token }}",
+		"name": "live-conformance-report-${{ github.event.workflow_run.run_attempt }}", "path": ".", "github-token": "${{ github.token }}",
 		"run-id": "${{ github.event.workflow_run.id }}",
 	}
 	if download.ID != "report" || download.Uses != downloadArtifactAction || download.Run != "" || !download.ContinueOnError || strings.TrimSpace(download.If) != "" || !reflect.DeepEqual(download.With, expectedDownload) {
