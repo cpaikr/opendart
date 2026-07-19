@@ -125,17 +125,20 @@ func NewHTTPFetcher() *HTTPFetcher {
 	}
 }
 
-func newDriftHTTPFetcher() *HTTPFetcher {
+func newDriftHTTPFetcher() (*HTTPFetcher, error) {
 	fetcher := NewHTTPFetcher()
 	fetcher.attempts = 1
 	// Both HTTP transports can transparently replay idempotent requests. Drift
 	// trades connection reuse and HTTP/2 for a literal one-wire-attempt policy;
 	// regular synchronization keeps its pooled retry behavior.
-	transport := fetcher.client.Transport.(*http.Transport)
+	transport, ok := fetcher.client.Transport.(*http.Transport)
+	if !ok {
+		return nil, sourceError("OpenDART guide HTTP transport does not support drift policy", nil, nil)
+	}
 	transport.DisableKeepAlives = true
 	transport.ForceAttemptHTTP2 = false
 	transport.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
-	return fetcher
+	return fetcher, nil
 }
 
 func (f *HTTPFetcher) Fetch(ctx context.Context, sourceURL *url.URL) ([]byte, error) {

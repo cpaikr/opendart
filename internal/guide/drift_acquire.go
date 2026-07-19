@@ -27,7 +27,11 @@ type DriftAcquisition struct {
 // AcquireDrift reads the current public guide once per page without applying
 // committed inventory cardinalities.
 func AcquireDrift(ctx context.Context) (DriftAcquisition, error) {
-	return acquireDriftWithFetcher(ctx, newDriftHTTPFetcher(), AbsoluteDriftRequestLimit)
+	fetcher, err := newDriftHTTPFetcher()
+	if err != nil {
+		return DriftAcquisition{}, err
+	}
+	return acquireDriftWithFetcher(ctx, fetcher, AbsoluteDriftRequestLimit)
 }
 
 func acquireDriftWithFetcher(ctx context.Context, fetcher Fetcher, absoluteLimit int) (result DriftAcquisition, err error) {

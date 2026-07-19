@@ -90,7 +90,10 @@ func TestCurrentInventoryPolicyAllowsEndpointRemoval(t *testing.T) {
 func TestDriftHTTPFetcherMakesOneAttempt(t *testing.T) {
 	t.Parallel()
 	requests := 0
-	fetcher := newDriftHTTPFetcher()
+	fetcher, err := newDriftHTTPFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
 	transport, ok := fetcher.client.Transport.(*http.Transport)
 	if !ok || !transport.DisableKeepAlives || transport.ForceAttemptHTTP2 || transport.TLSNextProto == nil || len(transport.TLSNextProto) != 0 {
 		t.Fatalf("transport = %#v", fetcher.client.Transport)
@@ -106,7 +109,7 @@ func TestDriftHTTPFetcherMakesOneAttempt(t *testing.T) {
 	})
 	sourceURL, _ := url.Parse("https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001")
 
-	_, err := fetcher.Fetch(context.Background(), sourceURL)
+	_, err = fetcher.Fetch(context.Background(), sourceURL)
 	if err == nil || err.Error() != "OpenDART guide request failed" || requests != 1 {
 		t.Fatalf("error = %v, requests = %d", err, requests)
 	}
