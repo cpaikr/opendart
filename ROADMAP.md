@@ -1,5 +1,8 @@
 # Roadmap
 
+Owner: `dev`. Rust planning is owned by `ROADMAP_RUST.md` and
+`tasks/rust/public-rust-sdk.md`; do not edit either from this worktree.
+
 ## Current
 
 _None._
@@ -10,6 +13,5 @@ _None._
 
 ## Tasks
 
-- [Public guide semantic drift](tasks/guide-drift.md)
-- [Credentialed live conformance](tasks/live-conformance.md)
-- [Public Rust SDK](tasks/public-rust-sdk.md)
+- [Public guide semantic drift](tasks/main/guide-drift.md)
+- [Credentialed live conformance](tasks/main/live-conformance.md)

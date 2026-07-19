@@ -109,19 +109,21 @@ the status is a successful empty result for a particular collection profile.
 
 ## Workstream documents
 
-- [Repository layout](../docs/rust-sdk/repository-layout.md) defines package
+- [Repository layout](../../docs/rust-sdk/repository-layout.md) defines package
   placement,
   ownership, feature boundaries, and room for later SDKs and a public CLI.
-- [Public contract](../docs/rust-sdk/public-contract.md) defines the low-level
+- [Public contract](../../docs/rust-sdk/public-contract.md) defines the low-level
   and ergonomic
   interfaces, invariants, errors, and supported escape path.
-- [Generation](../docs/rust-sdk/generation.md) defines the source-to-SDK
+- [Generation](../../docs/rust-sdk/generation.md) defines the source-to-SDK
   pipeline, conservative
   type policy, freshness gate, and complete operation coverage.
-- [Transport and safety](../docs/rust-sdk/transport-and-safety.md) defines `reqwest`
+- [Transport and safety](../../docs/rust-sdk/transport-and-safety.md) defines
+  `reqwest`
   configuration, configurable limits, secret handling, exact-byte behavior,
   and one-interaction tests.
-- [Verification and release](../docs/rust-sdk/verification-and-release.md) defines test layers,
+- [Verification and release](../../docs/rust-sdk/verification-and-release.md)
+  defines test layers,
   CI, release-guard changes, SemVer, crates.io publication, and consumer
   adoption.
 
@@ -146,7 +148,7 @@ target constraints and acceptance details for their workstreams.
 ### 2. Establish the Rust workspace and public-contract skeleton
 
 - Add the isolated workspace and one `opendart` library crate described in
-  [repository layout](../docs/rust-sdk/repository-layout.md).
+  [repository layout](../../docs/rust-sdk/repository-layout.md).
 - Extend `.gitignore` only for the workspace's build output; keep the
   verification lockfile and checked-in generated source tracked.
 - Commit the toolchain and MSRV policy, lockfile for repository verification,

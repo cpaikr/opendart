@@ -1,6 +1,6 @@
 # Rust SDK Repository Layout
 
-Planning source: [Public Rust SDK](../../tasks/public-rust-sdk.md).
+Planning source: [Public Rust SDK](../../tasks/rust/public-rust-sdk.md).
 
 ## Purpose
 
@@ -64,8 +64,8 @@ depend on the public Rust crate, but it remains a separate package.
 ## Why design documents live under `docs/rust-sdk`
 
 Implementation state and the next action belong in the
-[Public Rust SDK task](../../tasks/public-rust-sdk.md). The supporting design
-documents remain under `docs/rust-sdk` because their package boundaries,
+[Public Rust SDK task](../../tasks/rust/public-rust-sdk.md). The supporting
+design documents remain under `docs/rust-sdk` because their package boundaries,
 contracts, and safety constraints carry forward into implementation. They are
 design inputs, not installed-crate usage documentation or evidence of a
 currently supported SDK.

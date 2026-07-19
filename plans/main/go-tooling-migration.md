@@ -6,7 +6,7 @@ Replace the repository-owned Node.js tooling with one internal Go CLI while
 preserving the released OpenAPI contract. The repository continues to publish a
 specification and bundle, not an application or supported Go package. The
 language decision is recorded in
-[ADR 0001](../docs/decisions/0001-go-repository-tooling.md).
+[ADR 0001](../../docs/decisions/0001-go-repository-tooling.md).
 
 ## Current state
 
@@ -20,8 +20,8 @@ language decision is recorded in
   toolchain directly. The accepted multi-file OpenAPI 3.2 contract and Go bundle
   passed the former Node and Redocly checks as one-time cutover evidence; those
   implementations and temporary compatibility scaffolding are now removed.
-- [Guide drift](../tasks/guide-drift.md) and
-  [live conformance](../tasks/live-conformance.md) are
+- [Guide drift](../../tasks/main/guide-drift.md) and
+  [live conformance](../../tasks/main/live-conformance.md) are
   unscheduled follow-on work. They depend on the Go OpenAPI foundation and a
   future shared reporting implementation, while retaining separate network,
   credential, and issue boundaries.

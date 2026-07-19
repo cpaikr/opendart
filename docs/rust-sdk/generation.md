@@ -1,6 +1,6 @@
 # Rust SDK Generation
 
-Planning source: [Public Rust SDK](../../tasks/public-rust-sdk.md).
+Planning source: [Public Rust SDK](../../tasks/rust/public-rust-sdk.md).
 
 ## Purpose
 

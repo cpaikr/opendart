@@ -10,7 +10,7 @@ credential, request, assertion, and sanitized-report behavior.
 This plan completes the remaining work in the
 [Go tooling migration](go-tooling-migration.md). It does not implement public
 guide-drift automation or the general
-[live-conformance runner](../tasks/live-conformance.md).
+[live-conformance runner](../../tasks/main/live-conformance.md).
 
 ## Current state
 

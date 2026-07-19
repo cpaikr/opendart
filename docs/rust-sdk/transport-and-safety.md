@@ -1,6 +1,6 @@
 # Rust SDK Transport and Safety
 
-Planning source: [Public Rust SDK](../../tasks/public-rust-sdk.md).
+Planning source: [Public Rust SDK](../../tasks/rust/public-rust-sdk.md).
 
 ## Purpose
 

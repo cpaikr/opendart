@@ -163,9 +163,10 @@ OpenDART origin.
 
 [ADR 0001](docs/decisions/0001-go-repository-tooling.md) records the completed
 migration of repository-owned tooling from Node.js to one internal Go CLI. The
-[guide-drift](tasks/guide-drift.md) and
-[live-conformance](tasks/live-conformance.md) tasks define future work not yet
-part of the current runtime. The [Rust SDK task](tasks/public-rust-sdk.md)
+[guide-drift](tasks/main/guide-drift.md) and
+[live-conformance](tasks/main/live-conformance.md) tasks define future work not
+yet part of the current runtime. The
+[Rust SDK task](tasks/rust/public-rust-sdk.md)
 proposes an explicit future product-boundary change while retaining Go as
 private repository tooling; no SDK is part of the current system until that
 decision and implementation are completed.
