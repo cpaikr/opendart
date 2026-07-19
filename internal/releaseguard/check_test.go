@@ -729,6 +729,91 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			old: "      - name: Set up Go", replacement: "      - name: Run local action\n        uses: ./actions/check\n\n      - name: Set up Go",
 			invariant: "uses only the approved verification steps",
 		},
+		{
+			name: "live workflow schedule", artifact: liveWorkflowArtifact,
+			old: "  workflow_dispatch:", replacement: "  schedule:\n    - cron: '0 0 * * *'",
+			invariant: "is manual only",
+		},
+		{
+			name: "live non-main ref", artifact: liveWorkflowArtifact,
+			old: "github.ref == 'refs/heads/main'", replacement: "github.ref != ''",
+			invariant: "runs only trusted main code",
+		},
+		{
+			name: "live unprotected environment", artifact: liveWorkflowArtifact,
+			old: "environment: opendart-live-conformance", replacement: "environment: other",
+			invariant: "uses only the protected live environment",
+		},
+		{
+			name: "live issue permission", artifact: liveWorkflowArtifact,
+			old: "      contents: read", replacement: "      contents: read\n      issues: write",
+			invariant: "producer has read-only repository permission",
+		},
+		{
+			name: "live secret at preflight", artifact: liveWorkflowArtifact,
+			old: "      - name: Recheck offline gates\n        run:", replacement: "      - name: Recheck offline gates\n        env:\n          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}\n        run:",
+			invariant: "API key is absent outside the request boundary",
+		},
+		{
+			name: "live arbitrary artifact", artifact: liveWorkflowArtifact,
+			old: "path: live-conformance-report.json", replacement: "path: .",
+			invariant: "uploads only the bounded sanitized report",
+		},
+		{
+			name: "live artifact is not attempt scoped", artifact: liveWorkflowArtifact,
+			old: "name: live-conformance-report-${{ github.run_attempt }}", replacement: "name: live-conformance-report",
+			invariant: "uploads only the bounded sanitized report",
+		},
+		{
+			name: "live unpinned upload", artifact: liveWorkflowArtifact,
+			old: uploadArtifactAction, replacement: "actions/upload-artifact@v7",
+			invariant: "uploads only the bounded sanitized report",
+		},
+		{
+			name: "notifier manual trigger", artifact: notifyWorkflowArtifact,
+			old: "  workflow_run:", replacement: "  workflow_dispatch:",
+			invariant: "runs only after the live producer completes",
+		},
+		{
+			name: "notifier accepts branch", artifact: notifyWorkflowArtifact,
+			old: "github.event.workflow_run.head_branch == github.event.repository.default_branch", replacement: "github.event.workflow_run.head_branch != ''",
+			invariant: "accepts only manual trusted default-branch producer runs",
+		},
+		{
+			name: "notifier artifact is not attempt scoped", artifact: notifyWorkflowArtifact,
+			old: "name: live-conformance-report-${{ github.event.workflow_run.run_attempt }}", replacement: "name: live-conformance-report",
+			invariant: "downloads only the producer report with fixed-failure fallback",
+		},
+		{
+			name: "notifier protected environment", artifact: notifyWorkflowArtifact,
+			old: "    permissions:\n      actions: read", replacement: "    environment: opendart-live-conformance\n    permissions:\n      actions: read",
+			invariant: "isolates minimal issue authority",
+		},
+		{
+			name: "notifier excessive permission", artifact: notifyWorkflowArtifact,
+			old: "      issues: write", replacement: "      issues: write\n      pull-requests: write",
+			invariant: "isolates minimal issue authority",
+		},
+		{
+			name: "notifier download failure bypass", artifact: notifyWorkflowArtifact,
+			old: "continue-on-error: true", replacement: "continue-on-error: false",
+			invariant: "downloads only the producer report with fixed-failure fallback",
+		},
+		{
+			name: "notifier untrusted checkout", artifact: notifyWorkflowArtifact,
+			old: "ref: ${{ github.event.workflow_run.head_sha }}", replacement: "ref: main",
+			invariant: "checks out the exact trusted producer revision",
+		},
+		{
+			name: "notifier credential access", artifact: notifyWorkflowArtifact,
+			old: "GITHUB_TOKEN: ${{ github.token }}", replacement: "GITHUB_TOKEN: ${{ github.token }}\n          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}",
+			invariant: "invokes only the isolated notifier with trusted metadata",
+		},
+		{
+			name: "notifier arbitrary producer error", artifact: notifyWorkflowArtifact,
+			old: "NOTIFY_ARTIFACT_OUTCOME: ${{ steps.report.outcome }}", replacement: "NOTIFY_ARTIFACT_OUTCOME: ${{ steps.report.outputs.error }}",
+			invariant: "invokes only the isolated notifier with trusted metadata",
+		},
 	}
 
 	for _, test := range tests {
@@ -832,6 +917,8 @@ func copyReleaseArtifacts(t *testing.T) string {
 		canonicalBundleArtifact,
 		releaseWorkflowArtifact,
 		verifyWorkflowArtifact,
+		liveWorkflowArtifact,
+		notifyWorkflowArtifact,
 	} {
 		source, err := os.ReadFile(filepath.Join(sourceRoot, filepath.FromSlash(artifact)))
 		if err != nil {
