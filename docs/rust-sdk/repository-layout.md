@@ -129,7 +129,7 @@ The Rust crate owns source-protocol mechanics:
 - typed request inputs and deterministic serialization;
 - credential-safe authorization;
 - source status and message extraction;
-- conservative wire values and unknown-field retention; and
+- conservative typed responses, raw wire values, and unknown-field retention; and
 - an optional ordinary-user HTTP client.
 
 It does not own collection coordinates, request footprints, acquisition
@@ -152,8 +152,10 @@ change the canonical contract, SDK model, emitter, or handwritten runtime seam
 and regenerate.
 
 `src/provenance.rs` is handwritten release metadata, not generated contract
-output. It records the crate version, applicable specification release,
-canonical bundle checksum, generator schema, and SDK projection checksum.
+output. It records the crate version, applicable semantic specification source
+release, independently selected canonical bundle checksum, generator schema,
+and SDK projection checksum. The release guard proves that the canonical source
+inputs match the named tag without treating the generated bundle as tag-identical.
 Cargo adds `.cargo_vcs_info.json` to the package for the exact source revision.
 Ordinary specification regeneration does not update release-selected
 provenance when the SDK projection is unchanged.

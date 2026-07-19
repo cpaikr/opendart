@@ -71,13 +71,16 @@ HTTP execution; the default `client-reqwest` feature adds a bounded, one-attempt
 client for ordinary use.
 
 ```rust
-use opendart::{operations::Company, ApiKey, Client, Representation};
+use opendart::{operations::Company, ApiKey, Client};
 
 # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-let request = Company::new("00126380").prepare(Representation::Json)?;
+let request = Company::new("00126380").prepare_json()?;
 let client = Client::builder(ApiKey::new("example-key")?).build()?;
 let response = client.execute(&request).await?;
 println!("{}", response.metadata.status());
+if let opendart::SourceReply::Success(company) = response.reply {
+    println!("company name evidence: {:?}", company.corp_name);
+}
 # Ok(())
 # }
 ```

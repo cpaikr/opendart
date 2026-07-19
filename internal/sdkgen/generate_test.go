@@ -95,6 +95,44 @@ func TestGenerateRustRefusesToReplaceUnownedOutput(t *testing.T) {
 	}
 }
 
+func TestGenerateRustReplacesOnlyOlderOwnedSchemas(t *testing.T) {
+	root := canonicalRoot(t)
+
+	t.Run("previous schema", func(t *testing.T) {
+		output := filepath.Join(t.TempDir(), "generated")
+		generateTestTree(t, root, output)
+		marker := filepath.Join(output, ".opendart-sdk-generated")
+		if err := os.WriteFile(marker, []byte("opendart-sdk-generator-schema=1\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := GenerateRust(root, output); err != nil {
+			t.Fatalf("replace previous owned schema: %v", err)
+		}
+		content, err := os.ReadFile(marker)
+		if err != nil || string(content) != "opendart-sdk-generator-schema=2\n" {
+			t.Fatalf("marker = %q, %v", content, err)
+		}
+	})
+
+	for _, marker := range []string{
+		"opendart-sdk-generator-schema=0\n",
+		"opendart-sdk-generator-schema=3\n",
+		"opendart-sdk-generator-schema=1",
+		"opendart-sdk-generator-schema=1\nextra",
+	} {
+		t.Run("reject "+marker, func(t *testing.T) {
+			output := filepath.Join(t.TempDir(), "generated")
+			generateTestTree(t, root, output)
+			if err := os.WriteFile(filepath.Join(output, ".opendart-sdk-generated"), []byte(marker), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := GenerateRust(root, output); !errors.Is(err, ErrGeneratedUnowned) {
+				t.Fatalf("error = %v, want %v", err, ErrGeneratedUnowned)
+			}
+		})
+	}
+}
+
 func generateTestTree(t *testing.T, root, output string) {
 	t.Helper()
 	if _, err := GenerateRust(root, output); err != nil {

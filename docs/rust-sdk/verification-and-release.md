@@ -25,10 +25,12 @@ It does not replace Cargo compilation or tests and never contacts OpenDART.
 
 ### Cargo gates
 
-The pinned stable toolchain runs formatting, all-features and
+The pinned stable toolchain formats handwritten Rust and runs all-features and
 no-default-features Clippy and tests, rustdoc with warnings denied, the reqwest
 feature-unification fixture, and `cargo package`. The declared MSRV independently
 runs all-features and no-default-features checks plus locked metadata.
+Generated Rust uses generator-owned compact formatting; offline freshness is
+its exact formatting gate, while every Cargo compile gate still includes it.
 
 The package file list must exactly match `sdk/rust/package-files.txt`. This
 requires the license, README, changelog, generated source, provenance, public
@@ -56,14 +58,18 @@ crate package identifies:
 
 - its Cargo version;
 - its exact Git source revision through `.cargo_vcs_info.json`;
-- the selected specification release, when applicable;
-- the canonical bundle SHA-256;
+- the selected semantic specification source release, when applicable;
+- the independently selected canonical bundle SHA-256;
 - the generator schema; and
 - the deterministic SDK projection SHA-256.
 
 Generated freshness uses the SDK projection. A specification change outside
-that projection does not rewrite or release the crate. Full bundle provenance
-changes only when a crate release deliberately selects a new source snapshot.
+that projection does not rewrite or release the crate. The release guard proves
+that the selected source tag exists and contains the canonical specification
+inputs; generic verification does not freeze the current source tree to that
+older tag. Full bundle provenance changes only when a crate release deliberately
+selects a new generated artifact; that bundle need not be byte-identical to the
+bundle originally generated at the source tag.
 
 ## Rust compatibility
 
@@ -90,9 +96,11 @@ component-qualified tags, and updates the matching `opendart` entry in the
 workspace lock through an explicit TOML extra file.
 
 Before its first release, the Rust path is intentionally absent from
-`.release-please-manifest.json`. Release Please bootstraps the component at
-`0.1.0`; after release, the guard accepts only a SemVer value matching the crate
-manifest and workspace lock.
+`.release-please-manifest.json`. Release Please proposes bootstrapping the
+component at `0.1.0`, but the repository guard rejects that manifest transition
+until work 6 implements the complete publication and recovery flow. Therefore a
+Rust Release Please PR must not be merged before work 6; the same guard also
+stops the release workflow if such a merge bypasses the required PR check.
 
 The current Release Please workflow still finalizes only the root specification
 release assets. A Rust component can prepare a draft release proposal, but no
@@ -105,6 +113,10 @@ Publication is deliberately unimplemented. The later publication change must:
 
 1. Consume the exact path-qualified Rust component release-created flag, tag,
    version, and immutable target revision from the pinned Release Please action.
+   Before invoking Release Please, independently detect and resume an existing
+   draft for that exact `opendart-vX.Y.Z` component tag and immutable target
+   revision. A failed run may already have created the draft, so fresh action
+   outputs alone are not a sufficient recovery mechanism.
 2. Depend on the complete verification gate and reproduce the reviewed package
    inventory from that revision.
 3. Run `cargo package --locked` and `cargo publish --locked --dry-run` before

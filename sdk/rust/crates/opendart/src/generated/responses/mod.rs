@@ -2,12 +2,12 @@
 // generator-schema: 2
 // sdk-projection-sha256: ab9e0133bace84eec3b4c3ece7664bc45355f07bc728cc51b848a22209c6a7c4
 
-mod ds001;
-mod ds002;
-mod ds003;
-mod ds004;
-mod ds005;
-mod ds006;
+pub(crate) mod ds001;
+pub(crate) mod ds002;
+pub(crate) mod ds003;
+pub(crate) mod ds004;
+pub(crate) mod ds005;
+pub(crate) mod ds006;
 
 pub use ds001::*;
 pub use ds002::*;

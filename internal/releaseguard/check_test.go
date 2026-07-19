@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -32,7 +33,7 @@ func TestSemanticVersionPolicy(t *testing.T) {
 	}
 }
 
-func TestCheckAcceptsBootstrappedRustManifest(t *testing.T) {
+func TestCheckRejectsRustReleaseManifestUntilPublicationRecoveryExists(t *testing.T) {
 	root := copyReleaseArtifacts(t)
 	path := filepath.Join(root, manifestArtifact)
 	source, err := os.ReadFile(path)
@@ -48,8 +49,10 @@ func TestCheckAcceptsBootstrappedRustManifest(t *testing.T) {
 	if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := Check(root); err != nil {
-		t.Fatalf("Check() bootstrapped manifest error = %v", err)
+	err = Check(root)
+	var guardError *Error
+	if !errors.As(err, &guardError) || guardError.Artifact != manifestArtifact || !strings.Contains(guardError.Invariant, "existing-draft recovery") {
+		t.Fatalf("Check() error = %#v", err)
 	}
 }
 
@@ -95,29 +98,6 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 				t.Fatalf("Check() error = %#v, want %s invariant containing %q", err, test.artifact, test.invariant)
 			}
 		})
-	}
-}
-
-func TestCheckRejectsReleasedRustManifestMismatch(t *testing.T) {
-	root := copyReleaseArtifacts(t)
-	path := filepath.Join(root, manifestArtifact)
-	source, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	updated := strings.Replace(
-		string(source),
-		`".": "0.1.0"`,
-		`".": "0.1.0", "sdk/rust/crates/opendart": "0.1.1"`,
-		1,
-	)
-	if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	err = Check(root)
-	var guardError *Error
-	if !errors.As(err, &guardError) || guardError.Artifact != manifestArtifact || !strings.Contains(guardError.Invariant, "matches Cargo metadata") {
-		t.Fatalf("Check() error = %#v", err)
 	}
 }
 
@@ -201,6 +181,44 @@ func TestCheckRejectsRustPackageBundleProvenanceMismatch(t *testing.T) {
 	err = Check(root)
 	var guardError *Error
 	if !errors.As(err, &guardError) || guardError.Artifact != rustProvenanceArtifact || !strings.Contains(guardError.Invariant, "matches the canonical bundle SHA-256") {
+		t.Fatalf("Check() error = %#v", err)
+	}
+}
+
+func TestCheckAllowsSpecificationSourcesToAdvanceAfterSelectedRelease(t *testing.T) {
+	root := copyReleaseArtifacts(t)
+	path := filepath.Join(root, "openapi", "components", "schemas.yaml")
+	source, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, append(source, []byte("\n# changed after the selected source release\n")...), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Check(root); err != nil {
+		t.Fatalf("Check() rejected post-release specification evolution: %v", err)
+	}
+}
+
+func TestCheckRejectsUnavailableSpecificationSourceRelease(t *testing.T) {
+	root := copyReleaseArtifacts(t)
+	path := filepath.Join(root, rustProvenanceArtifact)
+	source, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(source), `Some("v0.1.0")`, `Some("v9.9.9")`, 1)
+	if updated == string(source) {
+		t.Fatal("fixture provenance does not contain the specification source release")
+	}
+	if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err = Check(root)
+	var guardError *Error
+	if !errors.As(err, &guardError) || guardError.Artifact != rustProvenanceArtifact || !strings.Contains(guardError.Invariant, "available specification source-release tag") {
 		t.Fatalf("Check() error = %#v", err)
 	}
 }
@@ -661,7 +679,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "verify checkout extra input", artifact: verifyWorkflowArtifact,
-			old: "persist-credentials: false", replacement: "persist-credentials: false\n          fetch-depth: 0",
+			old: "persist-credentials: false", replacement: "persist-credentials: false\n          show-progress: false",
 			invariant: "uses only the approved verification actions",
 		},
 		{
@@ -932,7 +950,62 @@ func copyReleaseArtifacts(t *testing.T) string {
 			t.Fatal(err)
 		}
 	}
+	for _, sourcePath := range canonicalSpecificationSources {
+		copyPath(t, sourceRoot, targetRoot, sourcePath)
+	}
+	gitDirectory, err := exec.Command("git", "-C", sourceRoot, "rev-parse", "--absolute-git-dir").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	gitFile := []byte("gitdir: " + strings.TrimSpace(string(gitDirectory)) + "\n")
+	if err := os.WriteFile(filepath.Join(targetRoot, ".git"), gitFile, 0o600); err != nil {
+		t.Fatal(err)
+	}
 	return targetRoot
+}
+
+func copyPath(t *testing.T, sourceRoot, targetRoot, relativePath string) {
+	t.Helper()
+	sourcePath := filepath.Join(sourceRoot, filepath.FromSlash(relativePath))
+	info, err := os.Stat(sourcePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.IsDir() {
+		copyFile(t, sourceRoot, targetRoot, relativePath)
+		return
+	}
+	if err := filepath.WalkDir(sourcePath, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		relative, err := filepath.Rel(sourceRoot, path)
+		if err != nil {
+			return err
+		}
+		copyFile(t, sourceRoot, targetRoot, filepath.ToSlash(relative))
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func copyFile(t *testing.T, sourceRoot, targetRoot, relativePath string) {
+	t.Helper()
+	source, err := os.ReadFile(filepath.Join(sourceRoot, filepath.FromSlash(relativePath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(targetRoot, filepath.FromSlash(relativePath))
+	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(target, source, 0o600); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func repositoryRoot(t *testing.T) string {

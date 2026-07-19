@@ -19,6 +19,7 @@ mod client;
 pub mod compatibility;
 
 pub use generated::operations;
+pub use generated::responses;
 pub use provenance::{SourceProvenance, source_provenance};
 
 #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
@@ -28,11 +29,11 @@ pub use client::{
 };
 pub use error::{AuthorizationError, PrepareError};
 pub use request::{
-    ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedRequest, Representation,
-    RequestMethod,
+    ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedBinaryRequest,
+    PreparedRequest, Representation, RequestMethod,
 };
 pub use wire::{
-    BodyLimitError, EnvelopeError, EnvelopeFormat, HttpVersion, ResponseHeader, ResponseMetadata,
-    SourceReply, SourceResponse, SourceStatus, SourceValue, SourceValueKind, StatusEnvelope,
-    WireInspectError, WireInspector,
+    BodyLimitError, EnvelopeError, EnvelopeFormat, HttpVersion, ResponseDecodeError,
+    ResponseHeader, ResponseMetadata, SourceReply, SourceResponse, SourceStatus, SourceValue,
+    SourceValueKind, StatusEnvelope, WireInspectError, WireInspector,
 };

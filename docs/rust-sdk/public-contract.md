@@ -23,11 +23,13 @@ Generated response structures are output-only wire evidence. Mark them
 external exhaustive construction or pattern matching. This keeps later
 source-supported response fields additive.
 
-Illustrative, non-final naming:
+JSON and XML preparation methods bind distinct generated response types into
+the returned request. ZIP preparation returns `PreparedBinaryRequest`, so a
+binary plan cannot be passed to structured execution.
 
 ```rust
 let operation = AuditorOpinion::new(corp_code, business_year, report_code);
-let prepared = operation.prepare(Representation::Json)?;
+let prepared = operation.prepare_json()?;
 ```
 
 Generation enforces only constraints supported by the canonical contract.
@@ -38,8 +40,9 @@ because they are explicit contract facts.
 
 ### Prepared request
 
-`PreparedRequest` is immutable, performs no I/O, and contains no credential. It
-privately holds:
+`PreparedRequest<T>` is immutable, performs no I/O, and contains no credential.
+Its private decoder binds the selected physical representation to generated
+success type `T`. It also privately holds:
 
 - HTTP method;
 - trusted relative path;
@@ -92,6 +95,7 @@ pub struct SourceResponse<T> {
 pub struct StatusEnvelope {
     pub code: SourceStatus,
     pub message: Option<SourceValue>,
+    pub evidence: SourceValue,
 }
 ```
 
@@ -107,10 +111,10 @@ The ergonomic client likewise returns a shape equivalent to
 `Result<SourceResponse<SourceReply<T>>, ClientError>`; it does not turn `013`,
 another known source code, or an unknown source code into a Rust error.
 `ResponseMetadata` is a repository-owned, non-exhaustive value that preserves
-HTTP status, version, and response headers after removing credential-bearing
-values. Header names and safe values remain available for caller-owned policy;
-raw authenticated redirect locations and the API key in literal or encoded
-form never cross the public boundary. A future opt-in helper may offer a
+HTTP status, version, and a conservative allowlist of representation and
+delivery headers. Redirect targets, cookies, extension headers, and other
+potentially credential-bearing values never cross the public boundary,
+including when their names or values use percent encoding. A future opt-in helper may offer a
 conventional interpretation, but it must return the original response and
 cannot define collection-specific successful-empty or retry policy.
 
@@ -183,14 +187,18 @@ let client = opendart::Client::builder(api_key)
     .total_timeout(total_timeout)
     .build()?;
 
-let prepared = operation.prepare(Representation::Json)?;
+let prepared = operation.prepare_json()?;
 let reply = client.execute(&prepared).await?;
 ```
 
-Callers select JSON or XML explicitly during preparation. Fixed ZIP operations
-use `Client::execute_binary` and do not pretend to have a structured
-alternative. Operation-specific request types remain the discoverable,
-generated API; client execution remains one stable handwritten path.
+`Client::execute` returns the generated response type bound into the prepared
+request. `Client::execute_raw` performs the same bounded request and envelope
+classification but returns the normalized `SourceValue` success payload for
+callers that need undocumented fields or an untyped migration path. Callers
+select JSON or XML explicitly during preparation. Fixed ZIP operations use
+`Client::execute_binary` and do not pretend to have a structured alternative.
+Operation-specific request types remain the discoverable, generated API;
+client execution remains one stable handwritten path.
 
 ## Invariants
 
@@ -211,8 +219,8 @@ generated API; client execution remains one stable handwritten path.
 
 Use focused, non-exhaustive error categories with sanitized context:
 
-- `PrepareError`: missing input, invalid shape, explicit cardinality, invalid
-  trusted-target construction, or unsupported representation.
+- `PrepareError`: missing input or an explicit cardinality violation. Unsupported
+  representation choices are absent methods rather than runtime errors.
 - `AuthorizationError`: structurally invalid or missing credential without
   echoing its value.
 - `TransportError`: sanitized connection, timeout, TLS, body-read, or protocol
@@ -222,8 +230,9 @@ Use focused, non-exhaustive error categories with sanitized context:
 - `BodyLimitError`: configured buffered-body limit exceeded while preserving
   response metadata.
 - `EnvelopeError`: malformed or unrecognized source-envelope syntax.
-- `DecodeError`: malformed declared success representation or unsupported wire
-  value.
+- `ResponseDecodeError`: a required generated field is absent or a documented
+  container/scalar has the wrong source kind. Its path identifies the field;
+  the enclosing `ClientError` retains sanitized response metadata.
 
 The transport-independent core has no `TransportError`. The optional client
 maps private `reqwest` errors into the public sanitized taxonomy.
@@ -236,7 +245,6 @@ The official client exposes configuration that preserves its invariants:
 - buffered response limits, while streaming budgets and sink behavior remain
   caller-owned;
 - user-agent suffix or application identity;
-- representation selection; and
 - narrowly reviewed TLS trust configuration if a real consumer requires it.
 
 It does not expose switches to enable retries, redirects, ambient proxies,
@@ -267,6 +275,9 @@ Treat these as public Rust API compatibility changes:
 - Adding response fields remains compatible because generated structures are
   non-exhaustive, retain unknown fields, and cannot be constructed or matched
   exhaustively outside the crate.
+- JSON and XML response types are distinct even when today’s documented fields
+  match; changing an operation to return the other representation's type is a
+  public API change.
 - Replacing an opaque scalar with a narrower type requires evidence and a
   compatibility review; it is not automatically a fix.
 - Generated module layout is private where possible. Stable operation and
@@ -281,6 +292,8 @@ Treat these as public Rust API compatibility changes:
 - Both paths share operation identity, validation, serialization, and
   credential placement.
 - Public types preserve unknown statuses, fields, and scalar uncertainty.
+- Typed execution exposes documented fields, while `execute_raw` retains the
+  complete normalized success envelope.
 - Fixtures prove that `000`, `013`, another documented source error, and an
   unknown code remain source evidence through both low-level and ergonomic
   paths rather than being collapsed into application policy.

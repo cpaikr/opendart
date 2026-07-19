@@ -11,10 +11,12 @@ use bytes::Bytes;
 use futures_core::Stream;
 use zeroize::Zeroizing;
 
+use crate::request::RequestParts;
 use crate::{
     ApiKey, BodyLimitError, EnvelopeError, EnvelopeFormat, HttpVersion, OperationIdentity,
-    PreparedRequest, Representation, RequestMethod, ResponseHeader, ResponseMetadata, SourceReply,
-    SourceResponse, SourceValue, StatusEnvelope, WireInspectError, WireInspector,
+    PreparedBinaryRequest, PreparedRequest, Representation, RequestMethod, ResponseDecodeError,
+    ResponseHeader, ResponseMetadata, SourceReply, SourceResponse, SourceValue, StatusEnvelope,
+    WireInspectError, WireInspector,
 };
 
 const DEFAULT_CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -40,13 +42,36 @@ impl Client {
     }
 
     /// Executes a prepared JSON or XML request and inspects its bounded envelope.
-    pub async fn execute(
+    pub async fn execute<T>(
         &self,
-        prepared: &PreparedRequest,
+        prepared: &PreparedRequest<T>,
+    ) -> Result<SourceResponse<SourceReply<T>>, ClientError> {
+        let raw = self.execute_raw(prepared).await?;
+        let metadata = raw.metadata;
+        let operation = prepared.identity();
+        let reply = match raw.reply {
+            SourceReply::Success(value) => {
+                SourceReply::Success(prepared.decode(value).map_err(|source| {
+                    ClientError::ResponseDecode {
+                        operation,
+                        metadata: metadata.clone(),
+                        source,
+                    }
+                })?)
+            }
+            SourceReply::Status(status) => SourceReply::Status(status),
+        };
+        Ok(SourceResponse { metadata, reply })
+    }
+
+    /// Executes a typed structured request while retaining its normalized raw success payload.
+    pub async fn execute_raw<T>(
+        &self,
+        prepared: &PreparedRequest<T>,
     ) -> Result<SourceResponse<SourceReply<SourceValue>>, ClientError> {
         let format = structured_format(prepared)?;
         let operation = prepared.identity();
-        let sent = self.send(prepared).await?;
+        let sent = self.send(prepared.parts()).await?;
         let deadline = sent.deadline;
         let mut response = sent.response;
         let metadata = response_metadata(&response, &self.api_key);
@@ -79,7 +104,7 @@ impl Client {
     /// Executes a prepared ZIP-with-XML-error request without losing consumed bytes.
     pub async fn execute_binary(
         &self,
-        prepared: &PreparedRequest,
+        prepared: &PreparedBinaryRequest,
     ) -> Result<SourceResponse<BinaryReply<BodyStream>>, ClientError> {
         if !prepared
             .expected_representations()
@@ -91,7 +116,7 @@ impl Client {
             });
         }
 
-        let sent = self.send(prepared).await?;
+        let sent = self.send(prepared.parts()).await?;
         let metadata = response_metadata(&sent.response, &self.api_key);
         let operation = prepared.identity();
         let stream = ReqwestBodyStream {
@@ -107,7 +132,7 @@ impl Client {
         })
     }
 
-    async fn send(&self, prepared: &PreparedRequest) -> Result<SentResponse, ClientError> {
+    async fn send(&self, prepared: &RequestParts) -> Result<SentResponse, ClientError> {
         let operation = prepared.identity();
         let deadline = tokio::time::Instant::now()
             .checked_add(self.total_timeout)
@@ -419,6 +444,16 @@ pub enum ClientError {
         /// The sanitized envelope failure.
         source: EnvelopeError,
     },
+    /// A well-formed success envelope violated the selected generated response shape.
+    #[error("{operation}: {source}")]
+    ResponseDecode {
+        /// The prepared operation.
+        operation: OperationIdentity,
+        /// Metadata retained before generated response decoding.
+        metadata: ResponseMetadata,
+        /// The sanitized generated-shape failure.
+        source: ResponseDecodeError,
+    },
 }
 
 impl ClientError {
@@ -428,7 +463,9 @@ impl ClientError {
         match self {
             Self::Representation { .. } => None,
             Self::Transport(error) => error.metadata(),
-            Self::BodyLimit { metadata, .. } | Self::Envelope { metadata, .. } => Some(metadata),
+            Self::BodyLimit { metadata, .. }
+            | Self::Envelope { metadata, .. }
+            | Self::ResponseDecode { metadata, .. } => Some(metadata),
         }
     }
 }
@@ -494,7 +531,7 @@ fn map_inspect_error(
     }
 }
 
-fn structured_format(prepared: &PreparedRequest) -> Result<EnvelopeFormat, ClientError> {
+fn structured_format<T>(prepared: &PreparedRequest<T>) -> Result<EnvelopeFormat, ClientError> {
     let representations = prepared.expected_representations();
     if representations.contains(&Representation::Json) {
         Ok(EnvelopeFormat::Json)
@@ -526,7 +563,8 @@ fn response_metadata(response: &reqwest::Response, api_key: &ApiKey) -> Response
             .iter()
             .filter_map(|(name, value)| {
                 let bytes = value.as_bytes();
-                if contains_bytes(bytes, secret.as_bytes())
+                if !safe_response_header(name.as_str())
+                    || contains_bytes(bytes, secret.as_bytes())
                     || contains_ascii_case_insensitive(bytes, form_encoded.as_bytes())
                     || contains_ascii_case_insensitive(bytes, percent_encoded.as_bytes())
                     || contains_ascii_case_insensitive(bytes, b"crtfc_key")
@@ -568,6 +606,18 @@ fn contains_ascii_case_insensitive(haystack: &[u8], needle: &[u8]) -> bool {
         && haystack
             .windows(needle.len())
             .any(|window| window.eq_ignore_ascii_case(needle))
+}
+
+fn safe_response_header(name: &str) -> bool {
+    matches!(
+        name,
+        "content-encoding"
+            | "content-language"
+            | "content-length"
+            | "content-type"
+            | "date"
+            | "retry-after"
+    )
 }
 
 /// The classified evidence from a ZIP-with-XML-error endpoint.
@@ -866,7 +916,8 @@ fn placeholder_operation() -> OperationIdentity {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::operations::{Company, CorpCode};
+    use crate::SourceValueKind;
+    use crate::operations::{Company, CorpCode, List};
     use std::{
         io::{Read, Write},
         net::TcpListener as StdTcpListener,
@@ -958,10 +1009,8 @@ mod tests {
         response
     }
 
-    fn company_request() -> PreparedRequest {
-        Company::new("00126380")
-            .prepare(Representation::Json)
-            .unwrap()
+    fn company_request() -> PreparedRequest<crate::responses::CompanyJsonResponse> {
+        Company::new("00126380").prepare_json().unwrap()
     }
 
     async fn collect(mut stream: BodyStream) -> (Vec<u8>, Option<TransportFailureKind>) {
@@ -1099,11 +1148,25 @@ mod tests {
     #[tokio::test]
     async fn client_sends_one_authorized_request_and_sanitizes_metadata() {
         let sentinel = "secret /+ credential";
-        let encoded = "secret+%2F%2B+credential";
-        let body = br#"{"status":"000","value":1.20e3}"#;
-        let unsafe_header = format!("https://elsewhere.invalid/?crtfc_key={encoded}");
+        let form_encoded = "secret+%2F%2B+credential";
+        let percent_encoded = "secret%20%2F%2B%20credential";
+        let body = br#"{"status":"000","corp_name":"Example Corp","value":1.20e3}"#;
+        let unsafe_location = "https://elsewhere.invalid/?crtfc%5Fkey=%73ecret";
         let (origin, server) = serve_once(response(
-            &[("x-safe", "retained"), ("location", &unsafe_header)],
+            &[
+                ("content-type", "application/json"),
+                ("content-language", sentinel),
+                ("content-encoding", form_encoded),
+                ("retry-after", percent_encoded),
+                ("date", "crtfc_key"),
+                ("location", unsafe_location),
+                ("content-location", unsafe_location),
+                ("link", unsafe_location),
+                ("refresh", unsafe_location),
+                ("set-cookie", "crtfc%5Fkey=%73ecret"),
+                ("x-crtfc%5fkey", "%73ecret"),
+                ("x-source-uri", unsafe_location),
+            ],
             body,
         ))
         .await;
@@ -1117,23 +1180,40 @@ mod tests {
             panic!("payload-bearing status must remain success evidence");
         };
         assert_eq!(
-            value.get("value").and_then(SourceValue::as_number_str),
+            value.corp_name.as_ref().and_then(SourceValue::as_str),
+            Some("Example Corp")
+        );
+        assert_eq!(
+            value
+                .additional_field("value")
+                .and_then(SourceValue::as_number_str),
             Some("1.20e3")
         );
-        assert!(
-            result
-                .metadata
-                .headers()
-                .iter()
-                .any(|header| { header.name() == "x-safe" && header.value() == b"retained" })
-        );
-        assert!(
-            !result
-                .metadata
-                .headers()
-                .iter()
-                .any(|header| header.name() == "location")
-        );
+        assert!(result.metadata.headers().iter().any(|header| {
+            header.name() == "content-type" && header.value() == b"application/json"
+        }));
+        for unsafe_name in [
+            "location",
+            "content-location",
+            "link",
+            "refresh",
+            "set-cookie",
+            "x-crtfc%5fkey",
+            "x-source-uri",
+            "content-language",
+            "content-encoding",
+            "retry-after",
+            "date",
+        ] {
+            assert!(
+                !result
+                    .metadata
+                    .headers()
+                    .iter()
+                    .any(|header| header.name() == unsafe_name),
+                "unsafe response header crossed the metadata boundary: {unsafe_name}"
+            );
+        }
 
         let request = String::from_utf8(server.await.unwrap()).unwrap();
         assert!(request.starts_with(
@@ -1217,7 +1297,7 @@ mod tests {
                 .test_origin(origin)
                 .build()
                 .unwrap();
-            let prepared = CorpCode::new().prepare(Representation::Zip).unwrap();
+            let prepared = CorpCode::new().prepare_zip().unwrap();
 
             let result = client.execute_binary(&prepared).await.unwrap();
             let BinaryReply::Unrecognized(stream) = result.reply else {
@@ -1278,6 +1358,124 @@ mod tests {
                 kind: TransportFailureKind::Body,
                 ..
             })
+        ));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn execute_raw_retains_the_normalized_success_envelope() {
+        let body = br#"{"status":"000","future":{"nested":true}}"#;
+        let (origin, server) =
+            serve_once(response(&[("content-type", "application/json")], body)).await;
+        let client = Client::builder(ApiKey::new("key").unwrap())
+            .test_origin(origin)
+            .build()
+            .unwrap();
+        let prepared = company_request();
+
+        let result = client.execute_raw(&prepared).await.unwrap();
+        let SourceReply::Success(value) = result.reply else {
+            panic!("payload-bearing status must remain success evidence");
+        };
+        assert_eq!(
+            value
+                .get("future")
+                .and_then(|future| future.get("nested"))
+                .and_then(SourceValue::as_bool),
+            Some(true)
+        );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn xml_execution_uses_its_distinct_generated_response_type() {
+        let body = br#"<result><status>000</status><corp_name>Example Corp</corp_name></result>"#;
+        let (origin, server) =
+            serve_once(response(&[("content-type", "application/xml")], body)).await;
+        let client = Client::builder(ApiKey::new("key").unwrap())
+            .test_origin(origin)
+            .build()
+            .unwrap();
+        let prepared = Company::new("00126380").prepare_xml().unwrap();
+
+        let result = client.execute(&prepared).await.unwrap();
+        let SourceReply::Success(value) = result.reply else {
+            panic!("payload-bearing status must remain success evidence");
+        };
+        assert_eq!(
+            value.corp_name.as_ref().and_then(SourceValue::as_str),
+            Some("Example Corp")
+        );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn typed_xml_arrays_accept_zero_one_or_repeated_elements() {
+        for (body, expected_length) in [
+            (
+                br#"<result><status>000</status><page_no>1</page_no></result>"#.as_slice(),
+                None,
+            ),
+            (
+                br#"<result><status>000</status><list/></result>"#.as_slice(),
+                Some(1),
+            ),
+            (
+                br#"<result><status>000</status><list><corp_code>A</corp_code></list></result>"#
+                    .as_slice(),
+                Some(1),
+            ),
+            (
+                br#"<result><status>000</status><list><corp_code>A</corp_code></list><list><corp_code>B</corp_code></list></result>"#
+                    .as_slice(),
+                Some(2),
+            ),
+        ] {
+            let (origin, server) =
+                serve_once(response(&[("content-type", "application/xml")], body)).await;
+            let client = Client::builder(ApiKey::new("key").unwrap())
+                .test_origin(origin)
+                .build()
+                .unwrap();
+            let prepared = List::new().prepare_xml().unwrap();
+
+            let result = client.execute(&prepared).await.unwrap();
+            let SourceReply::Success(value) = result.reply else {
+                panic!("payload-bearing status must remain success evidence");
+            };
+            assert_eq!(value.list.as_ref().map(Vec::len), expected_length);
+            if body == br#"<result><status>000</status><list/></result>"# {
+                let empty = &value.list.as_ref().unwrap()[0];
+                assert!(empty.corp_code.is_none());
+                assert_eq!(empty.additional_fields().count(), 0);
+            }
+            server.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn typed_decode_errors_retain_metadata_and_field_path() {
+        let body = br#"{"status":"000","list":"not-an-array"}"#;
+        let (origin, server) =
+            serve_once(response(&[("content-type", "application/json")], body)).await;
+        let client = Client::builder(ApiKey::new("key").unwrap())
+            .test_origin(origin)
+            .build()
+            .unwrap();
+        let prepared = List::new().prepare_json().unwrap();
+
+        let error = client.execute(&prepared).await.unwrap_err();
+        assert_eq!(error.metadata().map(ResponseMetadata::status), Some(200));
+        assert!(matches!(
+            error,
+            ClientError::ResponseDecode {
+                source: ResponseDecodeError::WrongKind {
+                    ref path,
+                    expected: SourceValueKind::Array,
+                    actual: SourceValueKind::String,
+                },
+                ..
+            } if path == "$/list"
         ));
         server.await.unwrap();
     }
@@ -1378,7 +1576,7 @@ mod tests {
             .test_origin(origin)
             .build()
             .unwrap();
-        let prepared = CorpCode::new().prepare(Representation::Zip).unwrap();
+        let prepared = CorpCode::new().prepare_zip().unwrap();
 
         let result = client.execute_binary(&prepared).await.unwrap();
         assert_eq!(result.metadata.status(), 200);
@@ -1416,7 +1614,7 @@ mod tests {
             .total_timeout(Duration::from_millis(70))
             .build()
             .unwrap();
-        let prepared = CorpCode::new().prepare(Representation::Zip).unwrap();
+        let prepared = CorpCode::new().prepare_zip().unwrap();
 
         let started = tokio::time::Instant::now();
         let result = client.execute_binary(&prepared).await.unwrap();

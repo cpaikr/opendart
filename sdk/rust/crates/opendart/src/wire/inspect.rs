@@ -624,17 +624,24 @@ fn decode_reference(reference: &str) -> Result<char, ()> {
 
 fn classify_status(value: SourceValue) -> SourceReply<SourceValue> {
     let field_count = value.fields().count();
-    let status = value.get("status").and_then(SourceValue::as_str);
+    let status = value
+        .get("status")
+        .and_then(SourceValue::as_str)
+        .map(str::to_owned);
     let status_only = status.is_some()
         && field_count <= 2
         && value
             .fields()
             .all(|(name, _)| matches!(name, "status" | "message"));
+    let source_status = status
+        .as_deref()
+        .is_some_and(|status| status != SourceStatus::SUCCESS);
 
-    if status_only {
+    if status_only || source_status {
         SourceReply::Status(StatusEnvelope {
             code: SourceStatus::new(status.expect("checked above")),
             message: value.get("message").cloned(),
+            evidence: value,
         })
     } else {
         SourceReply::Success(value)
@@ -699,6 +706,57 @@ mod tests {
             };
             assert_eq!(status.code.as_str(), code);
         }
+    }
+
+    #[test]
+    fn non_success_status_retains_additive_json_and_xml_evidence() {
+        let SourceReply::Status(json) = inspector(256)
+            .inspect_json(br#"{"status":"013","message":"none","request_id":"json-123"}"#)
+            .unwrap()
+        else {
+            panic!("a non-success JSON status with additive fields must remain status evidence");
+        };
+        assert_eq!(json.code.as_str(), "013");
+        assert_eq!(
+            json.evidence
+                .get("request_id")
+                .and_then(SourceValue::as_str),
+            Some("json-123")
+        );
+
+        let SourceReply::Status(xml) = inspector(256)
+            .inspect_xml(
+                br#"<result><status>013</status><message>none</message><request_id>xml-123</request_id></result>"#,
+            )
+            .unwrap()
+        else {
+            panic!("a non-success XML status with additive fields must remain status evidence");
+        };
+        assert_eq!(xml.code.as_str(), "013");
+        assert_eq!(
+            xml.evidence.get("request_id").and_then(SourceValue::as_str),
+            Some("xml-123")
+        );
+    }
+
+    #[test]
+    fn success_status_with_payload_is_not_a_status_envelope() {
+        for body in [
+            br#"{"status":"000","payload":"json"}"#.as_slice(),
+            br#"{"status":"000","message":"ok","future":true}"#.as_slice(),
+        ] {
+            assert!(matches!(
+                inspector(128).inspect_json(body).unwrap(),
+                SourceReply::Success(_)
+            ));
+        }
+
+        assert!(matches!(
+            inspector(128)
+                .inspect_xml(b"<result><status>000</status><payload>xml</payload></result>")
+                .unwrap(),
+            SourceReply::Success(_)
+        ));
     }
 
     #[test]

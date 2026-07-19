@@ -45,5 +45,6 @@ Tokio, Hyper, TLS, proxy, DNS, or streaming-runtime dependencies. The default
 remains the portable public surface.
 
 The package contains Cargo's `.cargo_vcs_info.json` for exact source revision
-and exposes `source_provenance()` for the crate version, specification release,
-canonical bundle checksum, generator schema, and SDK projection checksum.
+and exposes `source_provenance()` for the crate version, semantic specification
+source release, independently selected canonical bundle checksum, generator
+schema, and SDK projection checksum.

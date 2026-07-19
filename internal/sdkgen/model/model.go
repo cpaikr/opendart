@@ -15,7 +15,7 @@ import (
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 )
 
-const SchemaVersion = 1
+const SchemaVersion = 2
 
 type Representation string
 
@@ -102,8 +102,9 @@ type ResponseShape struct {
 }
 
 type ResponseProperty struct {
-	Name  string        `json:"name"`
-	Shape ResponseShape `json:"shape"`
+	Name     string        `json:"name"`
+	RustName string        `json:"rustName"`
+	Shape    ResponseShape `json:"shape"`
 }
 
 // Error reports a generator-model rule without including source bodies.
@@ -175,6 +176,9 @@ func Build(surface openapispec.SDKSurface) (Model, error) {
 		first := sources[0]
 		parameters, err := normalizeParameters(first)
 		if err != nil {
+			return Model{}, err
+		}
+		if err := validateOperationMethodSymbols(first.OperationID, parameters); err != nil {
 			return Model{}, err
 		}
 		name := operationTypeName(first.Path)
@@ -352,6 +356,37 @@ func normalizeParameters(source openapispec.SDKSurfaceOperation) ([]Parameter, e
 	return parameters, nil
 }
 
+func validateOperationMethodSymbols(operation string, parameters []Parameter) error {
+	methods := map[string]string{
+		"new":           "generated constructor",
+		"prepare_parts": "generated request assembly method",
+		"prepare_json":  "generated JSON preparation method",
+		"prepare_xml":   "generated XML preparation method",
+		"prepare_zip":   "generated ZIP preparation method",
+	}
+	for _, parameter := range parameters {
+		candidates := []struct {
+			name   string
+			detail string
+		}{
+			{name: parameter.RustName, detail: "getter for " + parameter.WireName},
+		}
+		if !parameter.Required {
+			candidates = append(candidates, struct {
+				name   string
+				detail string
+			}{name: "with_" + parameter.RustName, detail: "builder for " + parameter.WireName})
+		}
+		for _, candidate := range candidates {
+			if previous := methods[candidate.name]; previous != "" {
+				return reject("rust-name-collision", operation, "parameters", previous+" and "+candidate.detail+" normalize to "+candidate.name)
+			}
+			methods[candidate.name] = candidate.detail
+		}
+	}
+	return nil
+}
+
 func normalizeShape(source openapispec.SDKSurfaceSchema, mediaType string) (ResponseShape, error) {
 	if mediaType == "application/zip" {
 		return ResponseShape{Kind: "binary", Description: source.Description, AdditionalPropertiesPolicy: additionalPropertiesPolicy(source.AdditionalProperties)}, nil
@@ -390,13 +425,22 @@ func normalizeShape(source openapispec.SDKSurfaceSchema, mediaType string) (Resp
 			return ResponseShape{}, fmt.Errorf("object has array items")
 		}
 		properties := make(map[string]bool, len(source.Properties))
+		rustNames := make(map[string]string, len(source.Properties))
 		for _, property := range source.Properties {
 			properties[property.Name] = true
+			rustName := rustFieldName(property.Name)
+			if !validRustIdentifier(rustName) {
+				return ResponseShape{}, fmt.Errorf("property %q has invalid Rust name %q", property.Name, rustName)
+			}
+			if previous := rustNames[rustName]; previous != "" {
+				return ResponseShape{}, fmt.Errorf("properties %q and %q have the same Rust name %q", previous, property.Name, rustName)
+			}
+			rustNames[rustName] = property.Name
 			child, err := normalizeShape(property.Schema, mediaType)
 			if err != nil {
 				return ResponseShape{}, fmt.Errorf("property %q: %w", property.Name, err)
 			}
-			shape.Properties = append(shape.Properties, ResponseProperty{Name: property.Name, Shape: child})
+			shape.Properties = append(shape.Properties, ResponseProperty{Name: property.Name, RustName: rustName, Shape: child})
 		}
 		required := make(map[string]bool, len(shape.Required))
 		for _, name := range shape.Required {
@@ -631,6 +675,7 @@ var rustKeywords = map[string]bool{
 	"dyn": true, "abstract": true, "become": true, "box": true, "do": true,
 	"final": true, "macro": true, "override": true, "priv": true, "typeof": true,
 	"unsized": true, "virtual": true, "yield": true, "try": true,
+	"gen": true,
 }
 
 func denormalizeParameter(parameter Parameter) openapispec.SDKSurfaceParameter {

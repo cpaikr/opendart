@@ -1,4 +1,4 @@
-use crate::{OperationIdentity, Representation};
+use crate::OperationIdentity;
 
 /// A deterministic request could not be prepared from the supplied operation input.
 #[derive(Debug, thiserror::Error)]
@@ -11,16 +11,6 @@ pub enum PrepareError {
         operation: OperationIdentity,
         /// The canonical wire parameter name.
         parameter: &'static str,
-    },
-    /// The logical operation does not provide the requested physical representation.
-    #[error(
-        "logical operation {logical_operation} does not support the requested {representation:?} representation"
-    )]
-    UnsupportedRepresentation {
-        /// The stable logical operation identity.
-        logical_operation: &'static str,
-        /// The unsupported representation.
-        representation: Representation,
     },
     /// An explicit collection cardinality constraint was violated.
     #[error("{operation} parameter {parameter} requires between {minimum} and {maximum} items")]

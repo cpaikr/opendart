@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -103,10 +104,18 @@ diff -u sdk/rust/package-files.txt "${package_files}"
 cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml`
 )
 
+var canonicalSpecificationSources = []string{
+	"openapi/openapi.yaml",
+	"openapi/components",
+	"openapi/paths",
+	"openapi/schemas",
+}
+
 var (
 	semanticVersion = regexp.MustCompile(`^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`)
 	pinnedAction    = regexp.MustCompile(`^[^@]+@[0-9a-f]{40}$`)
 	rustBundleSHA   = regexp.MustCompile(`(?m)^const CANONICAL_BUNDLE_SHA256: &str =\s*"([0-9a-f]{64})";$`)
+	rustSourceTag   = regexp.MustCompile(`(?m)^const SPECIFICATION_SOURCE_RELEASE: Option<&str> = Some\("(v[0-9]+\.[0-9]+\.[0-9]+)"\);$`)
 )
 
 // Error identifies the repository artifact and invariant that failed without
@@ -175,6 +184,9 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
+	if err := checkSpecificationSourceRelease(absoluteRoot, provenanceSource); err != nil {
+		return err
+	}
 	if err := checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSource); err != nil {
 		return err
 	}
@@ -196,6 +208,38 @@ func Check(repositoryRoot string) error {
 		return err
 	}
 	return checkWorkflows(releaseSource, verifySource, liveSource, notifySource)
+}
+
+func checkSpecificationSourceRelease(repositoryRoot string, provenanceSource []byte) error {
+	matches := rustSourceTag.FindAllSubmatch(provenanceSource, -1)
+	if len(matches) != 1 {
+		return &Error{
+			Artifact:  rustProvenanceArtifact,
+			Invariant: "names one semantic specification source release",
+			Detail:    "one active vX.Y.Z source-release constant is required",
+		}
+	}
+	tag := string(matches[0][1])
+	reference := "refs/tags/" + tag
+	if err := exec.Command("git", "-C", repositoryRoot, "rev-parse", "--verify", "--quiet", reference+"^{commit}").Run(); err != nil {
+		return &Error{
+			Artifact:  rustProvenanceArtifact,
+			Invariant: "references an available specification source-release tag",
+			Detail:    tag,
+			Cause:     err,
+		}
+	}
+	for _, source := range canonicalSpecificationSources {
+		if err := exec.Command("git", "-C", repositoryRoot, "cat-file", "-e", reference+":"+source).Run(); err != nil {
+			return &Error{
+				Artifact:  rustProvenanceArtifact,
+				Invariant: "semantic source release contains the canonical specification inputs",
+				Detail:    tag + ":" + source,
+				Cause:     err,
+			}
+		}
+	}
+	return nil
 }
 
 func checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSource []byte) error {
@@ -325,6 +369,12 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 	releasedManifest := reflect.DeepEqual(manifestKeys, []string{".", rustPackagePath})
 	if err := require(manifestArtifact, "contains the root and optional bootstrapped Rust component", bootstrapManifest || releasedManifest, ""); err != nil {
 		return err
+	}
+	if releasedManifest {
+		return &Error{
+			Artifact:  manifestArtifact,
+			Invariant: "omits the Rust component until work 6 validates path-qualified outputs and existing-draft recovery",
+		}
 	}
 	if err := require(manifestArtifact, "root version is SemVer", semanticVersion.MatchString(manifest["."]), ""); err != nil {
 		return err
@@ -803,7 +853,7 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		uses string
 		with map[string]any
 	}{
-		{name: "Check out repository", uses: "actions/checkout", with: map[string]any{"persist-credentials": false}},
+		{name: "Check out repository", uses: "actions/checkout", with: map[string]any{"fetch-depth": 0, "persist-credentials": false}},
 		{name: "Set up Go", uses: "actions/setup-go", with: map[string]any{"go-version-file": "go.mod", "cache": true}},
 		{name: "Install pinned Rust toolchains", run: installRustToolchainsScript},
 		{name: "Fetch locked Rust dependencies", run: fetchRustDependenciesScript},
