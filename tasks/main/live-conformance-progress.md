@@ -73,5 +73,5 @@ None.
 
 ## Next action
 
-Run the full repository validation, then open the runner-foundation PR to
-`sub` for Codex and CodeRabbit review.
+Address the runner-foundation PR review, merge it to `sub`, then begin ordered
+work 4 on a fresh branch from the updated integration branch.

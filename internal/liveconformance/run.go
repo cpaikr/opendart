@@ -20,6 +20,8 @@ import (
 	"github.com/cpaikr/opendart/internal/liveprobe"
 )
 
+const maximumXMLDepth = 128
+
 // Run executes a previously preflighted plan. Constructing the plan is what
 // guarantees that the credential is not read until all offline gates pass.
 func (plan *Plan) Run(ctx context.Context) (Report, error) {
@@ -103,7 +105,14 @@ func executeCase(ctx context.Context, spec specification, do func(*http.Request)
 	request.Header.Set("Accept", prepared.operation.PrimaryRepresentation)
 	request.Header.Set("User-Agent", "opendart-live-conformance/1.0")
 	response, err := do(request)
-	if err != nil || response == nil {
+	if err != nil {
+		if response != nil && response.Body != nil {
+			_ = response.Body.Close()
+		}
+		failure := caseFailure("transport-failure", "request", prepared)
+		return result, &failure
+	}
+	if response == nil {
 		failure := caseFailure("transport-failure", "request", prepared)
 		return result, &failure
 	}
@@ -208,36 +217,53 @@ func parseJSON(body []byte) (Response, error) {
 }
 
 func parseXML(body []byte) (Response, error) {
+	root, values, err := parseXMLValues(body)
+	if err != nil || root != "result" {
+		return Response{}, errors.New("XML is invalid")
+	}
+	status := firstElementValue(values, "result/status")
+	if status == "" {
+		return Response{}, errors.New("XML status is missing")
+	}
+	return Response{Representation: "application/xml", APIStatus: status, XMLValues: values}, nil
+}
+
+func parseXMLValues(body []byte) (string, map[string][]string, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(body))
 	stack := make([]string, 0)
 	text := make([]strings.Builder, 0)
 	values := make(map[string][]string)
-	rootSeen := false
+	root := ""
 	for {
 		token, err := decoder.Token()
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return Response{}, errors.New("XML is invalid")
+			return "", nil, errors.New("XML is invalid")
 		}
 		switch current := token.(type) {
 		case xml.StartElement:
+			if len(stack) >= maximumXMLDepth {
+				return "", nil, errors.New("XML nesting is too deep")
+			}
 			if len(stack) == 0 {
-				if rootSeen {
-					return Response{}, errors.New("XML has multiple roots")
+				if root != "" {
+					return "", nil, errors.New("XML has multiple roots")
 				}
-				rootSeen = true
+				root = current.Name.Local
 			}
 			stack = append(stack, current.Name.Local)
 			text = append(text, strings.Builder{})
 		case xml.CharData:
 			if len(text) > 0 {
 				text[len(text)-1].Write([]byte(current))
+			} else if strings.TrimSpace(string(current)) != "" {
+				return "", nil, errors.New("XML has text outside its root")
 			}
 		case xml.EndElement:
 			if len(stack) == 0 || stack[len(stack)-1] != current.Name.Local {
-				return Response{}, errors.New("XML nesting is invalid")
+				return "", nil, errors.New("XML nesting is invalid")
 			}
 			path := strings.Join(stack, "/")
 			if value := strings.TrimSpace(text[len(text)-1].String()); value != "" {
@@ -247,43 +273,57 @@ func parseXML(body []byte) (Response, error) {
 			text = text[:len(text)-1]
 		}
 	}
-	if !rootSeen || len(stack) != 0 {
-		return Response{}, errors.New("XML root is missing")
+	if root == "" || len(stack) != 0 {
+		return "", nil, errors.New("XML root is missing")
 	}
-	status := firstElementValue(values, "status")
-	if status == "" {
-		return Response{}, errors.New("XML status is missing")
-	}
-	return Response{Representation: "application/xml", APIStatus: status, XMLValues: values}, nil
+	return root, values, nil
 }
 
 func parseZIP(body []byte) (Response, error) {
+	return parseZIPWithLimit(body, MaximumArchiveBytes)
+}
+
+func parseZIPWithLimit(body []byte, expansionLimit int) (Response, error) {
 	reader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
-	if err != nil || len(reader.File) == 0 {
+	if err != nil || len(reader.File) == 0 || expansionLimit <= 0 {
 		return Response{}, errors.New("ZIP is invalid")
 	}
 	summary := ArchiveSummary{Entries: len(reader.File)}
+	documents := make([]ArchiveDocument, 0)
 	for _, file := range reader.File {
 		if file.FileInfo().IsDir() {
 			continue
 		}
-		summary.ExpandedBytes += int(file.UncompressedSize64)
+		entry, err := file.Open()
+		if err != nil {
+			return Response{}, errors.New("ZIP entry is invalid")
+		}
+		remaining := expansionLimit - summary.ExpandedBytes
+		content, readErr := io.ReadAll(io.LimitReader(entry, int64(remaining)+1))
+		closeErr := entry.Close()
+		if readErr != nil || closeErr != nil || len(content) > remaining {
+			return Response{}, errors.New("ZIP expansion is invalid")
+		}
+		summary.ExpandedBytes += len(content)
 		extension := strings.ToLower(file.Name)
 		if strings.HasSuffix(extension, ".xml") || strings.HasSuffix(extension, ".xbrl") {
-			summary.XMLDocuments++
+			root, values, parseErr := parseXMLValues(content)
+			if parseErr == nil {
+				documents = append(documents, ArchiveDocument{Root: root, XMLValues: values})
+				summary.XMLDocuments++
+			}
 		}
 	}
 	if summary.XMLDocuments == 0 || summary.ExpandedBytes == 0 {
 		return Response{}, errors.New("ZIP has no meaningful XML content")
 	}
-	return Response{Representation: "application/zip", Archive: summary}, nil
+	return Response{Representation: "application/zip", Archive: summary, ArchiveDocuments: documents}, nil
 }
 
-func firstElementValue(values map[string][]string, element string) string {
-	for path, candidates := range values {
-		if (path == element || strings.HasSuffix(path, "/"+element)) && len(candidates) > 0 {
-			return candidates[0]
-		}
+func firstElementValue(values map[string][]string, path string) string {
+	candidates := values[path]
+	if len(candidates) > 0 {
+		return candidates[0]
 	}
 	return ""
 }
@@ -348,6 +388,9 @@ func validateReport(report Report, credential string) error {
 	encoded, err := json.Marshal(report)
 	if err != nil {
 		return err
+	}
+	if len(encoded) == 0 || len(encoded) > MaximumReportBytes {
+		return errors.New("report size is invalid")
 	}
 	if credential != "" && bytes.Contains(encoded, []byte(credential)) {
 		return errors.New("report contains credential")

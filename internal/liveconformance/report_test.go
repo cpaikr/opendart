@@ -30,6 +30,12 @@ func TestDecodeReportAcceptsOnlyStrictSanitizedSchema(t *testing.T) {
 	if decoded.Outcome != "passed" || len(decoded.Cases) != 1 {
 		t.Fatalf("decoded report = %#v", decoded)
 	}
+	oversizedProducer := report
+	oversizedProducer.Cases = append([]CaseResult(nil), report.Cases...)
+	oversizedProducer.Cases[0].CaseID = strings.Repeat("a", MaximumReportBytes)
+	if err := validateReport(oversizedProducer, ""); err == nil {
+		t.Fatal("producer accepted an oversized report")
+	}
 
 	for _, mutation := range []struct {
 		name    string

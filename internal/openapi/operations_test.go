@@ -102,7 +102,7 @@ func TestOperationsApplyOperationParameterOverrides(t *testing.T) {
 	}
 	for _, operation := range catalog.Operations {
 		if operation.Method == http.MethodPut && operation.Path == "/companies/{corp_code}.xml" {
-			if len(operation.Parameters) != 1 || operation.Parameters[0].Name != "corp_code" {
+			if len(operation.Parameters) != 1 || operation.Parameters[0].Name != "corp_code" || operation.Parameters[0].Style != "label" {
 				t.Fatalf("effective parameters = %#v", operation.Parameters)
 			}
 			return

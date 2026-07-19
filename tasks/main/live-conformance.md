@@ -18,13 +18,13 @@ Implementation progress is maintained in the task-local
 - The focused multi-company probe is ported to the Go CLI with its existing
   request matrix, assertions, sanitized report, expanded offline HTTP coverage,
   and direct operational entry point.
-- No general Go live runner, complete case inventory, credentialed workflow, or
-  live issue automation is committed.
-- Lasting Go tests cover OpenAPI loading, semantic comparison, response routing
-  and validation, and representative JSON, XML, and ZIP fixtures. Operation
-  enumeration, request validation, and the shared HTTP safety and reporting
-  foundations remain future work in this task. The focused Go probe is the only
-  implemented credentialed command until the general runner replaces it.
+- The general Go runner foundation now owns physical-operation enumeration,
+  offline request validation, fail-closed preflight, bounded execution, typed
+  assertions, and the sanitized report contract.
+- The complete primary-case inventory, credentialed workflow, and live issue
+  automation remain future work. The focused Go probe remains the only
+  operational credentialed command until the general runner is wired to the
+  reviewed inventory.
 - The completed [Go-only cleanup](../../plans/main/go-only-tooling-cleanup.md)
   does not
   claim completion of the general runner or introduce scheduled credentialed
@@ -62,18 +62,17 @@ Implementation progress is maintained in the task-local
 
 ## Ordered work
 
-1. **Partially complete.** Lasting Go tests cover OpenAPI loading, semantic
-   comparison, response routing and validation, and representative JSON, XML,
-   and ZIP fixtures. Operation enumeration and request validation remain future
-   work.
+1. **Complete.** Lasting Go tests cover OpenAPI loading, semantic comparison,
+   response routing and validation, representative JSON, XML, and ZIP fixtures,
+   physical-operation enumeration, and offline request validation.
 2. **Complete.** Ported the existing focused multi-company probe to Go through
    the [Go-only cleanup](../../plans/main/go-only-tooling-cleanup.md), preserving
    its cases,
    assertions, credential isolation, and sanitized report. This remains a
    focused probe rather than the general runner.
-3. Implement operation enumeration, request validation, the runner, request
-   budget, representation adapters, typed assertions, sanitized report, and
-   offline HTTP tests.
+3. **Complete.** Implemented operation enumeration, request validation, the
+   runner, request budget, representation adapters, typed assertions, sanitized
+   report, and offline HTTP tests.
 4. Curate one primary case for every physical operation, adding typed discovery
    only where stable public inputs are impractical. Add a preflight coverage and
    total-budget gate.
@@ -102,6 +101,6 @@ Implementation progress is maintained in the task-local
 
 ## Next action
 
-Implement operation enumeration, request validation, and the shared HTTP and
-reporting seams before curating the complete case inventory. Do not configure a
-credentialed workflow yet.
+Curate the complete primary-case inventory and wire its offline coverage,
+request-budget, and sanitization gates into repository verification. Do not
+configure a credentialed workflow yet.

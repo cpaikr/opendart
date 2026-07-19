@@ -15,6 +15,9 @@ import (
 // Preflight derives an executable plan without reading a credential or using a
 // network. Exactly one case must cover every physical operation.
 func Preflight(spec specification, cases []Case, assertions map[AssertionID]Assertion) (*Plan, error) {
+	if spec == nil {
+		return nil, preflightError("operation-enumeration", "")
+	}
 	catalog, err := spec.Operations()
 	if err != nil {
 		return nil, preflightError("operation-enumeration", "")

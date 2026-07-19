@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,6 +18,14 @@ import (
 )
 
 const testCredential = "0123456789012345678901234567890123456789"
+
+func TestPreflightRejectsNilSpecification(t *testing.T) {
+	_, err := Preflight(nil, nil, nil)
+	var conformanceError *Error
+	if !errors.As(err, &conformanceError) || conformanceError.Failure.Code != "operation-enumeration" {
+		t.Fatalf("error = %v", err)
+	}
+}
 
 func TestPreflightAndExecuteRepresentativeJSONXMLAndZIP(t *testing.T) {
 	spec := representativeSpecification()
@@ -136,20 +145,24 @@ func TestExecutionMakesOneAttemptAndSanitizesFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	attempts := 0
+	responseClosed := false
 	report, err := execute(context.Background(), plan, dependencies{
 		credential: func() (string, error) { return testCredential, nil },
 		now:        time.Now,
 		wait:       func(time.Duration) error { return nil },
 		do: func(*http.Request) (*http.Response, error) {
 			attempts++
-			return nil, errors.New("arbitrary transport error containing " + testCredential)
+			return &http.Response{Body: &recordingReadCloser{Reader: bytes.NewReader(nil), closed: &responseClosed}}, errors.New("arbitrary transport error containing " + testCredential)
 		},
 	})
 	var conformanceError *Error
-	if !errors.As(err, &conformanceError) || attempts != 1 || report.RequestBudget.Used != 1 || report.Failure == nil || report.Failure.Code != "transport-failure" {
-		t.Fatalf("attempts=%d report=%#v error=%v", attempts, report, err)
+	if !errors.As(err, &conformanceError) || attempts != 1 || !responseClosed || report.RequestBudget.Used != 1 || report.Failure == nil || report.Failure.Code != "transport-failure" {
+		t.Fatalf("attempts=%d responseClosed=%t report=%#v error=%v", attempts, responseClosed, report, err)
 	}
-	encoded, _ := json.Marshal(report)
+	encoded, marshalErr := json.Marshal(report)
+	if marshalErr != nil {
+		t.Fatal(marshalErr)
+	}
 	if bytes.Contains(encoded, []byte(testCredential)) || bytes.Contains(encoded, []byte("arbitrary transport")) {
 		t.Fatalf("failure report leaked unsafe diagnostics: %s", encoded)
 	}
@@ -180,9 +193,29 @@ func TestExecutionUsesFixedFailureWhenAllowlistedReportValidationFails(t *testin
 	if !errors.As(err, &conformanceError) || report.Failure == nil || report.Failure.Code != "report-sanitization" || report.RequestBudget != (RequestBudget{}) || len(report.Cases) != 0 {
 		t.Fatalf("report=%#v error=%v", report, err)
 	}
-	encoded, _ := json.Marshal(report)
+	encoded, marshalErr := json.Marshal(report)
+	if marshalErr != nil {
+		t.Fatal(marshalErr)
+	}
 	if bytes.Contains(encoded, []byte(testCredential)) {
 		t.Fatalf("fixed failure leaked credential: %s", encoded)
+	}
+}
+
+func TestXMLAndZIPParsingRequireReviewedContent(t *testing.T) {
+	parsed, err := parseXML([]byte(`<result><status>010</status><nested><status>000</status></nested></result>`))
+	if err != nil || parsed.APIStatus != "010" {
+		t.Fatalf("parsed=%#v error=%v", parsed, err)
+	}
+	if _, err := parseZIP(zipBodyWithContent(t, `<document>`)); err == nil {
+		t.Fatal("malformed XML archive passed")
+	}
+	if _, err := parseZIPWithLimit(zipBody(t), 1); err == nil {
+		t.Fatal("archive above expansion limit passed")
+	}
+	deepXML := strings.Repeat("<node>", maximumXMLDepth+1) + strings.Repeat("</node>", maximumXMLDepth+1)
+	if _, _, err := parseXMLValues([]byte(deepXML)); err == nil {
+		t.Fatal("deeply nested XML passed")
 	}
 }
 
@@ -290,14 +323,15 @@ func representativeAssertions() map[AssertionID]Assertion {
 		"company-xml-identity": {
 			Representations: []string{"application/xml"},
 			Check: func(response Response) (ComparisonEvidence, bool) {
-				value := firstElementValue(response.XMLValues, "corp_code")
+				value := firstElementValue(response.XMLValues, "result/corp_code")
 				return ComparisonEvidence{Kind: "company-identity", Count: boolCount(value == "00126380")}, value == "00126380"
 			},
 		},
 		"document-zip-content": {
 			Representations: []string{"application/zip"},
 			Check: func(response Response) (ComparisonEvidence, bool) {
-				return ComparisonEvidence{Kind: "archive-xml-documents", Count: response.Archive.XMLDocuments}, response.Archive.XMLDocuments > 0
+				matched := len(response.ArchiveDocuments) == 1 && response.ArchiveDocuments[0].Root == "document" && firstElementValue(response.ArchiveDocuments[0].XMLValues, "document/id") == "one"
+				return ComparisonEvidence{Kind: "archive-document-identity", Count: boolCount(matched)}, matched
 			},
 		},
 	}
@@ -308,6 +342,10 @@ func response(contentType string, body []byte) *http.Response {
 }
 
 func zipBody(t *testing.T) []byte {
+	return zipBodyWithContent(t, `<document><id>one</id></document>`)
+}
+
+func zipBodyWithContent(t *testing.T, content string) []byte {
 	t.Helper()
 	var buffer bytes.Buffer
 	writer := zip.NewWriter(&buffer)
@@ -315,13 +353,23 @@ func zipBody(t *testing.T) []byte {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := io.WriteString(entry, `<document><id>one</id></document>`); err != nil {
+	if _, err := io.WriteString(entry, content); err != nil {
 		t.Fatal(err)
 	}
 	if err := writer.Close(); err != nil {
 		t.Fatal(err)
 	}
 	return buffer.Bytes()
+}
+
+type recordingReadCloser struct {
+	io.Reader
+	closed *bool
+}
+
+func (reader *recordingReadCloser) Close() error {
+	*reader.closed = true
+	return nil
 }
 
 func boolCount(value bool) int {

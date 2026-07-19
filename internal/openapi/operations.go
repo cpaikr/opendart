@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -103,7 +104,7 @@ func (d *Document) Operations() (OperationCatalog, error) {
 // ValidateRequest checks query parameters against the selected OpenAPI
 // operation without performing network access.
 func (d *Document) ValidateRequest(method, pathValue string, query url.Values) error {
-	request, err := http.NewRequest(method, "https://opendart.invalid"+pathValue+"?"+query.Encode(), nil)
+	request, err := http.NewRequestWithContext(context.Background(), method, "https://opendart.invalid"+pathValue+"?"+query.Encode(), nil)
 	if err != nil {
 		return fmt.Errorf("validate request: build request: %w", err)
 	}

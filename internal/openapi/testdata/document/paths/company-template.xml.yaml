@@ -11,6 +11,7 @@ put:
       in: path
       required: true
       description: Operation-level override
+      style: label
       schema:
         type: string
   responses:

@@ -18,6 +18,7 @@ const (
 	TrustedServer        = "https://opendart.fss.or.kr/api"
 	CredentialSource     = "OPENDART_API_KEY"
 	MaximumBodyBytes     = 8 << 20
+	MaximumArchiveBytes  = MaximumBodyBytes
 	AbsoluteRequestLimit = 200
 	RequestTimeout       = 30 * time.Second
 	RequestPacing        = 100 * time.Millisecond
@@ -44,17 +45,23 @@ type Assertion struct {
 }
 
 type Response struct {
-	Representation string
-	APIStatus      string
-	JSON           map[string]any
-	XMLValues      map[string][]string
-	Archive        ArchiveSummary
+	Representation   string
+	APIStatus        string
+	JSON             map[string]any
+	XMLValues        map[string][]string
+	Archive          ArchiveSummary
+	ArchiveDocuments []ArchiveDocument
 }
 
 type ArchiveSummary struct {
 	Entries       int `json:"entries"`
 	XMLDocuments  int `json:"xmlDocuments"`
 	ExpandedBytes int `json:"expandedBytes"`
+}
+
+type ArchiveDocument struct {
+	Root      string
+	XMLValues map[string][]string
 }
 
 type ComparisonEvidence struct {
