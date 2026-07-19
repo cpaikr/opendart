@@ -107,6 +107,7 @@ impl FnlttMultiAcnt {
             _ => return Err(PrepareError::UnsupportedRepresentation { logical_operation: Self::LOGICAL_OPERATION_ID, representation }),
         };
         if !(1..=100).contains(&self.corp_code.len()) { return Err(PrepareError::InvalidCardinality { operation: identity, parameter: "corp_code", minimum: 1, maximum: 100 }); }
+        for value in &self.corp_code { require_nonempty(identity, "corp_code", value)?; }
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
         let parameters = vec![
@@ -374,6 +375,7 @@ impl FnlttCmpnyIndx {
             _ => return Err(PrepareError::UnsupportedRepresentation { logical_operation: Self::LOGICAL_OPERATION_ID, representation }),
         };
         if !(1..=100).contains(&self.corp_code.len()) { return Err(PrepareError::InvalidCardinality { operation: identity, parameter: "corp_code", minimum: 1, maximum: 100 }); }
+        for value in &self.corp_code { require_nonempty(identity, "corp_code", value)?; }
         require_nonempty(identity, "bsns_year", &self.bsns_year)?;
         require_nonempty(identity, "reprt_code", &self.reprt_code)?;
         require_nonempty(identity, "idx_cl_code", &self.idx_cl_code)?;

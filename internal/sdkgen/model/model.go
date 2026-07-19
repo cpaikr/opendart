@@ -152,12 +152,12 @@ func Build(surface openapispec.SDKSurface) (Model, error) {
 		}
 		constantNames[operation.RustConstant] = operation.OperationID
 		physical = append(physical, operation)
-		copy := source
-		copy.Parameters = nil
+		entry := source
+		entry.Parameters = nil
 		for _, parameter := range parameters {
-			copy.Parameters = append(copy.Parameters, denormalizeParameter(parameter))
+			entry.Parameters = append(entry.Parameters, denormalizeParameter(parameter))
 		}
-		logicalSources[source.LogicalOperationID] = append(logicalSources[source.LogicalOperationID], copy)
+		logicalSources[source.LogicalOperationID] = append(logicalSources[source.LogicalOperationID], entry)
 	}
 	sort.Slice(physical, func(i, j int) bool { return physical[i].OperationID < physical[j].OperationID })
 
@@ -652,8 +652,8 @@ func cloneInt(value *int64) *int64 {
 	if value == nil {
 		return nil
 	}
-	copy := *value
-	return &copy
+	cloned := *value
+	return &cloned
 }
 
 func reject(rule, operation, location, detail string) *Error {

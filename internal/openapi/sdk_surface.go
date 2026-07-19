@@ -148,6 +148,9 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 			if strings.TrimSpace(operation.OperationId) == "" {
 				return SDKSurface{}, fmt.Errorf("%s has no operationId", identity)
 			}
+			if operation.RequestBody != nil {
+				return SDKSurface{}, rejectSDKSurface("unsupported-request-body", operation.OperationId, pathName+"/"+method+"/requestBody", "generated requests are bodyless")
+			}
 			relativeTarget, err := sdkRelativeTarget(d.model.Model.Servers, pathItem.Servers, operation.Servers, pathName)
 			if err != nil {
 				return SDKSurface{}, fmt.Errorf("%s has invalid server target: %w", identity, err)

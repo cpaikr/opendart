@@ -13,6 +13,7 @@ import (
 
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
+	"github.com/cpaikr/opendart/internal/sdkgen/ownership"
 	rustemitter "github.com/cpaikr/opendart/internal/sdkgen/rust"
 )
 
@@ -65,7 +66,7 @@ func CheckRustFresh(root, output string) error {
 			return fmt.Errorf("%w: %s", ErrGeneratedMissing, name)
 		}
 		if !bytes.Equal(content, expected[name]) {
-			if name == ".opendart-sdk-generated" {
+			if name == ownership.Filename {
 				return fmt.Errorf("%w: %s", ErrGeneratedUnowned, name)
 			}
 			return fmt.Errorf("%w: %s", ErrGeneratedStale, name)
@@ -229,8 +230,8 @@ func readOwnedTree(root string) (map[string][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	marker, exists := files[".opendart-sdk-generated"]
-	if !exists || string(marker) != "opendart-sdk-generator-schema=1\n" {
+	marker, exists := files[ownership.Filename]
+	if !exists || string(marker) != ownership.Marker(model.SchemaVersion) {
 		return nil, ErrGeneratedUnowned
 	}
 	return files, nil

@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
+	"github.com/cpaikr/opendart/internal/sdkgen/ownership"
 )
-
-const ownershipMarker = "opendart-sdk-generator-schema=1\n"
 
 // Render returns the complete owned generated subtree keyed by slash-separated
 // relative file name.
@@ -20,10 +18,10 @@ func Render(source model.Model) (map[string][]byte, error) {
 		return nil, fmt.Errorf("render Rust SDK: invalid model schema or checksum")
 	}
 	files := map[string][]byte{
-		".opendart-sdk-generated": []byte(ownershipMarker),
-		"mod.rs":                  []byte(renderModule(source)),
-		"mapping.rs":              []byte(renderMapping(source)),
-		"wire_shapes.rs":          []byte(renderWireShapes(source)),
+		ownership.Filename: []byte(ownership.Marker(source.SchemaVersion)),
+		"mod.rs":           []byte(renderModule(source)),
+		"mapping.rs":       []byte(renderMapping(source)),
+		"wire_shapes.rs":   []byte(renderWireShapes(source)),
 	}
 	groups := make(map[string][]model.LogicalOperation)
 	for _, operation := range source.Logical {
@@ -238,6 +236,7 @@ func renderLogicalOperation(output *strings.Builder, operation model.LogicalOper
 		}
 		if parameter.Shape == model.StringArray {
 			renderCardinalityCheck(output, parameter)
+			renderArrayElementCheck(output, parameter)
 		}
 	}
 	if len(operation.Parameters) == 0 {
@@ -317,6 +316,14 @@ func renderCardinalityCheck(output *strings.Builder, parameter model.Parameter) 
 	}
 	fmt.Fprintf(output, "        if let Some(value) = &self.%s { if !(%d..=%d).contains(&value.len()) { return Err(PrepareError::InvalidCardinality { operation: identity, parameter: %s, minimum: %d, maximum: %d }); } }\n",
 		parameter.RustName, minimum, maximum, quote(parameter.WireName), minimum, maximum)
+}
+
+func renderArrayElementCheck(output *strings.Builder, parameter model.Parameter) {
+	if parameter.Required {
+		fmt.Fprintf(output, "        for value in &self.%s { require_nonempty(identity, %s, value)?; }\n", parameter.RustName, quote(parameter.WireName))
+		return
+	}
+	fmt.Fprintf(output, "        if let Some(values) = &self.%s { for value in values { require_nonempty(identity, %s, value)?; } }\n", parameter.RustName, quote(parameter.WireName))
 }
 
 func renderQueryParameter(output *strings.Builder, parameter model.Parameter) {
@@ -413,11 +420,15 @@ func flattenShape(path string, required bool, shape model.ResponseShape, output 
 		requiredNames[name] = true
 	}
 	for _, property := range shape.Properties {
-		flattenShape(path+"."+property.Name, requiredNames[property.Name], property.Shape, output)
+		flattenShape(path+"/"+jsonPointerSegment(property.Name), requiredNames[property.Name], property.Shape, output)
 	}
 	if shape.Items != nil {
-		flattenShape(path+"[]", true, *shape.Items, output)
+		flattenShape(path+"/-", true, *shape.Items, output)
 	}
+}
+
+func jsonPointerSegment(value string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(value, "~", "~0"), "/", "~1")
 }
 
 func rustParameterType(parameter model.Parameter) string {
@@ -539,5 +550,28 @@ func rustStringSlice(values []string) string {
 }
 
 func quote(value string) string {
-	return strconv.Quote(value)
+	var output strings.Builder
+	output.WriteByte('"')
+	for _, character := range value {
+		switch character {
+		case '"':
+			output.WriteString(`\"`)
+		case '\\':
+			output.WriteString(`\\`)
+		case '\n':
+			output.WriteString(`\n`)
+		case '\r':
+			output.WriteString(`\r`)
+		case '\t':
+			output.WriteString(`\t`)
+		default:
+			if character >= 0x20 && character <= 0x7e {
+				output.WriteRune(character)
+			} else {
+				fmt.Fprintf(&output, `\u{%x}`, character)
+			}
+		}
+	}
+	output.WriteByte('"')
+	return output.String()
 }

@@ -1,6 +1,7 @@
 package model_test
 
 import (
+	"errors"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -114,8 +115,8 @@ func TestBuildFailsClosedOnUnsupportedOrContradictoryInputs(t *testing.T) {
 			operation := firstOperationWithParameters(t, &surface)
 			test.edit(operation)
 			_, err := model.Build(surface)
-			modelError, ok := err.(*model.Error)
-			if !ok || modelError.Rule != test.rule || modelError.Operation == "" || modelError.Location == "" {
+			var modelError *model.Error
+			if !errors.As(err, &modelError) || modelError.Rule != test.rule || modelError.Operation == "" || modelError.Location == "" {
 				t.Fatalf("error = %#v", err)
 			}
 		})
@@ -151,8 +152,8 @@ func TestBuildRejectsIncompatibleLogicalMetadataAndRoutingMatrix(t *testing.T) {
 
 func assertModelRule(t *testing.T, err error, rule string) {
 	t.Helper()
-	modelError, ok := err.(*model.Error)
-	if !ok || modelError.Rule != rule || modelError.Operation == "" || modelError.Location == "" {
+	var modelError *model.Error
+	if !errors.As(err, &modelError) || modelError.Rule != rule || modelError.Operation == "" || modelError.Location == "" {
 		t.Fatalf("error = %#v, want rule %q", err, rule)
 	}
 }

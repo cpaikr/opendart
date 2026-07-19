@@ -78,6 +78,11 @@ fn multi_company_request_enforces_cardinality_and_comma_serialization() {
             .is_err()
     );
     assert!(
+        FnlttMultiAcnt::new([""], "2025", "11011")
+            .prepare(Representation::Json)
+            .is_err()
+    );
+    assert!(
         FnlttMultiAcnt::new(vec!["00126380"; 101], "2025", "11011")
             .prepare(Representation::Json)
             .is_err()
