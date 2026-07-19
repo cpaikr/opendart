@@ -1,7 +1,9 @@
 package releaseguard
 
 import (
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -17,6 +19,192 @@ func TestCheckAcceptsRepositoryReleasePolicy(t *testing.T) {
 	}
 }
 
+func TestSemanticVersionPolicy(t *testing.T) {
+	for _, version := range []string{"0.1.0", "1.2.3-rc.1", "1.2.3+build.01", "1.2.3-1a"} {
+		if !semanticVersion.MatchString(version) {
+			t.Errorf("semanticVersion does not accept %q", version)
+		}
+	}
+	for _, version := range []string{"01.2.3", "1.02.3", "1.2.03", "1.2.3-01", "1.2.3-"} {
+		if semanticVersion.MatchString(version) {
+			t.Errorf("semanticVersion accepts invalid %q", version)
+		}
+	}
+}
+
+func TestCheckAcceptsBootstrappedRustManifest(t *testing.T) {
+	root := copyReleaseArtifacts(t)
+	path := filepath.Join(root, manifestArtifact)
+	source, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(
+		string(source),
+		`".": "0.1.0"`,
+		`".": "0.1.0", "sdk/rust/crates/opendart": "0.1.0"`,
+		1,
+	)
+	if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := Check(root); err != nil {
+		t.Fatalf("Check() bootstrapped manifest error = %v", err)
+	}
+}
+
+func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
+	tests := []struct {
+		name        string
+		artifact    string
+		old         string
+		replacement string
+		invariant   string
+	}{
+		{name: "Rust release type", artifact: configArtifact, old: `"release-type": "rust"`, replacement: `"release-type": "simple"`, invariant: "Rust package release-type"},
+		{name: "Rust component", artifact: configArtifact, old: `"component": "opendart"`, replacement: `"component": "other"`, invariant: "Rust package component"},
+		{name: "Rust component tag", artifact: configArtifact, old: `"component": "opendart",
+      "include-component-in-tag": true`, replacement: `"component": "opendart",
+      "include-component-in-tag": false`, invariant: "Rust package include-component-in-tag"},
+		{name: "Rust forced tag", artifact: configArtifact, old: `"force-tag-creation": false`, replacement: `"force-tag-creation": true`, invariant: "Rust package force-tag-creation"},
+		{name: "Rust lock path", artifact: configArtifact, old: `"path": "/sdk/rust/Cargo.lock"`, replacement: `"path": "Cargo.lock"`, invariant: "updates the workspace lock version"},
+		{name: "Rust lock selector", artifact: configArtifact, old: `$.package[?(@.name == \"opendart\")].version`, replacement: `$.package.version`, invariant: "updates the workspace lock version"},
+		{name: "Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart\"\nversion = \"0.1.0\"", replacement: "name = \"opendart\"\nversion = \"0.1.1\"", invariant: "matches the crate package version"},
+		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "does not publish packages"},
+		{name: "registry publish in verify", artifact: verifyWorkflowArtifact, old: "go vet ./...", replacement: "cargo publish", invariant: "excludes package publication"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := copyReleaseArtifacts(t)
+			path := filepath.Join(root, filepath.FromSlash(test.artifact))
+			source, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			updated := strings.Replace(string(source), test.old, test.replacement, 1)
+			if updated == string(source) {
+				t.Fatalf("mutation source %q not found in %s", test.old, test.artifact)
+			}
+			if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			err = Check(root)
+			var guardError *Error
+			if !errors.As(err, &guardError) || guardError.Artifact != test.artifact || !strings.Contains(guardError.Invariant, test.invariant) {
+				t.Fatalf("Check() error = %#v, want %s invariant containing %q", err, test.artifact, test.invariant)
+			}
+		})
+	}
+}
+
+func TestCheckRejectsReleasedRustManifestMismatch(t *testing.T) {
+	root := copyReleaseArtifacts(t)
+	path := filepath.Join(root, manifestArtifact)
+	source, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(
+		string(source),
+		`".": "0.1.0"`,
+		`".": "0.1.0", "sdk/rust/crates/opendart": "0.1.1"`,
+		1,
+	)
+	if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	err = Check(root)
+	var guardError *Error
+	if !errors.As(err, &guardError) || guardError.Artifact != manifestArtifact || !strings.Contains(guardError.Invariant, "matches Cargo metadata") {
+		t.Fatalf("Check() error = %#v", err)
+	}
+}
+
+func TestCheckRejectsRustPackageMutations(t *testing.T) {
+	tests := []struct {
+		name        string
+		artifact    string
+		old         string
+		replacement string
+		invariant   string
+	}{
+		{
+			name: "registry scope", artifact: rustCargoArtifact,
+			old: `publish = ["crates-io"]`, replacement: `publish = true`,
+			invariant: "authorizes only the crates.io registry",
+		},
+		{
+			name: "release documentation", artifact: rustCargoArtifact,
+			old: `, "CHANGELOG.md"`, replacement: ``,
+			invariant: "packages release documentation and provenance",
+		},
+		{
+			name: "required package evidence", artifact: rustPackageListArtifact,
+			old: "src/provenance.rs\n", replacement: "",
+			invariant: "contains required package evidence",
+		},
+		{
+			name: "private package input", artifact: rustPackageListArtifact,
+			old: "tests/public_contract.rs\n", replacement: "target/secret\ntests/public_contract.rs\n",
+			invariant: "excludes repository-private inputs",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := copyReleaseArtifacts(t)
+			path := filepath.Join(root, filepath.FromSlash(test.artifact))
+			source, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			updated := strings.Replace(string(source), test.old, test.replacement, 1)
+			if updated == string(source) {
+				t.Fatalf("mutation source %q not found in %s", test.old, test.artifact)
+			}
+			if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			err = Check(root)
+			var guardError *Error
+			if !errors.As(err, &guardError) || guardError.Artifact != test.artifact || !strings.Contains(guardError.Invariant, test.invariant) {
+				t.Fatalf("Check() error = %#v, want %s invariant containing %q", err, test.artifact, test.invariant)
+			}
+		})
+	}
+}
+
+func TestCheckRejectsRustPackageBundleProvenanceMismatch(t *testing.T) {
+	root := copyReleaseArtifacts(t)
+	path := filepath.Join(root, rustProvenanceArtifact)
+	source, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := os.ReadFile(filepath.Join(root, canonicalBundleArtifact))
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := fmt.Sprintf("%x", sha256.Sum256(bundle))
+	if !strings.Contains(string(source), checksum) {
+		t.Fatal("fixture provenance does not contain the canonical bundle checksum")
+	}
+	replacement := "0" + checksum[1:]
+	if replacement == checksum {
+		replacement = "1" + checksum[1:]
+	}
+	spoofed := strings.Replace(string(source), checksum, replacement, 1) + "\n// stale checksum: " + checksum + "\n"
+	if err := os.WriteFile(path, []byte(spoofed), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	err = Check(root)
+	var guardError *Error
+	if !errors.As(err, &guardError) || guardError.Artifact != rustProvenanceArtifact || !strings.Contains(guardError.Invariant, "matches the canonical bundle SHA-256") {
+		t.Fatalf("Check() error = %#v", err)
+	}
+}
+
 func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -28,7 +216,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "manifest component scope", artifact: manifestArtifact,
 			old: `".": "0.1.0"`, replacement: `".": "0.1.0", "extra": "0.1.0"`,
-			invariant: "contains only the root component",
+			invariant: "contains the root and optional bootstrapped Rust component",
 		},
 		{
 			name: "manifest SemVer", artifact: manifestArtifact,
@@ -38,7 +226,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "config package scope", artifact: configArtifact,
 			old: `"packages": {`, replacement: `"packages": { "extra": {},`,
-			invariant: "contains only the root package",
+			invariant: "contains only the root and Rust packages",
 		},
 		{
 			name: "config top-level option allowlist", artifact: configArtifact,
@@ -228,7 +416,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "package publication", artifact: releaseWorkflowArtifact,
 			old: "mkdir release-assets", replacement: "npm publish\n          mkdir release-assets",
-			invariant: "does not publish packages or replace assets",
+			invariant: "does not publish packages, grant registry authority, or replace assets",
 		},
 		{
 			name: "draft detection", artifact: releaseWorkflowArtifact,
@@ -389,17 +577,17 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "canonical verify command", artifact: verifyWorkflowArtifact,
 			old: "go run ./cmd/opendart-tool verify --repository-root .", replacement: "go run ./cmd/opendart-tool lint --root openapi/openapi.yaml",
-			invariant: "runs the canonical repository verification command",
+			invariant: "uses only the approved verification steps",
 		},
 		{
 			name: "Go vet command", artifact: verifyWorkflowArtifact,
 			old: "go vet ./...", replacement: "go vet ./cmd/...",
-			invariant: "runs Go vet",
+			invariant: "uses only the approved verification steps",
 		},
 		{
 			name: "race-enabled Go tests", artifact: verifyWorkflowArtifact,
 			old: "go test -race ./...", replacement: "go test ./...",
-			invariant: "runs race-enabled Go tests",
+			invariant: "uses only the approved verification steps",
 		},
 		{
 			name: "verify job condition bypass", artifact: verifyWorkflowArtifact,
@@ -418,7 +606,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "verify timeout", artifact: verifyWorkflowArtifact,
-			old: "timeout-minutes: 20", replacement: "timeout-minutes: 60",
+			old: "timeout-minutes: 30", replacement: "timeout-minutes: 60",
 			invariant: "verify job uses the approved runner and timeout",
 		},
 		{
@@ -434,12 +622,12 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "canonical verify step condition bypass", artifact: verifyWorkflowArtifact,
 			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        if: always()\n        run:",
-			invariant: "runs the canonical repository verification command",
+			invariant: "verification steps use default execution controls",
 		},
 		{
 			name: "verify step continue-on-error bypass", artifact: verifyWorkflowArtifact,
 			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        continue-on-error: true\n        run:",
-			invariant: "runs the canonical repository verification command",
+			invariant: "verification steps use default execution controls",
 		},
 		{
 			name: "verify step shell bypass", artifact: verifyWorkflowArtifact,
@@ -459,22 +647,22 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "verify checkout credentials", artifact: verifyWorkflowArtifact,
 			old: "persist-credentials: false", replacement: "persist-credentials: true",
-			invariant: "checkout disables persisted credentials",
+			invariant: "uses only the approved verification actions",
 		},
 		{
 			name: "verify checkout ref", artifact: verifyWorkflowArtifact,
 			old: "persist-credentials: false", replacement: "persist-credentials: false\n          ref: main",
-			invariant: "checkout verifies the triggering revision",
+			invariant: "uses only the approved verification actions",
 		},
 		{
 			name: "verify checkout repository", artifact: verifyWorkflowArtifact,
 			old: "persist-credentials: false", replacement: "persist-credentials: false\n          repository: cpaikr/other",
-			invariant: "checkout verifies the triggering revision",
+			invariant: "uses only the approved verification actions",
 		},
 		{
 			name: "verify checkout extra input", artifact: verifyWorkflowArtifact,
 			old: "persist-credentials: false", replacement: "persist-credentials: false\n          fetch-depth: 0",
-			invariant: "checkout verifies the triggering revision",
+			invariant: "uses only the approved verification actions",
 		},
 		{
 			name: "verify step environment", artifact: verifyWorkflowArtifact,
@@ -534,12 +722,12 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "verify JavaScript script", artifact: verifyWorkflowArtifact,
 			old: "      - name: Set up Go", replacement: "      - name: Run repository script\n        run: ./scripts/check.mjs\n\n      - name: Set up Go",
-			invariant: "uses only approved Go verification steps",
+			invariant: "uses only the approved verification steps",
 		},
 		{
 			name: "verify local action", artifact: verifyWorkflowArtifact,
 			old: "      - name: Set up Go", replacement: "      - name: Run local action\n        uses: ./actions/check\n\n      - name: Set up Go",
-			invariant: "uses only approved Go verification steps",
+			invariant: "uses only the approved verification steps",
 		},
 	}
 
@@ -637,6 +825,11 @@ func copyReleaseArtifacts(t *testing.T) string {
 	for _, artifact := range []string{
 		configArtifact,
 		manifestArtifact,
+		rustCargoArtifact,
+		rustLockArtifact,
+		rustProvenanceArtifact,
+		rustPackageListArtifact,
+		canonicalBundleArtifact,
 		releaseWorkflowArtifact,
 		verifyWorkflowArtifact,
 	} {
