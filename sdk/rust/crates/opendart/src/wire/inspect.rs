@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use quick_xml::{Reader, events::Event};
 
@@ -91,6 +91,9 @@ impl WireInspector {
     /// Inspects a bounded JSON body without imposing source-status policy.
     pub fn inspect_json(&self, body: &[u8]) -> Result<SourceReply<SourceValue>, WireInspectError> {
         self.check_size(body)?;
+        if !json_members_are_unique(body) {
+            return Err(envelope_error(EnvelopeFormat::Json).into());
+        }
         let parsed: serde_json::Value =
             serde_json::from_slice(body).map_err(|_| envelope_error(EnvelopeFormat::Json))?;
         let numbers =
@@ -106,6 +109,12 @@ impl WireInspector {
     }
 
     /// Inspects a bounded XML body without resolving external entities.
+    ///
+    /// Elements with non-whitespace text interleaved with children retain
+    /// concatenated text in `$text` and their complete normalized order in
+    /// `$content`. Whitespace-only text between children is treated as document
+    /// formatting. Child values live only in one-field objects within `$content`
+    /// so nested evidence is never duplicated.
     pub fn inspect_xml(&self, body: &[u8]) -> Result<SourceReply<SourceValue>, WireInspectError> {
         self.check_size(body)?;
         let value = xml_value(body).map_err(|()| envelope_error(EnvelopeFormat::Xml))?;
@@ -189,29 +198,231 @@ fn json_number_tokens(body: &[u8]) -> Option<Vec<String>> {
     Some(tokens)
 }
 
+struct JsonMemberScanner<'a> {
+    body: &'a [u8],
+    index: usize,
+}
+
+impl JsonMemberScanner<'_> {
+    fn scan_value(&mut self, depth: usize) -> Option<()> {
+        if depth > MAX_NESTING_DEPTH {
+            return None;
+        }
+        self.skip_whitespace();
+        match self.body.get(self.index)? {
+            b'{' => self.scan_object(depth),
+            b'[' => self.scan_array(depth),
+            b'"' => self.scan_string().map(|_| ()),
+            _ => self.scan_scalar(),
+        }
+    }
+
+    fn scan_object(&mut self, depth: usize) -> Option<()> {
+        self.index += 1;
+        self.skip_whitespace();
+        if self.consume(b'}') {
+            return Some(());
+        }
+
+        let mut names = BTreeSet::new();
+        loop {
+            self.skip_whitespace();
+            let name = self.scan_string()?;
+            let name: String = serde_json::from_slice(name).ok()?;
+            if !names.insert(name) {
+                return None;
+            }
+            self.skip_whitespace();
+            if !self.consume(b':') {
+                return None;
+            }
+            self.scan_value(depth + 1)?;
+            self.skip_whitespace();
+            if self.consume(b'}') {
+                return Some(());
+            }
+            if !self.consume(b',') {
+                return None;
+            }
+        }
+    }
+
+    fn scan_array(&mut self, depth: usize) -> Option<()> {
+        self.index += 1;
+        self.skip_whitespace();
+        if self.consume(b']') {
+            return Some(());
+        }
+
+        loop {
+            self.scan_value(depth + 1)?;
+            self.skip_whitespace();
+            if self.consume(b']') {
+                return Some(());
+            }
+            if !self.consume(b',') {
+                return None;
+            }
+        }
+    }
+
+    fn scan_string(&mut self) -> Option<&[u8]> {
+        let start = self.index;
+        if !self.consume(b'"') {
+            return None;
+        }
+        while let Some(byte) = self.body.get(self.index) {
+            match byte {
+                b'\\' => self.index = self.index.checked_add(2)?,
+                b'"' => {
+                    self.index += 1;
+                    return self.body.get(start..self.index);
+                }
+                _ => self.index += 1,
+            }
+        }
+        None
+    }
+
+    fn scan_scalar(&mut self) -> Option<()> {
+        let start = self.index;
+        while let Some(byte) = self.body.get(self.index) {
+            if byte.is_ascii_whitespace() || matches!(byte, b',' | b']' | b'}') {
+                break;
+            }
+            self.index += 1;
+        }
+        (self.index > start).then_some(())
+    }
+
+    fn skip_whitespace(&mut self) {
+        while self
+            .body
+            .get(self.index)
+            .is_some_and(u8::is_ascii_whitespace)
+        {
+            self.index += 1;
+        }
+    }
+
+    fn consume(&mut self, expected: u8) -> bool {
+        if self.body.get(self.index) == Some(&expected) {
+            self.index += 1;
+            true
+        } else {
+            false
+        }
+    }
+}
+
+fn json_members_are_unique(body: &[u8]) -> bool {
+    let mut scanner = JsonMemberScanner { body, index: 0 };
+    if scanner.scan_value(1).is_none() {
+        return false;
+    }
+    scanner.skip_whitespace();
+    scanner.index == body.len()
+}
+
 #[derive(Debug)]
 struct XmlFrame {
     name: String,
     fields: BTreeMap<String, SourceValue>,
-    text: String,
+    content: Vec<XmlContent>,
 }
 
 impl XmlFrame {
+    fn push_text(&mut self, text: &str) {
+        if text.is_empty() {
+            return;
+        }
+        if let Some(XmlContent::Text(existing)) = self.content.last_mut() {
+            existing.push_str(text);
+        } else {
+            self.content.push(XmlContent::Text(text.to_owned()));
+        }
+    }
+
     fn finish(mut self) -> SourceValue {
-        if self.fields.is_empty() {
-            return SourceValue::string(self.text);
+        let has_children = self
+            .content
+            .iter()
+            .any(|content| matches!(content, XmlContent::Child { .. }));
+        let has_text = self.content.iter().any(|content| {
+            matches!(content, XmlContent::Text(value) if !value.chars().all(is_xml_whitespace))
+        });
+
+        if !has_children {
+            let text = self
+                .content
+                .into_iter()
+                .filter_map(XmlContent::into_text)
+                .collect::<String>();
+            if self.fields.is_empty() {
+                return SourceValue::string(text);
+            }
+            if !text.is_empty() {
+                self.fields
+                    .insert("$text".to_owned(), SourceValue::string(text));
+            }
+            return SourceValue::object(self.fields);
         }
-        if !self.text.is_empty() {
+
+        if !has_text {
+            for content in self.content {
+                if let XmlContent::Child { name, value } = content {
+                    attach_xml_field(&mut self.fields, name, value);
+                }
+            }
+            return SourceValue::object(self.fields);
+        }
+
+        let mut text = String::new();
+        for content in &self.content {
+            if let XmlContent::Text(value) = content {
+                text.push_str(value);
+            }
+        }
+        if !text.is_empty() {
             self.fields
-                .insert("$text".to_owned(), SourceValue::string(self.text));
+                .insert("$text".to_owned(), SourceValue::string(text));
         }
+        let ordered = self
+            .content
+            .into_iter()
+            .map(XmlContent::into_source_value)
+            .collect();
+        self.fields
+            .insert("$content".to_owned(), SourceValue::array(ordered));
         SourceValue::object(self.fields)
+    }
+}
+
+#[derive(Debug)]
+enum XmlContent {
+    Text(String),
+    Child { name: String, value: SourceValue },
+}
+
+impl XmlContent {
+    fn into_text(self) -> Option<String> {
+        match self {
+            Self::Text(value) => Some(value),
+            Self::Child { .. } => None,
+        }
+    }
+
+    fn into_source_value(self) -> SourceValue {
+        match self {
+            Self::Text(value) => SourceValue::string(value),
+            Self::Child { name, value } => SourceValue::object(BTreeMap::from([(name, value)])),
+        }
     }
 }
 
 fn xml_value(body: &[u8]) -> Result<SourceValue, ()> {
     let mut reader = Reader::from_reader(body);
-    reader.config_mut().trim_text(true);
+    reader.config_mut().trim_text(false);
     let mut stack: Vec<XmlFrame> = Vec::new();
     let mut root = None;
     let mut nodes = 0usize;
@@ -228,6 +439,7 @@ fn xml_value(body: &[u8]) -> Result<SourceValue, ()> {
                     .decode(start.name().as_ref())
                     .map_err(|_| ())?
                     .into_owned();
+                validate_xml_text(&name)?;
                 let mut fields = BTreeMap::new();
                 for attribute in start.attributes() {
                     let attribute = attribute.map_err(|_| ())?;
@@ -235,18 +447,20 @@ fn xml_value(body: &[u8]) -> Result<SourceValue, ()> {
                         .decoder()
                         .decode(attribute.key.as_ref())
                         .map_err(|_| ())?;
+                    validate_xml_text(&key)?;
                     let value = attribute
                         .decoded_and_normalized_value(
                             quick_xml::XmlVersion::Implicit1_0,
                             reader.decoder(),
                         )
                         .map_err(|_| ())?;
+                    validate_xml_text(&value)?;
                     fields.insert(format!("@{key}"), SourceValue::string(value.into_owned()));
                 }
                 stack.push(XmlFrame {
                     name,
                     fields,
-                    text: String::new(),
+                    content: Vec::new(),
                 });
             }
             Event::Empty(empty) => {
@@ -259,6 +473,7 @@ fn xml_value(body: &[u8]) -> Result<SourceValue, ()> {
                     .decode(empty.name().as_ref())
                     .map_err(|_| ())?
                     .into_owned();
+                validate_xml_text(&name)?;
                 let mut fields = BTreeMap::new();
                 for attribute in empty.attributes() {
                     let attribute = attribute.map_err(|_| ())?;
@@ -266,43 +481,77 @@ fn xml_value(body: &[u8]) -> Result<SourceValue, ()> {
                         .decoder()
                         .decode(attribute.key.as_ref())
                         .map_err(|_| ())?;
+                    validate_xml_text(&key)?;
                     let value = attribute
                         .decoded_and_normalized_value(
                             quick_xml::XmlVersion::Implicit1_0,
                             reader.decoder(),
                         )
                         .map_err(|_| ())?;
+                    validate_xml_text(&value)?;
                     fields.insert(format!("@{key}"), SourceValue::string(value.into_owned()));
                 }
                 let value = XmlFrame {
                     name: name.clone(),
                     fields,
-                    text: String::new(),
+                    content: Vec::new(),
                 }
                 .finish();
                 attach_xml_value(&mut stack, &mut root, name, value)?;
             }
-            Event::End(_) => {
+            Event::End(end) => {
                 let frame = stack.pop().ok_or(())?;
+                let end_name = reader
+                    .decoder()
+                    .decode(end.name().as_ref())
+                    .map_err(|_| ())?
+                    .into_owned();
+                validate_xml_text(&end_name)?;
+                if end_name != frame.name {
+                    return Err(());
+                }
                 let name = frame.name.clone();
                 attach_xml_value(&mut stack, &mut root, name, frame.finish())?;
             }
             Event::Text(text) => {
-                let frame = stack.last_mut().ok_or(())?;
-                frame.text.push_str(&text.decode().map_err(|_| ())?);
+                let text = text.decode().map_err(|_| ())?;
+                validate_xml_text(&text)?;
+                if let Some(frame) = stack.last_mut() {
+                    frame.push_text(&text);
+                } else if !text.chars().all(is_xml_whitespace) {
+                    return Err(());
+                }
             }
             Event::CData(text) => {
                 let frame = stack.last_mut().ok_or(())?;
-                frame.text.push_str(&text.decode().map_err(|_| ())?);
+                let text = text.decode().map_err(|_| ())?;
+                validate_xml_text(&text)?;
+                frame.push_text(&text);
             }
             Event::GeneralRef(reference) => {
                 let frame = stack.last_mut().ok_or(())?;
-                frame
-                    .text
-                    .push(decode_reference(&reference.decode().map_err(|_| ())?)?);
+                let value = decode_reference(&reference.decode().map_err(|_| ())?)?;
+                frame.push_text(&value.to_string());
             }
             Event::DocType(_) => return Err(()),
-            Event::Decl(_) | Event::Comment(_) | Event::PI(_) => {}
+            Event::Decl(declaration) => {
+                let declaration = reader
+                    .decoder()
+                    .decode(declaration.as_ref())
+                    .map_err(|_| ())?;
+                validate_xml_text(&declaration)?;
+            }
+            Event::Comment(comment) => {
+                let comment = comment.decode().map_err(|_| ())?;
+                validate_xml_text(&comment)?;
+            }
+            Event::PI(instruction) => {
+                let instruction = reader
+                    .decoder()
+                    .decode(instruction.as_ref())
+                    .map_err(|_| ())?;
+                validate_xml_text(&instruction)?;
+            }
             Event::Eof => break,
         }
     }
@@ -320,11 +569,7 @@ fn attach_xml_value(
     value: SourceValue,
 ) -> Result<(), ()> {
     if let Some(parent) = stack.last_mut() {
-        if let Some(existing) = parent.fields.get_mut(&name) {
-            existing.append_repeated(value);
-        } else {
-            parent.fields.insert(name, value);
-        }
+        parent.content.push(XmlContent::Child { name, value });
         Ok(())
     } else if root.is_none() {
         *root = Some((name, value));
@@ -332,6 +577,27 @@ fn attach_xml_value(
     } else {
         Err(())
     }
+}
+
+fn attach_xml_field(fields: &mut BTreeMap<String, SourceValue>, name: String, value: SourceValue) {
+    if let Some(existing) = fields.get_mut(&name) {
+        existing.append_repeated(value);
+    } else {
+        fields.insert(name, value);
+    }
+}
+
+fn validate_xml_text(value: &str) -> Result<(), ()> {
+    value.chars().all(is_xml_1_0_char).then_some(()).ok_or(())
+}
+
+fn is_xml_1_0_char(value: char) -> bool {
+    matches!(value, '\u{9}' | '\u{A}' | '\u{D}')
+        || matches!(value, '\u{20}'..='\u{D7FF}' | '\u{E000}'..='\u{FFFD}' | '\u{10000}'..='\u{10FFFF}')
+}
+
+fn is_xml_whitespace(value: char) -> bool {
+    matches!(value, '\u{9}' | '\u{A}' | '\u{D}' | ' ')
 }
 
 fn decode_reference(reference: &str) -> Result<char, ()> {
@@ -344,11 +610,13 @@ fn decode_reference(reference: &str) -> Result<char, ()> {
         value if value.starts_with("#x") => u32::from_str_radix(&value[2..], 16)
             .ok()
             .and_then(char::from_u32)
+            .filter(|value| is_xml_1_0_char(*value))
             .ok_or(()),
         value if value.starts_with('#') => value[1..]
             .parse::<u32>()
             .ok()
             .and_then(char::from_u32)
+            .filter(|value| is_xml_1_0_char(*value))
             .ok_or(()),
         _ => Err(()),
     }
@@ -411,6 +679,17 @@ mod tests {
     }
 
     #[test]
+    fn json_rejects_duplicate_object_members_after_name_decoding() {
+        for body in [
+            br#"{"status":"013","status":"000"}"#.as_slice(),
+            br#"{"status":"013","sta\u0074us":"000"}"#.as_slice(),
+            br#"{"outer":{"value":1,"value":2}}"#.as_slice(),
+        ] {
+            assert!(inspector(body.len()).inspect_json(body).is_err());
+        }
+    }
+
+    #[test]
     fn every_status_string_remains_evidence_without_policy() {
         for code in ["000", "013", "999", "future"] {
             let body = format!(r#"{{"status":"{code}","message":"source"}}"#);
@@ -435,6 +714,65 @@ mod tests {
         let items = value.get("item").and_then(SourceValue::as_array).unwrap();
         assert_eq!(items[0].as_str(), Some("A&B"));
         assert_eq!(items[1].as_str(), Some("C"));
+    }
+
+    #[test]
+    fn xml_preserves_interleaved_mixed_content_order() {
+        let SourceReply::Success(value) = inspector(128)
+            .inspect_xml(b"<p>before <b>x</b> after</p>")
+            .unwrap()
+        else {
+            panic!("expected mixed-content evidence");
+        };
+        assert_eq!(
+            value.get("$text").and_then(SourceValue::as_str),
+            Some("before  after")
+        );
+        let content = value
+            .get("$content")
+            .and_then(SourceValue::as_array)
+            .unwrap();
+        assert!(value.get("b").is_none());
+        assert_eq!(content[0].as_str(), Some("before "));
+        assert_eq!(content[1].get("b").and_then(SourceValue::as_str), Some("x"));
+        assert_eq!(content[2].as_str(), Some(" after"));
+
+        let reordered = inspector(128)
+            .inspect_xml(b"<p><b>x</b>before  after</p>")
+            .unwrap();
+        assert_ne!(SourceReply::Success(value), reordered);
+    }
+
+    #[test]
+    fn xml_rejects_forbidden_xml_1_0_characters() {
+        for body in [
+            b"<result>&#0;</result>".as_slice(),
+            b"<result>&#x1;</result>".as_slice(),
+            b"<result>\0</result>".as_slice(),
+            b"<result value=\"&#11;\"/>".as_slice(),
+            b"<result><!--\0--></result>".as_slice(),
+            b"<result><?note \0?></result>".as_slice(),
+            b"<res\0ult/>".as_slice(),
+            b"<result val\0ue=\"x\"/>".as_slice(),
+        ] {
+            assert!(inspector(body.len()).inspect_xml(body).is_err());
+        }
+    }
+
+    #[test]
+    fn xml_ignores_element_only_formatting_whitespace() {
+        for body in [
+            b"<result>\n  <status>013</status>\n  <message>source</message>\n</result>".as_slice(),
+            b"<result><status>013</status><![CDATA[ ]]><message>source</message></result>"
+                .as_slice(),
+            b"<result><status>013</status>&#32;<message>source</message></result>".as_slice(),
+        ] {
+            let SourceReply::Status(status) = inspector(body.len()).inspect_xml(body).unwrap()
+            else {
+                panic!("formatting whitespace must not obscure a status envelope");
+            };
+            assert_eq!(status.code.as_str(), "013");
+        }
     }
 
     #[test]
@@ -484,6 +822,7 @@ mod tests {
             b"{".as_slice(),
             b"<result>".as_slice(),
             b"<a/><b/>".as_slice(),
+            b"<a></b>".as_slice(),
         ] {
             let result = if body.starts_with(b"{") {
                 inspector(64).inspect_json(body)
