@@ -6,10 +6,9 @@ not append session transcripts.
 
 ## Current slice
 
-- Branch: `feat/live-conformance-workflow`, based on the published `sub`
-  integration branch.
-- Scope: ordered work 5 only—the manual protected producer, isolated notifier,
-  and offline enforcement of credential, artifact, permission, deduplication,
+- Integration branch: `sub`; ordered work 5 is merged.
+- Completed scope: the manual protected producer, isolated notifier, and
+  offline enforcement of credential, artifact, permission, deduplication,
   recovery, and sanitization boundaries.
 - Stop before environment or credential configuration, workflow dispatch, any
   real OpenDART request, weekly scheduling, or guide drift.
@@ -122,6 +121,8 @@ not append session transcripts.
   results to cover indexing delay without requiring repository label setup;
   unrelated issue bodies are discarded before candidate validation and the
   bounded response size accommodates the selected GitHub page size.
+- Merged ordered work 5 through PR #22 into `sub` with individual commits
+  preserved, all review threads resolved, and the final Verify run passing.
 - Ordered-work-5 validation passes: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.
@@ -133,5 +134,6 @@ not implementation blockers.
 
 ## Next action
 
-Complete independent and external review, merge ordered work 5 into `sub`, then
-stop before protected setup or ordered work 6.
+None within this task. Stop before protected environment or credential setup,
+the first workflow dispatch or live OpenDART request, weekly scheduling,
+ordered work 6, or guide-drift implementation.
