@@ -20,11 +20,12 @@ language decision is recorded in
   toolchain directly. The accepted multi-file OpenAPI 3.2 contract and Go bundle
   passed the former Node and Redocly checks as one-time cutover evidence; those
   implementations and temporary compatibility scaffolding are now removed.
-- [Guide drift](../../tasks/main/guide-drift.md) and
-  [live conformance](../../tasks/main/live-conformance.md) are
-  unscheduled follow-on work. They depend on the Go OpenAPI foundation and a
-  future shared reporting implementation, while retaining separate network,
-  credential, and issue boundaries.
+- [Guide drift](../../tasks/main/guide-drift.md) remains an unscheduled
+  follow-on. [Live conformance](../../tasks/main/live-conformance.md) now has
+  its general runner, reviewed case inventory, manual protected workflow,
+  isolated notifier, and credential-free repository gates. Protected
+  environment setup, credential configuration, supervised execution, and
+  scheduling remain explicitly deferred.
 - The [Go-only cleanup](go-only-tooling-cleanup.md) and this migration are
   complete. Future drift and live-conformance work remains intentionally
   separate and does not reopen the tooling migration.
@@ -49,7 +50,7 @@ language decision is recorded in
 - Use direct Go commands as the final local and CI interface. Do not replace npm
   scripts with another task runner.
 
-Future drift and live observation consumers must use one shared automation
+Drift and live observation consumers must use one shared automation
 contract: commands emit a small versioned, allowlisted JSON report while
 diagnostics remain separate; a minimally privileged notification job validates
 that report and otherwise uses only a fixed failure envelope derived from
@@ -57,7 +58,9 @@ trusted GitHub Actions metadata. Producer logs and arbitrary error text are
 never notification input. Guide drift and live conformance own independent
 deduplicated issues; recovery is recorded once and automation never closes an
 issue. This is settled cross-plan policy, not an implemented shared module or a
-tooling-migration completion prerequisite.
+tooling-migration completion prerequisite. The live-conformance implementation
+is now the concrete reference for that contract; future guide-drift work must
+reuse the policy without sharing credentials or issue state.
 
 ## Ordered work
 
@@ -75,9 +78,10 @@ tooling-migration completion prerequisite.
    focused probe behind a narrow Go interface, cut local and CI entry points
    over to direct Go commands, and removed repository-owned Node.js, npm,
    Redocly, and temporary compatibility surfaces.
-5. **Deferred follow-on.** Add shared report and HTTP safety seams through the
-   drift or general live-conformance work only when another implemented
-   consumer makes them concrete.
+5. **Complete through live conformance.** The general live-conformance runner
+   made the versioned report contract, bounded HTTP policy, and isolated
+   notifier concrete without adding a public Go API. Guide drift remains a
+   separate deferred consumer.
 
 ## Acceptance criteria
 
@@ -92,8 +96,8 @@ tooling-migration completion prerequisite.
   use their bundled runtimes.
 - Direct Go commands are the sole documented command surface; the repository
   does not require a replacement task runner.
-- The drift and live plans retain one shared automation contract for their
-  future implementations without sharing credentials or issue state.
+- The drift and live plans retain one shared automation contract without
+  sharing credentials or issue state.
 
 ## Next action
 
@@ -125,3 +129,8 @@ None — complete.
   Redocly dependency graph and duplicate implementations, and retired temporary
   compatibility adapters while retaining lasting Go coverage. Ordered work 5
   remains a deferred follow-on owned by the drift or live-conformance plans.
+- 2026-07-19: Completed ordered work 5 through the credentialed
+  live-conformance implementation. Added the bounded report and HTTP seams,
+  credential-free preflight, manual protected producer, and isolated notifier;
+  environment setup, credentials, supervised execution, and scheduling remain
+  outside the completed migration.

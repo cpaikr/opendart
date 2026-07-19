@@ -106,21 +106,26 @@ operation once. JSON, XML, and ZIP bodies are bounded, validated, semantically
 checked, and discarded; only the strict versioned report remains.
 
 `.github/workflows/live-conformance.yml` is manual-only, requires the canonical
-repository's `main` ref, grants read-only repository access, exposes the API
-key only to the live command in the protected environment, and uploads only the
-report. `.github/workflows/live-conformance-notify.yml` runs from the trusted
-default-branch definition after the producer completes. It checks out the exact
-trusted producer revision, receives no OpenDART secret, and grants issue-write
-permission only to the notifier. Missing, malformed, or inconsistent reports
-become a fixed failure derived from Actions metadata. Failures update one
-marker-owned issue, recovery is recorded once, and automation never closes it.
-The protected environment remains unconfigured, and the workflow has not been
-dispatched or scheduled.
+repository's `main` ref, grants read-only repository access, exposes
+`OPENDART_API_KEY` only to the live command inside the declared protected
+environment, and uploads only the report file. The separate
+`.github/workflows/live-conformance-notify.yml` runs from the trusted
+default-branch workflow definition after a producer completes. It checks out
+the exact trusted producer revision, has no environment or OpenDART secret,
+and gives issue-write permission only to the isolated notifier. The notifier
+strictly decodes the bounded report; missing, malformed, or inconsistent
+artifacts become a fixed failure derived only from Actions metadata. Failures
+update one marker-owned issue, recovery is recorded once, and automation never
+closes the issue. The protected environment and credential remain
+unconfigured, and the workflow has not been dispatched or scheduled.
 
 `internal/liveprobe` confines the one-attempt HTTP policy shared by credentialed
 repository tools. Its dated TLS compatibility exception lacks forward secrecy
-and must not be reused by the released SDK transport. Ambient proxies are
-disabled so authenticated queries reach only the fixed OpenDART origin.
+and must not be reused by the released SDK transport. Re-test the origin with
+Go's default transport whenever the dated evidence is refreshed or the Go
+toolchain changes, and remove the exception when the default handshake works.
+Ambient proxies are disabled so authenticated queries reach only the fixed
+OpenDART origin.
 
 ## Code map
 
@@ -170,13 +175,15 @@ disabled so authenticated queries reach only the fixed OpenDART origin.
 
 ## Decisions and evolution
 
-[ADR 0001](docs/decisions/0001-go-repository-tooling.md) keeps Go as private
-repository tooling. [ADR 0002](docs/decisions/0002-public-rust-sdk.md) accepts
-the first-party Rust SDK boundary. Current packaging and the remaining
-publication/adoption work are tracked in the
-[public Rust SDK task](tasks/rust/public-rust-sdk.md).
+[ADR 0001](docs/decisions/0001-go-repository-tooling.md) records the completed
+migration to private Go repository tooling. [ADR 0002](docs/decisions/0002-public-rust-sdk.md)
+accepts the first-party Rust SDK boundary. Current packaging and the remaining
+publication/adoption work are tracked in the [public Rust SDK task](tasks/rust/public-rust-sdk.md).
 
-The [live-conformance task](tasks/main/live-conformance.md) defers protected
+[guide drift](tasks/main/guide-drift.md) owns credential-free acquisition and
+semantic-comparison work. Drift-safe acquisition is implemented; the command,
+report, notifier, and scheduling remain future work. The
+[live-conformance](tasks/main/live-conformance.md) task defers protected
 environment setup, supervised execution, and weekly scheduling pending
 explicit authorization; the runner, protected workflow definition, and
 isolated notifier are implemented.

@@ -6,13 +6,14 @@ not append session transcripts.
 
 ## Current slice
 
-- Integration target: `rust`; `sub` is the historical source branch for the
-  completed ordered work 3 through 5 slice.
+- Integration target: `rust`; this reconciliation contains all committed
+  `sub` work through the completed guide-acquisition hardening while preserving
+  the earlier ordered work 3 through 5 ancestry.
 - Completed scope: the manual protected producer, isolated notifier, and
   offline enforcement of credential, artifact, permission, deduplication,
   recovery, and sanitization boundaries.
 - Stop before environment or credential configuration, workflow dispatch, any
-  real OpenDART request, weekly scheduling, or guide drift.
+  real OpenDART request, weekly scheduling, or further guide-drift work.
 
 ## Decisions
 
@@ -128,6 +129,9 @@ not append session transcripts.
 - Ordered-work-5 validation passes: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.
+- Bound producer reports and notifier downloads to the exact workflow attempt,
+  preventing reruns from colliding with or consuming an earlier attempt's
+  artifact. Offline workflow mutation tests enforce the paired names.
 - Reconciled the completed `sub` slice into `rust` while preserving individual
   source commits. The combined CLI exposes SDK generation and live commands;
   repository verification runs Rust SDK freshness before live preflight.
@@ -142,4 +146,4 @@ not implementation blockers.
 Ordered work 6 in [live-conformance.md](live-conformance.md) is deferred pending
 explicit authorization. Stop before protected environment or credential setup,
 the first workflow dispatch or live OpenDART request, weekly scheduling, or
-guide-drift implementation.
+further guide-drift implementation.
