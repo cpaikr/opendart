@@ -34,7 +34,7 @@ import (
 
 const (
 	maxArchiveEntries = 64
-	maxArchiveBytes   = 8 << 20
+	maxArchiveBytes   = 64 << 20
 )
 
 // Document is the repository-owned OpenAPI boundary. Third-party model and

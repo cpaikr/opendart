@@ -6,6 +6,14 @@ parameters:
       type: string
 put:
   operationId: put_company_xml_fixture
+  parameters:
+    - name: corp_code
+      in: path
+      required: true
+      description: Operation-level override
+      style: label
+      schema:
+        type: string
   responses:
     "200":
       description: Representative templated PUT XML response
@@ -13,6 +21,8 @@ put:
         application/xml:
           schema:
             $ref: ../schemas/company.yaml
+  x-opendart:
+    logicalOperationId: DS001-2019002
 patch:
   operationId: patch_company_xml_fixture
   responses:
@@ -22,3 +32,5 @@ patch:
         application/xml:
           schema:
             $ref: ../schemas/company.yaml
+  x-opendart:
+    logicalOperationId: DS001-2019002
