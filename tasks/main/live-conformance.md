@@ -23,10 +23,14 @@ Implementation progress is maintained in the task-local
   validation, fail-closed preflight, bounded execution, semantic assertions,
   and the sanitized report contract.
 - Repository verification runs its coverage, request-budget, and sanitization
-  preflight without reading a credential or contacting OpenDART. The manual
-  command is available, but no GitHub workflow invokes it yet.
-- The protected credentialed workflow and isolated live issue automation remain
-  future work.
+  preflight without reading a credential or contacting OpenDART.
+- A manual-only producer is constrained to trusted `main` code, declares the
+  protected environment, and uploads only the sanitized report. An isolated
+  default-branch notifier validates that report or uses a fixed workflow
+  failure, deduplicates the independent live issue, records recovery once, and
+  never closes it.
+- The GitHub environment and credential remain unconfigured. No workflow has
+  been dispatched, no live request has been made, and no schedule is enabled.
 - The completed [Go-only cleanup](../../plans/main/go-only-tooling-cleanup.md)
   does not
   claim completion of the general runner or introduce scheduled credentialed
@@ -79,9 +83,10 @@ Implementation progress is maintained in the task-local
    bounded reusable disclosure discovery for rare event coordinates, and wired
    coverage, pagination closure, total-budget, and sanitization preflight into
    repository verification.
-5. Add a manual protected workflow and isolated notifier. Configure the
-   environment and credential only after offline coverage, budgets, and report
-   sanitization have been reviewed.
+5. **Complete.** Added the manual protected workflow and isolated notifier with
+   offline workflow-policy, report-validation, budget, sanitization,
+   deduplication, and recovery gates. Environment and credential configuration
+   remains deliberately deferred.
 6. Run the complete matrix under supervision, inspect logs and artifacts for
    leakage, and enable the weekly schedule only after the run is accepted.
 
@@ -104,6 +109,6 @@ Implementation progress is maintained in the task-local
 
 ## Next action
 
-Add the manual protected workflow and isolated notifier. Stop before configuring
-the GitHub environment or credential, making a real OpenDART request, or enabling
-the weekly schedule.
+After explicit authorization, configure the protected GitHub environment and
+credential, then perform ordered work 6 under supervision. Do not make a real
+OpenDART request or enable the weekly schedule before that review.
