@@ -1,6 +1,6 @@
 # Public Guide Semantic Drift
 
-## Objective
+## Outcome
 
 Detect whether the current public OpenDART development guide would change the
 generated OpenAPI contract. The weekly job reports evidence only; it never
@@ -33,8 +33,8 @@ This credential-free work is independent of authenticated
   Issue-writing authority belongs to an isolated default-branch notification
   job with no OpenDART credential or access to unrestricted source artifacts.
 - Use the shared report, fixed-failure, deduplication, and recovery contract in
-  the [tooling migration](go-tooling-migration.md). Drift uses its own report
-  outcome and tracking issue, distinct from live failures.
+  the [tooling migration](../plans/go-tooling-migration.md). Drift uses its own
+  report outcome and tracking issue, distinct from live failures.
 
 ## Ordered work
 
@@ -67,4 +67,4 @@ This credential-free work is independent of authenticated
 When drift work is explicitly started, implement the credential-free drift
 command and its offline fixtures before adding GitHub write permissions or
 scheduling. No drift implementation is part of the completed credential-free
-[Go tooling migration](go-tooling-migration.md) scope.
+[Go tooling migration](../plans/go-tooling-migration.md) scope.

@@ -1,5 +1,7 @@
 # Rust SDK Verification and Release
 
+Planning source: [Public Rust SDK](../../tasks/public-rust-sdk.md).
+
 ## Purpose
 
 Add Rust verification and crates.io publication without weakening the existing
@@ -56,8 +58,9 @@ crate coverage plus a dedicated dependency-unification fixture that enables
 protocol-NACK, fixed-backend, fixed-resolver, and raw-body cases. Tests use only
 loopback fixtures and no OpenDART credential.
 
-Live OpenDART conformance remains a separate, protected observation plan. A
-crate release does not depend on an unreviewed live call or expose its
+The [live-conformance task](../../tasks/live-conformance.md) remains separate,
+protected observation work. A crate release does not depend on an unreviewed
+live call or expose its
 credential to package publication.
 
 ### Consumer fixture

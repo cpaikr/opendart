@@ -1,6 +1,6 @@
 # Go-Only Tooling Cleanup
 
-## Objective
+## Outcome
 
 Finish the repository-tooling migration by moving the focused multi-company
 probe to the internal Go CLI and removing repository-owned Node.js, npm, and
@@ -10,7 +10,7 @@ credential, request, assertion, and sanitized-report behavior.
 This plan completes the remaining work in the
 [Go tooling migration](go-tooling-migration.md). It does not implement public
 guide-drift automation or the general
-[live-conformance runner](live-conformance.md).
+[live-conformance runner](../tasks/live-conformance.md).
 
 ## Current state
 
@@ -131,10 +131,7 @@ go run ./cmd/opendart-tool verify --repository-root .
 
 ## Next action
 
-This cleanup is complete. Future work starts only through the dedicated
-[guide-drift](guide-drift.md) or [live-conformance](live-conformance.md) plan;
-credential configuration and notifier automation remain outside this completed
-migration. Promotion from `dev` to `main` is complete.
+None — complete.
 
 ## Acceptance criteria
 
@@ -179,7 +176,7 @@ evidence, then the Go-only command/CI cutover and deletion. Each slice must pass
 the repository review and validation requirements before the next begins.
 
 Stop when the repository-owned toolchain is Go-only and this plan is complete.
-Do not continue into scheduled guide drift, the general live-conformance
+Do not continue into unscheduled guide drift, the general live-conformance
 matrix, credential or notifier configuration, or promotion from `dev` to
 `main`.
 

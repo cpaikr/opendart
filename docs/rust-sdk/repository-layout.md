@@ -1,5 +1,7 @@
 # Rust SDK Repository Layout
 
+Planning source: [Public Rust SDK](../../tasks/public-rust-sdk.md).
+
 ## Purpose
 
 Place the public Rust SDK beside the canonical specification while preserving
@@ -59,13 +61,14 @@ private compatibility contract. A public CLI has different release,
 configuration, credential, output, and compatibility obligations. It may
 depend on the public Rust crate, but it remains a separate package.
 
-## Why plans remain under `docs/plans`
+## Why design documents live under `docs/rust-sdk`
 
-Implementation state belongs under `docs/plans`, matching current repository
-conventions. `docs/sdk/rust` is reserved for durable installed-crate usage,
-configuration, compatibility, and maintenance documentation after those
-surfaces exist. This prevents an unimplemented design from appearing to be a
-supported SDK.
+Implementation state and the next action belong in the
+[Public Rust SDK task](../../tasks/public-rust-sdk.md). The supporting design
+documents remain under `docs/rust-sdk` because their package boundaries,
+contracts, and safety constraints carry forward into implementation. They are
+design inputs, not installed-crate usage documentation or evidence of a
+currently supported SDK.
 
 ## Package boundary
 

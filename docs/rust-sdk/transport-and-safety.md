@@ -1,5 +1,7 @@
 # Rust SDK Transport and Safety
 
+Planning source: [Public Rust SDK](../../tasks/public-rust-sdk.md).
+
 ## Purpose
 
 Define the optional `reqwest` client's fixed safety behavior, supported

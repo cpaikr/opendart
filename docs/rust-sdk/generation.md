@@ -1,5 +1,7 @@
 # Rust SDK Generation
 
+Planning source: [Public Rust SDK](../../tasks/public-rust-sdk.md).
+
 ## Purpose
 
 Generate complete, deterministic request and conservative wire code from the

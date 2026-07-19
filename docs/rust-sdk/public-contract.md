@@ -1,5 +1,7 @@
 # Rust SDK Public Contract
 
+Planning source: [Public Rust SDK](../../tasks/public-rust-sdk.md).
+
 ## Purpose
 
 Expose a small reusable protocol interface that supports both ordinary SDK

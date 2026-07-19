@@ -1,6 +1,6 @@
 # Credentialed Live Conformance
 
-## Objective
+## Outcome
 
 Exercise every physical OpenDART operation each week and verify that its live
 response remains usable under the committed OpenAPI contract and reviewed
@@ -20,10 +20,10 @@ credential-free [guide drift](guide-drift.md).
 - Lasting Go tests cover OpenAPI loading, semantic comparison, response routing
   and validation, and representative JSON, XML, and ZIP fixtures. Operation
   enumeration, request validation, and the shared HTTP safety and reporting
-  foundations remain future work in this plan. The focused Go probe is the only
+  foundations remain future work in this task. The focused Go probe is the only
   implemented credentialed command until the general runner replaces it.
-- The completed [Go-only cleanup](go-only-tooling-cleanup.md) does not claim
-  completion of the general runner or introduce scheduled credentialed
+- The completed [Go-only cleanup](../plans/go-only-tooling-cleanup.md) does not
+  claim completion of the general runner or introduce scheduled credentialed
   automation.
 
 ## Constraints
@@ -53,8 +53,8 @@ credential-free [guide drift](guide-drift.md).
   identities, statuses, sizes, hashes, schema locations, assertion IDs, and safe
   comparison evidence.
 - Use the shared report, fixed-failure, deduplication, and recovery contract in
-  the [tooling migration](go-tooling-migration.md), with an independent live
-  failure issue.
+  the [tooling migration](../plans/go-tooling-migration.md), with an independent
+  live failure issue.
 
 ## Ordered work
 
@@ -63,7 +63,7 @@ credential-free [guide drift](guide-drift.md).
    and ZIP fixtures. Operation enumeration and request validation remain future
    work.
 2. **Complete.** Ported the existing focused multi-company probe to Go through
-   the [Go-only cleanup](go-only-tooling-cleanup.md), preserving its cases,
+   the [Go-only cleanup](../plans/go-only-tooling-cleanup.md), preserving its cases,
    assertions, credential isolation, and sanitized report. This remains a
    focused probe rather than the general runner.
 3. Implement operation enumeration, request validation, the runner, request

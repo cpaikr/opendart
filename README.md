@@ -113,7 +113,7 @@ sanitized [auditor evidence manifest](docs/api/evidence/auditor-2026-07-18.json)
 
 The planned full live-conformance runner is not implemented. Its intended
 credential, reporting, and evidence boundaries are tracked in the
-[live-conformance plan](docs/plans/live-conformance.md).
+[live-conformance task](tasks/live-conformance.md).
 
 ## Releases
 
@@ -137,17 +137,19 @@ API.
 
 ## Repository documentation
 
+- [`ROADMAP.md`](ROADMAP.md) is the source of truth for current, scheduled,
+  and unscheduled project work.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) maps repository boundaries, runtime flow,
   and security invariants.
 - The [Go tooling ADR](docs/decisions/0001-go-repository-tooling.md) records the
-  accepted direction; the [migration plan](docs/plans/go-tooling-migration.md)
+  accepted direction; the [migration history](plans/go-tooling-migration.md)
   records the completed repository-tooling migration.
-- The [guide-drift plan](docs/plans/guide-drift.md) and
-  [live-conformance plan](docs/plans/live-conformance.md) track remaining
+- The [guide-drift task](tasks/guide-drift.md) and
+  [live-conformance task](tasks/live-conformance.md) track remaining
   maintenance and empirical work.
 - The [external-auditor retrieval guide](docs/api/auditor.md) separates the
   canonical endpoint contracts from a layered, empirically informed lookup
   strategy.
-- The [Rust SDK plan](docs/plans/rust-sdk/README.md) proposes a future public
+- The [Rust SDK task](tasks/public-rust-sdk.md) proposes a future public
   crate derived from the canonical contract. It does not describe a currently
   published runtime package.
