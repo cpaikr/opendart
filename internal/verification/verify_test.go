@@ -42,6 +42,10 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseBundleFreshness+":"+filepath.Base(source)+":"+filepath.Base(bundle))
 			return nil
 		},
+		checkEvidence: func(path string) error {
+			calls = append(calls, phaseAuditorEvidence+":"+filepath.Base(path))
+			return nil
+		},
 		checkRelease: func(root string) error {
 			calls = append(calls, phaseReleaseGuard+":"+filepath.Base(root))
 			return nil
@@ -57,6 +61,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"lint:openapi.yaml",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
+		"auditor-evidence:auditor-2026-07-18.json",
 		"release-guard:repository",
 	}
 	if !reflect.DeepEqual(calls, wantCalls) {
@@ -96,7 +101,8 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 		{name: "source lint diagnostic", fail: phaseSourceLint, wantPhase: phaseSourceLint, wantArtifact: "source.yaml", wantRule: "operation-summary", wantCallCount: 2},
 		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 4},
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 3},
-		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 5},
+		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 5},
+		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 6},
 	}
 
 	for _, test := range tests {
@@ -126,6 +132,13 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					calls++
 					if test.fail == phaseBundleFreshness {
 						return fmt.Errorf("%w: unsafe detail", openapispec.ErrBundleStale)
+					}
+					return nil
+				},
+				checkEvidence: func(string) error {
+					calls++
+					if test.fail == phaseAuditorEvidence {
+						return cause
 					}
 					return nil
 				},
@@ -188,8 +201,9 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 			}
 			return nil, nil
 		},
-		checkFresh:   func(string, string) error { return openapispec.ErrBundleMissing },
-		checkRelease: func(string) error { return nil },
+		checkFresh:    func(string, string) error { return openapispec.ErrBundleMissing },
+		checkEvidence: func(string) error { return nil },
+		checkRelease:  func(string) error { return nil },
 	}
 
 	_, err := verifyWith(t.TempDir(), deps)

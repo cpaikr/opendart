@@ -1,0 +1,2216 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-18T14:07:02.700Z",
+  "observedDate": "2026-07-18",
+  "credentialSource": "OPENDART_API_KEY",
+  "credentialPersisted": false,
+  "requestBudget": {
+    "maximum": 60,
+    "used": 24
+  },
+  "structured": [
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "누가의료기",
+        "corpCode": "00571818",
+        "businessYear": "2015",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "013",
+        "bodyBytes": 65,
+        "bodySha256": "5b9f448765008cd323ab5b94081c873aa00d39974e7ed5aa1964b00a19e8242b"
+      },
+      "rowCount": 0,
+      "receiptNumbers": [],
+      "distinctAuditors": [],
+      "distinctOpinions": [],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "누가의료기",
+        "corpCode": "00571818",
+        "businessYear": "2020",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "013",
+        "bodyBytes": 65,
+        "bodySha256": "5b9f448765008cd323ab5b94081c873aa00d39974e7ed5aa1964b00a19e8242b"
+      },
+      "rowCount": 0,
+      "receiptNumbers": [],
+      "distinctAuditors": [],
+      "distinctOpinions": [],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "누가의료기",
+        "corpCode": "00571818",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "013",
+        "bodyBytes": 65,
+        "bodySha256": "5b9f448765008cd323ab5b94081c873aa00d39974e7ed5aa1964b00a19e8242b"
+      },
+      "rowCount": 0,
+      "receiptNumbers": [],
+      "distinctAuditors": [],
+      "distinctOpinions": [],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "삼성바이오에피스",
+        "corpCode": "00907679",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "013",
+        "bodyBytes": 65,
+        "bodySha256": "5b9f448765008cd323ab5b94081c873aa00d39974e7ed5aa1964b00a19e8242b"
+      },
+      "rowCount": 0,
+      "receiptNumbers": [],
+      "distinctAuditors": [],
+      "distinctOpinions": [],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "삼성디스플레이",
+        "corpCode": "00912006",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "013",
+        "bodyBytes": 65,
+        "bodySha256": "5b9f448765008cd323ab5b94081c873aa00d39974e7ed5aa1964b00a19e8242b"
+      },
+      "rowCount": 0,
+      "receiptNumbers": [],
+      "distinctAuditors": [],
+      "distinctOpinions": [],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "삼성전자",
+        "corpCode": "00126380",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "000",
+        "bodyBytes": 2492,
+        "bodySha256": "c9633e17ca784ad2af2effb2ffd0ec59898e877c888ef19f486c23911f2c69c9"
+      },
+      "rowCount": 6,
+      "receiptNumbers": [
+        "20250311001085"
+      ],
+      "distinctAuditors": [
+        "삼정회계법인",
+        "안진회계법인"
+      ],
+      "distinctOpinions": [
+        "적정의견"
+      ],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "교보생명보험",
+        "corpCode": "00112882",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "000",
+        "bodyBytes": 1926,
+        "bodySha256": "5360af2446d668d7bd92642a9768c5993363c8cdd2e7b190c04bbe2a9507b714"
+      },
+      "rowCount": 6,
+      "receiptNumbers": [
+        "20250515002959"
+      ],
+      "distinctAuditors": [
+        "삼일회계법인"
+      ],
+      "distinctOpinions": [
+        "적정의견"
+      ],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "롯데건설",
+        "corpCode": "00120438",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "000",
+        "bodyBytes": 1100,
+        "bodySha256": "e95a9f3d25ebb61255abe1e5b9965139be3e95ac5509f536e8cca48f5fe90723"
+      },
+      "rowCount": 6,
+      "receiptNumbers": [
+        "20250331003610"
+      ],
+      "distinctAuditors": [],
+      "distinctOpinions": [],
+      "placeholderCount": 6
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020009",
+        "endpoint": "accnutAdtorNmNdAdtOpinion.json",
+        "companyName": "카카오모빌리티",
+        "corpCode": "01250666",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "000",
+        "bodyBytes": 1994,
+        "bodySha256": "8ca3d635667d925c02c46af377a9f4921dabe00c9de108b30ca46e0199ccf914"
+      },
+      "rowCount": 6,
+      "receiptNumbers": [
+        "20250331002700"
+      ],
+      "distinctAuditors": [
+        "삼일회계법인",
+        "삼정회계법인"
+      ],
+      "distinctOpinions": [
+        "적정의견"
+      ],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020010",
+        "endpoint": "adtServcCnclsSttus.json",
+        "companyName": "누가의료기",
+        "corpCode": "00571818",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "013",
+        "bodyBytes": 65,
+        "bodySha256": "5b9f448765008cd323ab5b94081c873aa00d39974e7ed5aa1964b00a19e8242b"
+      },
+      "rowCount": 0,
+      "receiptNumbers": [],
+      "distinctAuditors": [],
+      "distinctOpinions": [],
+      "placeholderCount": 0
+    },
+    {
+      "request": {
+        "logicalOperationId": "DS002-2020011",
+        "endpoint": "accnutAdtorNonAdtServcCnclsSttus.json",
+        "companyName": "누가의료기",
+        "corpCode": "00571818",
+        "businessYear": "2024",
+        "reportCode": "11011"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/json",
+        "apiStatus": "013",
+        "bodyBytes": 65,
+        "bodySha256": "5b9f448765008cd323ab5b94081c873aa00d39974e7ed5aa1964b00a19e8242b"
+      },
+      "rowCount": 0,
+      "receiptNumbers": [],
+      "distinctAuditors": [],
+      "distinctOpinions": [],
+      "placeholderCount": 0
+    }
+  ],
+  "searches": [
+    {
+      "companyName": "누가의료기",
+      "corpCode": "00571818",
+      "detailType": "F001",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "누가의료기",
+            "corpCode": "00571818",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F001",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 3338,
+            "bodySha256": "19df490a6b78d38e410e12306aae64e5b2985d3a069a91286f088af71dfafe68"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 15,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2025.12)",
+              "receiptNumber": "20260402001821",
+              "filerName": "한울회계법인",
+              "receiptDate": "20260402",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2024.12)",
+              "receiptNumber": "20250403000748",
+              "filerName": "다산회계법인",
+              "receiptDate": "20250403",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2023.12)",
+              "receiptNumber": "20240403000451",
+              "filerName": "다산회계법인",
+              "receiptDate": "20240403",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2022.12)",
+              "receiptNumber": "20230403003442",
+              "filerName": "다산회계법인",
+              "receiptDate": "20230403",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2021.12)",
+              "receiptNumber": "20220404000499",
+              "filerName": "다산회계법인",
+              "receiptDate": "20220404",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2020.12)",
+              "receiptNumber": "20210414000307",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20210414",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2019.12)",
+              "receiptNumber": "20200410003428",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20200410",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2018.12)",
+              "receiptNumber": "20190408002809",
+              "filerName": "다산회계법인",
+              "receiptDate": "20190408",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2017.12)",
+              "receiptNumber": "20180406000166",
+              "filerName": "다산회계법인",
+              "receiptDate": "20180406",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2016.12)",
+              "receiptNumber": "20170410000769",
+              "filerName": "다산회계법인",
+              "receiptDate": "20170410",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "연결감사보고서 (2015.12)",
+              "receiptNumber": "20160429000550",
+              "filerName": "다산회계법인",
+              "receiptDate": "20160429",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "[기재정정]감사보고서 (2015.12)",
+              "receiptNumber": "20160429000510",
+              "filerName": "다산회계법인",
+              "receiptDate": "20160429",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2015.12)",
+              "receiptNumber": "20160408002178",
+              "filerName": "다산회계법인",
+              "receiptDate": "20160408",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2014.12)",
+              "receiptNumber": "20150409000803",
+              "filerName": "다산회계법인",
+              "receiptDate": "20150409",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2013.12)",
+              "receiptNumber": "20140401000789",
+              "filerName": "다산회계법인",
+              "receiptDate": "20140401",
+              "remarks": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "companyName": "누가의료기",
+      "corpCode": "00571818",
+      "detailType": "F002",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "누가의료기",
+            "corpCode": "00571818",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F002",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 3338,
+            "bodySha256": "19df490a6b78d38e410e12306aae64e5b2985d3a069a91286f088af71dfafe68"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 15,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2025.12)",
+              "receiptNumber": "20260402001821",
+              "filerName": "한울회계법인",
+              "receiptDate": "20260402",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2024.12)",
+              "receiptNumber": "20250403000748",
+              "filerName": "다산회계법인",
+              "receiptDate": "20250403",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2023.12)",
+              "receiptNumber": "20240403000451",
+              "filerName": "다산회계법인",
+              "receiptDate": "20240403",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2022.12)",
+              "receiptNumber": "20230403003442",
+              "filerName": "다산회계법인",
+              "receiptDate": "20230403",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2021.12)",
+              "receiptNumber": "20220404000499",
+              "filerName": "다산회계법인",
+              "receiptDate": "20220404",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2020.12)",
+              "receiptNumber": "20210414000307",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20210414",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2019.12)",
+              "receiptNumber": "20200410003428",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20200410",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2018.12)",
+              "receiptNumber": "20190408002809",
+              "filerName": "다산회계법인",
+              "receiptDate": "20190408",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2017.12)",
+              "receiptNumber": "20180406000166",
+              "filerName": "다산회계법인",
+              "receiptDate": "20180406",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2016.12)",
+              "receiptNumber": "20170410000769",
+              "filerName": "다산회계법인",
+              "receiptDate": "20170410",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "연결감사보고서 (2015.12)",
+              "receiptNumber": "20160429000550",
+              "filerName": "다산회계법인",
+              "receiptDate": "20160429",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "[기재정정]감사보고서 (2015.12)",
+              "receiptNumber": "20160429000510",
+              "filerName": "다산회계법인",
+              "receiptDate": "20160429",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2015.12)",
+              "receiptNumber": "20160408002178",
+              "filerName": "다산회계법인",
+              "receiptDate": "20160408",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2014.12)",
+              "receiptNumber": "20150409000803",
+              "filerName": "다산회계법인",
+              "receiptDate": "20150409",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00571818",
+              "corpName": "누가의료기",
+              "reportName": "감사보고서 (2013.12)",
+              "receiptNumber": "20140401000789",
+              "filerName": "다산회계법인",
+              "receiptDate": "20140401",
+              "remarks": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "companyName": "삼성바이오에피스",
+      "corpCode": "00907679",
+      "detailType": "F001",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "삼성바이오에피스",
+            "corpCode": "00907679",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F001",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 6478,
+            "bodySha256": "50476e7917c4c4e6f5382132e90b7780f968f68bc445ca71b64f5fb262c5e92a"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 28,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "[기재정정]연결감사보고서 (2025.12)",
+              "receiptNumber": "20260515003109",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260515",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "[기재정정]감사보고서 (2025.12)",
+              "receiptNumber": "20260515003107",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260515",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2025.12)",
+              "receiptNumber": "20260327000412",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260327",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2025.12)",
+              "receiptNumber": "20260327000410",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260327",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2024.12)",
+              "receiptNumber": "20250331003459",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20250331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2024.12)",
+              "receiptNumber": "20250331003456",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20250331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2023.12)",
+              "receiptNumber": "20240329001254",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240329",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2023.12)",
+              "receiptNumber": "20240329001253",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240329",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2022.12)",
+              "receiptNumber": "20230331003749",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20230331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2022.12)",
+              "receiptNumber": "20230331003746",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20230331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2021.12)",
+              "receiptNumber": "20220401002742",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20220401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2021.12)",
+              "receiptNumber": "20220401002740",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20220401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2020.12)",
+              "receiptNumber": "20210402002201",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20210402",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2020.12)",
+              "receiptNumber": "20210402002198",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20210402",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2019.12)",
+              "receiptNumber": "20200327002049",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20200327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2019.12)",
+              "receiptNumber": "20200327002047",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20200327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2018.12)",
+              "receiptNumber": "20190411002660",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20190411",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2018.12)",
+              "receiptNumber": "20190411002655",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20190411",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2017.12)",
+              "receiptNumber": "20180409002610",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20180409",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2017.12)",
+              "receiptNumber": "20180409002608",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20180409",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2016.12)",
+              "receiptNumber": "20170323000436",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20170323",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2016.12)",
+              "receiptNumber": "20170323000433",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20170323",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2015.12)",
+              "receiptNumber": "20160401001254",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20160401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2015.12)",
+              "receiptNumber": "20160401001251",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20160401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2014.12)",
+              "receiptNumber": "20150401001918",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20150401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2014.12)",
+              "receiptNumber": "20150401001915",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20150401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "[기재정정]감사보고서 (2013.12)",
+              "receiptNumber": "20140401002355",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20140402",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2013.12)",
+              "receiptNumber": "20140401001864",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20140401",
+              "remarks": "정"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "companyName": "삼성바이오에피스",
+      "corpCode": "00907679",
+      "detailType": "F002",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "삼성바이오에피스",
+            "corpCode": "00907679",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F002",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 6478,
+            "bodySha256": "50476e7917c4c4e6f5382132e90b7780f968f68bc445ca71b64f5fb262c5e92a"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 28,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "[기재정정]연결감사보고서 (2025.12)",
+              "receiptNumber": "20260515003109",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260515",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "[기재정정]감사보고서 (2025.12)",
+              "receiptNumber": "20260515003107",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260515",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2025.12)",
+              "receiptNumber": "20260327000412",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260327",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2025.12)",
+              "receiptNumber": "20260327000410",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260327",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2024.12)",
+              "receiptNumber": "20250331003459",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20250331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2024.12)",
+              "receiptNumber": "20250331003456",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20250331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2023.12)",
+              "receiptNumber": "20240329001254",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240329",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2023.12)",
+              "receiptNumber": "20240329001253",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240329",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2022.12)",
+              "receiptNumber": "20230331003749",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20230331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2022.12)",
+              "receiptNumber": "20230331003746",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20230331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2021.12)",
+              "receiptNumber": "20220401002742",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20220401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2021.12)",
+              "receiptNumber": "20220401002740",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20220401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2020.12)",
+              "receiptNumber": "20210402002201",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20210402",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2020.12)",
+              "receiptNumber": "20210402002198",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20210402",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2019.12)",
+              "receiptNumber": "20200327002049",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20200327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2019.12)",
+              "receiptNumber": "20200327002047",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20200327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2018.12)",
+              "receiptNumber": "20190411002660",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20190411",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2018.12)",
+              "receiptNumber": "20190411002655",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20190411",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2017.12)",
+              "receiptNumber": "20180409002610",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20180409",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2017.12)",
+              "receiptNumber": "20180409002608",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20180409",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2016.12)",
+              "receiptNumber": "20170323000436",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20170323",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2016.12)",
+              "receiptNumber": "20170323000433",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20170323",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2015.12)",
+              "receiptNumber": "20160401001254",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20160401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2015.12)",
+              "receiptNumber": "20160401001251",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20160401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "연결감사보고서 (2014.12)",
+              "receiptNumber": "20150401001918",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20150401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2014.12)",
+              "receiptNumber": "20150401001915",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20150401",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "[기재정정]감사보고서 (2013.12)",
+              "receiptNumber": "20140401002355",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20140402",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00907679",
+              "corpName": "삼성바이오에피스",
+              "reportName": "감사보고서 (2013.12)",
+              "receiptNumber": "20140401001864",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20140401",
+              "remarks": "정"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "companyName": "삼성디스플레이",
+      "corpCode": "00912006",
+      "detailType": "F001",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "삼성디스플레이",
+            "corpCode": "00912006",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F001",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 5903,
+            "bodySha256": "ec509024e5d3551256e147a8c6a04a4dd184e0494a1dd5c14f48bcccb7f9b145"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 26,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2025.12)",
+              "receiptNumber": "20260318000378",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260318",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2025.12)",
+              "receiptNumber": "20260318000377",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260318",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2024.12)",
+              "receiptNumber": "20250319000821",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20250319",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2024.12)",
+              "receiptNumber": "20250319000818",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20250319",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2023.12)",
+              "receiptNumber": "20240320000982",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240320",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2023.12)",
+              "receiptNumber": "20240320000981",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240320",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2022.12)",
+              "receiptNumber": "20230316001154",
+              "filerName": "안진회계법인",
+              "receiptDate": "20230316",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2022.12)",
+              "receiptNumber": "20230316001151",
+              "filerName": "안진회계법인",
+              "receiptDate": "20230316",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2021.12)",
+              "receiptNumber": "20220314000056",
+              "filerName": "안진회계법인",
+              "receiptDate": "20220314",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2021.12)",
+              "receiptNumber": "20220314000055",
+              "filerName": "안진회계법인",
+              "receiptDate": "20220314",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2020.12)",
+              "receiptNumber": "20210330000848",
+              "filerName": "안진회계법인",
+              "receiptDate": "20210330",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2020.12)",
+              "receiptNumber": "20210330000845",
+              "filerName": "안진회계법인",
+              "receiptDate": "20210330",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2019.12)",
+              "receiptNumber": "20200331001999",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20200331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2019.12)",
+              "receiptNumber": "20200331001995",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20200331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2018.12)",
+              "receiptNumber": "20190327001105",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20190327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2018.12)",
+              "receiptNumber": "20190327001104",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20190327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2017.12)",
+              "receiptNumber": "20180329001286",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20180329",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2017.12)",
+              "receiptNumber": "20180329001285",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20180329",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2016.12)",
+              "receiptNumber": "20170327000812",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20170327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2016.12)",
+              "receiptNumber": "20170327000810",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20170327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2015.12)",
+              "receiptNumber": "20160325000675",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20160325",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2015.12)",
+              "receiptNumber": "20160325000673",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20160325",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2014.12)",
+              "receiptNumber": "20150327000245",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20150327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2014.12)",
+              "receiptNumber": "20150327000244",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20150327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2013.12)",
+              "receiptNumber": "20140328001236",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20140328",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2013.12)",
+              "receiptNumber": "20140328001235",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20140328",
+              "remarks": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "companyName": "삼성디스플레이",
+      "corpCode": "00912006",
+      "detailType": "F002",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "삼성디스플레이",
+            "corpCode": "00912006",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F002",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 5903,
+            "bodySha256": "ec509024e5d3551256e147a8c6a04a4dd184e0494a1dd5c14f48bcccb7f9b145"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 26,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2025.12)",
+              "receiptNumber": "20260318000378",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260318",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2025.12)",
+              "receiptNumber": "20260318000377",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20260318",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2024.12)",
+              "receiptNumber": "20250319000821",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20250319",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2024.12)",
+              "receiptNumber": "20250319000818",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20250319",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2023.12)",
+              "receiptNumber": "20240320000982",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240320",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2023.12)",
+              "receiptNumber": "20240320000981",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240320",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2022.12)",
+              "receiptNumber": "20230316001154",
+              "filerName": "안진회계법인",
+              "receiptDate": "20230316",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2022.12)",
+              "receiptNumber": "20230316001151",
+              "filerName": "안진회계법인",
+              "receiptDate": "20230316",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2021.12)",
+              "receiptNumber": "20220314000056",
+              "filerName": "안진회계법인",
+              "receiptDate": "20220314",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2021.12)",
+              "receiptNumber": "20220314000055",
+              "filerName": "안진회계법인",
+              "receiptDate": "20220314",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2020.12)",
+              "receiptNumber": "20210330000848",
+              "filerName": "안진회계법인",
+              "receiptDate": "20210330",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2020.12)",
+              "receiptNumber": "20210330000845",
+              "filerName": "안진회계법인",
+              "receiptDate": "20210330",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2019.12)",
+              "receiptNumber": "20200331001999",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20200331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2019.12)",
+              "receiptNumber": "20200331001995",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20200331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2018.12)",
+              "receiptNumber": "20190327001105",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20190327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2018.12)",
+              "receiptNumber": "20190327001104",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20190327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2017.12)",
+              "receiptNumber": "20180329001286",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20180329",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2017.12)",
+              "receiptNumber": "20180329001285",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20180329",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2016.12)",
+              "receiptNumber": "20170327000812",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20170327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2016.12)",
+              "receiptNumber": "20170327000810",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20170327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2015.12)",
+              "receiptNumber": "20160325000675",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20160325",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2015.12)",
+              "receiptNumber": "20160325000673",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20160325",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2014.12)",
+              "receiptNumber": "20150327000245",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20150327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2014.12)",
+              "receiptNumber": "20150327000244",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20150327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "연결감사보고서 (2013.12)",
+              "receiptNumber": "20140328001236",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20140328",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00912006",
+              "corpName": "삼성디스플레이",
+              "reportName": "감사보고서 (2013.12)",
+              "receiptNumber": "20140328001235",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20140328",
+              "remarks": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "companyName": "삼성전자",
+      "corpCode": "00126380",
+      "detailType": "F001",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "삼성전자",
+            "corpCode": "00126380",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F001",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 1424,
+            "bodySha256": "e0578b6016d84bb1bab4dd71764912c4e8fd8406d220981d96951879fa2f5820"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 6,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "00126380",
+              "corpName": "삼성전자",
+              "reportName": "연결감사보고서 (2015.12)",
+              "receiptNumber": "20160314000623",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20160314",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00126380",
+              "corpName": "삼성전자",
+              "reportName": "감사보고서 (2015.12)",
+              "receiptNumber": "20160314000622",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20160314",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00126380",
+              "corpName": "삼성전자",
+              "reportName": "연결감사보고서 (2014.12)",
+              "receiptNumber": "20150326000677",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20150326",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00126380",
+              "corpName": "삼성전자",
+              "reportName": "감사보고서 (2014.12)",
+              "receiptNumber": "20150326000676",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20150326",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00126380",
+              "corpName": "삼성전자",
+              "reportName": "연결감사보고서 (2013.12)",
+              "receiptNumber": "20140327000956",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20140327",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00126380",
+              "corpName": "삼성전자",
+              "reportName": "감사보고서 (2013.12)",
+              "receiptNumber": "20140327000954",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20140327",
+              "remarks": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "companyName": "교보생명보험",
+      "corpCode": "00112882",
+      "detailType": "F001",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "교보생명보험",
+            "corpCode": "00112882",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F001",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 984,
+            "bodySha256": "3ae376ca7ba5b759f346fb9f6df7ca1c4206d6f8abc7266cefd34e5d6303ebe8"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 4,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "00112882",
+              "corpName": "교보생명보험",
+              "reportName": "연결감사보고서 (2014.12)",
+              "receiptNumber": "20150330000603",
+              "filerName": "한영회계법인",
+              "receiptDate": "20150330",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00112882",
+              "corpName": "교보생명보험",
+              "reportName": "감사보고서 (2014.12)",
+              "receiptNumber": "20150330000593",
+              "filerName": "한영회계법인",
+              "receiptDate": "20150330",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00112882",
+              "corpName": "교보생명보험",
+              "reportName": "연결감사보고서 (2013.12)",
+              "receiptNumber": "20140319000119",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20140319",
+              "remarks": ""
+            },
+            {
+              "corpCode": "00112882",
+              "corpName": "교보생명보험",
+              "reportName": "감사보고서 (2013.12)",
+              "receiptNumber": "20140319000118",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20140319",
+              "remarks": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "companyName": "카카오모빌리티",
+      "corpCode": "01250666",
+      "detailType": "F001",
+      "pages": [
+        {
+          "request": {
+            "logicalOperationId": "DS001-2019001",
+            "endpoint": "list.json",
+            "companyName": "카카오모빌리티",
+            "corpCode": "01250666",
+            "beginDate": "20140101",
+            "endDate": "20260718",
+            "lastReport": "N",
+            "publicationType": "F",
+            "detailType": "F001",
+            "pageNumber": 1,
+            "pageCount": 100
+          },
+          "response": {
+            "httpStatus": 200,
+            "mediaType": "application/json",
+            "apiStatus": "000",
+            "bodyBytes": 2849,
+            "bodySha256": "27b231f0e9064f3af9b665625178e04de4ff5452d689f1599a91d6027ff26884"
+          },
+          "pageNumber": 1,
+          "pageCount": 100,
+          "totalCount": 12,
+          "totalPages": 1,
+          "filings": [
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "[기재정정]연결감사보고서 (2021.12)",
+              "receiptNumber": "20240319000002",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20240319",
+              "remarks": ""
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "[기재정정]감사보고서 (2021.12)",
+              "receiptNumber": "20240319000001",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20240319",
+              "remarks": ""
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "[기재정정]연결감사보고서 (2020.12)",
+              "receiptNumber": "20240318000864",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240318",
+              "remarks": ""
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "[기재정정]감사보고서 (2020.12)",
+              "receiptNumber": "20240318000861",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20240318",
+              "remarks": ""
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "연결감사보고서 (2021.12)",
+              "receiptNumber": "20220408001788",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20220408",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "감사보고서 (2021.12)",
+              "receiptNumber": "20220408001785",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20220408",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "연결감사보고서 (2020.12)",
+              "receiptNumber": "20210409001918",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20210409",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "감사보고서 (2020.12)",
+              "receiptNumber": "20210409001916",
+              "filerName": "삼정회계법인",
+              "receiptDate": "20210409",
+              "remarks": "정"
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "연결감사보고서 (2019.12)",
+              "receiptNumber": "20200331002182",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20200331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "감사보고서 (2019.12)",
+              "receiptNumber": "20200331002180",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20200331",
+              "remarks": ""
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "연결감사보고서 (2018.12)",
+              "receiptNumber": "20190408001591",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20190408",
+              "remarks": ""
+            },
+            {
+              "corpCode": "01250666",
+              "corpName": "카카오모빌리티",
+              "reportName": "감사보고서 (2018.12)",
+              "receiptNumber": "20190408001589",
+              "filerName": "삼일회계법인",
+              "receiptDate": "20190408",
+              "remarks": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "selection": {
+        "companyName": "누가의료기",
+        "reportPeriod": "2015",
+        "receiptNumber": "20160429000550",
+        "expectedFirm": "다산회계법인",
+        "selectionBasis": "latest-receipt-matching-report-period-from-F001-or-F002"
+      },
+      "request": {
+        "logicalOperationId": "DS001-2019003",
+        "endpoint": "document.xml",
+        "companyName": "누가의료기",
+        "receiptNumber": "20160429000550"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/x-msdownload",
+        "apiStatus": null,
+        "bodyBytes": 38548,
+        "bodySha256": "817dbbef5cc67200dd4c74f4b35c34d719a1a348e7972ca33b9eda5c2441e716"
+      },
+      "archiveBytes": 38548,
+      "archiveSha256": "817dbbef5cc67200dd4c74f4b35c34d719a1a348e7972ca33b9eda5c2441e716",
+      "entryCount": 1,
+      "expandedBytes": 322462,
+      "entries": [
+        {
+          "name": "/20160429000550_00761.xml",
+          "nameSha256": "c8ffbd5cce5f3ccbbf86455d39b79b8366f002b568bbe7b180d0d57facde0292",
+          "compressedBytes": 38384,
+          "expandedBytes": 322462,
+          "contentSha256": "525fdf1e813f3fff49920cc04c579b27fce9647d675c70df1209b9a8a144db9a",
+          "decoding": "cp949-compatible",
+          "expectedFirmMatches": 2,
+          "auditorSectionMarkerMatches": 3
+        }
+      ],
+      "expectedFirmMatches": 2,
+      "auditorSectionMarkerMatches": 3
+    },
+    {
+      "selection": {
+        "companyName": "누가의료기",
+        "reportPeriod": "2020",
+        "receiptNumber": "20210414000307",
+        "expectedFirm": "삼정회계법인",
+        "selectionBasis": "latest-receipt-matching-report-period-from-F001-or-F002"
+      },
+      "request": {
+        "logicalOperationId": "DS001-2019003",
+        "endpoint": "document.xml",
+        "companyName": "누가의료기",
+        "receiptNumber": "20210414000307"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/x-msdownload",
+        "apiStatus": null,
+        "bodyBytes": 41225,
+        "bodySha256": "f0da8e3f03b422d89862ca48f03a6fe54707f17aabea534ee98889ac54628acc"
+      },
+      "archiveBytes": 41225,
+      "archiveSha256": "f0da8e3f03b422d89862ca48f03a6fe54707f17aabea534ee98889ac54628acc",
+      "entryCount": 1,
+      "expandedBytes": 330876,
+      "entries": [
+        {
+          "name": "20210414000307_00760.xml",
+          "nameSha256": "72a275b4c5744fe92e28b757ed2ce290b7dcebd95616d6e03aafc64d5e679c37",
+          "compressedBytes": 41063,
+          "expandedBytes": 330876,
+          "contentSha256": "f33f190fb60bd11ae29558c6228347b5bb0efe655175a804756723cdcc1f386d",
+          "decoding": "cp949-compatible",
+          "expectedFirmMatches": 2,
+          "auditorSectionMarkerMatches": 3
+        }
+      ],
+      "expectedFirmMatches": 2,
+      "auditorSectionMarkerMatches": 3
+    },
+    {
+      "selection": {
+        "companyName": "누가의료기",
+        "reportPeriod": "2025",
+        "receiptNumber": "20260402001821",
+        "expectedFirm": "한울회계법인",
+        "selectionBasis": "latest-receipt-matching-report-period-from-F001-or-F002"
+      },
+      "request": {
+        "logicalOperationId": "DS001-2019003",
+        "endpoint": "document.xml",
+        "companyName": "누가의료기",
+        "receiptNumber": "20260402001821"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/x-msdownload",
+        "apiStatus": null,
+        "bodyBytes": 43756,
+        "bodySha256": "0d0daea4d2b33ceb724d9c8289022d83760f0c165340ce39fb265a54d09ec7c4"
+      },
+      "archiveBytes": 43756,
+      "archiveSha256": "0d0daea4d2b33ceb724d9c8289022d83760f0c165340ce39fb265a54d09ec7c4",
+      "entryCount": 1,
+      "expandedBytes": 359898,
+      "entries": [
+        {
+          "name": "20260402001821_00760.xml",
+          "nameSha256": "01d6c92b2a48d439b573cba471b4f492721a7715d8e56763533b3e2eafce25f6",
+          "compressedBytes": 43594,
+          "expandedBytes": 359898,
+          "contentSha256": "7cfed58bbb48dac3f4b9d8f78140e6a464cc7fc21e2db748e9c8cf58795b7153",
+          "decoding": "utf-8",
+          "expectedFirmMatches": 2,
+          "auditorSectionMarkerMatches": 2
+        }
+      ],
+      "expectedFirmMatches": 2,
+      "auditorSectionMarkerMatches": 2
+    },
+    {
+      "selection": {
+        "companyName": "롯데건설",
+        "reportPeriod": "2024",
+        "receiptNumber": "20250331003610",
+        "expectedFirm": "안진회계법인",
+        "selectionBasis": "greatest-receipt-from-2024-annual-structured-result"
+      },
+      "request": {
+        "logicalOperationId": "DS001-2019003",
+        "endpoint": "document.xml",
+        "companyName": "롯데건설",
+        "receiptNumber": "20250331003610"
+      },
+      "response": {
+        "httpStatus": 200,
+        "mediaType": "application/x-msdownload",
+        "apiStatus": null,
+        "bodyBytes": 705153,
+        "bodySha256": "1bf4f75029e17395c1376706f339cb20a99d2c2f36a201e619d8776284a5c53c"
+      },
+      "archiveBytes": 705153,
+      "archiveSha256": "1bf4f75029e17395c1376706f339cb20a99d2c2f36a201e619d8776284a5c53c",
+      "entryCount": 3,
+      "expandedBytes": 8055317,
+      "entries": [
+        {
+          "name": "20250331003610.xml",
+          "nameSha256": "37ced52f5d1597ebc1470e3a25461bd317a74b8f7d5c943f1e295fc3e9a0684b",
+          "compressedBytes": 450359,
+          "expandedBytes": 5239909,
+          "contentSha256": "5c9f8683d59017b1810eea669743054a5eb4013d6735656ffb0afe015afc016a",
+          "decoding": "utf-8",
+          "expectedFirmMatches": 6,
+          "auditorSectionMarkerMatches": 0
+        },
+        {
+          "name": "20250331003610_00761.xml",
+          "nameSha256": "bafdbfe7127362dfc82532f6898dcf66a3eb652ec9b0b404b1eeda1fb69854f1",
+          "compressedBytes": 129842,
+          "expandedBytes": 1422728,
+          "contentSha256": "64adaa064914f00ffd2c75cc277639f3b30bff5f949c4f06f1acbd9d328af345",
+          "decoding": "utf-8",
+          "expectedFirmMatches": 2,
+          "auditorSectionMarkerMatches": 2
+        },
+        {
+          "name": "20250331003610_00760.xml",
+          "nameSha256": "bd2c37397d213eac8bfa94e66cb9f0efe5b504ac317e03889abb23e924467db4",
+          "compressedBytes": 124522,
+          "expandedBytes": 1392680,
+          "contentSha256": "beb1c580f3c99b876150fd3445625a4676598a9ba9e490a69a92a0dc076727ad",
+          "decoding": "utf-8",
+          "expectedFirmMatches": 3,
+          "auditorSectionMarkerMatches": 2
+        }
+      ],
+      "expectedFirmMatches": 11,
+      "auditorSectionMarkerMatches": 4
+    }
+  ]
+}
