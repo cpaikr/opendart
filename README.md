@@ -1,9 +1,10 @@
-# OpenDART API Specification
+# OpenDART API Specification and Rust SDK
 
 This unofficial, community-maintained repository provides a source-backed
 OpenAPI 3.2 description of the operations published in the official OpenDART
-development guide. It is not affiliated with or endorsed by the Financial
-Supervisory Service or OpenDART.
+development guide and a first-party Rust protocol SDK derived from that
+contract. It is not affiliated with or endorsed by the Financial Supervisory
+Service or OpenDART.
 
 ## Use the specification
 
@@ -62,6 +63,32 @@ and historical availability remain `probe-required` unless empirical evidence
 states otherwise. This keeps guide-sourced facts separate from observations and
 collection analysis.
 
+## Use the Rust SDK
+
+The `opendart` crate prepares every supported operation through generated,
+typed request inputs. Its transport-independent core supports callers that own
+HTTP execution; the default `client-reqwest` feature adds a bounded, one-attempt
+client for ordinary use.
+
+```rust
+use opendart::{operations::Company, ApiKey, Client, Representation};
+
+# async fn example() -> Result<(), Box<dyn std::error::Error>> {
+let request = Company::new("00126380").prepare(Representation::Json)?;
+let client = Client::builder(ApiKey::new("example-key")?).build()?;
+let response = client.execute(&request).await?;
+println!("{}", response.metadata.status());
+# Ok(())
+# }
+```
+
+Status envelopes, including code `013`, remain source evidence rather than SDK
+success or retry policy. Binary operations use `Client::execute_binary`.
+Strict callers can disable default features and use `PreparedRequest`,
+authorization, and `WireInspector` with their own executor. See the
+[crate guide](sdk/rust/crates/opendart/README.md) and
+[SDK workspace guide](sdk/rust/README.md).
+
 ## Refresh and verify
 
 The repository tooling requires only the Go version declared in `go.mod`:
@@ -87,6 +114,11 @@ Generated OpenAPI files are reviewed artifacts. Do not edit them by hand; change
 the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is
 canonical. If a consumer requires OpenAPI 3.1, create a separate compatibility
 artifact rather than changing the source contract.
+
+CI also runs the pinned stable and MSRV Rust gates, all-features and
+no-default-features tests, documentation, compatibility fixtures, generated
+coverage checks, and exact crate-package inventory inspection. The complete
+local commands are in [`sdk/rust/README.md`](sdk/rust/README.md).
 
 ## Credentialed probe
 
@@ -117,10 +149,10 @@ credential, reporting, and evidence boundaries are tracked in the
 
 ## Releases
 
-Humans classify bundle compatibility and choose the corresponding Conventional
-Commit input. Release Please applies the configured version policy, updates the
-generated changelog and manifest, creates the tag and draft release, and the
-release workflow validates, attaches, and publishes the immutable release.
+Humans classify public compatibility and choose the corresponding Conventional
+Commit input. Release Please owns independent specification and Rust SDK
+components. Specification releases use `vX.Y.Z`; crate releases use
+`opendart-vX.Y.Z` and update the crate manifest, lockfile, and changelog.
 [`RELEASING.md`](RELEASING.md) is the maintainer policy and review checklist.
 
 Each release contains `openapi.bundle.yaml` and
@@ -132,8 +164,9 @@ gh release verify vX.Y.Z --repo cpaikr/opendart
 gh release verify-asset vX.Y.Z openapi.bundle.yaml --repo cpaikr/opendart
 ```
 
-This repository publishes no runtime package and exposes no supported tooling
-API.
+The crate is package-ready but is not yet published to crates.io. Publication,
+registry-artifact verification, and adoption are deliberately reserved for
+[work 6](tasks/rust/public-rust-sdk.md). Repository Go tooling remains private.
 
 ## Repository documentation
 
@@ -151,6 +184,5 @@ API.
 - The [external-auditor retrieval guide](docs/api/auditor.md) separates the
   canonical endpoint contracts from a layered, empirically informed lookup
   strategy.
-- The [Rust SDK task](tasks/rust/public-rust-sdk.md) proposes a future public
-  crate derived from the canonical contract. It does not describe a currently
-  published runtime package.
+- The [Rust SDK task](tasks/rust/public-rust-sdk.md) records the implemented
+  crate and the remaining publication and adoption work.

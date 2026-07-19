@@ -8,11 +8,9 @@ Place the public Rust SDK beside the canonical specification while preserving
 clear boundaries between private repository tooling, generated SDK artifacts,
 future language packages, and a possible user-facing CLI.
 
-## Target structure
+## Current structure
 
-Create only the Rust paths during the first implementation. Python,
-TypeScript/Node, and CLI paths below are reserved design locations, not empty
-scaffolding to commit now.
+The implemented Rust paths are:
 
 ```text
 opendart/
@@ -38,13 +36,12 @@ opendart/
 │               │   ├── lib.rs
 │               │   ├── request/     handwritten request kernel
 │               │   ├── wire/        handwritten envelope and opaque values
-│               │   ├── client/      optional reqwest convenience client
-│               │   ├── provenance.rs release-managed source snapshot identity
+│               │   ├── client.rs    optional reqwest convenience client
+│               │   ├── provenance.rs reviewed source snapshot identity
 │               │   └── generated/   reviewed generated Rust
 │               └── tests/           public API and HTTP integration tests
 └── docs/
-    ├── plans/rust-sdk/               implementation state and constraints
-    └── sdk/rust/                     stable user/maintainer docs, when real
+    └── rust-sdk/                     stable design and maintainer contracts
 ```
 
 Possible later additions:
@@ -66,19 +63,18 @@ depend on the public Rust crate, but it remains a separate package.
 Implementation state and the next action belong in the
 [Public Rust SDK task](../../tasks/rust/public-rust-sdk.md). The supporting
 design documents remain under `docs/rust-sdk` because their package boundaries,
-contracts, and safety constraints carry forward into implementation. They are
-design inputs, not installed-crate usage documentation or evidence of a
-currently supported SDK.
+contracts, and safety constraints carry forward into maintenance.
+Installed-crate usage lives in the crate README.
 
 ## Package boundary
 
-Start with one crates.io package named `opendart`, subject to a name-availability
-check. Do not begin with `opendart-core`, `opendart-types`, and transport crates:
+The workspace contains one package named `opendart`. Do not split it into
+`opendart-core`, `opendart-types`, and transport crates:
 the transport-independent modules can remain deep internal/public module
 boundaries until independent consumers or release policies require separate
 packages.
 
-The initial feature model is:
+The feature model is:
 
 ```toml
 [features]
@@ -86,8 +82,7 @@ default = ["client-reqwest"]
 client-reqwest = ["dep:bytes", "dep:futures-core", "dep:reqwest", "dep:tokio"]
 ```
 
-The exact feature name is fixed during the public-seam gate, but the invariant
-is not negotiable:
+The feature boundary has these invariants:
 
 - Request construction, authorization types, operation identity, and wire
   inspection compile with `default-features = false`.
@@ -157,9 +152,11 @@ change the canonical contract, SDK model, emitter, or handwritten runtime seam
 and regenerate.
 
 `src/provenance.rs` is handwritten release metadata, not generated contract
-output. A Rust release PR updates it with the reviewed Git revision,
-specification release when one exists, canonical bundle checksum, and generator
-schema version. Ordinary specification regeneration does not update it.
+output. It records the crate version, applicable specification release,
+canonical bundle checksum, generator schema, and SDK projection checksum.
+Cargo adds `.cargo_vcs_info.json` to the package for the exact source revision.
+Ordinary specification regeneration does not update release-selected
+provenance when the SDK projection is unchanged.
 
 ## Future-language boundary
 

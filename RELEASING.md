@@ -1,101 +1,99 @@
 # Release policy
 
-The released product is `openapi/generated/openapi.bundle.yaml`. Humans classify
-changes to that public contract; Release Please turns the chosen Conventional
-Commit inputs into a version, changelog, tag, and draft GitHub Release. The
-release workflow runs the credential-free Go repository verifier, uploads the
-bundle and checksum, and publishes the immutable release.
+This repository has two independently versioned public products:
 
-The release sources of truth are:
+- the canonical OpenAPI bundle, released from the root component as `vX.Y.Z`;
+- the `opendart` Rust crate, prepared from
+  `sdk/rust/crates/opendart` as `opendart-vX.Y.Z`.
 
-- [`release-please-config.json`](release-please-config.json) for versioning and
-  path exclusions;
-- [`.release-please-manifest.json`](.release-please-manifest.json) for the current
-  release version;
-- [`CHANGELOG.md`](CHANGELOG.md) for generated release notes;
-- [`.github/workflows/verify.yml`](.github/workflows/verify.yml) for repository
-  verification; and
-- [`.github/workflows/release-please.yml`](.github/workflows/release-please.yml)
-  for release creation, asset upload, recovery, and publication.
+Release Please owns each component's version and changelog. Do not manually
+edit its manifest state or generated changelogs, move published tags, replace
+immutable assets, or publish outside the reviewed workflow.
 
-Do not manually edit the generated changelog or manifest, move published tags,
-replace immutable assets, or publish a release outside this flow.
+## Compatibility classification
 
-## Version meanings
+The OpenAPI dialect and upstream snapshot identifiers are not release
+versions: `openapi: 3.2.0` selects the dialect, while `info.version` and
+`x-opendart.source.checkedAt` identify guide evidence.
 
-- `openapi: 3.2.0` identifies the OpenAPI dialect.
-- `info.version` and `x-opendart.source.checkedAt` identify the upstream guide
-  snapshot date.
-- The `vX.Y.Z` Git tag identifies this repository's bundle compatibility
-  version. It does not version the upstream OpenDART service.
+Below `1.0.0`, the specification component uses this policy:
 
-## Release eligibility
+| Impact | Commit input | Version impact |
+| --- | --- | --- |
+| Repository-only | `chore:`, `test:`, `ci:`, `docs:` | None |
+| Compatible contract fix | `fix(openapi):` | Patch |
+| Compatible contract addition | `feat(openapi):` | Patch |
+| Breaking contract change | `feat(openapi)!:` plus `BREAKING CHANGE:` | Minor |
 
-Compare the candidate bundle with the bundle at the latest release tag before
-choosing a Conventional Commit type. A change is releasable only when the bundle
-contains a material public-contract change and matches a fresh build.
-Formatting-only changes and repository, tooling, CI, test, or prose changes are
-not releasable. Generator changes become releasable in the commit that also
-updates the generated specification.
+Classify the Rust component by its public API and wire behavior:
 
-Release Please excludes the repository-only paths listed in
-[`release-please-config.json`](release-please-config.json). Root files are not
-covered by those directory exclusions, so root-file-only changes must use a
-non-releasable commit type. Reviewers must reject any release proposal whose
-bundle has no material change, regardless of commit wording.
+| Impact | Examples | Version impact |
+| --- | --- | --- |
+| None | Docs, tests, private refactor, identical generation | None |
+| Compatible fix | Internal bug fix without contract change | Patch |
+| Compatible addition | Operation, optional input, open status constant | Minor |
+| Breaking | Required input, serialization change, public removal or narrowing | Major |
 
-While the project is below `1.0.0`:
+At and after `1.0.0`, both products use standard SemVer. A change described as
+a fix can still be breaking. Generated changes require compatibility review;
+their source does not make them automatically safe.
 
-| Impact | Examples | Commit input | Version impact |
-| --- | --- | --- | --- |
-| None | Tooling, tests, CI, repository docs, formatting | `chore:`, `test:`, `ci:`, `docs:` | None |
-| Compatible fix | Corrected descriptions or schemas without consumer incompatibility | `fix(openapi):` | Patch |
-| Compatible addition | Additive endpoints, optional inputs, or output fields | `feat(openapi):` | Patch |
-| Breaking | Removed or renamed operations or fields, new required inputs, schema narrowing, incompatible security or serialization changes | `feat(openapi)!:` with a `BREAKING CHANGE:` footer | Minor |
+## Eligibility and ownership
 
-At and after `1.0.0`, use standard SemVer: compatible fixes are patches,
-compatible additions are minors, and incompatible changes are majors. Classify
-corrections by consumer impact; a change described as a fix can still be
-breaking.
+Root specification eligibility requires a material bundle change that matches a
+fresh build. Formatting, tooling, CI, test, and prose changes are not releasable.
+The root component excludes repository-only paths, including `sdk/`.
+
+Rust eligibility requires a material change beneath the crate component path.
+Its Release Please component owns `Cargo.toml`, the crate `CHANGELOG.md`, the
+workspace-lock package version, and component-qualified tag. Specification and
+Rust versions may differ even when both products change in one commit.
+
+The Rust manifest may be absent from `.release-please-manifest.json` before the
+first component release. Release Please bootstraps it at `0.1.0`; pre-seeding
+that entry would falsely claim the version was already released.
 
 ## Verification gate
 
-The intended branch-protection policy for `main` is to require pull-request
-review, conversation resolution, and the `verify` job produced by the
-[`Verify` workflow](.github/workflows/verify.yml). Branch protection is external
-GitHub state, not provisioned by this repository, so confirm the configured rule
-before relying on it.
+Before merging an implementation or Release Please PR, require review,
+conversation resolution, and the `verify` job. Verification runs the Go
+repository gate plus pinned stable, MSRV, all-features, no-default-features,
+documentation, compatibility, offline, and exact package-content Cargo gates.
 
-Release Please uses the repository `GITHUB_TOKEN`. GitHub therefore does not
-trigger a new `pull_request` workflow run for a Release Please-authored event;
-there is no approval-waiting Verify run. Validate an open Release Please pull
-request by manually dispatching Verify on its head branch, for example:
+Release Please uses the repository `GITHUB_TOKEN`, so its own PR may require a
+manual Verify dispatch:
 
 ```sh
 gh workflow run verify.yml --ref <release-please-branch>
 ```
 
-Inspect the resulting run in Actions and do not merge until it passes. A
-different credential would be required if the repository later chooses to
-trigger this CI automatically.
+Do not merge the release PR until that run passes and the proposed component,
+version, changelog, tag, Cargo lock, and artifact scope are correct.
 
-## Release flow
+## Specification release flow
 
-1. Record the latest release tag and summarize the material bundle diff in the
-   implementation pull request.
-2. Confirm that the intended merge commit follows the compatibility table and
-   that the committed bundle matches a fresh build.
-3. Merge the implementation only after review and Verify pass.
-4. Review the Release Please pull request's proposed version, changelog, bundle
-   scope, and any breaking-change note. Manually dispatch Verify on that branch
-   and merge only after it passes.
-5. After the Release Please pull request merges, the release workflow calls
-   Verify before the release job creates or resumes the draft release.
-6. Confirm that the published immutable GitHub Release targets the release
-   commit and contains `openapi.bundle.yaml` and
-   `openapi.bundle.yaml.sha256`.
+1. Compare the candidate bundle with the latest specification tag and classify
+   the material public-contract diff.
+2. Merge the implementation after review and Verify pass.
+3. Review and verify the root Release Please PR, then merge it.
+4. The release workflow reruns Verify, creates or resumes the draft release,
+   attaches `openapi.bundle.yaml` and its checksum, and publishes the release.
+5. Confirm the immutable release targets the intended commit and assets.
 
-If a run fails after its draft release is created, rerun the failed Release
-Please workflow. If recovery requires a code change, merge the repair; the next
-`main` push verifies that commit before resuming the draft. Never move a
-published tag or replace an immutable asset.
+If a run fails after draft creation, rerun the failed workflow or merge a repair
+and let the next run resume the draft. Never move a published tag or replace an
+immutable asset.
+
+## Rust release boundary
+
+The current configuration prepares a Rust-aware draft component release and
+keeps the crate manifest and workspace lock aligned. It does not publish to
+crates.io and has no registry credential, trusted-publishing permission, or
+`cargo publish` command.
+
+Work 6 must add publication as a separate guarded flow. It may authorize a
+publish only from the exact Rust component output and immutable target revision,
+never from the generic root release or a specification-only change. It must
+package and dry-run without credentials first, publish once, download the
+registry artifact, and verify its checksum, provenance, normalized manifest,
+and file contents before finalizing the component release.

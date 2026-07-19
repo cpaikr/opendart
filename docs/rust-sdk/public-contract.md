@@ -172,9 +172,9 @@ evidence, not full archive validation; the SDK still does not extract entries.
 
 ### Ergonomic client
 
-The optional client groups operations by stable source concepts and offers one
-high-level asynchronous call per operation. It owns bounded buffering for
-JSON/XML and a streaming interface for ZIP or other binary responses.
+The optional client executes the same generated operation inputs used by the
+advanced seam. It owns bounded buffering for JSON/XML and a streaming interface
+for ZIP or other binary responses without duplicating endpoint methods.
 
 ```rust
 let client = opendart::Client::builder(api_key)
@@ -183,12 +183,14 @@ let client = opendart::Client::builder(api_key)
     .total_timeout(total_timeout)
     .build()?;
 
-let reply = client.periodic_reports().auditor_opinion(operation).await?;
+let prepared = operation.prepare(Representation::Json)?;
+let reply = client.execute(&prepared).await?;
 ```
 
-The ergonomic API may choose JSON as a documented convenience default when the
-logical operation supports both representations. Callers can select XML
-explicitly. Fixed ZIP operations do not pretend to have a JSON alternative.
+Callers select JSON or XML explicitly during preparation. Fixed ZIP operations
+use `Client::execute_binary` and do not pretend to have a structured
+alternative. Operation-specific request types remain the discoverable,
+generated API; client execution remains one stable handwritten path.
 
 ## Invariants
 
