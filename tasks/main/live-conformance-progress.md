@@ -63,6 +63,10 @@ not append session transcripts.
   identical producer/notifier allowlists, unsupported-media sanitization, and
   failed-report round-trip coverage. Kept the single sequential execution path,
   bounded representation adapters, and narrow repository-owned projection.
+- Addressed all Codex and CodeRabbit findings on the runner PR, including
+  complete success evidence, canonical failure identities, bounded semantic ZIP
+  evidence, deterministic XML paths, body lifecycle handling, and identical
+  producer/notifier size limits. The independent follow-up review is clean.
 - Baseline validation passed: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.
