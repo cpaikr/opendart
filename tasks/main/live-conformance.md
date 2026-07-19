@@ -12,16 +12,25 @@ credential-free [guide drift](guide-drift.md).
 
 ## Current state
 
+Implementation progress is maintained in the task-local
+[live-conformance progress](live-conformance-progress.md) document.
+
 - The focused multi-company probe is ported to the Go CLI with its existing
   request matrix, assertions, sanitized report, expanded offline HTTP coverage,
   and direct operational entry point.
-- No general Go live runner, complete case inventory, credentialed workflow, or
-  live issue automation is committed.
-- Lasting Go tests cover OpenAPI loading, semantic comparison, response routing
-  and validation, and representative JSON, XML, and ZIP fixtures. Operation
-  enumeration, request validation, and the shared HTTP safety and reporting
-  foundations remain future work in this task. The focused Go probe is the only
-  implemented credentialed command until the general runner replaces it.
+- The general Go runner owns physical-operation enumeration, the complete typed
+  primary-case registry, bounded reusable discovery, offline request
+  validation, fail-closed preflight, bounded execution, semantic assertions,
+  and the sanitized report contract.
+- Repository verification runs its coverage, request-budget, and sanitization
+  preflight without reading a credential or contacting OpenDART.
+- A manual-only producer is constrained to trusted `main` code, declares the
+  protected environment, and uploads only the sanitized report. An isolated
+  default-branch notifier validates that report or uses a fixed workflow
+  failure, deduplicates the independent live issue, records recovery once, and
+  never closes it.
+- The GitHub environment and credential remain unconfigured. No workflow has
+  been dispatched, no live request has been made, and no schedule is enabled.
 - The completed [Go-only cleanup](../../plans/main/go-only-tooling-cleanup.md)
   does not
   claim completion of the general runner or introduce scheduled credentialed
@@ -59,24 +68,25 @@ credential-free [guide drift](guide-drift.md).
 
 ## Ordered work
 
-1. **Partially complete.** Lasting Go tests cover OpenAPI loading, semantic
-   comparison, response routing and validation, and representative JSON, XML,
-   and ZIP fixtures. Operation enumeration and request validation remain future
-   work.
+1. **Complete.** Lasting Go tests cover OpenAPI loading, semantic comparison,
+   response routing and validation, representative JSON, XML, and ZIP fixtures,
+   physical-operation enumeration, and offline request validation.
 2. **Complete.** Ported the existing focused multi-company probe to Go through
    the [Go-only cleanup](../../plans/main/go-only-tooling-cleanup.md), preserving
    its cases,
    assertions, credential isolation, and sanitized report. This remains a
    focused probe rather than the general runner.
-3. Implement operation enumeration, request validation, the runner, request
-   budget, representation adapters, typed assertions, sanitized report, and
-   offline HTTP tests.
-4. Curate one primary case for every physical operation, adding typed discovery
-   only where stable public inputs are impractical. Add a preflight coverage and
-   total-budget gate.
-5. Add a manual protected workflow and isolated notifier. Configure the
-   environment and credential only after offline coverage, budgets, and report
-   sanitization have been reviewed.
+3. **Complete.** Implemented operation enumeration, request validation, the
+   runner, request budget, representation adapters, typed assertions, sanitized
+   report, and offline HTTP tests.
+4. **Complete.** Curated one primary case for every physical operation, added
+   bounded reusable disclosure discovery for rare event coordinates, and wired
+   coverage, pagination closure, total-budget, and sanitization preflight into
+   repository verification.
+5. **Complete.** Added the manual protected workflow and isolated notifier with
+   offline workflow-policy, report-validation, budget, sanitization,
+   deduplication, and recovery gates. Environment and credential configuration
+   remains deliberately deferred.
 6. Run the complete matrix under supervision, inspect logs and artifacts for
    leakage, and enable the weekly schedule only after the run is accepted.
 
@@ -99,7 +109,6 @@ credential-free [guide drift](guide-drift.md).
 
 ## Next action
 
-When general live-conformance work is explicitly started, implement operation
-enumeration, request validation, and the shared HTTP and reporting seams before
-curating the complete case inventory. Do not configure a credentialed workflow
-yet.
+After explicit authorization, configure the protected GitHub environment and
+credential, then perform ordered work 6 under supervision. Do not make a real
+OpenDART request or enable the weekly schedule before that review.

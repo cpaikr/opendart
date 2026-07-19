@@ -339,6 +339,11 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, malformedXMLZIP); err == nil {
 		t.Fatal("ZIP with malformed XML passed validation")
 	}
+	malformedEncoding := append([]byte(`<document>`), 0xff)
+	malformedEncoding = append(malformedEncoding, []byte(`</document>`)...)
+	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, zipFixture(t, "document.xml", malformedEncoding)); err == nil {
+		t.Fatal("ZIP with replacement-rune XML fallback passed validation")
+	}
 	manyEntries := make(map[string][]byte)
 	for index := 0; index <= maxArchiveEntries; index++ {
 		manyEntries[fmt.Sprintf("%d.xml", index)] = []byte("<document/>")

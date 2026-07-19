@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/liveconformance"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/releaseguard"
 	"github.com/cpaikr/opendart/internal/sdkgen"
@@ -43,6 +44,10 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseBundleFreshness+":"+filepath.Base(source)+":"+filepath.Base(bundle))
 			return nil
 		},
+		checkLive: func(root string) error {
+			calls = append(calls, phaseLiveConformance+":"+filepath.Base(root))
+			return nil
+		},
 		checkEvidence: func(path string) error {
 			calls = append(calls, phaseAuditorEvidence+":"+filepath.Base(path))
 			return nil
@@ -67,6 +72,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
 		"rust-sdk-freshness:openapi.yaml:generated",
+		"live-conformance-preflight:repository",
 		"auditor-evidence:auditor-2026-07-18.json",
 		"release-guard:repository",
 	}
@@ -93,6 +99,26 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 	}
 }
 
+func TestLiveConformanceFailurePreservesSanitizedContext(t *testing.T) {
+	cause := &liveconformance.Error{Failure: liveconformance.Failure{Code: "invalid-primary-assertion", Stage: "preflight", Operation: "GET /company.json application/json"}}
+	got := liveConformanceFailure(cause)
+	if got.Phase != phaseLiveConformance || got.Artifact != "live conformance inventory" || got.Rule != "invalid-primary-assertion" || got.Operation != cause.Failure.Operation || !errors.Is(got, cause) {
+		t.Fatalf("failure = %#v", got)
+	}
+
+	nested := failure("nested-phase", "nested-artifact", "nested-rule", errors.New("detail"))
+	got = liveConformanceFailure(nested)
+	if got.Phase != phaseLiveConformance || got.Artifact != "nested-artifact" || got.Rule != "nested-rule" {
+		t.Fatalf("nested failure = %#v", got)
+	}
+
+	unknown := errors.New("unclassified detail")
+	got = liveConformanceFailure(unknown)
+	if got.Phase != phaseLiveConformance || got.Artifact != "live conformance repository" || got.Rule != "unknown-rule" || !errors.Is(got, unknown) {
+		t.Fatalf("unclassified failure = %#v", got)
+	}
+}
+
 func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 	cause := errors.New("unbounded body https://example.invalid/?token=secret")
 	tests := []struct {
@@ -112,8 +138,9 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 3},
 		{name: "Rust SDK freshness", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 5},
 		{name: "Rust SDK model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 5},
-		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 6},
-		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 7},
+		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 6},
+		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 7},
+		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 8},
 	}
 
 	for _, test := range tests {
@@ -143,6 +170,13 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					calls++
 					if test.fail == phaseBundleFreshness {
 						return fmt.Errorf("%w: unsafe detail", openapispec.ErrBundleStale)
+					}
+					return nil
+				},
+				checkLive: func(string) error {
+					calls++
+					if test.fail == phaseLiveConformance {
+						return cause
 					}
 					return nil
 				},
@@ -223,6 +257,7 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 			return nil, nil
 		},
 		checkFresh:    func(string, string) error { return openapispec.ErrBundleMissing },
+		checkLive:     func(string) error { return nil },
 		checkEvidence: func(string) error { return nil },
 		checkRelease:  func(string) error { return nil },
 		checkRustSDK:  func(string, string) error { return nil },
