@@ -21,9 +21,10 @@ generator model without depending on Rust source.
   behavior, including a positive-control protocol retry fixture, and the Go
   OpenAPI boundary now exposes complete SDK-surface evidence through only
   repository-owned values.
-- The repository publishes only the OpenAPI bundle and its checksum. It has no
-  Cargo workspace, public runtime package, SDK generator, or crates.io release
-  flow.
+- The isolated Cargo workspace and unpublished `opendart` crate now establish
+  the reviewed transport-independent public contract. The repository still has
+  no SDK generator, complete operation inventory, optional client
+  implementation, or crates.io release flow.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -152,7 +153,7 @@ target constraints and acceptance details for their workstreams.
   physical operations and `x-opendart` metadata without leaking third-party
   model types.
 
-### 2. Establish the Rust workspace and public-contract skeleton
+### 2. Establish the Rust workspace and public-contract skeleton — complete
 
 - Add the isolated workspace and one `opendart` library crate described in
   [repository layout](../../docs/rust-sdk/repository-layout.md).
@@ -260,9 +261,10 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Start ordered work 2 by creating the isolated Cargo workspace and handwritten
-public-contract skeleton. Prove the no-default-feature dependency boundary and
-review the representative public API before generating the endpoint surface.
+Start ordered work 3 by replacing the representative handwritten operation
+inventory with a validated language-neutral SDK model and deterministic Rust
+emitter. Add direct generation and stale-output verification before expanding
+the runtime client.
 
 ## Progress log
 
@@ -278,3 +280,13 @@ review the representative public API before generating the endpoint surface.
   redaction, and complete repository-owned OpenAPI surface access. The
   throwaway Cargo fixture was removed after its stable-Rust gate passed; the
   canonical coverage proof remains as a Go test.
+- 2026-07-19: Added the isolated resolver-3 Cargo workspace, pinned stable and
+  MSRV policy, locked dependencies, package metadata, and the unpublished
+  `opendart` crate. The reviewed handwritten seam covers physical/logical
+  identity, deterministic credential-free preparation, borrowed redacted
+  authorization, response metadata, open source status, opaque values, and
+  focused errors. Representative JSON/XML, ZIP-with-XML-error, and
+  multi-company operations prove representation routing, cardinality, exact
+  query serialization, and credential redaction. Stable/MSRV, all-feature,
+  no-default-feature, lint, documentation, package, and dependency-tree gates
+  pass; the no-default normal graph contains no HTTP client or async runtime.

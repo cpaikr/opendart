@@ -11,6 +11,9 @@ coverage/
 .opendart-stage-*
 .opendart-backup-*
 
+# Isolated Rust SDK workspace build output
+/sdk/rust/target/
+
 # Logs and operating-system metadata
 *.log
 .DS_Store
