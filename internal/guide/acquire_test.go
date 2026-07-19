@@ -152,6 +152,73 @@ func TestAcquireGroupNormalizesInventoryFixture(t *testing.T) {
 	}
 }
 
+func TestAcquireGroupIgnoresDetailLinksOutsideCanonicalInventory(t *testing.T) {
+	t.Parallel()
+	body := string(readAcquisitionFixture(t, "group-ds001.html"))
+	chrome := `<div class="list_area"><table class="tb01"><caption>chrome</caption><thead><tr><th>메뉴</th></tr></thead><tbody><tr><td><a href="/guide/detail.do?apiGrpCd=DS001&amp;apiId=2099999">chrome</a></td></tr></tbody></table></div>`
+	body = strings.Replace(body, "</body>", chrome+"</body>", 1)
+
+	endpoints, err := acquireGroup(context.Background(), fetchFunc(func(context.Context, *url.URL) ([]byte, error) {
+		return []byte(body), nil
+	}), Groups[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(endpoints) != Groups[0].ExpectedCount {
+		t.Fatalf("endpoint count = %d", len(endpoints))
+	}
+}
+
+func TestAcquireGroupRejectsMalformedCanonicalInventory(t *testing.T) {
+	t.Parallel()
+	body := string(readAcquisitionFixture(t, "group-ds001.html"))
+	tests := []struct {
+		name    string
+		mutate  func(string) string
+		message string
+	}{
+		{name: "missing", mutate: func(value string) string {
+			return strings.Replace(value, `class="tb01"`, `class="tb02"`, 1)
+		}, message: "Canonical guide inventory table is missing"},
+		{name: "duplicate", mutate: func(value string) string {
+			start := strings.Index(value, `<table class="tb01">`)
+			if start < 0 {
+				return value
+			}
+			endOffset := strings.Index(value[start:], "</table>")
+			if endOffset < 0 {
+				return value
+			}
+			duplicate := `<div class="list_area">` + value[start:start+endOffset+len("</table>")] + `</div>`
+			return strings.Replace(value, "</body>", duplicate+"</body>", 1)
+		}, message: "Canonical guide inventory table is duplicated"},
+		{name: "caption", mutate: func(value string) string {
+			return strings.Replace(value, "<caption>공시정보 테이블</caption>", "", 1)
+		}, message: "Canonical guide inventory table structure changed"},
+		{name: "headers", mutate: func(value string) string {
+			return strings.Replace(value, "API명", "API 이름", 1)
+		}, message: "Guide inventory table headers changed"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			changed := test.mutate(body)
+			if changed == body {
+				t.Fatal("fixture mutation did not match")
+			}
+			_, err := acquireGroup(context.Background(), fetchFunc(func(context.Context, *url.URL) ([]byte, error) {
+				return []byte(changed), nil
+			}), Groups[0])
+			if err == nil || err.Error() != test.message {
+				t.Fatalf("error = %v, want %q", err, test.message)
+			}
+			var source *SourceError
+			if !errors.As(err, &source) || source.Context["group"] != "DS001" || source.Context["sourceUrl"] == "" {
+				t.Fatalf("source error = %#v", source)
+			}
+		})
+	}
+}
+
 func TestAcquireEndpointNormalizesOfficialGuidePrimitives(t *testing.T) {
 	t.Parallel()
 	body := readAcquisitionFixture(t, "detail.html")
@@ -236,7 +303,9 @@ func TestAcquireEndpointRejectsIdentityAndTableDrift(t *testing.T) {
 		{name: "identity must be hidden", replace: `type="hidden" name="apiId"`, with: `type="text" name="apiId"`, message: "Detail page identity does not match its link", identity: "apiId"},
 		{name: "Korean header", replace: "출력포멧", with: "출력형식", message: "Guide table headers changed"},
 		{name: "row width", replace: "<td>JSON</td>", with: "", message: "Guide table row width changed"},
-		{name: "message code", replace: "000 정상", with: "정상", message: "Message-code row has no three-digit code"},
+		{name: "message code missing", replace: "000 정상", with: "정상", message: "Message-code row must contain exactly one three-digit code"},
+		{name: "message code too long", replace: "000 정상", with: "1000 정상", message: "Message-code row must contain exactly one three-digit code"},
+		{name: "multiple message codes", replace: "000 정상", with: "000/013 정상", message: "Message-code row must contain exactly one three-digit code"},
 		{name: "response span", replace: `<td><span class="tree mgl5">`, with: `<td rowspan="1"><span class="tree mgl5">`, message: "Guide table must not use row or column spans"},
 		{name: "message span", replace: "<td>000 정상</td>", with: `<td colspan="1">000 정상</td>`, message: "Guide table must not use row or column spans"},
 	}
@@ -252,7 +321,7 @@ func TestAcquireEndpointRejectsIdentityAndTableDrift(t *testing.T) {
 			if err == nil || err.Error() != test.message {
 				t.Fatalf("error = %v, want %q", err, test.message)
 			}
-			if test.identity != "" || test.name == "message code" {
+			if test.identity != "" || strings.Contains(test.name, "message code") {
 				var source *SourceError
 				if !errors.As(err, &source) || source.Context["logicalOperationId"] != summary.LogicalOperationID || source.Context["sourceUrl"] != summary.SourceURL {
 					t.Fatalf("source error = %#v", source)
@@ -262,6 +331,39 @@ func TestAcquireEndpointRejectsIdentityAndTableDrift(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestAcquireEndpointRejectsDuplicateRequiredTable(t *testing.T) {
+	t.Parallel()
+	body := string(readAcquisitionFixture(t, "detail.html"))
+	start := strings.Index(body, `<section class="DGCont">
+      <table>
+        <caption>요청 인자</caption>`)
+	if start < 0 {
+		t.Fatal("request table section is missing from fixture")
+	}
+	endOffset := strings.Index(body[start:], "</section>")
+	if endOffset < 0 {
+		t.Fatal("request table section is not closed")
+	}
+	end := start + endOffset + len("</section>")
+	section := body[start:end]
+	body = body[:end] + section + body[end:]
+	summary := EndpointSummary{
+		APIGroupCode: "DS001", APIID: "2019001", LogicalOperationID: "DS001-2019001",
+		SourceURL: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019001",
+	}
+
+	_, err := acquireEndpoint(context.Background(), fetchFunc(func(context.Context, *url.URL) ([]byte, error) {
+		return []byte(body), nil
+	}), summary)
+	if err == nil || err.Error() != "Required guide table is duplicated" {
+		t.Fatalf("error = %v", err)
+	}
+	var source *SourceError
+	if !errors.As(err, &source) || source.Context["caption"] != "요청 인자" || source.Context["logicalOperationId"] != summary.LogicalOperationID {
+		t.Fatalf("source error = %#v", source)
 	}
 }
 
@@ -350,6 +452,34 @@ func TestAcquireRejectsUnknownOnlyBeforeDetails(t *testing.T) {
 	}
 	var source *SourceError
 	if !errors.As(err, &source) || !reflect.DeepEqual(source.Context["missing"], []string{"DS999-1"}) {
+		t.Fatalf("source error = %#v", source)
+	}
+}
+
+func TestAcquireRejectsDuplicateInventoryBeforeDetails(t *testing.T) {
+	t.Parallel()
+	base := newInventoryFetcher(string(readAcquisitionFixture(t, "detail.html")))
+	fetcher := fetchFunc(func(ctx context.Context, sourceURL *url.URL) ([]byte, error) {
+		body, err := base.Fetch(ctx, sourceURL)
+		if err != nil || sourceURL.Path != "/guide/main.do" || sourceURL.Query().Get("apiGrpCd") != "DS001" {
+			return body, err
+		}
+		changed := strings.Replace(string(body), "apiGrpCd=DS001&amp;apiId=2019002", "apiGrpCd=DS001&amp;apiId=2019001", 1)
+		if changed == string(body) {
+			t.Fatal("inventory fixture mutation did not match")
+		}
+		return []byte(changed), nil
+	})
+
+	_, err := Acquire(context.Background(), fetcher, nil)
+	if err == nil || err.Error() != "OpenDART guide inventory contains a duplicate endpoint identity" {
+		t.Fatalf("error = %v", err)
+	}
+	if base.detailFetches.Load() != 0 {
+		t.Fatalf("detail fetches = %d", base.detailFetches.Load())
+	}
+	var source *SourceError
+	if !errors.As(err, &source) || source.Context["logicalOperationId"] != "DS001-2019001" {
 		t.Fatalf("source error = %#v", source)
 	}
 }
@@ -488,7 +618,7 @@ func TestHTTPFetcherPerAttemptTimeout(t *testing.T) {
 	})
 	sourceURL, _ := url.Parse("https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001")
 	_, err := fetcher.Fetch(context.Background(), sourceURL)
-	if err == nil || !strings.Contains(err.Error(), "after retries") {
+	if err == nil || err.Error() != "OpenDART guide request failed" {
 		t.Fatalf("error = %v", err)
 	}
 }
@@ -547,11 +677,11 @@ func (fetcher *inventoryFetcher) Fetch(ctx context.Context, sourceURL *url.URL) 
 			}
 		}
 		var builder strings.Builder
-		builder.WriteString("<table><tbody>")
+		fmt.Fprintf(&builder, `<div class="list_area"><table class="tb01"><caption>%s 테이블</caption><thead><tr><th>번호</th><th>API명</th><th>상세기능</th><th>개발가이드</th></tr></thead><tbody>`, group.Name)
 		for index := 1; index <= group.ExpectedCount; index++ {
-			fmt.Fprintf(&builder, `<tr><td><a href="/guide/detail.do?apiGrpCd=%s&amp;apiId=%d">상세</a></td><td>이름 %d</td><td>설명 %d</td></tr>`, group.Code, 2019000+index, index, index)
+			fmt.Fprintf(&builder, `<tr><td>%d</td><td>이름 %d</td><td>설명 %d</td><td><a href="/guide/detail.do?apiGrpCd=%s&amp;apiId=%d">상세</a></td></tr>`, index, index, index, group.Code, 2019000+index)
 		}
-		builder.WriteString("</tbody></table>")
+		builder.WriteString("</tbody></table></div>")
 		return []byte(builder.String()), nil
 	}
 	fetcher.detailFetches.Add(1)

@@ -5,7 +5,7 @@ Owner: `dev`. Rust planning is owned by `ROADMAP_RUST.md` and
 
 ## Current
 
-_None._
+- [Public guide semantic drift](tasks/main/guide-drift.md)
 
 ## Plans
 
@@ -13,5 +13,4 @@ _None._
 
 ## Tasks
 
-- [Public guide semantic drift](tasks/main/guide-drift.md)
 - [Credentialed live conformance](tasks/main/live-conformance.md)
