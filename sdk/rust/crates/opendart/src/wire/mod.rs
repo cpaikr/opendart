@@ -1,5 +1,9 @@
 use std::{collections::BTreeMap, fmt};
 
+mod inspect;
+
+pub use inspect::{BodyLimitError, EnvelopeError, EnvelopeFormat, WireInspectError, WireInspector};
+
 /// Repository-owned HTTP protocol versions retained as response evidence.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
@@ -28,8 +32,8 @@ pub struct ResponseHeader {
 }
 
 impl ResponseHeader {
-    #[cfg(test)]
-    fn new(name: impl Into<String>, value: impl Into<Vec<u8>>) -> Self {
+    #[cfg(any(test, all(feature = "client-reqwest", not(target_family = "wasm"))))]
+    pub(crate) fn new(name: impl Into<String>, value: impl Into<Vec<u8>>) -> Self {
         let name = name.into();
         let value = value.into();
         Self { name, value }
@@ -70,8 +74,8 @@ pub struct ResponseMetadata {
 }
 
 impl ResponseMetadata {
-    #[cfg(test)]
-    fn new(status: u16, version: HttpVersion, headers: Vec<ResponseHeader>) -> Self {
+    #[cfg(any(test, all(feature = "client-reqwest", not(target_family = "wasm"))))]
+    pub(crate) fn new(status: u16, version: HttpVersion, headers: Vec<ResponseHeader>) -> Self {
         Self {
             status,
             version,
@@ -280,6 +284,16 @@ impl SourceValue {
         value
             .into_iter()
             .flat_map(|fields| fields.iter().map(|(name, value)| (name.as_str(), value)))
+    }
+
+    fn append_repeated(&mut self, value: Self) {
+        match &mut self.0 {
+            SourceValueRepr::Array(values) => values.push(value),
+            _ => {
+                let first = std::mem::replace(self, Self::null());
+                *self = Self::array(vec![first, value]);
+            }
+        }
     }
 }
 

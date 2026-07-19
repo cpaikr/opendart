@@ -1,0 +1,13 @@
+[package]
+name = "opendart-reqwest-feature-unification"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88.0"
+publish = false
+
+[workspace]
+
+[dependencies]
+opendart = { path = "../../crates/opendart" }
+reqwest = { version = "0.13.4", default-features = false, features = ["brotli", "deflate", "gzip", "hickory-dns", "http2", "native-tls", "rustls", "stream", "zstd"] }
+tokio = { version = "1.49.0", features = ["io-util", "macros", "net", "rt-multi-thread", "time"] }
