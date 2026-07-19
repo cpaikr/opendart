@@ -31,7 +31,7 @@ const (
 	githubAPIBase   = "https://api.github.com"
 	githubWebBase   = "https://github.com"
 	maximumBody     = 64 << 10
-	maximumResponse = 1 << 20
+	maximumResponse = 16 << 20
 	issuesPerPage   = 100
 	maximumPages    = 10
 )
@@ -92,7 +92,10 @@ func Notify(ctx context.Context, options Options) (Result, error) {
 }
 
 func newGitHubHTTPClient() *http.Client {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport := &http.Transport{}
+	if defaultTransport, ok := http.DefaultTransport.(*http.Transport); ok {
+		transport = defaultTransport.Clone()
+	}
 	transport.Proxy = nil
 	return &http.Client{
 		Transport: transport,
@@ -183,7 +186,7 @@ func inspect(options Options) (observation, error) {
 	if err != nil {
 		return fixed, nil
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	report, err := liveconformance.DecodeReport(file)
 	if err != nil {
 		return fixed, nil
@@ -269,29 +272,74 @@ type githubIssue struct {
 	PullRequest json.RawMessage `json:"pull_request"`
 }
 
+type githubIssueSearch struct {
+	TotalCount        int           `json:"total_count"`
+	IncompleteResults bool          `json:"incomplete_results"`
+	Items             []githubIssue `json:"items"`
+}
+
 func (store *githubStore) List(ctx context.Context, repository string) ([]issue, error) {
 	result := make([]issue, 0)
+	seen := make(map[int]struct{})
 	for page := 1; page <= maximumPages; page++ {
 		query := url.Values{
-			"state":    []string{"all"},
+			"q":        []string{fmt.Sprintf("repo:%s is:issue in:title %q", repository, issueTitle)},
 			"per_page": []string{strconv.Itoa(issuesPerPage)},
 			"page":     []string{strconv.Itoa(page)},
 		}
-		var response []githubIssue
-		if err := store.do(ctx, http.MethodGet, "/repos/"+repository+"/issues?"+query.Encode(), nil, &response); err != nil {
+		var response githubIssueSearch
+		if err := store.do(ctx, http.MethodGet, "/search/issues?"+query.Encode(), nil, &response); err != nil {
 			return nil, err
 		}
-		for _, candidate := range response {
-			if candidate.Number <= 0 || len(candidate.Title) > maximumBody || len(candidate.Body) > maximumBody {
-				return nil, errors.New("GitHub issue response is invalid")
-			}
-			result = append(result, issue{Number: candidate.Number, Title: candidate.Title, Body: candidate.Body, PullRequest: len(candidate.PullRequest) != 0})
+		if response.IncompleteResults || response.TotalCount < 0 || response.TotalCount > issuesPerPage*maximumPages {
+			return nil, errors.New("GitHub issue search response is incomplete")
 		}
-		if len(response) < issuesPerPage {
-			return result, nil
+		if err := appendGitHubIssues(&result, seen, response.Items); err != nil {
+			return nil, err
+		}
+		if len(response.Items) < issuesPerPage || page*issuesPerPage >= response.TotalCount {
+			break
+		}
+		if page == maximumPages {
+			return nil, errors.New("GitHub issue search pagination limit reached")
 		}
 	}
-	return nil, errors.New("GitHub issue pagination limit reached")
+
+	query := url.Values{
+		"state":     []string{"all"},
+		"sort":      []string{"created"},
+		"direction": []string{"desc"},
+		"per_page":  []string{strconv.Itoa(issuesPerPage)},
+		"page":      []string{"1"},
+	}
+	var recent []githubIssue
+	if err := store.do(ctx, http.MethodGet, "/repos/"+repository+"/issues?"+query.Encode(), nil, &recent); err != nil {
+		return nil, err
+	}
+	if err := appendGitHubIssues(&result, seen, recent); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func appendGitHubIssues(result *[]issue, seen map[int]struct{}, candidates []githubIssue) error {
+	for _, candidate := range candidates {
+		if candidate.Number <= 0 || len(candidate.Title) > maximumBody {
+			return errors.New("GitHub issue response is invalid")
+		}
+		if len(candidate.PullRequest) != 0 || candidate.Title != issueTitle {
+			continue
+		}
+		if len(candidate.Body) > maximumBody {
+			return errors.New("GitHub issue response is invalid")
+		}
+		if _, exists := seen[candidate.Number]; exists {
+			continue
+		}
+		seen[candidate.Number] = struct{}{}
+		*result = append(*result, issue{Number: candidate.Number, Title: candidate.Title, Body: candidate.Body})
+	}
+	return nil
 }
 
 func (store *githubStore) Create(ctx context.Context, repository, title, body string) (issue, error) {
@@ -340,7 +388,7 @@ func (store *githubStore) do(ctx context.Context, method, path string, input any
 	if err != nil {
 		return errors.New("perform GitHub issue request")
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	limited := io.LimitReader(response.Body, maximumResponse+1)
 	content, err := io.ReadAll(limited)
 	if err != nil || len(content) > maximumResponse {

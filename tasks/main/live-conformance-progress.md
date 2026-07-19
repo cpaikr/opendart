@@ -116,6 +116,12 @@ not append session transcripts.
   Actions result, including timeout, startup, stale, neutral, and
   action-required outcomes; each now produces the fixed notification rather
   than exiting before issue handling.
+- Addressed external notifier review with a fail-closed multiple-issue test,
+  safe HTTP transport cloning, explicit ignored-close handling, and bounded
+  exact-title GitHub issue search. One newest-issues page is merged with search
+  results to cover indexing delay without requiring repository label setup;
+  unrelated issue bodies are discarded before candidate validation and the
+  bounded response size accommodates the selected GitHub page size.
 - Ordered-work-5 validation passes: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.

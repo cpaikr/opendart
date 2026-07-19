@@ -94,6 +94,17 @@ func TestNotifyRejectsAmbiguousRecoveryState(t *testing.T) {
 	}
 }
 
+func TestNotifyRejectsMultipleManagedIssuesWithoutWriting(t *testing.T) {
+	store := &fakeStore{issues: []issue{
+		{Number: 17, Title: issueTitle, Body: issueMarker + "\n" + failedMarker},
+		{Number: 18, Title: issueTitle, Body: issueMarker + "\n" + failedMarker},
+	}}
+	options := validOptions(writeReport(t, validReport("failed")), "failure")
+	if _, err := notifyWith(context.Background(), options, store); err == nil || store.creates != 0 || store.updates != 0 {
+		t.Fatalf("error = %v, store = %#v", err, store)
+	}
+}
+
 func TestNotifyUsesOnlyFixedFallbackForUntrustedProducerInputs(t *testing.T) {
 	for _, test := range []struct {
 		name       string
@@ -186,6 +197,68 @@ func TestGitHubErrorsDiscardResponseBodies(t *testing.T) {
 	_, err := store.List(context.Background(), "owner/repository")
 	if err == nil || strings.Contains(err.Error(), "secret") || strings.Contains(err.Error(), "authenticated") {
 		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestGitHubListCombinesSearchWithRecentIssues(t *testing.T) {
+	requests := make(map[string]int)
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		requests[request.URL.Path]++
+		response.Header().Set("Content-Type", "application/json")
+		switch request.URL.Path {
+		case "/search/issues":
+			query := request.URL.Query()
+			if !strings.Contains(query.Get("q"), "repo:owner/repository") || !strings.Contains(query.Get("q"), "is:issue") || !strings.Contains(query.Get("q"), issueTitle) {
+				t.Errorf("search query = %q", query.Get("q"))
+			}
+			_, _ = response.Write([]byte(`{"total_count":1,"incomplete_results":false,"items":[{"number":17,"title":"OpenDART live conformance failure","body":"<!-- opendart-live-conformance -->"}]}`))
+		case "/repos/owner/repository/issues":
+			query := request.URL.Query()
+			if query.Get("state") != "all" || query.Get("sort") != "created" || query.Get("direction") != "desc" || query.Get("page") != "1" {
+				t.Errorf("recent query = %q", query.Encode())
+			}
+			recent := []map[string]any{{"number": 17, "title": issueTitle, "body": issueMarker}}
+			for number := 18; number < 38; number++ {
+				recent = append(recent, map[string]any{"number": number, "title": "unrelated", "body": strings.Repeat("x", maximumBody)})
+			}
+			if err := json.NewEncoder(response).Encode(recent); err != nil {
+				t.Fatal(err)
+			}
+		default:
+			http.NotFound(response, request)
+		}
+	}))
+	defer server.Close()
+	store := &githubStore{baseURL: server.URL, token: "job-token", client: server.Client()}
+	issues, err := store.List(context.Background(), "owner/repository")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 1 || issues[0].Number != 17 || requests["/search/issues"] != 1 || requests["/repos/owner/repository/issues"] != 1 {
+		t.Fatalf("issues = %#v, requests = %#v", issues, requests)
+	}
+}
+
+func TestGitHubListFindsRecentlyCreatedIssueBeforeSearchIndexesIt(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		response.Header().Set("Content-Type", "application/json")
+		switch request.URL.Path {
+		case "/search/issues":
+			_, _ = response.Write([]byte(`{"total_count":0,"incomplete_results":false,"items":[]}`))
+		case "/repos/owner/repository/issues":
+			_, _ = response.Write([]byte(`[{"number":17,"title":"OpenDART live conformance failure","body":"<!-- opendart-live-conformance -->"}]`))
+		default:
+			http.NotFound(response, request)
+		}
+	}))
+	defer server.Close()
+	store := &githubStore{baseURL: server.URL, token: "job-token", client: server.Client()}
+	issues, err := store.List(context.Background(), "owner/repository")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 1 || issues[0].Number != 17 {
+		t.Fatalf("issues = %#v", issues)
 	}
 }
 
