@@ -4,7 +4,7 @@
 
 /// Conservative kind established by the canonical source schema.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum WireShapeKind {
+pub(crate) enum WireShapeKind {
     /// An object with named properties.
     Object,
     /// An ordered array.
@@ -19,7 +19,7 @@ pub enum WireShapeKind {
 
 /// Source policy for fields not named by an object schema.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum AdditionalPropertiesPolicy {
+pub(crate) enum AdditionalPropertiesPolicy {
     /// The canonical schema does not close or explicitly open the object.
     Unspecified,
     /// Additional properties are explicitly allowed.
@@ -30,7 +30,7 @@ pub enum AdditionalPropertiesPolicy {
 
 /// One flattened node in a conservative response-shape tree.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct WireShapeNode {
+pub(crate) struct WireShapeNode {
     /// Stable source-field path from the media root.
     pub path: &'static str,
     /// Selected canonical source description, or an empty string when absent.
@@ -51,7 +51,7 @@ pub struct WireShapeNode {
 
 /// Response routing and conservative wire-shape metadata for one media type.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct ResponseShape {
+pub(crate) struct ResponseShape {
     /// Canonical physical OpenAPI operation ID.
     pub operation_id: &'static str,
     /// OpenAPI response selector such as `default`.
@@ -5068,7 +5068,7 @@ const GET_XBRL_TAXONOMY_XML_RESPONSE_0_MEDIA_0: &[WireShapeNode] = &[
 ];
 
 /// Complete generated response-routing inventory.
-pub const RESPONSE_SHAPES: &[ResponseShape] = &[
+pub(crate) const RESPONSE_SHAPES: &[ResponseShape] = &[
     ResponseShape { operation_id: "get_accnutAdtorNmNdAdtOpinion_json", selector: "default", http_status_evidence: "not-documented", media_type: "application/json", content_type_status: "inferred-from-documented-output-format", nodes: GET_ACCNUT_ADTOR_NM_ND_ADT_OPINION_JSON_RESPONSE_0_MEDIA_0 },
     ResponseShape { operation_id: "get_accnutAdtorNmNdAdtOpinion_xml", selector: "default", http_status_evidence: "not-documented", media_type: "application/xml", content_type_status: "inferred-from-documented-output-format", nodes: GET_ACCNUT_ADTOR_NM_ND_ADT_OPINION_XML_RESPONSE_0_MEDIA_0 },
     ResponseShape { operation_id: "get_accnutAdtorNonAdtServcCnclsSttus_json", selector: "default", http_status_evidence: "not-documented", media_type: "application/json", content_type_status: "inferred-from-documented-output-format", nodes: GET_ACCNUT_ADTOR_NON_ADT_SERVC_CNCLS_STTUS_JSON_RESPONSE_0_MEDIA_0 },

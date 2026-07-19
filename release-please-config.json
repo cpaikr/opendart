@@ -20,10 +20,30 @@
         "docs",
         "go.mod",
         "go.sum",
-        "internal"
+        "internal",
+        "sdk"
       ],
       "draft": true,
       "force-tag-creation": true
+    },
+    "sdk/rust/crates/opendart": {
+      "release-type": "rust",
+      "component": "opendart",
+      "include-component-in-tag": true,
+      "include-v-in-tag": true,
+      "include-v-in-release-name": true,
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "draft": true,
+      "force-tag-creation": false,
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "/sdk/rust/Cargo.lock",
+          "jsonpath": "$.package[?(@.name == \"opendart\")].version"
+        }
+      ]
     }
   }
 }

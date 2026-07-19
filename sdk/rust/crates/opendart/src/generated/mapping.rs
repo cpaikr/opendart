@@ -4,7 +4,7 @@
 
 /// Stable public-name mapping back to the canonical OpenAPI identities.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct OperationMapping {
+pub(crate) struct OperationMapping {
     /// Generated public Rust input type name.
     pub rust_name: &'static str,
     /// Canonical physical OpenAPI operation ID.
@@ -14,7 +14,7 @@ pub struct OperationMapping {
 }
 
 /// Complete canonical physical-operation mapping.
-pub const OPERATION_MAPPINGS: &[OperationMapping] = &[
+pub(crate) const OPERATION_MAPPINGS: &[OperationMapping] = &[
     OperationMapping { rust_name: "AccnutAdtorNmNdAdtOpinion", operation_id: "get_accnutAdtorNmNdAdtOpinion_json", logical_operation_id: "DS002-2020009" },
     OperationMapping { rust_name: "AccnutAdtorNmNdAdtOpinion", operation_id: "get_accnutAdtorNmNdAdtOpinion_xml", logical_operation_id: "DS002-2020009" },
     OperationMapping { rust_name: "AccnutAdtorNonAdtServcCnclsSttus", operation_id: "get_accnutAdtorNonAdtServcCnclsSttus_json", logical_operation_id: "DS002-2020011" },

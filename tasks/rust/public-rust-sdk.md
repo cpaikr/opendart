@@ -24,8 +24,16 @@ generator model without depending on Rust source.
 - The private Go SDK model and deterministic Rust emitter now generate the
   complete checked-in operation inventory, request serializers, routing
   metadata, and conservative wire shapes. Repository verification rejects
-  stale output and unsupported contract constructs. The optional client and
-  crates.io release flow remain to be implemented.
+  stale output and unsupported contract constructs.
+- The transport-independent inspector and optional safe-default HTTP client are
+  implemented with bounded parsing, replaying binary streams, centralized
+  credential handling, and explicit one-attempt transport policy.
+- Package verification proves generated coverage and routing, unknown-field
+  retention, source provenance, exact archive contents, stable Rust, MSRV,
+  all-features, and no-default-features behavior through offline gates.
+- The architecture and release policy now recognize an independent Rust-aware
+  Release Please component. No workflow yet has crates.io publication authority;
+  registry publication and consumer adoption remain work 6.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -33,9 +41,6 @@ generator model without depending on Rust source.
   uses default responses where HTTP behavior is unknown, represents JSON and
   XML as distinct physical operations, and records source-specific identity
   and evidence under `x-opendart`.
-- The current architecture, README, release policy, release guard, and Release
-  Please configuration all assume that no runtime package exists. They must be
-  revised deliberately rather than bypassed.
 
 ## Decisions
 
@@ -197,7 +202,7 @@ target constraints and acceptance details for their workstreams.
 - Add the transport and credential-safety integration suite before calling the
   client safe by default.
 
-### 5. Close full coverage and package the crate
+### 5. Close full coverage and package the crate — complete
 
 - Generate every physical operation and verify logical-operation pairing,
   request serialization, response routing, unknown-field retention, and source
@@ -208,8 +213,8 @@ target constraints and acceptance details for their workstreams.
   reproducibility gates.
 - Revise the architecture, README, release policy, release guard, and Release
   Please setup to represent the implemented SDK as a current product. Give the
-  crate a Rust-aware release component that owns its Cargo version and alone
-  authorizes crates.io publication.
+  crate a Rust-aware release component that owns its Cargo version and provides
+  the only component identity a later crates.io publication job may trust.
 
 ### 6. Publish and adopt
 
@@ -262,8 +267,8 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Start ordered work 5 by closing the generated operation coverage and packaging
-the crate with current product documentation, CI, and release ownership.
+Begin work 6 with a separate publication-authority change. Do not publish or
+adopt the crate from work 5.
 
 ## Progress log
 
@@ -305,3 +310,9 @@ the crate with current product documentation, CI, and release ownership.
   NACK, timeout, truncation, feature-unification, and credential-safety
   behavior. Stable/MSRV, all-feature, no-default-feature, package, docs,
   adversarial dependency, race-enabled Go, and offline verification gates pass.
+- 2026-07-19: Closed generated mapping/response-route coverage and public
+  unknown-field tests; added source provenance, exact package inventory,
+  stable/MSRV/offline CI, and a no-runtime dependency-graph gate. Promoted the
+  SDK to the current architecture with independent Rust Release Please
+  ownership while retaining a hard prohibition on crates.io authority. Full Go,
+  Cargo, package, repository verification, and cross-module review pass.
