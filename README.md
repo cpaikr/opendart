@@ -116,8 +116,14 @@ sanitized [auditor evidence manifest](docs/api/evidence/auditor-2026-07-18.json)
 
 The full runner covers every canonical physical operation, emits only its
 strict versioned report, and stops on the first discovery or primary-case
-failure. It has no scheduled workflow; protected automation and the first
-supervised run remain tracked in the
+failure. `.github/workflows/live-conformance.yml` is a manual-only producer
+that is constrained to trusted `main` code and declares the protected
+`opendart-live-conformance` environment. A separate `workflow_run` notifier
+validates the report or substitutes a fixed workflow-failure envelope before
+updating one persistent issue; it has no access to the OpenDART credential and
+never closes the issue. The environment and key are intentionally not
+configured yet, and no workflow has been dispatched. Protected setup, the
+first supervised run, and later scheduling remain tracked in the
 [live-conformance task](tasks/main/live-conformance.md).
 
 ## Releases

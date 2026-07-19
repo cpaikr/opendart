@@ -6,13 +6,13 @@ not append session transcripts.
 
 ## Current slice
 
-- Branch: `feat/live-conformance-cases`, based on the published `sub`
+- Branch: `feat/live-conformance-workflow`, based on the published `sub`
   integration branch.
-- Scope: ordered work 4 only—the complete primary-case registry, bounded typed
-  discovery, the operational CLI entry point, and offline coverage, budget,
-  pagination, ZIP compatibility, and sanitization gates.
-- Stop before workflow/notifier work, environment or credential configuration,
-  any real OpenDART request, weekly scheduling, or guide drift.
+- Scope: ordered work 5 only—the manual protected producer, isolated notifier,
+  and offline enforcement of credential, artifact, permission, deduplication,
+  recovery, and sanitization boundaries.
+- Stop before environment or credential configuration, workflow dispatch, any
+  real OpenDART request, weekly scheduling, or guide drift.
 
 ## Decisions
 
@@ -95,12 +95,43 @@ not append session transcripts.
 - Baseline validation passed: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.
+- Merged ordered work 4 through PR #21 into `sub` with individual commits
+  preserved and all review threads resolved, then based this slice on that
+  integration result.
+- Added the manual-only trusted-`main` producer with read-only repository
+  access, protected-environment declaration, a credential-free preflight, API
+  key exposure only at the request step, and a fixed sanitized report artifact.
+- Added a separate default-branch `workflow_run` notifier with minimal artifact,
+  repository, and issue permissions. It has no protected environment or
+  OpenDART credential and checks out the exact trusted producer revision.
+- Added strict bounded report consumption, fixed workflow-failure fallback,
+  one-issue deduplication, update-in-place failures, one-time recovery
+  recording, and issue-state preservation. Tests use fake stores and local HTTP
+  servers only; no GitHub issue write or OpenDART request was made.
+- Extended offline repository verification to fail closed on workflow trigger,
+  ref, environment, permission, action pin, checkout, artifact, credential, and
+  notifier-input drift.
+- Completed the required independent security review. Its fixed-fallback
+  finding expanded the allowlisted producer conclusions to every terminal
+  Actions result, including timeout, startup, stale, neutral, and
+  action-required outcomes; each now produces the fixed notification rather
+  than exiting before issue handling.
+- Addressed external notifier review with a fail-closed multiple-issue test,
+  safe HTTP transport cloning, explicit ignored-close handling, and bounded
+  exact-title GitHub issue search. One newest-issues page is merged with search
+  results to cover indexing delay without requiring repository label setup;
+  unrelated issue bodies are discarded before candidate validation and the
+  bounded response size accommodates the selected GitHub page size.
+- Ordered-work-5 validation passes: `go vet ./...`, `go test -race ./...`,
+  `go run ./cmd/opendart-tool verify --repository-root .`, and
+  `git diff --check`.
 
 ## Blockers
 
-None.
+None. The protected GitHub environment and credential are intentionally absent,
+not implementation blockers.
 
 ## Next action
 
-Publish and merge the reviewed ordered-work-4 PR into `sub`, then begin ordered
-work 5 on a fresh branch from that integration result.
+Complete independent and external review, merge ordered work 5 into `sub`, then
+stop before protected setup or ordered work 6.

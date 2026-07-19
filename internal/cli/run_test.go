@@ -14,6 +14,7 @@ import (
 	"github.com/cpaikr/opendart/internal/auditorprobe"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/liveconformance"
+	"github.com/cpaikr/opendart/internal/livenotifier"
 	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/verification"
@@ -50,7 +51,7 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "live-conformance", "probe-multi-company", "probe-auditor-evidence"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "verify", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
@@ -478,8 +479,47 @@ func TestRunLiveConformanceEmitsSanitizedFailureReport(t *testing.T) {
 	}
 }
 
+func TestRunLiveConformanceNotifyPassesOnlyExplicitMetadataAndEnvironmentToken(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runLiveConformanceNotifyWith(context.Background(), []string{
+		"--report", "report.json",
+		"--repository", "cpaikr/opendart",
+		"--producer-conclusion", "failure",
+		"--artifact-outcome", "success",
+		"--run-id", "123",
+		"--run-attempt", "2",
+	}, &stdout, &stderr, func(name string) string {
+		if name != "GITHUB_TOKEN" {
+			t.Fatalf("environment name = %q", name)
+		}
+		return "job-token"
+	}, func(_ context.Context, options livenotifier.Options) (livenotifier.Result, error) {
+		if options.ReportPath != "report.json" || options.Repository != "cpaikr/opendart" || options.ProducerConclusion != "failure" || options.ArtifactOutcome != "success" || options.RunID != 123 || options.RunAttempt != 2 || options.Token != "job-token" {
+			t.Fatalf("options = %#v", options)
+		}
+		return livenotifier.Result{Action: "updated", IssueNumber: 17}, nil
+	})
+	if code != 0 || stderr.Len() != 0 || !strings.Contains(stdout.String(), `"action": "updated"`) || !strings.Contains(stdout.String(), `"issueNumber": 17`) {
+		t.Fatalf("code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestRunLiveConformanceNotifyFailureIsFixed(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runLiveConformanceNotifyWith(context.Background(), nil, &stdout, &stderr, func(string) string {
+		return "secret-token"
+	}, func(context.Context, livenotifier.Options) (livenotifier.Result, error) {
+		return livenotifier.Result{}, errors.New("secret authenticated URL and raw issue body")
+	})
+	if code != 1 || stdout.Len() != 0 || stderr.String() != "live-conformance-notify: notification failed\n" || strings.Contains(stderr.String(), "secret") || strings.Contains(stderr.String(), "raw") {
+		t.Fatalf("code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestNewCommandsRejectPositionalArguments(t *testing.T) {
-	for _, command := range []string{"catalog", "lint", "bundle", "verify", "live-conformance"} {
+	for _, command := range []string{"catalog", "lint", "bundle", "verify", "live-conformance", "live-conformance-notify"} {
 		t.Run(command, func(t *testing.T) {
 			var stderr bytes.Buffer
 			if code := Run([]string{command, "unexpected"}, &bytes.Buffer{}, &stderr); code != 2 {

@@ -24,6 +24,12 @@ OpenDART guide
 OpenDART API + local API key
     -> focused multi-company or auditor-evidence probe
     -> sanitized observation on stdout
+
+OpenDART API + protected environment key
+    -> manual trusted-main live conformance producer
+    -> bounded sanitized report artifact
+    -> isolated default-branch notifier
+    -> one persistent GitHub issue
 ```
 
 Specification refresh is a deliberate local network operation. Pull-request
@@ -109,7 +115,21 @@ event coordinates through bounded reusable discovery, then executes every
 physical operation once. JSON, XML, and ZIP bodies are bounded, validated,
 semantically checked, and discarded; only the strict versioned report remains.
 Observed download media and Korean archive encodings are normalized only after
-positive bounded ZIP validation. No GitHub workflow invokes this command yet.
+positive bounded ZIP validation.
+
+`.github/workflows/live-conformance.yml` is manual-only, requires the canonical
+repository's `main` ref, and exposes `OPENDART_API_KEY` only to the live command
+inside the declared protected environment. It has read-only repository access
+and uploads only the report file. The separate
+`.github/workflows/live-conformance-notify.yml` runs from the trusted
+default-branch workflow definition after a producer completes. It checks out
+the exact trusted producer revision, has no environment or OpenDART secret,
+and gives issue-write permission only to the isolated notifier. The notifier
+strictly decodes the bounded report; missing, malformed, or inconsistent
+artifacts become a fixed failure derived only from Actions metadata. Failures
+update one marker-owned issue, recovery is recorded once, and automation never
+changes issue state. The protected environment and credential remain
+unconfigured, and the workflow has not been dispatched or scheduled.
 
 `internal/liveprobe` confines the live-only HTTP policy shared by credentialed
 repository tools.
@@ -143,9 +163,14 @@ OpenDART origin.
   bounded disclosure/document inspection, and sanitized evidence schema.
 - `internal/liveconformance` owns the canonical primary-case registry, bounded
   discovery, fail-closed execution, semantic adapters, and notifier-safe report.
+- `internal/livenotifier` owns strict report consumption, fixed workflow
+  failure fallback, GitHub issue deduplication, and recovery recording.
 - `internal/liveprobe` owns the shared one-attempt HTTP transport and its
   upstream-confined TLS compatibility exception.
 - `.github/workflows/verify.yml` is the credential-free repository gate.
+  `.github/workflows/live-conformance.yml` is the manual protected producer;
+  `.github/workflows/live-conformance-notify.yml` is its credential-isolated
+  default-branch notifier.
   `.github/workflows/release-please.yml`, `release-please-config.json`, and
   `.release-please-manifest.json` own release automation.
 - `.env.schema` is the committed Varlock contract for local credentialed
@@ -173,6 +198,9 @@ OpenDART origin.
   contains the key, an authenticated URL, or an unrestricted response body.
 - Release automation cannot publish until the read-only verification job
   succeeds.
+- Non-default live workflow refs receive neither the protected API credential
+  nor issue-writing authority. The notifier accepts only trusted default-branch
+  producer metadata and never receives producer logs or arbitrary error text.
 - No current automation modifies the specification from guide drift or live API
   observations. Specification changes remain reviewed repository changes.
 
