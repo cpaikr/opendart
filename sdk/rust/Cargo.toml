@@ -1,0 +1,24 @@
+[workspace]
+members = ["crates/opendart"]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.85.0"
+license = "MIT"
+repository = "https://github.com/cpaikr/opendart"
+
+[workspace.dependencies]
+form_urlencoded = "1.2.2"
+secrecy = "0.10.3"
+thiserror = "2.0.17"
+zeroize = "1.8.1"
+
+[workspace.lints.rust]
+missing_docs = "deny"
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+dbg_macro = "deny"
+print_stderr = "deny"
+print_stdout = "deny"
