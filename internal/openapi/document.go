@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/pb33f/libopenapi"
 	validator "github.com/pb33f/libopenapi-validator"
@@ -30,6 +31,8 @@ import (
 	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/high/v3"
 	"go.yaml.in/yaml/v4"
+	"golang.org/x/text/encoding/korean"
+	"golang.org/x/text/transform"
 )
 
 const (
@@ -642,14 +645,8 @@ func validateZIP(body []byte) error {
 		switch strings.ToLower(filepath.Ext(file.Name)) {
 		case ".xml", ".xbrl":
 			foundXML = true
-			decoder := xml.NewDecoder(bytes.NewReader(data))
-			for {
-				if _, err := decoder.Token(); err != nil {
-					if errors.Is(err, io.EOF) {
-						break
-					}
-					return fmt.Errorf("validate ZIP response: XML entry %d is malformed", index)
-				}
+			if err := validateArchiveXML(data); err != nil {
+				return fmt.Errorf("validate ZIP response: XML entry %d is malformed", index)
 			}
 		}
 	}
@@ -657,6 +654,45 @@ func validateZIP(body []byte) error {
 		return errors.New("validate ZIP response: archive contains no XML document")
 	}
 	return nil
+}
+
+func validateArchiveXML(data []byte) error {
+	if err := consumeXML(data); err == nil || utf8.Valid(data) {
+		return err
+	}
+	decoded, _, err := transform.Bytes(korean.EUCKR.NewDecoder(), data)
+	if err != nil || !utf8.Valid(decoded) || bytes.ContainsRune(decoded, utf8.RuneError) {
+		return errors.New("XML encoding is invalid")
+	}
+	return consumeXML(decoded)
+}
+
+func consumeXML(data []byte) error {
+	decoder := xml.NewDecoder(bytes.NewReader(data))
+	decoder.CharsetReader = openDARTXMLCharsetReader
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return err
+		}
+		if text, ok := token.(xml.CharData); ok && bytes.ContainsRune(text, utf8.RuneError) {
+			return errors.New("XML encoding is invalid")
+		}
+	}
+}
+
+func openDARTXMLCharsetReader(label string, input io.Reader) (io.Reader, error) {
+	switch strings.ToLower(strings.TrimSpace(label)) {
+	case "utf-8", "utf8", "us-ascii":
+		return input, nil
+	case "euc-kr", "ks_c_5601-1987", "cp949":
+		return transform.NewReader(input, korean.EUCKR.NewDecoder()), nil
+	default:
+		return nil, errors.New("XML encoding is unsupported")
+	}
 }
 
 func validateXMLRoot(body []byte, expected string) error {

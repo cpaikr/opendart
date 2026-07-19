@@ -77,7 +77,8 @@ func validateAllowlistedFields(report Report) error {
 	}
 	if report.Failure != nil {
 		expectedOperation, caseExists := caseOperations[report.Failure.CaseID]
-		if !allowedFailureCode(report.Failure.Code) || !allowedFailureStage(report.Failure.Code, report.Failure.Stage) || report.Failure.CaseID == "" && report.Failure.Operation != "" || report.Failure.CaseID != "" && (!caseExists || report.Failure.Operation != expectedOperation) {
+		discoveryFailure := report.Failure.Stage == "discovery"
+		if !allowedFailureCode(report.Failure.Code) || !allowedFailureStage(report.Failure.Code, report.Failure.Stage) || discoveryFailure != (report.Failure.DiscoveryID != "") || report.Failure.DiscoveryID != "" && !safeIdentifier.MatchString(string(report.Failure.DiscoveryID)) || report.Failure.CaseID == "" && report.Failure.Operation != "" || report.Failure.CaseID != "" && (!caseExists || report.Failure.Operation != expectedOperation) {
 			return errors.New("live conformance report failure is invalid")
 		}
 	}
@@ -86,18 +87,24 @@ func validateAllowlistedFields(report Report) error {
 
 func allowedFailureStage(code, stage string) bool {
 	expected := map[string]string{
-		"credential-unavailable":      "credential",
-		"request-budget-exhausted":    "budget",
-		"request-construction":        "request",
-		"transport-failure":           "request",
-		"bounded-body-failure":        "response",
-		"invalid-media-type":          "response",
-		"openapi-response-validation": "response",
-		"representation-parse":        "response",
-		"unsuccessful-envelope":       "response",
-		"assertion-failed":            "assertion",
-		"pacing-interrupted":          "pacing",
-		"report-sanitization":         "report",
+		"credential-unavailable":       "credential",
+		"request-budget-exhausted":     "budget",
+		"request-construction":         "request",
+		"transport-failure":            "request",
+		"bounded-body-failure":         "response",
+		"invalid-media-type":           "response",
+		"openapi-response-validation":  "response",
+		"representation-parse":         "response",
+		"unsuccessful-envelope":        "response",
+		"assertion-failed":             "assertion",
+		"pacing-interrupted":           "pacing",
+		"report-sanitization":          "report",
+		"discovery-request-failed":     "discovery",
+		"discovery-budget-exhausted":   "discovery",
+		"discovery-incomplete":         "discovery",
+		"discovery-pagination-open":    "discovery",
+		"discovery-coordinate-invalid": "discovery",
+		"discovery-pacing-interrupted": "discovery",
 	}
 	return expected[code] == stage
 }
@@ -113,7 +120,7 @@ func allowedRepresentation(value string) bool {
 
 func allowedFailureCode(value string) bool {
 	switch value {
-	case "credential-unavailable", "request-budget-exhausted", "request-construction", "transport-failure", "bounded-body-failure", "invalid-media-type", "openapi-response-validation", "representation-parse", "unsuccessful-envelope", "assertion-failed", "pacing-interrupted", "report-sanitization":
+	case "credential-unavailable", "request-budget-exhausted", "request-construction", "transport-failure", "bounded-body-failure", "invalid-media-type", "openapi-response-validation", "representation-parse", "unsuccessful-envelope", "assertion-failed", "pacing-interrupted", "report-sanitization", "discovery-request-failed", "discovery-budget-exhausted", "discovery-incomplete", "discovery-pagination-open", "discovery-coordinate-invalid", "discovery-pacing-interrupted":
 		return true
 	default:
 		return false

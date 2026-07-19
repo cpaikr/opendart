@@ -64,8 +64,9 @@ CI runs `go vet ./...`, `go test -race ./...`, and
 `go run ./cmd/opendart-tool verify --repository-root .`. The verifier checks
 catalog invariants, strict lint for the multi-file source and bundle,
 the committed auditor-evidence manifest's strict sanitized schema,
+the complete live-conformance inventory's offline coverage and request budget,
 release/workflow policy, and byte-for-byte Go bundle freshness. It does not
-rewrite a committed artifact or contact OpenDART.
+read a credential, rewrite a committed artifact, or contact OpenDART.
 
 `.github/workflows/verify.yml` runs that gate for pull requests, reusable
 workflow calls, and manual dispatches with read-only repository permission.
@@ -97,7 +98,21 @@ parsed under probe-specific entry and expansion bounds without extracting
 source-controlled member paths; this empirical adapter also accommodates the
 observed non-contract media type and CP949-compatible content.
 
-`internal/liveprobe` confines the live-only HTTP policy shared by both probes.
+### General live conformance
+
+`opendart-tool live-conformance --preflight-only` loads the canonical OpenAPI
+document and proves exact primary-case coverage, trusted routing, valid
+requests, typed assertions, fixed discovery partitions, pagination closure,
+and the derived request ceiling without reading `OPENDART_API_KEY`. The normal
+command performs that same preflight before credential access, resolves rare
+event coordinates through bounded reusable discovery, then executes every
+physical operation once. JSON, XML, and ZIP bodies are bounded, validated,
+semantically checked, and discarded; only the strict versioned report remains.
+Observed download media and Korean archive encodings are normalized only after
+positive bounded ZIP validation. No GitHub workflow invokes this command yet.
+
+`internal/liveprobe` confines the live-only HTTP policy shared by credentialed
+repository tools.
 On 2026-07-18, the live OpenDART origin required a TLS 1.2 RSA key-exchange
 suite that modern Go does not enable by default. The probe client adds only the
 required AES-GCM suite to Go's secure suite set; this compatibility path lacks
@@ -126,6 +141,8 @@ OpenDART origin.
   request, assertion, pacing, response-bound, and sanitized-report policy.
 - `internal/auditorprobe` owns the fixed external-auditor evidence matrix,
   bounded disclosure/document inspection, and sanitized evidence schema.
+- `internal/liveconformance` owns the canonical primary-case registry, bounded
+  discovery, fail-closed execution, semantic adapters, and notifier-safe report.
 - `internal/liveprobe` owns the shared one-attempt HTTP transport and its
   upstream-confined TLS compatibility exception.
 - `.github/workflows/verify.yml` is the credential-free repository gate.
@@ -163,9 +180,11 @@ OpenDART origin.
 
 [ADR 0001](docs/decisions/0001-go-repository-tooling.md) records the completed
 migration of repository-owned tooling from Node.js to one internal Go CLI. The
-[guide-drift](tasks/main/guide-drift.md) and
-[live-conformance](tasks/main/live-conformance.md) tasks define future work not
-yet part of the current runtime. The
+[guide-drift](tasks/main/guide-drift.md) task defines future work not yet part
+of the current runtime. The
+[live-conformance](tasks/main/live-conformance.md) task tracks protected
+workflow, notification, and supervised scheduling work beyond the current
+manual command. The
 [Rust SDK task](tasks/rust/public-rust-sdk.md)
 proposes an explicit future product-boundary change while retaining Go as
 private repository tooling; no SDK is part of the current system until that

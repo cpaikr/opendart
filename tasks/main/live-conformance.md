@@ -18,13 +18,15 @@ Implementation progress is maintained in the task-local
 - The focused multi-company probe is ported to the Go CLI with its existing
   request matrix, assertions, sanitized report, expanded offline HTTP coverage,
   and direct operational entry point.
-- The general Go runner foundation now owns physical-operation enumeration,
-  offline request validation, fail-closed preflight, bounded execution, typed
-  assertions, and the sanitized report contract.
-- The complete primary-case inventory, credentialed workflow, and live issue
-  automation remain future work. The focused Go probe remains the only
-  operational credentialed command until the general runner is wired to the
-  reviewed inventory.
+- The general Go runner owns physical-operation enumeration, the complete typed
+  primary-case registry, bounded reusable discovery, offline request
+  validation, fail-closed preflight, bounded execution, semantic assertions,
+  and the sanitized report contract.
+- Repository verification runs its coverage, request-budget, and sanitization
+  preflight without reading a credential or contacting OpenDART. The manual
+  command is available, but no GitHub workflow invokes it yet.
+- The protected credentialed workflow and isolated live issue automation remain
+  future work.
 - The completed [Go-only cleanup](../../plans/main/go-only-tooling-cleanup.md)
   does not
   claim completion of the general runner or introduce scheduled credentialed
@@ -73,9 +75,10 @@ Implementation progress is maintained in the task-local
 3. **Complete.** Implemented operation enumeration, request validation, the
    runner, request budget, representation adapters, typed assertions, sanitized
    report, and offline HTTP tests.
-4. Curate one primary case for every physical operation, adding typed discovery
-   only where stable public inputs are impractical. Add a preflight coverage and
-   total-budget gate.
+4. **Complete.** Curated one primary case for every physical operation, added
+   bounded reusable disclosure discovery for rare event coordinates, and wired
+   coverage, pagination closure, total-budget, and sanitization preflight into
+   repository verification.
 5. Add a manual protected workflow and isolated notifier. Configure the
    environment and credential only after offline coverage, budgets, and report
    sanitization have been reviewed.
@@ -101,6 +104,6 @@ Implementation progress is maintained in the task-local
 
 ## Next action
 
-Curate the complete primary-case inventory and wire its offline coverage,
-request-budget, and sanitization gates into repository verification. Do not
-configure a credentialed workflow yet.
+Add the manual protected workflow and isolated notifier. Stop before configuring
+the GitHub environment or credential, making a real OpenDART request, or enabling
+the weekly schedule.

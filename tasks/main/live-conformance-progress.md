@@ -6,22 +6,21 @@ not append session transcripts.
 
 ## Current slice
 
-- Branch: `feat/live-conformance-runner`, based on the published `sub`
+- Branch: `feat/live-conformance-cases`, based on the published `sub`
   integration branch.
-- Scope: ordered work 3 only—operation enumeration, request validation, the
-  general runner, request budget, representation adapters, typed assertions,
-  sanitized report, and offline HTTP tests.
-- Stop before the complete primary-case inventory, workflow/notifier work,
-  environment or credential configuration, any real OpenDART request, weekly
-  scheduling, or guide drift.
+- Scope: ordered work 4 only—the complete primary-case registry, bounded typed
+  discovery, the operational CLI entry point, and offline coverage, budget,
+  pagination, ZIP compatibility, and sanitization gates.
+- Stop before workflow/notifier work, environment or credential configuration,
+  any real OpenDART request, weekly scheduling, or guide drift.
 
 ## Decisions
 
 - Deliver three sequential, non-stacked PRs matching ordered work 3, 4, and 5.
   Merge each into `sub` before creating its successor branch.
-- Treat the canonical matrix as 167 physical GET operations: 82 JSON, 82 XML,
-  and 3 ZIP success representations. An XML API-error response on a ZIP route
-  is an alternate response, not another physical operation.
+- Derive the physical GET matrix and representation split from the canonical
+  OpenAPI document. An XML API-error response on a ZIP route is an alternate
+  response, not another physical operation.
 - Extend `internal/openapi` only through repository-owned types. Keep pinned
   libopenapi types private and preserve the Rust worktree's ownership boundary.
 - Rust currently has no changes in the shared seams. After this slice lands,
@@ -45,6 +44,9 @@ not append session transcripts.
   feature branch from it.
 - Established the canonical inventory counts and representation split without
   changing generated OpenAPI artifacts.
+- Merged ordered work 3 through PR #18 into `sub` with individual commits
+  preserved and all review threads resolved, then based this slice on that
+  integration result.
 - Added the deterministic repository-owned physical-operation projection,
   trusted server and query-auth metadata, parameter serialization metadata, and
   offline OpenAPI request validation. Canonical tests prove the complete
@@ -67,6 +69,29 @@ not append session transcripts.
   complete success evidence, canonical failure identities, bounded semantic ZIP
   evidence, deterministic XML paths, body lifecycle handling, and identical
   producer/notifier size limits. The independent follow-up review is clean.
+- Added deterministic reviewed cases for every physical operation. Structured
+  JSON/XML pairs share one logical definition and semantic policy; the archive
+  operations remain explicit. Stable Samsung, reporting-period, taxonomy, and
+  receipt coordinates are committed in typed code rather than OpenAPI metadata.
+- Added one fixed rare-disclosure discovery batch whose declared historical
+  partitions, detail types, pages, aliases, and maximum are preflighted. Results
+  are reused across paired primary cases; empty partitions and unused pages do
+  not spend the ceiling, open pagination fails closed, and unresolved or invalid
+  coordinates use distinct allowlisted discovery failures.
+- Wired `live-conformance --preflight-only` and the full manual command to the
+  reviewed registry. Repository verification now runs the credential-free
+  coverage, request, budget, pagination, and report-identity gate.
+- Matched committed archive evidence without weakening structured routing:
+  positive ZIP signatures may normalize the observed download media to the
+  canonical ZIP representation, and bounded archive XML supports reviewed
+  EUC-KR/CP949 labels or bytes. XML API-error envelopes remain alternate ZIP
+  responses and cannot pass a primary case.
+- Completed the ordered-work-4 review corrections: discovered assertions bind
+  the exact resolved corporation and receipt within one record, DS006
+  assertions follow its nested `group/list` structure in JSON and XML, index
+  assertions use fields their schemas expose, corrected filings cannot supply
+  initial-receipt coordinates, and short discovery partitions require unique
+  contiguous declarations plus consistent response pagination.
 - Baseline validation passed: `go vet ./...`, `go test -race ./...`,
   `go run ./cmd/opendart-tool verify --repository-root .`, and
   `git diff --check`.
@@ -77,5 +102,5 @@ None.
 
 ## Next action
 
-Address the runner-foundation PR review, merge it to `sub`, then begin ordered
-work 4 on a fresh branch from the updated integration branch.
+Publish and merge the reviewed ordered-work-4 PR into `sub`, then begin ordered
+work 5 on a fresh branch from that integration result.
