@@ -241,6 +241,40 @@ func Compare(leftRoot, rightRoot string) (Comparison, error) {
 	}
 	defer right.document.Release()
 
+	return compareCanonicalDocuments(left, right)
+}
+
+// CompareGuideDrift compares the committed contract to a generated guide
+// candidate after replacing only snapshot metadata in the candidate. The
+// baseline stays the original document so compatibility direction is stable.
+func CompareGuideDrift(baselineRoot, candidateRoot string) (Comparison, error) {
+	baseline, err := canonicalComparisonDocument(baselineRoot)
+	if err != nil {
+		return Comparison{}, fmt.Errorf("load original: %w", err)
+	}
+	defer baseline.document.Release()
+	candidate, err := canonicalComparisonDocument(candidateRoot)
+	if err != nil {
+		return Comparison{}, fmt.Errorf("load updated: %w", err)
+	}
+
+	snapshot, err := guideSnapshotVersion(baseline.value)
+	if err != nil {
+		candidate.document.Release()
+		return Comparison{}, fmt.Errorf("read baseline snapshot: %w", err)
+	}
+	normalizeGuideSnapshot(candidate.value, openAPIValueDocument, snapshot)
+	candidate.document.Release()
+	candidate, err = canonicalDocumentFromValue(candidate.value, candidateRoot)
+	if err != nil {
+		return Comparison{}, fmt.Errorf("normalize updated snapshot: %w", err)
+	}
+	defer candidate.document.Release()
+
+	return compareCanonicalDocuments(baseline, candidate)
+}
+
+func compareCanonicalDocuments(left, right canonicalDocument) (Comparison, error) {
 	changes, compareErrors := libopenapi.CompareDocuments(left.document, right.document)
 	if compareErrors != nil {
 		return Comparison{}, fmt.Errorf("compare documents: %w", compareErrors)
@@ -274,6 +308,10 @@ func canonicalComparisonDocument(root string) (canonicalDocument, error) {
 		return canonicalDocument{}, fmt.Errorf("decode canonical bundle for %s: %w", root, err)
 	}
 	semanticValue = normalizeOpenAPIValue(semanticValue)
+	return canonicalDocumentFromValue(semanticValue, root)
+}
+
+func canonicalDocumentFromValue(semanticValue any, root string) (canonicalDocument, error) {
 	canonicalJSON, err := json.Marshal(semanticValue)
 	if err != nil {
 		return canonicalDocument{}, fmt.Errorf("encode canonical bundle for %s: %w", root, err)
@@ -287,6 +325,44 @@ func canonicalComparisonDocument(root string) (canonicalDocument, error) {
 		return canonicalDocument{}, fmt.Errorf("build canonical bundle for %s: %w", root, err)
 	}
 	return canonicalDocument{document: canonical, value: semanticValue}, nil
+}
+
+func guideSnapshotVersion(value any) (string, error) {
+	root, ok := value.(map[string]any)
+	if !ok {
+		return "", errors.New("root document is not an object")
+	}
+	info, ok := root["info"].(map[string]any)
+	if !ok {
+		return "", errors.New("info object is missing")
+	}
+	version, ok := info["version"].(string)
+	if !ok || strings.TrimSpace(version) == "" {
+		return "", errors.New("info.version is missing")
+	}
+	return version, nil
+}
+
+func normalizeGuideSnapshot(value any, role openAPIValueRole, snapshot string) {
+	mapping, ok := value.(map[string]any)
+	if !ok {
+		return
+	}
+	if role == openAPIValueDocument {
+		if info, ok := mapping["info"].(map[string]any); ok {
+			info["version"] = snapshot
+		}
+	}
+	if role == openAPIValueDocument || role == openAPIValueOperation {
+		if extension, ok := mapping["x-opendart"].(map[string]any); ok {
+			if source, ok := extension["source"].(map[string]any); ok {
+				source["checkedAt"] = snapshot
+			}
+		}
+	}
+	for key, child := range mapping {
+		normalizeGuideSnapshot(child, openAPIChildRole(role, key), snapshot)
+	}
 }
 
 func semanticChanges(left, right any, location string) []ChangeDetail {
