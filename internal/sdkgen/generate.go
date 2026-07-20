@@ -89,10 +89,7 @@ func GenerateRust(root string, outputs RustOutputs) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	products := []ownedProduct{
-		{kind: "sdk", markerName: ownership.Filename, markerPrefix: ownership.MarkerPrefix, schemaVersion: generated.SDK.SchemaVersion, checksum: generated.SDK.Checksum, output: outputs.SDK, files: files.SDK},
-		{kind: "cli", markerName: ownership.CLIFilename, markerPrefix: ownership.CLIMarkerPrefix, schemaVersion: generated.CLI.SchemaVersion, checksum: generated.CLI.Checksum, output: outputs.CLI, files: files.CLI},
-	}
+	products := rustProducts(generated, files, outputs)
 	staged, err := stageProducts(products)
 	if err != nil {
 		return Report{}, err
@@ -124,10 +121,7 @@ func CheckRustFresh(root string, outputs RustOutputs) error {
 	if err != nil {
 		return err
 	}
-	products := []ownedProduct{
-		{kind: "sdk", markerName: ownership.Filename, markerPrefix: ownership.MarkerPrefix, schemaVersion: generated.SDK.SchemaVersion, output: outputs.SDK, files: files.SDK},
-		{kind: "cli", markerName: ownership.CLIFilename, markerPrefix: ownership.CLIMarkerPrefix, schemaVersion: generated.CLI.SchemaVersion, output: outputs.CLI, files: files.CLI},
-	}
+	products := rustProducts(generated, files, outputs)
 	for _, product := range products {
 		actual, err := readOwnedTree(product.output, product, false)
 		if err != nil {
@@ -162,6 +156,13 @@ func renderRust(root string) (model.ArtifactSet, rustemitter.Artifacts, error) {
 		return model.ArtifactSet{}, rustemitter.Artifacts{}, err
 	}
 	return generated, files, nil
+}
+
+func rustProducts(generated model.ArtifactSet, files rustemitter.Artifacts, outputs RustOutputs) []ownedProduct {
+	return []ownedProduct{
+		{kind: "sdk", markerName: ownership.Filename, markerPrefix: ownership.MarkerPrefix, schemaVersion: generated.SDK.SchemaVersion, checksum: generated.SDK.Checksum, output: outputs.SDK, files: files.SDK},
+		{kind: "cli", markerName: ownership.CLIFilename, markerPrefix: ownership.CLIMarkerPrefix, schemaVersion: generated.CLI.SchemaVersion, checksum: generated.CLI.Checksum, output: outputs.CLI, files: files.CLI},
+	}
 }
 
 func stageProducts(products []ownedProduct) ([]*stagedProduct, error) {
