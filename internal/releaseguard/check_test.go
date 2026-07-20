@@ -129,6 +129,21 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 			old: "tests/public_contract.rs\n", replacement: "target/secret\ntests/public_contract.rs\n",
 			invariant: "excludes repository-private inputs",
 		},
+		{
+			name: "CLI inventory order", artifact: rustCLIPackageListArtifact,
+			old: ".cargo_vcs_info.json\nCargo.lock\n", replacement: "Cargo.lock\n.cargo_vcs_info.json\n",
+			invariant: "is sorted for deterministic comparison",
+		},
+		{
+			name: "required CLI package evidence", artifact: rustCLIPackageListArtifact,
+			old: "tests/live_smoke.rs\n", replacement: "",
+			invariant: "contains required package evidence",
+		},
+		{
+			name: "private CLI package input", artifact: rustCLIPackageListArtifact,
+			old: ".cargo_vcs_info.json\nCargo.lock\n", replacement: ".cargo_vcs_info.json\n.github/secret\nCargo.lock\n",
+			invariant: "excludes repository-private inputs",
+		},
 	}
 
 	for _, test := range tests {
@@ -623,6 +638,26 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "uses only the approved verification steps",
 		},
 		{
+			name: "CLI no-default-features tests", artifact: verifyWorkflowArtifact,
+			old: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "CLI MSRV no-default-features check", artifact: verifyWorkflowArtifact,
+			old: "cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features", replacement: "cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "CLI package inventory diff", artifact: verifyWorkflowArtifact,
+			old: "diff -u sdk/rust/opendart-cli-package-files.txt \"${cli_package_files}\"", replacement: "test -s \"${cli_package_files}\"",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "workspace package dry run", artifact: verifyWorkflowArtifact,
+			old: "cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml", replacement: "cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml",
+			invariant: "uses only the approved verification steps",
+		},
+		{
 			name: "native artifact compatibility cfg", artifact: verifyWorkflowArtifact,
 			old: "RUSTFLAGS: --cfg opendart_compat", replacement: "RUSTFLAGS: --cfg other",
 			invariant: "native artifact jobs use only approved steps",
@@ -798,6 +833,36 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "producer has read-only repository permission",
 		},
 		{
+			name: "live Rust toolchain", artifact: liveWorkflowArtifact,
+			old: "rustup toolchain install 1.97.1 --profile minimal", replacement: "rustup toolchain install stable --profile minimal",
+			invariant: "installs the approved Rust toolchain",
+		},
+		{
+			name: "live Rust dependency fetch", artifact: liveWorkflowArtifact,
+			old: "cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml", replacement: "cargo +1.97.1 fetch --manifest-path sdk/rust/Cargo.toml",
+			invariant: "fetches locked Rust dependencies",
+		},
+		{
+			name: "live credential-free runner build", artifact: liveWorkflowArtifact,
+			old: "go build -o .live-bin/opendart-tool ./cmd/opendart-tool", replacement: "go build ./cmd/opendart-tool",
+			invariant: "builds only the approved live runners",
+		},
+		{
+			name: "live Rust CLI smoke", artifact: liveWorkflowArtifact,
+			old: ".live-bin/live-smoke --exact structured_and_binary_live_paths_are_read_only_and_sanitized", replacement: ".live-bin/live-smoke",
+			invariant: "runs only the approved live conformance commands",
+		},
+		{
+			name: "live Rust CLI gate", artifact: liveWorkflowArtifact,
+			old: "OPENDART_LIVE_TESTS: \"1\"", replacement: "OPENDART_LIVE_TESTS: \"true\"",
+			invariant: "sets only the approved live request gates",
+		},
+		{
+			name: "live preflight runner", artifact: liveWorkflowArtifact,
+			old: ".live-bin/opendart-tool live-conformance --preflight-only --repository-root .", replacement: "go run ./cmd/opendart-tool live-conformance --preflight-only --repository-root .",
+			invariant: "rechecks credential-free live gates",
+		},
+		{
 			name: "live secret at preflight", artifact: liveWorkflowArtifact,
 			old: "      - name: Recheck offline gates\n        run:", replacement: "      - name: Recheck offline gates\n        env:\n          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}\n        run:",
 			invariant: "API key is absent outside the request boundary",
@@ -962,6 +1027,7 @@ func copyReleaseArtifacts(t *testing.T) string {
 		rustLockArtifact,
 		rustProvenanceArtifact,
 		rustPackageListArtifact,
+		rustCLIPackageListArtifact,
 		canonicalBundleArtifact,
 		releaseWorkflowArtifact,
 		verifyWorkflowArtifact,

@@ -72,31 +72,36 @@ fn with_server(
     responder: impl FnOnce(&mut TcpStream) + Send + 'static,
 ) -> Output {
     let listener = TcpListener::bind("127.0.0.1:0").expect("loopback listener");
-    listener
-        .set_nonblocking(true)
-        .expect("configure loopback listener");
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let deadline = Instant::now() + Duration::from_secs(5);
-        let (mut stream, _) = loop {
-            match listener.accept() {
-                Ok(connection) => break connection,
-                Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
-                    assert!(Instant::now() < deadline, "CLI never connected");
-                    thread::sleep(Duration::from_millis(5));
-                }
-                Err(error) => panic!("accept CLI connection: {error}"),
-            }
-        };
-        stream
-            .set_nonblocking(false)
-            .expect("restore blocking fixture stream");
+        let mut stream = accept_within(&listener);
         assert_valid_request(&mut stream);
         responder(&mut stream);
     });
     let output = invoke(&origin, arguments);
     server.join().expect("fixture server should finish");
     output
+}
+
+fn accept_within(listener: &TcpListener) -> TcpStream {
+    listener
+        .set_nonblocking(true)
+        .expect("configure loopback listener");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let (stream, _) = loop {
+        match listener.accept() {
+            Ok(connection) => break connection,
+            Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
+                assert!(Instant::now() < deadline, "CLI never connected");
+                thread::sleep(Duration::from_millis(5));
+            }
+            Err(error) => panic!("accept CLI connection: {error}"),
+        }
+    };
+    stream
+        .set_nonblocking(false)
+        .expect("restore blocking fixture stream");
+    stream
 }
 
 fn assert_valid_request(stream: &mut TcpStream) {
@@ -397,7 +402,7 @@ fn stdout_failure_after_publication_leaves_the_complete_artifact() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let (mut stream, _) = listener.accept().unwrap();
+        let mut stream = accept_within(&listener);
         assert_valid_request(&mut stream);
         write_fixed(&mut stream, "application/zip", body);
     });

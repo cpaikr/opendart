@@ -2,11 +2,11 @@
 
 #![cfg(opendart_compat)]
 
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::process::{Command, Output};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde_json::Value;
 
@@ -43,13 +43,34 @@ fn with_response(response: Vec<u8>, arguments: &[String]) -> Output {
     let listener = TcpListener::bind("127.0.0.1:0").expect("loopback listener");
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let (mut stream, _) = listener.accept().expect("one CLI connection");
+        let mut stream = accept_within(&listener);
         assert_valid_request(&mut stream);
         stream.write_all(&response).expect("write fixture response");
     });
     let output = invoke(&origin, arguments);
     server.join().expect("fixture server should finish");
     output
+}
+
+fn accept_within(listener: &TcpListener) -> TcpStream {
+    listener
+        .set_nonblocking(true)
+        .expect("configure loopback listener");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let (stream, _) = loop {
+        match listener.accept() {
+            Ok(connection) => break connection,
+            Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
+                assert!(Instant::now() < deadline, "CLI never connected");
+                thread::sleep(Duration::from_millis(5));
+            }
+            Err(error) => panic!("accept CLI connection: {error}"),
+        }
+    };
+    stream
+        .set_nonblocking(false)
+        .expect("restore blocking fixture stream");
+    stream
 }
 
 fn http_response(content_type: &str, body: &[u8], extra_headers: &[(&str, &str)]) -> Vec<u8> {
@@ -226,7 +247,7 @@ fn timeout_incomplete_body_and_refused_connection_have_stable_classes() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let (mut stream, _) = listener.accept().unwrap();
+        let mut stream = accept_within(&listener);
         assert_valid_request(&mut stream);
         stream
             .write_all(
@@ -268,4 +289,38 @@ fn timeout_incomplete_body_and_refused_connection_have_stable_classes() {
     let error = json(&output, 1);
     assert_eq!(error["error"]["code"], "transport_connection");
     assert!(error.get("metadata").is_none());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn stdout_failure_after_structured_encoding_exits_without_a_replacement_document() {
+    use std::fs::OpenOptions;
+    use std::process::Stdio;
+
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let server = thread::spawn(move || {
+        let mut stream = accept_within(&listener);
+        assert_valid_request(&mut stream);
+        stream
+            .write_all(&http_response(
+                "application/json",
+                br#"{"status":"000","corp_name":"complete"}"#,
+                &[],
+            ))
+            .unwrap();
+    });
+    let full = OpenOptions::new().write(true).open("/dev/full").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_opendart"))
+        .args(company_arguments("json"))
+        .env("OPENDART_API_KEY", SYNTHETIC_KEY)
+        .env("OPENDART_COMPAT_ORIGIN", origin)
+        .stdout(Stdio::from(full))
+        .stderr(Stdio::piped())
+        .output()
+        .unwrap();
+    server.join().unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stdout.is_empty());
+    assert!(output.stderr.is_empty());
 }

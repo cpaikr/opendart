@@ -32,16 +32,27 @@ runs all-features and no-default-features checks plus locked metadata.
 Generated Rust uses generator-owned compact formatting; offline freshness is
 its exact formatting gate, while every Cargo compile gate still includes it.
 
-The package file list must exactly match `sdk/rust/package-files.txt`. This
-requires the license, README, changelog, generated source, provenance, public
-tests, normalized manifest, workspace lock, and Cargo-generated
-`.cargo_vcs_info.json`, while excluding generator source, repository fixtures,
-credentials, and local artifacts.
+The SDK and CLI package file lists must exactly match
+`sdk/rust/package-files.txt` and `sdk/rust/opendart-cli-package-files.txt`.
+They require their reviewed generated source, public tests and output fixtures,
+normalized manifests, workspace lock, and Cargo-generated provenance while
+excluding generator source, repository-private inputs, credentials, and local
+artifacts. Workspace packaging verifies the unpublished local dependency
+relationship without granting publication authority.
 
 The default client integration suite uses loopback-only fixtures. It proves the
 one-interaction contract under dependency feature unification: no automatic
 retry, redirect, ambient proxy, alternate TLS backend, alternate DNS resolver,
 or response-content decoding. No OpenDART credential is used.
+
+The CLI process suite additionally covers exact structured output fixtures,
+malformed and incomplete responses, timeout controls, binary publication, and
+broken stdout. Live CLI smoke coverage is opt-in and reads the credential only
+when both `OPENDART_LIVE_TESTS=1` and `OPENDART_API_KEY` are present; it makes
+only reviewed read-only calls and asserts structure rather than business data.
+The protected workflow compiles both live runners before exposing the key; the
+credential-bearing step executes only those reviewed binaries, so dependency
+build scripts never inherit the credential.
 
 The no-default-features graph must remain free of `reqwest`, Tokio, Hyper, TLS,
 proxy, DNS, and streaming-runtime dependencies.
