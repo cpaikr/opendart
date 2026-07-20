@@ -334,9 +334,11 @@ reference:
 `unrecognized` has the same artifact value shape. `status` instead places the
 complete SDK `StatusEnvelope` in `value` and publishes no destination.
 
-A stream, deadline, or filesystem failure exits `1`, reports any already-safe
-response metadata, removes its owned temporary file, and never publishes a
-partial destination. The CLI does not open or validate archive entries.
+Every failure before publication—including transport or connection, timeout,
+stream, filesystem, and no-clobber publication failures—exits `1`, reports any
+already-safe response metadata, removes its owned temporary file, and never
+publishes a partial destination. The CLI does not open or validate archive
+entries.
 
 Every binary call has a 512 MiB (`536870912` byte) default budget and accepts a
 positive `--artifact-limit-bytes` override. The inclusive limit applies to

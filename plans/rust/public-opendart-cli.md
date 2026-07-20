@@ -356,7 +356,7 @@ provenance points to the immutable reviewed revision.
 - Stable all-feature and no-default-feature tests, Clippy, rustdoc, MSRV checks,
   generator freshness, and package inventory validation are the merge gate for
   this slice. No credential or live network access is required.
-- Works 2–7 remain. There is no implementation blocker and no publication or
+- Work 2–7 remain. There is no implementation blocker and no publication or
   prebuilt-release work is authorized by this plan state.
 
 ## Next action

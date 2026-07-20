@@ -133,13 +133,15 @@ second public model.
    request, and require a destination that does not exist.
 2. Read and validate `OPENDART_API_KEY`, build the SDK client, and create a
    temporary file in the destination directory before network access.
-3. Execute once through `Client::execute_binary` and preserve response metadata.
+3. Execute once through `Client::execute_binary` and preserve response metadata;
+   remove the owned temporary file if execution fails.
 4. For `Archive` or `Unrecognized`, count and stream every body chunk into the
    temporary file within the selected finite artifact budget, then publish it
    without clobbering the destination.
 5. Emit an artifact reply with the SDK classification, path, and byte count.
-6. Remove the temporary file on a source `Status` or any read or write failure;
-   no such path publishes a destination.
+6. Remove the temporary file on a source `Status` or any failure before
+   publication, including transport, timeout, stream, filesystem, and
+   no-clobber publication failures; no such path publishes a destination.
 
 ## Target code map
 

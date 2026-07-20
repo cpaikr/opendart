@@ -63,6 +63,7 @@ evidence directly with `serde_json`:
 ```toml
 [dependencies]
 opendart = { version = "0.1", features = ["serde-json"] }
+serde_json = "1"
 ```
 
 Generated response objects and the shared response, status, metadata, and
