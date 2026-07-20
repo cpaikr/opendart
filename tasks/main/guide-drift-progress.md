@@ -11,7 +11,7 @@ Update it in place and keep authorization-gated actions explicit.
   preserved.
 - Ordered work 3 implements and validates the manual trusted-main producer,
   attempt-scoped bounded artifact, isolated notifier, and credential-free
-  workflow-policy checks on `feat/guide-drift-automation`.
+  workflow-policy checks in PR #33 for `dev`.
 - No workflow has been dispatched, no external issue has been written, and no
   schedule has been enabled.
 
@@ -47,6 +47,7 @@ None.
 
 ## Next action
 
-Review and merge the ordered-work-3 PR into `dev` with its commits preserved.
-Stop before workflow dispatch, external issue writes, or schedule enablement;
-ordered work 4 remains authorization-gated.
+Authorization-gated ordered work 4: run one supervised manual default-branch
+check and inspect its permissions, artifact, and issue behavior before separately
+authorizing a schedule. Do not dispatch a workflow, write an external issue, or
+enable scheduling without that authorization.
