@@ -51,7 +51,7 @@ opendart operations describe <operation>
 With no arguments, the binary emits a compact `kind: home` document containing
 the exact absolute executable path, a display path with the home directory
 collapsed to `~`, a one-sentence description, structured argument prefixes for
-listing, describing, and calling operations, the global execution flags, and
+listing, describing, and calling operations, the call-scoped execution flags, and
 the name and scope of the credential environment variable. It does not choose
 an authenticated endpoint or print the full operation inventory. Agents spawn
 `executable.path` directly and append an `argv` array; they never have to parse
@@ -74,12 +74,11 @@ a shell command string or expand `~`.
     "environment": "OPENDART_API_KEY",
     "required_for": ["call"]
   },
-  "global_flags": [
+  "call_flags": [
     {"name": "--connect-timeout-ms", "required": false, "shape": "positive_integer"},
     {"name": "--read-timeout-ms", "required": false, "shape": "positive_integer"},
     {"name": "--total-timeout-ms", "required": false, "shape": "positive_integer"},
-    {"name": "--envelope-limit-bytes", "required": false, "shape": "positive_integer"},
-    {"name": "--artifact-limit-bytes", "required": false, "shape": "positive_integer", "default": 536870912}
+    {"name": "--envelope-limit-bytes", "required": false, "shape": "positive_integer"}
   ]
 }
 ```
@@ -98,7 +97,7 @@ canonical name and then logical ID; representations use that fixed order.
 
 `operations describe` emits `kind: operation` and is self-sufficient for
 constructing a valid call. It adds operation-specific flags, requiredness, list
-shape, explicit constraints, credential requirements, global execution flags,
+shape, explicit constraints, credential requirements, call execution flags,
 representation-specific invocation templates, physical IDs and SDK response
 types, response field structure, ZIP destination requirements, and the official
 guide URL. Presentation text may be improved without changing these generated
@@ -106,9 +105,9 @@ facts.
 
 The exact outer shape is `{"kind":"operation","operation":{...}}`.
 The operation has `name`, `logical_id`, `group`, `api_id`, `guide_url`,
-`description`, `invocation`, `global_flags`, `flags`, and `representations`.
+`description`, `invocation`, `execution_flags`, `flags`, and `representations`.
 `invocation` contains `argv_prefix: ["call", "<canonical-name>"]` and
-`required_env: ["OPENDART_API_KEY"]`. `global_flags` repeats the complete home
+`required_env: ["OPENDART_API_KEY"]`. `execution_flags` repeats the complete home
 records so the detail document stands alone.
 
 Each operation flag has `name`, `sdk_field`, `description`, `required`,
@@ -143,22 +142,23 @@ Every subcommand also supports concise conventional `--help`; `--version`
 reports the CLI package version. Help and version are the only intentionally
 plain-text successful outputs.
 
-## Global execution controls
+## Call execution controls
 
 All machine-readable stdout uses compact JSON. The CLI has no output-format
 selector and does not expose TOON as an alternate contract.
 
-Global optional controls expose existing SDK client builder settings plus one
-CLI-owned artifact budget:
+Call-scoped optional controls expose existing SDK client builder settings plus
+one CLI-owned artifact budget:
 
 - `--connect-timeout-ms <positive integer>` — connection establishment;
 - `--read-timeout-ms <positive integer>` — time between body reads;
 - `--total-timeout-ms <positive integer>` — total request and body deadline;
 - `--envelope-limit-bytes <positive integer>` — structured or alternate
   envelope limit; and
-- `--artifact-limit-bytes <positive integer>` — override the finite default for
-  a ZIP body; rejected for structured representations. The default is 512 MiB
-  (`536870912` bytes).
+- `--artifact-limit-bytes <positive integer>` — advertised by ZIP output
+  metadata instead of the common call flags; it overrides the finite default
+  for a ZIP body and is rejected for structured representations. The default
+  is 512 MiB (`536870912` bytes).
 
 Omitting an SDK-owned control leaves that builder setting untouched so the SDK
 remains its default source of truth. Omitting the artifact control uses the
@@ -268,7 +268,6 @@ Failures that do not produce a typed source reply use a CLI error envelope:
 ```json
 {
   "kind": "error",
-  "operation": null,
   "error": {
     "code": "missing_api_key",
     "message": "OPENDART_API_KEY is required",
@@ -294,8 +293,9 @@ The initial stable error-code inventory is:
   `transport_protocol`, `transport_other`;
 - structured response: `body_limit`, `malformed_envelope`, `response_decode`;
   and
-- local output and invariants: `output_encode`, `destination_exists`,
-  `artifact_limit`, `artifact_io`, `sdk_contract_mismatch`.
+- local output and invariants: `executable_resolution`, `output_encode`,
+  `destination_exists`, `artifact_limit`, `artifact_io`,
+  `sdk_contract_mismatch`.
 
 Binary stream transport failures use the matching `transport_*` code. New codes
 may be additive; changing the meaning or exit class of an existing code is a

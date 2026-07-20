@@ -44,6 +44,7 @@ type SDKSurfaceOperation struct {
 	Path               string
 	RelativeTarget     string
 	OperationID        string
+	Description        string
 	LogicalOperationID string
 	APIGroupCode       string
 	APIID              string
@@ -58,6 +59,7 @@ type SDKSurfaceOperation struct {
 // must cross the private OpenAPI boundary during SDK generation.
 type SDKSurfaceParameter struct {
 	Name            string
+	Description     string
 	Location        string
 	Required        bool
 	Style           string
@@ -180,6 +182,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 			for _, parameter := range effectiveParameters {
 				evidence := SDKSurfaceParameter{
 					Name:            parameter.Name,
+					Description:     parameter.Description,
 					Location:        parameter.In,
 					Style:           parameter.Style,
 					Explode:         parameter.IsExploded(),
@@ -274,6 +277,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 				Path:               pathName,
 				RelativeTarget:     relativeTarget,
 				OperationID:        operation.OperationId,
+				Description:        operation.Description,
 				LogicalOperationID: logicalOperationID,
 				APIGroupCode:       apiGroupCode,
 				APIID:              apiID,

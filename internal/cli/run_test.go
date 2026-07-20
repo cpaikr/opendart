@@ -363,24 +363,25 @@ func TestRunBundleRequiresOutputAndForwardsPaths(t *testing.T) {
 }
 
 func TestRunGenerateSDKRequiresRustAndForwardsPaths(t *testing.T) {
-	var root, output string
+	var root string
+	var output sdkgen.RustOutputs
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := runGenerateSDKWith([]string{"--language", "rust", "--root", "spec.yaml", "--output", "generated"}, &stdout, &stderr, func(receivedRoot, receivedOutput string) (sdkgen.Report, error) {
+	code := runGenerateSDKWith([]string{"--language", "rust", "--root", "spec.yaml", "--output", "generated", "--cli-output", "cli-generated"}, &stdout, &stderr, func(receivedRoot string, receivedOutput sdkgen.RustOutputs) (sdkgen.Report, error) {
 		root, output = receivedRoot, receivedOutput
-		return sdkgen.Report{Language: "rust", SchemaVersion: 1, Checksum: "checksum", Output: receivedOutput}, nil
+		return sdkgen.Report{Language: "rust", SemanticSchemaVersion: 1, SemanticChecksum: "checksum"}, nil
 	})
-	if code != 0 || stderr.Len() != 0 || root != "spec.yaml" || output != "generated" {
+	if code != 0 || stderr.Len() != 0 || root != "spec.yaml" || output.SDK != "generated" || output.CLI != "cli-generated" {
 		t.Fatalf("code = %d, root = %q, output = %q, stderr = %q", code, root, output, stderr.String())
 	}
 	var report sdkgen.Report
-	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil || report.Checksum != "checksum" {
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil || report.SemanticChecksum != "checksum" {
 		t.Fatalf("report = %#v, error = %v", report, err)
 	}
 
-	for _, args := range [][]string{{"--language", "python", "--output", "generated"}, {"--language", "rust"}} {
+	for _, args := range [][]string{{"--language", "python", "--output", "generated", "--cli-output", "cli-generated"}, {"--language", "rust"}, {"--language", "rust", "--output", "generated"}} {
 		stderr.Reset()
-		if code := runGenerateSDKWith(args, &bytes.Buffer{}, &stderr, func(string, string) (sdkgen.Report, error) {
+		if code := runGenerateSDKWith(args, &bytes.Buffer{}, &stderr, func(string, sdkgen.RustOutputs) (sdkgen.Report, error) {
 			t.Fatal("runner should not be called for invalid options")
 			return sdkgen.Report{}, nil
 		}); code != 2 {

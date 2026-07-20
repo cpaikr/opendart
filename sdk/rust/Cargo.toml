@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/opendart"]
+members = ["crates/opendart", "crates/opendart-cli"]
 resolver = "3"
 
 [workspace.package]
@@ -10,6 +10,7 @@ repository = "https://github.com/cpaikr/opendart"
 
 [workspace.dependencies]
 bytes = "1.12.1"
+clap = "4.6.2"
 form_urlencoded = "1.2.2"
 futures-core = "0.3.33"
 quick-xml = "0.41.0"

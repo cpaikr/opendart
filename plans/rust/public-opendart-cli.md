@@ -350,19 +350,24 @@ provenance points to the immutable reviewed revision.
 
 ## Progress
 
-- Work 1 is implemented in the first delivery slice: the SDK feature graph,
-  fallible JSON-number boundary, generated/shared serialization, exact-number
-  snapshots, and non-serialization assertions are present.
-- Stable all-feature and no-default-feature tests, Clippy, rustdoc, MSRV checks,
-  generator freshness, and package inventory validation are the merge gate for
-  this slice. No credential or live network access is required.
-- Work 2–7 remain. There is no implementation blocker and no publication or
-  prebuilt-release work is authorized by this plan state.
+- Work 1 is merged on `rust`: the SDK feature graph, fallible JSON-number
+  boundary, generated/shared serialization, exact-number snapshots, and
+  non-serialization assertions are present.
+- Works 2 and 3 are implemented in the current delivery slice. One normalized
+  build produces separately identified SDK and CLI projections, validates both
+  owned trees before publication, and verifies both offline. CLI-only prose is
+  covered against SDK checksum and byte drift.
+- The binary-only `opendart-cli` workspace crate uses the exact local SDK pin,
+  generated clap command construction, exhaustive typed preparation dispatch,
+  and keyless machine-readable discovery. Process tests cover every canonical
+  name and logical-ID alias, strict usage, representation rules, help/version,
+  and a discovery-only invocation consumer.
+- Works 4–7 remain. Authenticated execution has not begun, and no publication
+  or prebuilt-release work is authorized by this plan state.
 
 ## Next action
 
-After work 1 passes compatibility review and merges, implement works 2 and 3 as
-the next substantial slice: deepen the generator into independently checksummed
-SDK and CLI projections, atomically own both generated trees, and establish the
-binary crate with complete keyless discovery. Do not begin authenticated
-execution until discovery passes process-level review.
+After works 2 and 3 pass review and merge, implement Work 4 as the next slice:
+execute prepared structured requests through the SDK, apply the approved client
+controls, and encode typed success, source status, and sanitized failure
+outcomes. Keep ZIP artifact handling in Work 5.

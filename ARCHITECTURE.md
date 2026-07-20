@@ -2,11 +2,12 @@
 
 ## Product boundary
 
-This repository maintains two public products derived from one source-backed
+This repository maintains three public products derived from one source-backed
 OpenDART contract:
 
 - the portable OpenAPI bundle; and
-- the `opendart` Rust protocol SDK.
+- the `opendart` Rust protocol SDK; and
+- the `opendart` command-line client.
 
 The official OpenDART development guide is authoritative for documented
 behavior. Authenticated observations remain separate evidence. Go packages and
@@ -19,8 +20,9 @@ OpenDART guide
     -> staged acquisition and normalization
     -> canonical multi-file OpenAPI 3.2
     -> deterministic bundle ----------------------> GitHub specification release
-    -> repository-owned SDK model
-    -> deterministic checked-in Rust -------------> opendart crate package
+    -> repository-owned Rust artifact model
+       -> deterministic checked-in SDK -----------> opendart crate package
+       -> deterministic checked-in CLI breadth ---> opendart-cli crate package
 
 OpenDART API + local API key
     -> fixed, bounded probes
@@ -52,17 +54,22 @@ response validation, and the repository-owned SDK input projection.
 
 ### Rust generation and use
 
-`opendart-tool generate-sdk` passes the canonical contract through
-`internal/sdkgen/model` and the Rust renderer. Generated source is reviewed and
-committed beneath `sdk/rust/crates/opendart/src/generated`; consumer builds do
-not run Go or parse OpenAPI.
+`opendart-tool generate-sdk` passes the canonical contract through one
+`internal/sdkgen/model` build and the Rust artifact renderer. It stages and
+validates independently owned SDK and CLI trees before publishing either.
+Generated source is reviewed and committed beneath each crate's `src/generated`
+directory; consumer builds do not run Go or parse OpenAPI.
 
-The crate exposes generated operation types plus handwritten request,
+The SDK crate exposes generated operation types plus handwritten request,
 authorization, wire-inspection, and provenance contracts. Its core performs no
 I/O. The optional default `client-reqwest` feature adds one-attempt bounded HTTP
 execution with redirects, retries, ambient proxies, and automatic response
 decoding disabled. Applications retain persistence, quota, retry, collection,
 and domain policy.
+
+The binary-only CLI crate keeps orchestration and output policy handwritten.
+Generated code owns its operation catalog, clap command breadth, response-shape
+discovery, typed SDK input construction, and exhaustive preparation dispatch.
 
 ### Verify and package
 
@@ -83,6 +90,10 @@ Release Please owns independent components:
 
 - root `vX.Y.Z` tags and `CHANGELOG.md` for the OpenAPI bundle; and
 - `opendart-vX.Y.Z` tags and the crate changelog/version for the Rust SDK.
+
+The `opendart-cli` crate is an unreleased third component. Work 7 owns its
+independent version, changelog, and tag configuration; the current Release
+Please configuration does not prepare or publish CLI releases.
 
 Rust changes are excluded from root release eligibility. The Rust component is
 configured to prepare a draft component release and keep the crate manifest and
@@ -134,10 +145,12 @@ OpenDART origin.
 - `cmd/opendart-tool` is the private command surface.
 - `internal/guide` owns guide acquisition and guarded generation.
 - `internal/openapi` confines OpenAPI dependencies and owns SDK projection.
-- `internal/sdkgen/model` and `internal/sdkgen/rust` own deterministic SDK
-  normalization and rendering.
+- `internal/sdkgen/model` and `internal/sdkgen/rust` own deterministic Rust
+  semantic normalization plus the independent SDK and CLI projections.
 - `sdk/rust` is the isolated Cargo workspace. The public crate lives under
-  `sdk/rust/crates/opendart`; generated files have one owned subtree.
+  `sdk/rust/crates/opendart`, and the binary-only CLI lives under
+  `sdk/rust/crates/opendart-cli`; each has an independently owned generated
+  subtree.
 - `internal/verification` coordinates repository verification, while
   `internal/releaseguard` enforces workflow, package, provenance, and release
   policy.
@@ -154,8 +167,8 @@ OpenDART origin.
 
 ## Invariants
 
-- OpenAPI 3.2 remains canonical; generated SDK files never become an alternate
-  endpoint inventory.
+- OpenAPI 3.2 remains canonical; generated SDK and CLI files never become an
+  alternate endpoint inventory.
 - Generated OpenAPI and Rust files change through their generators, not by
   hand, and verification requires byte-for-byte freshness.
 - Guide facts, empirical observations, and executable policy remain separate.
