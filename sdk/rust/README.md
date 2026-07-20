@@ -1,8 +1,8 @@
 # Rust SDK workspace
 
-This isolated Cargo workspace contains the public `opendart` crate. Consumer
-builds use Cargo only; the private Go generator and canonical OpenAPI inputs
-remain repository tooling.
+This isolated Cargo workspace contains the public `opendart` SDK crate and the
+binary-only `opendart-cli` crate. Consumer builds use Cargo only; the private Go
+generator and canonical OpenAPI inputs remain repository tooling.
 
 The stable gate is pinned to Rust 1.97.1 and the crate declares Rust 1.85.0 as
 its MSRV. Fetch locked dependencies once, then run every build gate offline:
@@ -29,7 +29,8 @@ cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p op
 cargo +1.85.0 metadata --locked --offline --manifest-path sdk/rust/Cargo.toml --no-deps
 ```
 
-Verify the reviewed package inventory exactly:
+Verify the reviewed SDK package inventory exactly. CLI package inventory and
+publication remain gated by its release-preparation work:
 
 ```sh
 package_files="$(mktemp)"

@@ -57,8 +57,8 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseReleaseGuard+":"+filepath.Base(root))
 			return nil
 		},
-		checkRustSDK: func(source, output string) error {
-			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(source)+":"+filepath.Base(output))
+		checkRustSDK: func(source string, output sdkgen.RustOutputs) error {
+			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(source)+":"+filepath.Base(output.SDK)+":"+filepath.Base(output.CLI))
 			return nil
 		},
 	}
@@ -72,7 +72,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"lint:openapi.yaml",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
-		"rust-sdk-freshness:openapi.yaml:generated",
+		"rust-sdk-freshness:openapi.yaml:generated:generated",
 		"live-conformance-preflight:repository",
 		"auditor-evidence:auditor-2026-07-18.json",
 		"release-guard:repository",
@@ -196,7 +196,7 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					}
 					return nil
 				},
-				checkRustSDK: func(string, string) error {
+				checkRustSDK: func(string, sdkgen.RustOutputs) error {
 					calls++
 					if test.fail == phaseRustSDKFreshness {
 						if test.rustError != nil {
@@ -262,7 +262,7 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 		checkLive:     func(string) error { return nil },
 		checkEvidence: func(string) error { return nil },
 		checkRelease:  func(string) error { return nil },
-		checkRustSDK:  func(string, string) error { return nil },
+		checkRustSDK:  func(string, sdkgen.RustOutputs) error { return nil },
 	}
 
 	_, err := verifyWith(t.TempDir(), deps)

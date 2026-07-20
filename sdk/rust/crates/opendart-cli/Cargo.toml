@@ -1,0 +1,23 @@
+[package]
+name = "opendart-cli"
+version = "0.1.0"
+description = "Machine-readable OpenDART command-line client backed by the typed Rust SDK"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "opendart"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+clap.workspace = true
+opendart = { path = "../opendart", version = "=0.1.0", default-features = false, features = ["client-reqwest", "serde-json"] }
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
