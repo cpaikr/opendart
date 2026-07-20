@@ -63,6 +63,18 @@ impl ErrorEnvelope {
         }
     }
 
+    pub(crate) fn invalid_client_configuration() -> Self {
+        Self {
+            kind: "error",
+            operation: None,
+            error: ErrorBody {
+                code: "invalid_client_configuration",
+                message: "OPENDART_API_KEY is not a valid environment value",
+                help: vec!["Set OPENDART_API_KEY to a valid non-empty text value".to_owned()],
+            },
+        }
+    }
+
     pub(crate) fn client_initialization() -> Self {
         Self {
             kind: "error",

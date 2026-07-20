@@ -78,14 +78,17 @@ fn call(matches: &ArgMatches) -> u8 {
         Err(_) => return emit(&ErrorEnvelope::invalid_request(), 2),
     };
     let _identity = prepared.identity();
-    let key = std::env::var("OPENDART_API_KEY")
-        .ok()
-        .filter(|value| !value.is_empty());
-    let Some(key) = key else {
+    let Some(key) = std::env::var_os("OPENDART_API_KEY") else {
         return emit(&ErrorEnvelope::missing_api_key(), 1);
     };
-    if opendart::ApiKey::new(key).is_err() {
+    if key.is_empty() {
         return emit(&ErrorEnvelope::missing_api_key(), 1);
+    }
+    let Ok(key) = key.into_string() else {
+        return emit(&ErrorEnvelope::invalid_client_configuration(), 1);
+    };
+    if opendart::ApiKey::new(key).is_err() {
+        return emit(&ErrorEnvelope::invalid_client_configuration(), 1);
     }
     emit(&ErrorEnvelope::client_initialization(), 1)
 }

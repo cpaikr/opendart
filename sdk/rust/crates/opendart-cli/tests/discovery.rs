@@ -146,6 +146,47 @@ fn discovery_json_alone_constructs_an_sdk_prepared_call() {
 }
 
 #[test]
+fn empty_api_key_remains_missing() {
+    let arguments = vec![
+        "call".to_owned(),
+        "company".to_owned(),
+        "--corp-code".to_owned(),
+        "00126380".to_owned(),
+        "--representation".to_owned(),
+        "json".to_owned(),
+    ];
+    let output = invoke(&arguments, Some(""));
+    assert_eq!(output.status.code(), Some(1));
+    let error: Value = serde_json::from_slice(&output.stdout).expect("error JSON");
+    assert_eq!(error["error"]["code"], "missing_api_key");
+}
+
+#[cfg(unix)]
+#[test]
+fn non_text_api_key_is_invalid_client_configuration() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    let output = Command::new(env!("CARGO_BIN_EXE_opendart"))
+        .args([
+            "call",
+            "company",
+            "--corp-code",
+            "00126380",
+            "--representation",
+            "json",
+        ])
+        .env("OPENDART_API_KEY", OsString::from_vec(vec![0xff]))
+        .output()
+        .expect("CLI process should start");
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stderr.is_empty());
+    let error: Value = serde_json::from_slice(&output.stdout).expect("error JSON");
+    assert_eq!(error["error"]["code"], "invalid_client_configuration");
+    assert!(error.get("operation").is_none());
+}
+
+#[test]
 fn invalid_invocations_are_strict_json_usage_errors_before_credentials() {
     let cases: &[&[&str]] = &[
         &["unknown"],
