@@ -3,8 +3,9 @@
 ## Outcome
 
 Detect whether the current public OpenDART development guide would change the
-generated OpenAPI contract. The weekly job reports evidence only; it never
-edits the specification, creates a pull request, or publishes a release.
+generated OpenAPI contract. The planned weekly job will report evidence only;
+it will never edit the specification, create a pull request, or publish a
+release.
 
 This credential-free work is independent of authenticated
 [live conformance](live-conformance.md).
@@ -35,7 +36,8 @@ This credential-free work is independent of authenticated
   dynamic inventory cardinality, one attempt per page, and enforced request
   budgets.
 - [x] Add the drift command, narrow snapshot normalization, bounded versioned
-  report, and offline unchanged/change/error fixtures.
+  report, and offline fixtures for unchanged content, additions, removals,
+  multi-company changes, truncation, unsafe evidence, and processing errors.
 - [ ] Add isolated manual automation and notifier validation, then complete a
   supervised permissions and artifact review before scheduling.
 
@@ -86,7 +88,8 @@ This credential-free work is independent of authenticated
    can compare a temporary candidate with the committed baseline.
 2. **Complete.** Implement the drift command, request budget, versioned report,
    and offline fixtures for unchanged content, semantic additions and removals,
-   malformed sources, and processing failures.
+   multi-company changes, truncation, unsafe evidence, malformed sources, and
+   processing failures.
 3. Add manual default-branch automation, bounded artifacts, and the isolated
    drift notifier. Test missing, oversized, invalid, and conclusion-inconsistent
    reports without trusting producer-controlled text.
