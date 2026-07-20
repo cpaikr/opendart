@@ -17,6 +17,7 @@ src/main.rs
 src/output.rs
 src/prepared.rs
 tests/binary_loopback.rs
+tests/common/mod.rs
 tests/discovery.rs
 tests/fixtures/invalid-invocation.json
 tests/fixtures/missing-api-key.json

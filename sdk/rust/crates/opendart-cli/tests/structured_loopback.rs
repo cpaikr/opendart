@@ -2,11 +2,13 @@
 
 #![cfg(opendart_compat)]
 
-use std::io::{self, Read, Write};
+mod common;
+
+use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::process::{Command, Output};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use serde_json::Value;
 
@@ -43,34 +45,13 @@ fn with_response(response: Vec<u8>, arguments: &[String]) -> Output {
     let listener = TcpListener::bind("127.0.0.1:0").expect("loopback listener");
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let mut stream = accept_within(&listener);
+        let mut stream = common::accept_within(&listener);
         assert_valid_request(&mut stream);
         stream.write_all(&response).expect("write fixture response");
     });
     let output = invoke(&origin, arguments);
     server.join().expect("fixture server should finish");
     output
-}
-
-fn accept_within(listener: &TcpListener) -> TcpStream {
-    listener
-        .set_nonblocking(true)
-        .expect("configure loopback listener");
-    let deadline = Instant::now() + Duration::from_secs(5);
-    let (stream, _) = loop {
-        match listener.accept() {
-            Ok(connection) => break connection,
-            Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
-                assert!(Instant::now() < deadline, "CLI never connected");
-                thread::sleep(Duration::from_millis(5));
-            }
-            Err(error) => panic!("accept CLI connection: {error}"),
-        }
-    };
-    stream
-        .set_nonblocking(false)
-        .expect("restore blocking fixture stream");
-    stream
 }
 
 fn http_response(content_type: &str, body: &[u8], extra_headers: &[(&str, &str)]) -> Vec<u8> {
@@ -247,7 +228,7 @@ fn timeout_incomplete_body_and_refused_connection_have_stable_classes() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let mut stream = accept_within(&listener);
+        let mut stream = common::accept_within(&listener);
         assert_valid_request(&mut stream);
         stream
             .write_all(
@@ -300,7 +281,7 @@ fn stdout_failure_after_structured_encoding_exits_without_a_replacement_document
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let mut stream = accept_within(&listener);
+        let mut stream = common::accept_within(&listener);
         assert_valid_request(&mut stream);
         stream
             .write_all(&http_response(

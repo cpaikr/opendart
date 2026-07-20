@@ -313,14 +313,7 @@ func checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSo
 			return &Error{Artifact: rustPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
 		}
 	}
-	for _, name := range lines {
-		for _, prefix := range []string{".github/", "compat/", "internal/", "openapi/", "target/"} {
-			if strings.HasPrefix(name, prefix) {
-				return &Error{Artifact: rustPackageListArtifact, Invariant: "excludes repository-private inputs", Detail: name}
-			}
-		}
-	}
-	return nil
+	return checkPackageInventoryPrivateInputs(rustPackageListArtifact, lines)
 }
 
 func checkRustCLIPackageInventory(packageListSource []byte) error {
@@ -338,6 +331,7 @@ func checkRustCLIPackageInventory(packageListSource []byte) error {
 		"src/generated/dispatch.rs",
 		"src/main.rs",
 		"tests/binary_loopback.rs",
+		"tests/common/mod.rs",
 		"tests/discovery.rs",
 		"tests/fixtures/invalid-invocation.json",
 		"tests/fixtures/missing-api-key.json",
@@ -348,10 +342,14 @@ func checkRustCLIPackageInventory(packageListSource []byte) error {
 			return &Error{Artifact: rustCLIPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
 		}
 	}
+	return checkPackageInventoryPrivateInputs(rustCLIPackageListArtifact, lines)
+}
+
+func checkPackageInventoryPrivateInputs(artifact string, lines []string) error {
 	for _, name := range lines {
 		for _, prefix := range []string{".github/", "compat/", "internal/", "openapi/", "target/"} {
 			if strings.HasPrefix(name, prefix) {
-				return &Error{Artifact: rustCLIPackageListArtifact, Invariant: "excludes repository-private inputs", Detail: name}
+				return &Error{Artifact: artifact, Invariant: "excludes repository-private inputs", Detail: name}
 			}
 		}
 	}
