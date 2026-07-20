@@ -147,7 +147,7 @@ func runBundle(args []string, stdout, stderr io.Writer) int {
 
 type verificationRunner func(string) (verification.Report, error)
 
-type sdkGenerationRunner func(string, string) (sdkgen.Report, error)
+type sdkGenerationRunner func(string, sdkgen.RustOutputs) (sdkgen.Report, error)
 
 func runGenerateSDK(args []string, stdout, stderr io.Writer) int {
 	return runGenerateSDKWith(args, stdout, stderr, sdkgen.GenerateRust)
@@ -159,6 +159,7 @@ func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGener
 	language := flags.String("language", "", "SDK language (rust)")
 	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
 	output := flags.String("output", "", "owned generated source directory")
+	cliOutput := flags.String("cli-output", "", "owned generated CLI source directory")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -171,7 +172,10 @@ func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGener
 	if strings.TrimSpace(*output) == "" {
 		return writeCommandError(stderr, "generate-sdk", errors.New("--output is required"), 2)
 	}
-	report, err := runner(*root, *output)
+	if strings.TrimSpace(*cliOutput) == "" {
+		return writeCommandError(stderr, "generate-sdk", errors.New("--cli-output is required"), 2)
+	}
+	report, err := runner(*root, sdkgen.RustOutputs{SDK: *output, CLI: *cliOutput})
 	if err != nil {
 		return writeCommandError(stderr, "generate-sdk", err, 1)
 	}
@@ -516,7 +520,7 @@ func usage(output io.Writer) error {
 		"  catalog        validate generated catalog and reference invariants",
 		"  lint           apply strict OpenAPI policy",
 		"  bundle         write the portable OpenAPI bundle",
-		"  generate-sdk   generate one owned language SDK source subtree",
+		"  generate-sdk   generate the owned Rust SDK and CLI source trees",
 		"  verify         run credential-free repository verification",
 		"  live-conformance  run the reviewed live matrix (use --preflight-only offline)",
 		"  live-conformance-notify  update the isolated live failure issue",

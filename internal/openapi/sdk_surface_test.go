@@ -34,7 +34,7 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 	physical := make(map[string]bool, len(surface.Operations))
 	logical := make(map[string]bool)
 	for _, operation := range surface.Operations {
-		if operation.OperationID == "" || operation.LogicalOperationID == "" || operation.Path == "" || operation.Method == "" {
+		if operation.OperationID == "" || operation.LogicalOperationID == "" || operation.Path == "" || operation.Method == "" || operation.Description == "" {
 			t.Fatalf("incomplete operation identity: %#v", operation)
 		}
 		if operation.GuideURL == "" || operation.SourceCheckedAt == "" {
@@ -49,7 +49,7 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 			t.Fatalf("missing security or response routing for %s", operation.OperationID)
 		}
 		for _, parameter := range operation.Parameters {
-			if parameter.Name == "" || parameter.Location == "" || !parameter.HasSchema {
+			if parameter.Name == "" || parameter.Location == "" || parameter.Description == "" || !parameter.HasSchema {
 				t.Fatalf("incomplete parameter evidence for %s: %#v", operation.OperationID, parameter)
 			}
 		}
