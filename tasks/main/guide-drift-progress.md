@@ -9,9 +9,9 @@ Update it in place and keep authorization-gated actions explicit.
   non-stacked pull requests and never targets `main`.
 - Ordered work 2 was reviewed in PR #31 and merged into `dev` with its commits
   preserved.
-- Ordered work 3 implements the manual trusted-main producer, attempt-scoped
-  bounded artifact, isolated notifier, and credential-free workflow-policy
-  checks on `feat/guide-drift-automation`.
+- Ordered work 3 implements and validates the manual trusted-main producer,
+  attempt-scoped bounded artifact, isolated notifier, and credential-free
+  workflow-policy checks on `feat/guide-drift-automation`.
 - No workflow has been dispatched, no external issue has been written, and no
   schedule has been enabled.
 
@@ -39,8 +39,11 @@ Update it in place and keep authorization-gated actions explicit.
 - `go vet ./...` passes.
 - `go run ./cmd/opendart-tool verify --repository-root .` passes all phases.
 - `git diff --check` passes.
-- Focused notifier, workflow-policy, and CLI tests pass. Full repository
-  validation and the required security-focused code review are pending.
+- `go test -race ./...`, `go vet ./...`, credential-free repository
+  verification, and `git diff --check` pass.
+- The required security-focused code review is complete. Its bounded issue-body
+  finding was fixed with complete-line omission and an explicit shown count;
+  the decoder-valid oversized-identifier regression test passes.
 
 ## Blockers
 
@@ -48,6 +51,6 @@ None.
 
 ## Next action
 
-Finish validation and review, then merge the ordered-work-3 PR into `dev` with
-its commits preserved. Stop before workflow dispatch, external issue writes, or
-schedule enablement; ordered work 4 remains authorization-gated.
+Review and merge the ordered-work-3 PR into `dev` with its commits preserved.
+Stop before workflow dispatch, external issue writes, or schedule enablement;
+ordered work 4 remains authorization-gated.
