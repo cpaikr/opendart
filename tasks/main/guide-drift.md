@@ -27,8 +27,12 @@ This credential-free work is independent of authenticated
   fail closed.
 - The offline drift command generates and structurally validates a temporary
   candidate, normalizes only snapshot metadata, and emits a bounded versioned
-  semantic report. No drift workflow, schedule, or issue automation is
-  committed.
+  semantic report.
+- Manual-only default-branch automation uploads exactly that bounded report.
+  A separate notifier validates the report, substitutes fixed trusted failure
+  state when necessary, and updates one marker-owned drift issue. Workflow
+  policy is enforced offline. No workflow has been dispatched, no issue has
+  been written, and no schedule is enabled.
 
 ## Implementation checklist
 
@@ -38,8 +42,8 @@ This credential-free work is independent of authenticated
 - [x] Add the drift command, narrow snapshot normalization, bounded versioned
   report, and offline fixtures for unchanged content, additions, removals,
   multi-company changes, truncation, unsafe evidence, and processing errors.
-- [ ] Add isolated manual automation and notifier validation, then complete a
-  supervised permissions and artifact review before scheduling.
+- [x] Add isolated manual automation, notifier validation, bounded artifacts,
+  and credential-free workflow-policy verification.
 
 ## Constraints
 
@@ -90,9 +94,9 @@ This credential-free work is independent of authenticated
    and offline fixtures for unchanged content, semantic additions and removals,
    multi-company changes, truncation, unsafe evidence, malformed sources, and
    processing failures.
-3. Add manual default-branch automation, bounded artifacts, and the isolated
-   drift notifier. Test missing, oversized, invalid, and conclusion-inconsistent
-   reports without trusting producer-controlled text.
+3. **Complete.** Add manual default-branch automation, bounded artifacts, and
+   the isolated drift notifier. Test missing, oversized, invalid, and
+   conclusion-inconsistent reports without trusting producer-controlled text.
 4. Run one supervised check, inspect its permissions and artifacts, then enable
    the weekly schedule.
 
@@ -123,6 +127,7 @@ This credential-free work is independent of authenticated
 
 ## Next action
 
-Add manual default-branch automation, the bounded report artifact, isolated
-drift notifier, and offline workflow-policy verification. Do not dispatch the
-workflow, write a GitHub issue, or enable scheduling.
+Authorization-gated: run one supervised manual default-branch check and inspect
+its permissions, bounded artifact, and issue behavior. Enable a weekly schedule
+only after that separate review and authorization. Do not dispatch the workflow,
+write a GitHub issue, or enable scheduling in the completed work-3 slice.
