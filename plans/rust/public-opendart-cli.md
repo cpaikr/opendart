@@ -14,19 +14,18 @@ without duplicating endpoint contracts or adding a second output notation.
   accepts the separate public CLI, shared-generator, typed-response,
   agent-output, credential, and independent-release decisions.
 - The [target architecture](../../docs/rust-cli/architecture.md) and
-  [public contract](../../docs/rust-cli/public-contract.md) define the target
-  module seams and user-visible behavior. No CLI crate exists yet.
+  [public contract](../../docs/rust-cli/public-contract.md) define the
+  implemented module seams and user-visible behavior.
 - The `opendart` SDK already provides complete generated logical operations,
   representation-specific typed responses, one-attempt client execution,
   sanitized metadata, replaying binary streams, and optional source-faithful
   JSON serialization.
-- The private Go model already owns logical/physical identity, Rust names,
-  parameters, constraints, representations, guide identity, and response
-  shapes. It does not yet provide CLI presentation metadata or independently
-  checksummed SDK and CLI projections.
-- The Rust workspace currently contains only `opendart`. Its generated mapping
-  is private and test-only, so CLI completeness and dispatch must be generated
-  from the private model rather than discovered from the SDK at runtime.
+- The private Go model owns logical/physical identity, Rust names, parameters,
+  constraints, representations, guide identity, response shapes, CLI
+  presentation metadata, and independently checksummed SDK and CLI projections.
+- The Rust workspace contains `opendart` and the binary-only `opendart-cli`.
+  CLI completeness and typed dispatch are generated from the private model
+  rather than discovered from the SDK at runtime.
 - Registry availability checks are dated evidence, not reservations. Recheck
   both package names immediately before any authorized publication.
 - The output decision has been narrowed to compact JSON only. SDK-owned direct
@@ -378,7 +377,7 @@ provenance points to the immutable reviewed revision.
   CLI no-default/MSRV coverage, exact SDK and CLI package inventories, workspace
   package dry runs, bounded process fixtures, and a strictly dual-gated
   read-only structured/binary live smoke path extend the credential-free gate.
-- CLI roadmap Work 7 is implemented in the current delivery slice. The CLI
+- CLI roadmap Work 7 is merged on `rust`. The CLI
   source package includes its lockfile and release documentation, clean locked
   source installs run on Linux, macOS, and Windows, and Release Please owns an
   independent CLI version, changelog, tag, and workspace-lock entry. The SDK
@@ -392,8 +391,8 @@ provenance points to the immutable reviewed revision.
 
 ## Next action
 
-After CLI roadmap Work 7 passes review and merges, pause this plan. The separate
-public Rust SDK release plan's Work 6 ("crates.io publication") remains
+This plan is paused after the reviewed Work 7 merge. The separate public Rust
+SDK release plan's Work 6 ("crates.io publication") remains
 unimplemented and is not authorized by this delivery. Resume that work only
 through a separately authorized delivery, publish and verify `opendart`, then
 return here for CLI roadmap Work 8 through another explicit authorization. Do
