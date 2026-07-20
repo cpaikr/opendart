@@ -1,8 +1,8 @@
-# OpenDART CLI target architecture
+# OpenDART CLI architecture
 
-This is the approved target shape for the planned public Rust CLI. The current
-repository architecture is documented in [the root architecture](../../ARCHITECTURE.md),
-and implementation status lives only in the
+This is the implemented source-distribution architecture for the public Rust
+CLI. The repository-wide view is documented in
+[the root architecture](../../ARCHITECTURE.md), and delivery status lives in the
 [CLI plan](../../plans/rust/public-opendart-cli.md).
 
 ## Purpose and boundaries
@@ -156,7 +156,8 @@ second public model.
 - `sdk/rust/crates/opendart-cli/tests` — process-level contract, loopback, and
   opt-in live smoke tests.
 
-These paths describe the target starting points, not current implementation.
+These are the current ownership boundaries; generated subtrees remain
+generator-owned and handwritten runtime code remains crate-owned.
 
 ## Invariants
 
@@ -197,3 +198,4 @@ These paths describe the target starting points, not current implementation.
 - [Public CLI contract](public-contract.md)
 - [Rust SDK public contract](../rust-sdk/public-contract.md)
 - [Rust SDK generation](../rust-sdk/generation.md)
+- [CLI verification and release](verification-and-release.md)

@@ -89,16 +89,18 @@ SDK projection, generator schema, and applicable specification release.
 Release Please owns independent components:
 
 - root `vX.Y.Z` tags and `CHANGELOG.md` for the OpenAPI bundle; and
-- `opendart-vX.Y.Z` tags and the crate changelog/version for the Rust SDK.
+- `opendart-vX.Y.Z` tags and the crate changelog/version for the Rust SDK; and
+- `opendart-cli-vX.Y.Z` tags and the crate changelog/version for the Rust CLI.
 
-The `opendart-cli` crate is an unreleased third component. Work 7 owns its
-independent version, changelog, and tag configuration; the current Release
-Please configuration does not prepare or publish CLI releases.
+The SDK and CLI components update separate workspace-lock entries. SDK version
+proposals also update the CLI's exact local SDK pin for workspace resolution
+without changing the CLI version or changelog.
 
-Rust changes are excluded from root release eligibility. The Rust component is
-configured to prepare a draft component release and keep the crate manifest and
-workspace lock aligned. This repository does not yet authorize `cargo publish`;
-registry publication and post-publication verification belong to work 6.
+Rust changes are excluded from root release eligibility. Both Rust components
+are configured for independent draft proposals, but remain absent from the
+released-version manifest until their guarded publication flows exist. This
+repository does not yet authorize `cargo publish`: SDK publication belongs to
+SDK work 6, after which CLI work 8 may publish the dependent source package.
 
 ### Focused live probes
 
@@ -153,7 +155,8 @@ OpenDART origin.
   subtree.
 - `internal/verification` coordinates repository verification, while
   `internal/releaseguard` enforces workflow, package, provenance, and release
-  policy.
+  policy. `internal/crateverification` compares local candidate and accepted
+  Rust crate artifacts without network or publication authority.
 - `internal/multicompanyprobe`, `internal/auditorprobe`, and
   `internal/liveprobe` own focused credentialed evidence collection.
 - `internal/liveconformance` owns the canonical case registry, bounded
@@ -193,13 +196,12 @@ migration to private Go repository tooling. [ADR 0002](docs/decisions/0002-publi
 accepts the first-party Rust SDK boundary. Current packaging and the remaining
 publication/adoption work are tracked in the [public Rust SDK task](tasks/rust/public-rust-sdk.md).
 
-[ADR 0003](docs/decisions/0003-agent-first-opendart-cli.md) accepts a planned
+[ADR 0003](docs/decisions/0003-agent-first-opendart-cli.md) accepts the
 agent-first public CLI that consumes the SDK through generated typed dispatch.
-Its [target architecture](docs/rust-cli/architecture.md),
+Its [architecture](docs/rust-cli/architecture.md),
 [public contract](docs/rust-cli/public-contract.md), and
-[implementation plan](plans/rust/public-opendart-cli.md) record the accepted
-direction and remaining product decisions, not current runtime state. The CLI
-enters the product boundary and system map only after implementation.
+[implementation plan](plans/rust/public-opendart-cli.md) record the implemented
+source-distribution boundary and the remaining publication decision.
 
 [guide drift](tasks/main/guide-drift.md) owns credential-free acquisition and
 semantic-comparison work. Drift-safe acquisition is implemented; the command,

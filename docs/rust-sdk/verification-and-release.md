@@ -63,6 +63,8 @@ The repository has independent release components:
 
 1. The canonical bundle uses root `vX.Y.Z` tags.
 2. The `opendart` crate uses `opendart-vX.Y.Z` tags and Rust API SemVer.
+3. The `opendart-cli` crate uses `opendart-cli-vX.Y.Z` tags and CLI contract
+   SemVer.
 
 They may release from the same commit but do not share a version by rule. A
 crate package identifies:
@@ -102,22 +104,22 @@ request behavior, not only the source OpenAPI label.
 ## Release Please boundary
 
 The specification component is rooted at `openapi/generated`, so repository and
-SDK commits cannot create a specification release. The separate Rust-aware
-component is rooted at `sdk/rust/crates/opendart`, owns its `Cargo.toml` and `CHANGELOG.md`, uses
-component-qualified tags, and updates the matching `opendart` entry in the
-workspace lock through an explicit TOML extra file.
+Rust commits cannot create a specification release. Separate Rust-aware
+components are rooted at `sdk/rust/crates/opendart` and
+`sdk/rust/crates/opendart-cli`; each owns its `Cargo.toml`, `CHANGELOG.md`,
+component-qualified tags, and matching workspace-lock entry. The SDK component
+also updates the CLI's marked exact local SDK pin without bumping the CLI
+version or changelog.
 
-Before its first release, the Rust path is intentionally absent from
-`.release-please-manifest.json`. Release Please proposes bootstrapping the
-component at `0.1.0`, but the repository guard rejects that manifest transition
-until work 6 implements the complete publication and recovery flow. Therefore a
-Rust Release Please PR must not be merged before work 6; the same guard also
-stops the release workflow if such a merge bypasses the required PR check.
+Before their first releases, both Rust paths are intentionally absent from
+`.release-please-manifest.json`. The repository guard rejects either bootstrap
+until its complete publication and recovery flow exists. The SDK must complete
+work 6 first; only then may the CLI plan resume at work 8.
 
-The current Release Please workflow still finalizes only the specification
-release assets. A Rust component can prepare a draft release proposal, but no
-workflow has crates.io credentials or runs `cargo publish`. Path-qualified
-specification outputs never authorize Rust publication.
+The current Release Please workflow still finalizes only specification release
+assets. Rust components can prepare independent proposals, but no workflow has
+crates.io credentials or runs `cargo publish`. Path-qualified outputs for one
+component never authorize another component's publication.
 
 ## Work 6: crates.io publication
 

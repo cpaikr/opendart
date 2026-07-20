@@ -1,7 +1,10 @@
 .cargo_vcs_info.json
+CHANGELOG.md
 Cargo.lock
 Cargo.toml
 Cargo.toml.orig
+LICENSE
+README.md
 src/app.rs
 src/artifact.rs
 src/command.rs
