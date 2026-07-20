@@ -2,7 +2,7 @@
 // cli-generator-schema: 1
 // cli-projection-sha256: a316ea1c2b35591f462399e53f1161769d0a12968661987ca1d1d5d80216b107
 
-use crate::discovery::{FlagSpec, InvocationSpec, OperationSpec, OutputSpec, RepresentationSpec, ResponseField, ResponseShape, GLOBAL_FLAGS};
+use crate::discovery::{CALL_FLAGS, FlagSpec, InvocationSpec, OperationSpec, OutputSpec, RepresentationSpec, ResponseField, ResponseShape};
 
 pub(crate) const OPERATIONS: &[OperationSpec] = &[
     OperationSpec {
@@ -13,7 +13,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020009",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{d68c}\u{acc4}\u{ac10}\u{c0ac}\u{c778}\u{c758} \u{ba85}\u{ce6d} \u{bc0f} \u{ac10}\u{c0ac}\u{c758}\u{acac}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "accnut-adtor-nm-nd-adt-opinion"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -32,7 +32,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020011",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{d68c}\u{acc4}\u{ac10}\u{c0ac}\u{c778}\u{acfc}\u{c758} \u{be44}\u{ac10}\u{c0ac}\u{c6a9}\u{c5ed} \u{acc4}\u{c57d}\u{ccb4}\u{acb0} \u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "accnut-adtor-non-adt-servc-cncls-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -51,7 +51,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020010",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{ac10}\u{c0ac}\u{c6a9}\u{c5ed}\u{ccb4}\u{acb0}\u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "adt-servc-cncls-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -70,7 +70,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019005",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{bc30}\u{b2f9}\u{c5d0} \u{ad00}\u{d55c} \u{c0ac}\u{d56d}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "alot-matter"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -89,7 +89,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020018",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c790}\u{c0b0}\u{c591}\u{c218}\u{b3c4}(\u{ae30}\u{d0c0}), \u{d48b}\u{bc31}\u{c635}\u{c158}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "ast-inhtrf-etc-ptbk-opt"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -108,7 +108,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS006&apiId=2020055",
         description: "\u{c99d}\u{ad8c}\u{c2e0}\u{ace0}\u{c11c}(\u{cc44}\u{bb34}\u{c99d}\u{ad8c}) \u{b0b4}\u{c5d0} \u{c694}\u{c57d} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "bd-rs"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -127,7 +127,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020034",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c2e0}\u{c8fc}\u{c778}\u{c218}\u{ad8c}\u{bd80}\u{c0ac}\u{cc44}\u{ad8c} \u{bc1c}\u{d589}\u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "bdwt-is-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -146,7 +146,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020027",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{cc44}\u{ad8c}\u{c740}\u{d589} \u{b4f1}\u{c758} \u{ad00}\u{b9ac}\u{c808}\u{cc28} \u{ac1c}\u{c2dc}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "bnk-mngt-pcbg"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -165,7 +165,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020036",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{cc44}\u{ad8c}\u{c740}\u{d589} \u{b4f1}\u{c758} \u{ad00}\u{b9ac}\u{c808}\u{cc28} \u{c911}\u{b2e8}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "bnk-mngt-pcsp"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -184,7 +184,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020042",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c601}\u{c5c5}\u{c591}\u{c218} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "bsn-inh-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -203,7 +203,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020020",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c601}\u{c5c5}\u{c815}\u{c9c0}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "bsn-sp"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -222,7 +222,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020043",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c601}\u{c5c5}\u{c591}\u{b3c4} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "bsn-trf-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -241,7 +241,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020051",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d68c}\u{c0ac}\u{bd84}\u{d560} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "cmp-dv-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -260,7 +260,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020052",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d68c}\u{c0ac}\u{bd84}\u{d560}\u{d569}\u{bcd1} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "cmp-dvmg-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -279,7 +279,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020050",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d68c}\u{c0ac}\u{d569}\u{bcd1} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "cmp-mg-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -298,7 +298,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020008",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c870}\u{ac74}\u{bd80} \u{c790}\u{bcf8}\u{c99d}\u{ad8c} \u{bbf8}\u{c0c1}\u{d658} \u{c794}\u{c561}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "cndl-capl-scrits-nrdmp-blce"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -317,7 +317,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019002",
         description: "DART\u{c5d0} \u{b4f1}\u{b85d}\u{b418}\u{c5b4}\u{c788}\u{b294} \u{ae30}\u{c5c5}\u{c758} \u{ac1c}\u{d669}\u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "company"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
         ],
@@ -334,7 +334,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019018",
         description: "DART\u{c5d0} \u{b4f1}\u{b85d}\u{b418}\u{c5b4}\u{c788}\u{b294} \u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638},\u{d68c}\u{c0ac}\u{ba85},\u{c885}\u{baa9}\u{cf54}\u{b4dc}, \u{cd5c}\u{adfc}\u{bcc0}\u{acbd}\u{c77c}\u{c790}\u{b97c} \u{d30c}\u{c77c}\u{b85c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "corp-code"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
         ],
         representations: &[
@@ -349,7 +349,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020006",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{d68c}\u{c0ac}\u{cc44} \u{bbf8}\u{c0c1}\u{d658} \u{c794}\u{c561}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "cprnd-nrdmp-blce"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -368,7 +368,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020026",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{ac10}\u{c790} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "cr-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -387,7 +387,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020021",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d68c}\u{c0dd}\u{c808}\u{cc28} \u{ac1c}\u{c2dc}\u{c2e0}\u{ccad}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "ctrcvs-bgrq"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -406,7 +406,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020033",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c804}\u{d658}\u{c0ac}\u{cc44}\u{ad8c} \u{bc1c}\u{d589}\u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "cvbd-is-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -425,7 +425,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020003",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{cc44}\u{bb34}\u{c99d}\u{ad8c} \u{bc1c}\u{d589}\u{c2e4}\u{c801}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "det-scrits-isu-acmslt"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -444,7 +444,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020019",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{bd80}\u{b3c4}\u{bc1c}\u{c0dd}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "df-ocr"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -463,7 +463,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019003",
         description: "\u{acf5}\u{c2dc}\u{bcf4}\u{ace0}\u{c11c} \u{c6d0}\u{bcf8}\u{d30c}\u{c77c}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "document"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--rcept-no", id: "rcept_no", sdk_field: "rcept_no", description: "\u{c811}\u{c218}\u{bc88}\u{d638}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
         ],
@@ -479,7 +479,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020014",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c774}\u{c0ac}\u{b7}\u{ac10}\u{c0ac} \u{c804}\u{ccb4}\u{c758} \u{bcf4}\u{c218}\u{d604}\u{d669}(\u{c8fc}\u{c8fc}\u{cd1d}\u{d68c} \u{c2b9}\u{c778}\u{ae08}\u{c561})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "drctr-adt-all-mendng-sttus-gmtsck-confm-amount"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -498,7 +498,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020015",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c774}\u{c0ac}\u{b7}\u{ac10}\u{c0ac} \u{c804}\u{ccb4}\u{c758} \u{bcf4}\u{c218}\u{d604}\u{d669}(\u{bcf4}\u{c218}\u{c9c0}\u{ae09}\u{ae08}\u{c561} - \u{c720}\u{d615}\u{bcc4})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "drctr-adt-all-mendng-sttus-mendng-pymntamt-ty-cl"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -517,7 +517,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020022",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d574}\u{c0b0}\u{c0ac}\u{c720} \u{bc1c}\u{c0dd}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "ds-rs-ocr"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -536,7 +536,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS006&apiId=2020059",
         description: "\u{c99d}\u{ad8c}\u{c2e0}\u{ace0}\u{c11c}(\u{bd84}\u{d560}) \u{b0b4}\u{c5d0} \u{c694}\u{c57d} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "dv-rs"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -555,7 +555,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS004&apiId=2019022",
         description: "\u{c784}\u{c6d0}\u{318d}\u{c8fc}\u{c694}\u{c8fc}\u{c8fc}\u{d2b9}\u{c815}\u{c99d}\u{ad8c}\u{b4f1} \u{c18c}\u{c720}\u{c0c1}\u{d669}\u{bcf4}\u{ace0}\u{c11c} \u{b0b4}\u{c5d0} \u{c784}\u{c6d0}\u{318d}\u{c8fc}\u{c694}\u{c8fc}\u{c8fc} \u{c18c}\u{c720}\u{bcf4}\u{ace0}\n\u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "elestock"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
         ],
@@ -572,7 +572,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019011",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c9c1}\u{c6d0} \u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "emp-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -591,7 +591,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020004",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{ae30}\u{c5c5}\u{c5b4}\u{c74c}\u{c99d}\u{ad8c} \u{bbf8}\u{c0c1}\u{d658} \u{c794}\u{c561}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "entrprs-bil-scrits-nrdmp-blce"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -610,7 +610,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS006&apiId=2020054",
         description: "\u{c99d}\u{ad8c}\u{c2e0}\u{ace0}\u{c11c}(\u{c9c0}\u{bd84}\u{c99d}\u{ad8c}) \u{b0b4}\u{c5d0} \u{c694}\u{c57d} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "estk-rs"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -629,7 +629,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020035",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{ad50}\u{d658}\u{c0ac}\u{cc44}\u{ad8c} \u{bc1c}\u{d589}\u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "exbd-is-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -648,7 +648,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019010",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c784}\u{c6d0} \u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "exctv-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -667,7 +667,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS006&apiId=2020058",
         description: "\u{c99d}\u{ad8c}\u{c2e0}\u{ace0}\u{c11c}(\u{c8fc}\u{c2dd}\u{c758}\u{d3ec}\u{ad04}\u{c801}\u{ad50}\u{d658}\u{b7}\u{c774}\u{c804}) \u{b0b4}\u{c5d0} \u{c694}\u{c57d} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "extr-rs"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -686,7 +686,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2022002",
         description: "\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c720}\u{ac00}\u{c99d}\u{ad8c}, \u{cf54}\u{c2a4}\u{b2e5}) \u{bc0f} \u{c8fc}\u{c694} \u{be44}\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c0ac}\u{c5c5}\u{bcf4}\u{ace0}\u{c11c} \u{c81c}\u{cd9c}\u{b300}\u{c0c1} & IFRS \u{c801}\u{c6a9})\u{c774} \u{c81c}\u{cd9c}\u{d55c} \u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} \u{b0b4}\u{c5d0} XBRL\u{c7ac}\u{bb34}\u{c81c}\u{d45c}\u{c758} \u{c8fc}\u{c694} \u{c7ac}\u{bb34}\u{c9c0}\u{d45c}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.(\u{b300}\u{c0c1}\u{bc95}\u{c778} \u{bcf5}\u{c218}\u{c870}\u{d68c} \u{ac00}\u{b2a5})",
         invocation: InvocationSpec { argv_prefix: &["call", "fnltt-cmpny-indx"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string_list", occurrence: "repeat", min_items: Some(1), max_items: Some(100) },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2023\u{b144} 3\u{bd84}\u{ae30} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -706,7 +706,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2019017",
         description: "\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c720}\u{ac00}\u{c99d}\u{ad8c}, \u{cf54}\u{c2a4}\u{b2e5}) \u{bc0f} \u{c8fc}\u{c694} \u{be44}\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c0ac}\u{c5c5}\u{bcf4}\u{ace0}\u{c11c} \u{c81c}\u{cd9c}\u{b300}\u{c0c1} & IFRS \u{c801}\u{c6a9})\u{c774} \u{c81c}\u{cd9c}\u{d55c} \u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} \u{b0b4}\u{c5d0} XBRL\u{c7ac}\u{bb34}\u{c81c}\u{d45c}\u{c758} \u{c8fc}\u{c694}\u{acc4}\u{c815}\u{acfc}\u{baa9}(\u{c7ac}\u{bb34}\u{c0c1}\u{d0dc}\u{d45c}, \u{c190}\u{c775}\u{acc4}\u{c0b0}\u{c11c})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.\n(\u{b300}\u{c0c1}\u{bc95}\u{c778} \u{bcf5}\u{c218}\u{c870}\u{d68c} \u{bcf5}\u{c218}\u{c870}\u{d68c} \u{ac00}\u{b2a5})",
         invocation: InvocationSpec { argv_prefix: &["call", "fnltt-multi-acnt"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string_list", occurrence: "repeat", min_items: Some(1), max_items: Some(100) },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -725,7 +725,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2019016",
         description: "\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c720}\u{ac00}\u{c99d}\u{ad8c}, \u{cf54}\u{c2a4}\u{b2e5}) \u{bc0f} \u{c8fc}\u{c694} \u{be44}\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c0ac}\u{c5c5}\u{bcf4}\u{ace0}\u{c11c} \u{c81c}\u{cd9c}\u{b300}\u{c0c1} & IFRS \u{c801}\u{c6a9})\u{c774} \u{c81c}\u{cd9c}\u{d55c} \u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} \u{b0b4}\u{c5d0} XBRL\u{c7ac}\u{bb34}\u{c81c}\u{d45c}\u{c758} \u{c8fc}\u{c694}\u{acc4}\u{c815}\u{acfc}\u{baa9}(\u{c7ac}\u{bb34}\u{c0c1}\u{d0dc}\u{d45c}, \u{c190}\u{c775}\u{acc4}\u{c0b0}\u{c11c})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "fnltt-singl-acnt"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -744,7 +744,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2019020",
         description: "\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c720}\u{ac00}\u{c99d}\u{ad8c}, \u{cf54}\u{c2a4}\u{b2e5}) \u{bc0f} \u{c8fc}\u{c694} \u{be44}\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c0ac}\u{c5c5}\u{bcf4}\u{ace0}\u{c11c} \u{c81c}\u{cd9c}\u{b300}\u{c0c1} & IFRS \u{c801}\u{c6a9})\u{c774} \u{c81c}\u{cd9c}\u{d55c} \u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} \u{b0b4}\u{c5d0} XBRL\u{c7ac}\u{bb34}\u{c81c}\u{d45c}\u{c758} \u{baa8}\u{b4e0}\u{acc4}\u{c815}\u{acfc}\u{baa9}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "fnltt-singl-acnt-all"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -764,7 +764,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2022001",
         description: "\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c720}\u{ac00}\u{c99d}\u{ad8c}, \u{cf54}\u{c2a4}\u{b2e5}) \u{bc0f} \u{c8fc}\u{c694} \u{be44}\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c0ac}\u{c5c5}\u{bcf4}\u{ace0}\u{c11c} \u{c81c}\u{cd9c}\u{b300}\u{c0c1} & IFRS \u{c801}\u{c6a9})\u{c774} \u{c81c}\u{cd9c}\u{d55c} \u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} \u{b0b4}\u{c5d0} XBRL\u{c7ac}\u{bb34}\u{c81c}\u{d45c}\u{c758} \u{c8fc}\u{c694} \u{c7ac}\u{bb34}\u{c9c0}\u{d45c}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "fnltt-singl-indx"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2023\u{b144} 3\u{bd84}\u{ae30} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -784,7 +784,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2019019",
         description: "\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c720}\u{ac00}\u{c99d}\u{ad8c}, \u{cf54}\u{c2a4}\u{b2e5}) \u{bc0f} \u{c8fc}\u{c694} \u{be44}\u{c0c1}\u{c7a5}\u{bc95}\u{c778}(\u{c0ac}\u{c5c5}\u{bcf4}\u{ace0}\u{c11c} \u{c81c}\u{cd9c}\u{b300}\u{c0c1} & IFRS \u{c801}\u{c6a9})\u{c774} \u{c81c}\u{cd9c}\u{d55c} \u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} \u{b0b4}\u{c5d0} XBRL\u{c7ac}\u{bb34}\u{c81c}\u{d45c}\u{c758} \u{c6d0}\u{bcf8}\u{d30c}\u{c77c}(XBRL)\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "fnltt-xbrl"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--rcept-no", id: "rcept_no", sdk_field: "rcept_no", description: "\u{c811}\u{c218}\u{bc88}\u{d638}\n\u{203b} \u{c870}\u{d68c}\u{bc29}\u{bc95} : \u{acf5}\u{c2dc}\u{ac80}\u{c0c9}API \u{d638}\u{cd9c} > \u{c751}\u{b2f5}\u{c694}\u{ccad} \u{ac12} rcept_no \u{cd94}\u{cd9c}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--reprt-code", id: "reprt_code", sdk_field: "reprt_code", description: "1\u{bd84}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} : 11013\n\u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} : 11012\n3\u{bd84}\u{ae30}\u{bcf4}\u{ace0}\u{c11c} : 11014\n\u{c0ac}\u{c5c5}\u{bcf4}\u{ace0}\u{c11c} : 11011", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -801,7 +801,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020024",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{bb34}\u{c0c1}\u{c99d}\u{c790} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "fric-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -820,7 +820,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019013",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c774}\u{c0ac}\u{b7}\u{ac10}\u{c0ac} \u{c804}\u{ccb4}\u{c758} \u{bcf4}\u{c218}\u{d604}\u{d669}(\u{bcf4}\u{c218}\u{c9c0}\u{ae09}\u{ae08}\u{c561} - \u{c774}\u{c0ac}\u{b7}\u{ac10}\u{c0ac} \u{c804}\u{ccb4})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "hmv-audit-all-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -839,7 +839,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019012",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c774}\u{c0ac}\u{b7}\u{ac10}\u{c0ac}\u{c758} \u{ac1c}\u{c778}\u{bcc4} \u{bcf4}\u{c218}\u{d604}\u{d669}(5\u{c5b5}\u{c6d0} \u{c774}\u{c0c1})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.\n\u{203b} 2026\u{b144} 4\u{c6d4}\u{ae4c}\u{c9c0} \u{c81c}\u{cd9c}\u{b41c} \u{bcf4}\u{ace0}\u{c11c}\u{d574}\u{b2f9}",
         invocation: InvocationSpec { argv_prefix: &["call", "hmv-audit-indvdl-by-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -858,7 +858,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2026001",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c774}\u{c0ac}\u{b7}\u{ac10}\u{c0ac}\u{c758} \u{ac1c}\u{c778}\u{bcc4} \u{bcf4}\u{c218}\u{d604}\u{d669}(5\u{c5b5}\u{c6d0} \u{c774}\u{c0c1})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.\n\u{203b} 2026\u{b144} 5\u{c6d4} \u{c774}\u{d6c4}\u{bd80}\u{d130} \u{c81c}\u{cd9c}\u{b41c} \u{bcf4}\u{ace0}\u{c11c}\u{d574}\u{b2f9}",
         invocation: InvocationSpec { argv_prefix: &["call", "hmv-audit-indvdl-by-sttus-v2"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2026\u{b144} 5\u{c6d4} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -877,7 +877,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019008",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{cd5c}\u{b300}\u{c8fc}\u{c8fc} \u{bcc0}\u{b3d9}\u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "hyslr-chg-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -896,7 +896,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019007",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{cd5c}\u{b300}\u{c8fc}\u{c8fc} \u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "hyslr-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -915,7 +915,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019014",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{ac1c}\u{c778}\u{bcc4} \u{bcf4}\u{c218}\u{c9c0}\u{ae09} \u{ae08}\u{c561}(5\u{c5b5}\u{c774}\u{c0c1} \u{c0c1}\u{c704}5\u{c778})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.\n\u{203b} 2026\u{b144} 4\u{c6d4}\u{ae4c}\u{c9c0} \u{c81c}\u{cd9c}\u{b41c} \u{bcf4}\u{ace0}\u{c11c}\u{d574}\u{b2f9}",
         invocation: InvocationSpec { argv_prefix: &["call", "indvdl-by-pay"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -934,7 +934,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2026002",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c774}\u{c0ac}\u{b7}\u{ac10}\u{c0ac}\u{c758} \u{ac1c}\u{c778}\u{bcc4} \u{bcf4}\u{c218}\u{d604}\u{d669}(5\u{c5b5}\u{c6d0} \u{c774}\u{c0c1})\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.\n\u{203b} 2026\u{b144} 5\u{c6d4} \u{c774}\u{d6c4}\u{bd80}\u{d130} \u{c81c}\u{cd9c}\u{b41c} \u{bcf4}\u{ace0}\u{c11c}\u{d574}\u{b2f9}",
         invocation: InvocationSpec { argv_prefix: &["call", "indvdl-by-pay-v2"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2026\u{b144} 5\u{c6d4} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -953,7 +953,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019004",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c99d}\u{c790}(\u{ac10}\u{c790}) \u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "irds-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -972,7 +972,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019001",
         description: "\u{acf5}\u{c2dc} \u{c720}\u{d615}\u{bcc4}, \u{d68c}\u{c0ac}\u{bcc4}, \u{b0a0}\u{c9dc}\u{bcc4} \u{b4f1} \u{c5ec}\u{b7ec}\u{ac00}\u{c9c0} \u{c870}\u{ac74}\u{c73c}\u{b85c} \u{acf5}\u{c2dc}\u{bcf4}\u{ace0}\u{c11c} \u{ac80}\u{c0c9}\u{ae30}\u{b2a5}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "list"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: false, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n1) \u{ae30}\u{bcf8}\u{ac12} : \u{c885}\u{b8cc}\u{c77c}(end_de)\n2) \u{ace0}\u{c720}\u{bc88}\u{d638}(corp_code)\u{ac00} \u{c5c6}\u{b294} \u{acbd}\u{c6b0} \u{ac80}\u{c0c9}\u{ae30}\u{ac04}\u{c740} 3\u{ac1c}\u{c6d4}\u{b85c} \u{c81c}\u{d55c}", required: false, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -999,7 +999,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020028",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c18c}\u{c1a1} \u{b4f1}\u{c758} \u{c81c}\u{ae30}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "lwst-lg"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1018,7 +1018,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS004&apiId=2019021",
         description: "\u{c8fc}\u{c2dd}\u{b4f1}\u{c758} \u{b300}\u{b7c9}\u{bcf4}\u{c720}\u{c0c1}\u{d669}\u{bcf4}\u{ace0}\u{c11c} \u{b0b4}\u{c5d0} \u{b300}\u{b7c9}\u{bcf4}\u{c720} \u{c0c1}\u{d669}\u{bcf4}\u{ace0} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "majorstock"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
         ],
@@ -1035,7 +1035,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS006&apiId=2020057",
         description: "\u{c99d}\u{ad8c}\u{c2e0}\u{ace0}\u{c11c}(\u{d569}\u{bcd1}) \u{b0b4}\u{c5d0} \u{c694}\u{c57d} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "mg-rs"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1054,7 +1054,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019009",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c18c}\u{c561}\u{c8fc}\u{c8fc} \u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "mrhl-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1073,7 +1073,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020007",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c2e0}\u{c885}\u{c790}\u{bcf8}\u{c99d}\u{ad8c} \u{bbf8}\u{c0c1}\u{d658} \u{c794}\u{c561}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "new-capl-scrits-nrdmp-blce"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1092,7 +1092,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020046",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d0c0}\u{bc95}\u{c778} \u{c8fc}\u{c2dd} \u{bc0f} \u{cd9c}\u{c790}\u{c99d}\u{ad8c} \u{c591}\u{c218}\u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "otcpr-stk-invscr-inh-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1111,7 +1111,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020047",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d0c0}\u{bc95}\u{c778} \u{c8fc}\u{c2dd} \u{bc0f} \u{cd9c}\u{c790}\u{c99d}\u{ad8c} \u{c591}\u{b3c4}\u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "otcpr-stk-invscr-trf-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1130,7 +1130,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019015",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{d0c0}\u{bc95}\u{c778} \u{cd9c}\u{c790}\u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "otr-cpr-invstmnt-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1149,7 +1149,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020012",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c0ac}\u{c678}\u{c774}\u{c0ac} \u{bc0f} \u{adf8} \u{bcc0}\u{b3d9}\u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "outcmpny-drctr-nd-change-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1168,7 +1168,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020032",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d574}\u{c678} \u{c99d}\u{ad8c}\u{c2dc}\u{c7a5} \u{c8fc}\u{ad8c}\u{b4f1} \u{c0c1}\u{c7a5}\u{d3d0}\u{c9c0}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "ov-dlst"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1187,7 +1187,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020030",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d574}\u{c678} \u{c99d}\u{ad8c}\u{c2dc}\u{c7a5} \u{c8fc}\u{ad8c}\u{b4f1} \u{c0c1}\u{c7a5}\u{d3d0}\u{c9c0} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "ov-dlst-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1206,7 +1206,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020031",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d574}\u{c678} \u{c99d}\u{ad8c}\u{c2dc}\u{c7a5} \u{c8fc}\u{ad8c}\u{b4f1} \u{c0c1}\u{c7a5}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "ov-lst"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1225,7 +1225,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020029",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{d574}\u{c678} \u{c99d}\u{ad8c}\u{c2dc}\u{c7a5} \u{c8fc}\u{ad8c}\u{b4f1} \u{c0c1}\u{c7a5} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "ov-lst-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1244,7 +1244,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020025",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c720}\u{bb34}\u{c0c1}\u{c99d}\u{c790} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "pifric-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1263,7 +1263,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020023",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c720}\u{c0c1}\u{c99d}\u{c790} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "piic-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1282,7 +1282,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020017",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c0ac}\u{baa8}\u{c790}\u{ae08}\u{c758} \u{c0ac}\u{c6a9}\u{b0b4}\u{c5ed}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "prvsrp-cptal-use-dtls"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1301,7 +1301,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020016",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{acf5}\u{baa8}\u{c790}\u{ae08}\u{c758} \u{c0ac}\u{c6a9}\u{b0b4}\u{c5ed}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "pssrp-cptal-use-dtls"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1320,7 +1320,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020005",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{b2e8}\u{ae30}\u{c0ac}\u{cc44} \u{bbf8}\u{c0c1}\u{d658} \u{c794}\u{c561}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "srtpd-psndbt-nrdmp-blce"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1339,7 +1339,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020053",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c8fc}\u{c2dd}\u{ad50}\u{d658}\u{b7}\u{c774}\u{c804} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "stk-extr-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1358,7 +1358,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS006&apiId=2020056",
         description: "\u{c99d}\u{ad8c}\u{c2e0}\u{ace0}\u{c11c}(\u{c99d}\u{ad8c}\u{c608}\u{d0c1}\u{c99d}\u{ad8c}) \u{b0b4}\u{c5d0} \u{c694}\u{c57d} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "stkdp-rs"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1377,7 +1377,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020048",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c8fc}\u{ad8c} \u{ad00}\u{b828} \u{c0ac}\u{cc44}\u{ad8c} \u{c591}\u{c218} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "stkrtbd-inh-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1396,7 +1396,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020049",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c8fc}\u{ad8c} \u{ad00}\u{b828} \u{c0ac}\u{cc44}\u{ad8c} \u{c591}\u{b3c4} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "stkrtbd-trf-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1415,7 +1415,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020002",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c2dd}\u{c758}\u{cd1d}\u{c218}\u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "stock-totqy-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1434,7 +1434,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019006",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{c790}\u{ae30}\u{c8fc}\u{c2dd} \u{cde8}\u{b4dd} \u{bc0f} \u{cc98}\u{bd84} \u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "tesstk-acqs-dsps-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1453,7 +1453,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020044",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c720}\u{d615}\u{c790}\u{c0b0} \u{c591}\u{c218} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "tgast-inh-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1472,7 +1472,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020045",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c720}\u{d615}\u{c790}\u{c0b0} \u{c591}\u{b3c4} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "tgast-trf-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1491,7 +1491,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020038",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c790}\u{ae30}\u{c8fc}\u{c2dd} \u{cde8}\u{b4dd} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "tsstk-aq-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1510,7 +1510,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020041",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c790}\u{ae30}\u{c8fc}\u{c2dd}\u{cde8}\u{b4dd} \u{c2e0}\u{d0c1}\u{acc4}\u{c57d} \u{d574}\u{c9c0} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "tsstk-aq-trctr-cc-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1529,7 +1529,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020040",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c790}\u{ae30}\u{c8fc}\u{c2dd}\u{cde8}\u{b4dd} \u{c2e0}\u{d0c1}\u{acc4}\u{c57d} \u{ccb4}\u{acb0} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "tsstk-aq-trctr-cns-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1548,7 +1548,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020039",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c790}\u{ae30}\u{c8fc}\u{c2dd} \u{cc98}\u{bd84} \u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "tsstk-dp-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1567,7 +1567,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2020013",
         description: "\u{c815}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}(\u{c0ac}\u{c5c5}, \u{bd84}\u{ae30}, \u{bc18}\u{ae30}\u{bcf4}\u{ace0}\u{c11c}) \u{b0b4}\u{c5d0} \u{bbf8}\u{b4f1}\u{ae30}\u{c784}\u{c6d0} \u{bcf4}\u{c218}\u{d604}\u{d669}\u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "unrst-exctv-mendng-sttus"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bsns-year", id: "bsns_year", sdk_field: "bsns_year", description: "\u{c0ac}\u{c5c5}\u{c5f0}\u{b3c4}(4\u{c790}\u{b9ac})\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1586,7 +1586,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS005&apiId=2020037",
         description: "\u{c8fc}\u{c694}\u{c0ac}\u{d56d}\u{bcf4}\u{ace0}\u{c11c}(\u{c0c1}\u{ac01}\u{d615} \u{c870}\u{ac74}\u{bd80}\u{c790}\u{bcf8}\u{c99d}\u{ad8c} \u{bc1c}\u{d589}\u{acb0}\u{c815}) \u{b0b4}\u{c5d0} \u{c8fc}\u{c694} \u{c815}\u{bcf4}\u{b97c} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "wd-cocobd-is-decsn"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--corp-code", id: "corp_code", sdk_field: "corp_code", description: "\u{acf5}\u{c2dc}\u{b300}\u{c0c1}\u{d68c}\u{c0ac}\u{c758} \u{ace0}\u{c720}\u{bc88}\u{d638}(8\u{c790}\u{b9ac})\n\u{203b} \u{ac1c}\u{bc1c}\u{ac00}\u{c774}\u{b4dc} > \u{acf5}\u{c2dc}\u{c815}\u{bcf4} > \u{ace0}\u{c720}\u{bc88}\u{d638} \u{cc38}\u{ace0}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
             FlagSpec { name: "--bgn-de", id: "bgn_de", sdk_field: "bgn_de", description: "\u{ac80}\u{c0c9}\u{c2dc}\u{c791} \u{c811}\u{c218}\u{c77c}\u{c790}(YYYYMMDD)\n\u{203b} 2015\u{b144} \u{c774}\u{d6c4} \u{bd80}\u{d130} \u{c815}\u{bcf4}\u{c81c}\u{acf5}", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
@@ -1605,7 +1605,7 @@ pub(crate) const OPERATIONS: &[OperationSpec] = &[
         guide_url: "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2020001",
         description: "\u{ae08}\u{c735}\u{ac10}\u{b3c5}\u{c6d0} \u{d68c}\u{acc4}\u{d3ec}\u{d0c8}\u{c5d0}\u{c11c} \u{c81c}\u{acf5}\u{d558}\u{b294} IFRS \u{ae30}\u{bc18} XBRL \u{c7ac}\u{bb34}\u{c81c}\u{d45c} \u{acf5}\u{c2dc}\u{c6a9} \u{d45c}\u{c900}\u{acc4}\u{c815}\u{acfc}\u{baa9}\u{ccb4}\u{acc4}(\u{acc4}\u{c815}\u{acfc}\u{baa9}) \u{c744} \u{c81c}\u{acf5}\u{d569}\u{b2c8}\u{b2e4}.",
         invocation: InvocationSpec { argv_prefix: &["call", "xbrl-taxonomy"], required_env: &["OPENDART_API_KEY"] },
-        global_flags: GLOBAL_FLAGS,
+        execution_flags: CALL_FLAGS,
         flags: &[
             FlagSpec { name: "--sj-div", id: "sj_div", sdk_field: "sj_div", description: "(\u{203b}\u{c7ac}\u{bb34}\u{c81c}\u{d45c}\u{ad6c}\u{bd84} \u{cc38}\u{c870})", required: true, value_kind: "string", occurrence: "once", min_items: None, max_items: None },
         ],

@@ -48,9 +48,13 @@ fn keyless_home_and_inventory_are_self_describing_and_deterministic() {
         serde_json::json!(["operations", "list"])
     );
     assert_eq!(home["authentication"]["environment"], "OPENDART_API_KEY");
-    assert_eq!(
-        home["global_flags"].as_array().expect("global flags").len(),
-        5
+    assert!(home.get("global_flags").is_none());
+    let call_flags = home["call_flags"].as_array().expect("call flags");
+    assert_eq!(call_flags.len(), 4);
+    assert!(
+        call_flags
+            .iter()
+            .all(|flag| flag["name"] != "--artifact-limit-bytes")
     );
 
     let first = json_output(&["operations", "list"], 0);
@@ -88,6 +92,16 @@ fn every_generated_operation_is_described_equally_by_name_and_logical_id() {
             by_name["operation"]["invocation"]["argv_prefix"],
             serde_json::json!(["call", name])
         );
+        assert!(by_name["operation"].get("global_flags").is_none());
+        assert_eq!(
+            by_name["operation"]["execution_flags"],
+            serde_json::json!([
+                {"name": "--connect-timeout-ms", "required": false, "shape": "positive_integer"},
+                {"name": "--read-timeout-ms", "required": false, "shape": "positive_integer"},
+                {"name": "--total-timeout-ms", "required": false, "shape": "positive_integer"},
+                {"name": "--envelope-limit-bytes", "required": false, "shape": "positive_integer"}
+            ])
+        );
     }
 }
 
@@ -120,6 +134,7 @@ fn discovery_json_alone_constructs_an_sdk_prepared_call() {
     assert_eq!(output.status.code(), Some(1));
     let error: Value = serde_json::from_slice(&output.stdout).expect("error JSON");
     assert_eq!(error["error"]["code"], "missing_api_key");
+    assert!(error.get("operation").is_none());
 
     arguments[1] = operation["logical_id"]
         .as_str()

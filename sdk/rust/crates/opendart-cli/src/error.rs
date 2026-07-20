@@ -3,6 +3,7 @@ use serde::Serialize;
 #[derive(Serialize)]
 pub(crate) struct ErrorEnvelope {
     kind: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
     operation: Option<OperationIdentity>,
     error: ErrorBody,
 }

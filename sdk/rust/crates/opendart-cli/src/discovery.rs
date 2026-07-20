@@ -2,12 +2,11 @@ use std::path::Path;
 
 use serde::Serialize;
 
-pub(crate) const GLOBAL_FLAGS: &[GlobalFlag] = &[
+pub(crate) const CALL_FLAGS: &[GlobalFlag] = &[
     GlobalFlag::positive_integer("--connect-timeout-ms", None),
     GlobalFlag::positive_integer("--read-timeout-ms", None),
     GlobalFlag::positive_integer("--total-timeout-ms", None),
     GlobalFlag::positive_integer("--envelope-limit-bytes", None),
-    GlobalFlag::positive_integer("--artifact-limit-bytes", Some(536_870_912)),
 ];
 
 #[derive(Clone, Copy, Serialize)]
@@ -39,7 +38,7 @@ pub(crate) struct OperationSpec {
     pub(crate) guide_url: &'static str,
     pub(crate) description: &'static str,
     pub(crate) invocation: InvocationSpec,
-    pub(crate) global_flags: &'static [GlobalFlag],
+    pub(crate) execution_flags: &'static [GlobalFlag],
     pub(crate) flags: &'static [FlagSpec],
     pub(crate) representations: &'static [RepresentationSpec],
 }
@@ -121,7 +120,7 @@ pub(crate) struct Home<'a> {
     description: &'static str,
     commands: Commands,
     authentication: Authentication,
-    global_flags: &'static [GlobalFlag],
+    call_flags: &'static [GlobalFlag],
 }
 
 #[derive(Serialize)]
@@ -172,7 +171,7 @@ impl<'a> Home<'a> {
                 environment: "OPENDART_API_KEY",
                 required_for: &["call"],
             },
-            global_flags: GLOBAL_FLAGS,
+            call_flags: CALL_FLAGS,
         }
     }
 }

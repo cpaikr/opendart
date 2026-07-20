@@ -56,14 +56,14 @@ func renderCLIModule(source model.CLIModel) string {
 func renderCLICatalog(source model.CLIModel) string {
 	var output strings.Builder
 	output.WriteString(cliHeader(source))
-	output.WriteString("use crate::discovery::{FlagSpec, InvocationSpec, OperationSpec, OutputSpec, RepresentationSpec, ResponseField, ResponseShape, GLOBAL_FLAGS};\n\n")
+	output.WriteString("use crate::discovery::{CALL_FLAGS, FlagSpec, InvocationSpec, OperationSpec, OutputSpec, RepresentationSpec, ResponseField, ResponseShape};\n\n")
 	output.WriteString("pub(crate) const OPERATIONS: &[OperationSpec] = &[\n")
 	for _, operation := range source.Operations {
 		output.WriteString("    OperationSpec {\n")
 		fmt.Fprintf(&output, "        name: %s,\n        logical_id: %s,\n        group: %s,\n        api_id: %s,\n        guide_url: %s,\n        description: %s,\n",
 			quote(operation.Name), quote(operation.LogicalID), quote(operation.Group), quote(operation.APIID), quote(operation.GuideURL), quote(operation.Description))
 		fmt.Fprintf(&output, "        invocation: InvocationSpec { argv_prefix: &[\"call\", %s], required_env: &[\"OPENDART_API_KEY\"] },\n", quote(operation.Name))
-		output.WriteString("        global_flags: GLOBAL_FLAGS,\n        flags: &[\n")
+		output.WriteString("        execution_flags: CALL_FLAGS,\n        flags: &[\n")
 		for _, parameter := range operation.Parameters {
 			occurrence, kind := "once", "string"
 			if parameter.Shape == model.StringArray {
