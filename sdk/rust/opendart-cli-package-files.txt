@@ -22,6 +22,8 @@ src/prepared.rs
 tests/binary_loopback.rs
 tests/common/mod.rs
 tests/discovery.rs
+tests/fixtures/company-json-success.json
+tests/fixtures/company-xml-success.json
 tests/fixtures/invalid-invocation.json
 tests/fixtures/missing-api-key.json
 tests/live_smoke.rs

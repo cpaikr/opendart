@@ -1,7 +1,7 @@
 # OpenDART CLI public contract
 
-This document defines the approved target shell, output, credential, and
-compatibility interface for the planned `opendart` binary. See the
+This document defines the approved shell, output, credential, and compatibility
+interface for the implemented, unpublished `opendart` binary. See the
 [implementation plan](../../plans/rust/public-opendart-cli.md) for status.
 
 ## Command grammar

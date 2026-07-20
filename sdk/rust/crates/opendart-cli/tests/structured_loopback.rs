@@ -13,6 +13,8 @@ use std::time::Duration;
 use serde_json::Value;
 
 const SYNTHETIC_KEY: &str = "work4-synthetic-sentinel";
+const JSON_SUCCESS_FIXTURE: &[u8] = include_bytes!("fixtures/company-json-success.json");
+const XML_SUCCESS_FIXTURE: &[u8] = include_bytes!("fixtures/company-xml-success.json");
 
 fn company_arguments(representation: &str) -> Vec<String> {
     vec![
@@ -111,6 +113,7 @@ fn json_success_preserves_typed_additive_values_and_exact_numbers() {
         &[("Content-Language", SYNTHETIC_KEY)],
     );
     let output = with_response(response, &company_arguments("json"));
+    assert_eq!(output.stdout, JSON_SUCCESS_FIXTURE);
     let value = json(&output, 0);
 
     assert_eq!(value["kind"], "response");
@@ -147,6 +150,7 @@ fn xml_success_and_json_xml_statuses_keep_complete_source_evidence() {
         http_response("application/xml", xml, &[]),
         &company_arguments("xml"),
     );
+    assert_eq!(output.stdout, XML_SUCCESS_FIXTURE);
     let value = json(&output, 0);
     assert_eq!(value["operation"]["physical_id"], "get_company_xml");
     assert_eq!(value["operation"]["representation"], "xml");
