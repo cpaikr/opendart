@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
+	"github.com/cpaikr/opendart/internal/crateverification"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/liveconformance"
 	"github.com/cpaikr/opendart/internal/livenotifier"
@@ -52,7 +53,7 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-sdk", "verify", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-sdk", "verify", "verify-crate-artifact", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
@@ -437,6 +438,67 @@ func TestRunVerifyEmitsReportAndForwardsRepositoryRoot(t *testing.T) {
 		diagnostic.Rule != "operation-summary" || diagnostic.Operation != "getCompany" ||
 		diagnostic.Location != "#/paths/~1company/get" {
 		t.Fatalf("diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestRunVerifyCrateArtifactPassesExplicitLocalEvidence(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	arguments := crateVerificationArguments()
+	code := runVerifyCrateArtifactWith(arguments, &stdout, &stderr, func(options crateverification.Options) (crateverification.Report, error) {
+		if options.CandidatePath != "candidate.crate" || options.AcceptedPath != "accepted.crate" || options.InventoryPath != "inventory.txt" ||
+			options.Package != "opendart-cli" || options.Version != "0.1.0" || options.Revision != strings.Repeat("a", 40) ||
+			options.VCSPath != "sdk/rust/crates/opendart-cli" || options.RegistryChecksum != strings.Repeat("b", 64) {
+			t.Fatalf("options = %#v", options)
+		}
+		return crateverification.Report{Kind: "crate-artifact-verification", SchemaVersion: 1, Package: options.Package}, nil
+	})
+	if code != 0 || stderr.Len() != 0 || !strings.Contains(stdout.String(), `"kind": "crate-artifact-verification"`) {
+		t.Fatalf("code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestRunVerifyCrateArtifactEmitsBoundedInvariant(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runVerifyCrateArtifactWith(crateVerificationArguments(), &stdout, &stderr, func(crateverification.Options) (crateverification.Report, error) {
+		return crateverification.Report{}, &crateverification.Error{Artifact: "accepted", Invariant: "matches the registry checksum"}
+	})
+	if code != 1 || stdout.Len() != 0 {
+		t.Fatalf("code = %d, stdout = %q", code, stdout.String())
+	}
+	var diagnostic struct {
+		Artifact  string `json:"artifact"`
+		Invariant string `json:"invariant"`
+	}
+	if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+		t.Fatalf("decode diagnostic: %v; stderr = %q", err, stderr.String())
+	}
+	if diagnostic.Artifact != "accepted" || diagnostic.Invariant != "matches the registry checksum" {
+		t.Fatalf("diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestRunVerifyCrateArtifactRejectsMissingEvidence(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	called := false
+	code := runVerifyCrateArtifactWith(nil, &stdout, &stderr, func(crateverification.Options) (crateverification.Report, error) {
+		called = true
+		return crateverification.Report{}, nil
+	})
+	if code != 2 || called || stdout.Len() != 0 || !strings.Contains(stderr.String(), "--candidate is required") {
+		t.Fatalf("code = %d, called = %t, stdout = %q, stderr = %q", code, called, stdout.String(), stderr.String())
+	}
+}
+
+func crateVerificationArguments() []string {
+	return []string{
+		"--candidate", "candidate.crate", "--accepted", "accepted.crate",
+		"--inventory", "inventory.txt", "--package", "opendart-cli",
+		"--version", "0.1.0", "--revision", strings.Repeat("a", 40),
+		"--vcs-path", "sdk/rust/crates/opendart-cli",
+		"--registry-checksum", strings.Repeat("b", 64),
 	}
 }
 
