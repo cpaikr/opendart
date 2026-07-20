@@ -59,6 +59,15 @@ impl ArtifactTarget {
                 )));
             }
         }
+        let parent = artifact_parent(&path);
+        match fs::metadata(parent) {
+            Ok(metadata) if metadata.is_dir() => {}
+            Ok(_) | Err(_) => {
+                return Err(TargetError::Execution(ErrorEnvelope::artifact_io(
+                    operation, None,
+                )));
+            }
+        }
         let limit = matches
             .get_one::<u64>("artifact-limit-bytes")
             .copied()
@@ -74,11 +83,7 @@ impl ArtifactTarget {
         self,
         operation: OperationContext,
     ) -> Result<StagedArtifact, ErrorEnvelope> {
-        let parent = self
-            .path
-            .parent()
-            .filter(|path| !path.as_os_str().is_empty())
-            .unwrap_or_else(|| Path::new("."));
+        let parent = artifact_parent(&self.path);
         let file = tempfile::NamedTempFile::new_in(parent)
             .map_err(|_| ErrorEnvelope::artifact_io(operation, None))?;
         Ok(StagedArtifact {
@@ -88,6 +93,12 @@ impl ArtifactTarget {
             limit: self.limit,
         })
     }
+}
+
+fn artifact_parent(path: &Path) -> &Path {
+    path.parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."))
 }
 
 pub(crate) struct StagedArtifact {
