@@ -1,5 +1,14 @@
 use crate::OperationIdentity;
 
+/// A caller supplied a source-number spelling outside the SDK-owned JSON grammar.
+///
+/// The rejected spelling is deliberately not retained so partially valid source
+/// evidence cannot escape through diagnostics.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, thiserror::Error)]
+#[error("source number is not valid JSON")]
+#[non_exhaustive]
+pub struct InvalidSourceNumberError;
+
 /// A deterministic request could not be prepared from the supplied operation input.
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]

@@ -32,7 +32,20 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 			},
 		},
 		Physical: []model.PhysicalOperation{
-			{OperationID: "optional.json", LogicalID: "optional", RustConstant: "OPTIONAL_JSON", Path: "/api/optional.json", PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON}, Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "object", Description: "source description", AdditionalPropertiesPolicy: "allowed"}}}}}},
+			{
+				OperationID: "optional.json", LogicalID: "optional", RustConstant: "OPTIONAL_JSON", Path: "/api/optional.json",
+				PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON},
+				Responses: []model.Response{{
+					Selector: "default", HTTPStatusEvidence: "not-documented",
+					Media: []model.ResponseMedia{{
+						Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format",
+						Shape: model.ResponseShape{
+							Kind: "object", Description: "source description", AdditionalPropertiesPolicy: "allowed",
+							Properties: []model.ResponseProperty{{Name: "source-value", RustName: "source_value", Shape: model.ResponseShape{Kind: "opaque"}}},
+						},
+					}},
+				}},
+			},
 			{OperationID: "required.json", LogicalID: "required", RustConstant: "REQUIRED_JSON", Path: "/api/required.json", PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON}, Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "object", AdditionalPropertiesPolicy: "allowed"}}}}}},
 		},
 	}
@@ -54,6 +67,18 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 	responses := string(files["responses/group.rs"])
 	if !strings.Contains(responses, "pub struct OptionalInputJsonResponse") || !strings.Contains(responses, "source description") {
 		t.Fatal("typed response or selected description was not emitted")
+	}
+	if !strings.Contains(responses, `#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]`) {
+		t.Fatal("typed responses do not gate serialization on the public feature")
+	}
+	if !strings.Contains(responses, `#[cfg_attr(feature = "serde-json", serde(flatten))]`) {
+		t.Fatal("typed responses do not flatten additive source fields")
+	}
+	if !strings.Contains(responses, `#[cfg_attr(feature = "serde-json", serde(rename = "source-value"))]`) {
+		t.Fatal("typed response fields do not retain their source names")
+	}
+	if !strings.Contains(responses, `#[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]`) {
+		t.Fatal("optional typed response fields are not omitted when absent")
 	}
 }
 

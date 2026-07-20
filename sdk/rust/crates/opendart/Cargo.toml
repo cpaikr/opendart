@@ -16,6 +16,7 @@ include = ["src/**", "tests/**", "Cargo.toml", "README.md", "CHANGELOG.md", "LIC
 [features]
 default = ["client-reqwest"]
 client-reqwest = ["dep:bytes", "dep:futures-core", "dep:reqwest", "dep:tokio"]
+serde-json = ["dep:serde", "serde_json/raw_value"]
 
 [dependencies]
 bytes = { workspace = true, optional = true }
@@ -23,6 +24,7 @@ form_urlencoded.workspace = true
 futures-core = { workspace = true, optional = true }
 quick-xml.workspace = true
 secrecy.workspace = true
+serde = { workspace = true, optional = true }
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, optional = true, features = ["time"] }
@@ -37,6 +39,7 @@ features = ["native-tls", "stream"]
 [dev-dependencies]
 h2 = "0.4.15"
 reqwest = { version = "0.13.4", default-features = false, features = ["brotli", "deflate", "gzip", "http2", "native-tls", "rustls", "stream", "zstd"] }
+serde.workspace = true
 static_assertions = "1.1.0"
 tokio = { workspace = true, features = ["io-util", "macros", "net", "rt-multi-thread", "time"] }
 

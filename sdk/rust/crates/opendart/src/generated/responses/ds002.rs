@@ -9,16 +9,24 @@ use crate::{ResponseDecodeError, SourceStatus, SourceValue};
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IrdsSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<IrdsSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -33,35 +41,54 @@ impl IrdsSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IrdsSttusJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 주식발행 감소일자
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_de: Option<SourceValue>,
     /// 발행 감소 주당 가액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_mstvdv_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_mstvdv_amount: Option<SourceValue>,
     /// 발행 감소 주당 액면 가액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_mstvdv_fval_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_mstvdv_fval_amount: Option<SourceValue>,
     /// 발행 감소 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_qy: Option<SourceValue>,
     /// 발행 감소 형태
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_stle"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_stle: Option<SourceValue>,
     /// 발행 감소 주식 종류
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_stock_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_stock_knd: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -69,11 +96,16 @@ pub struct IrdsSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -140,16 +172,24 @@ pub(crate) fn decode_irds_sttus_json_response(value: SourceValue) -> Result<Irds
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IrdsSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<IrdsSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -164,35 +204,54 @@ impl IrdsSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IrdsSttusXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 주식발행 감소일자
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_de: Option<SourceValue>,
     /// 발행 감소 주당 가액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_mstvdv_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_mstvdv_amount: Option<SourceValue>,
     /// 발행 감소 주당 액면 가액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_mstvdv_fval_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_mstvdv_fval_amount: Option<SourceValue>,
     /// 발행 감소 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_qy: Option<SourceValue>,
     /// 발행 감소 형태
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_stle"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_stle: Option<SourceValue>,
     /// 발행 감소 주식 종류
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_dcrs_stock_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_dcrs_stock_knd: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -200,11 +259,16 @@ pub struct IrdsSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -271,16 +335,24 @@ pub(crate) fn decode_irds_sttus_xml_response(value: SourceValue) -> Result<IrdsS
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AlotMatterJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<AlotMatterJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -295,25 +367,36 @@ impl AlotMatterJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AlotMatterJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 전기
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "frmtrm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub frmtrm: Option<SourceValue>,
     /// 전전기
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "lwfr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub lwfr: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -321,23 +404,34 @@ pub struct AlotMatterJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 구분
     /// 
     /// 유상증자(주주배정), 전환권행사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 주식 종류
     /// 
     /// 보통주 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "stock_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stock_knd: Option<SourceValue>,
     /// 당기
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "thstrm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub thstrm: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -402,16 +496,24 @@ pub(crate) fn decode_alot_matter_json_response(value: SourceValue) -> Result<Alo
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AlotMatterXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<AlotMatterXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -426,25 +528,36 @@ impl AlotMatterXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AlotMatterXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 전기
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "frmtrm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub frmtrm: Option<SourceValue>,
     /// 전전기
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "lwfr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub lwfr: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -452,23 +565,34 @@ pub struct AlotMatterXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 구분
     /// 
     /// 유상증자(주주배정), 전환권행사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 주식 종류
     /// 
     /// 보통주 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "stock_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stock_knd: Option<SourceValue>,
     /// 당기
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "thstrm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub thstrm: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -533,16 +657,24 @@ pub(crate) fn decode_alot_matter_xml_response(value: SourceValue) -> Result<Alot
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct TesstkAcqsDspsSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<TesstkAcqsDspsSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -557,46 +689,67 @@ impl TesstkAcqsDspsSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct TesstkAcqsDspsSttusJsonResponseListItem {
     /// 취득방법 대분류
     /// 
     /// 배당가능이익범위 이내 취득, 기타취득, 총계 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "acqs_mth1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub acqs_mth1: Option<SourceValue>,
     /// 취득방법 중분류
     /// 
     /// 직접취득, 신탁계약에 의한취득, 기타취득, 총계 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "acqs_mth2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub acqs_mth2: Option<SourceValue>,
     /// 취득방법 소분류
     /// 
     /// 장내직접취득, 장외직접취득, 공개매수, 주식매수청구권행사, 수탁자보유물량,
     /// 현물보유량, 기타취득, 소계, 총계 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "acqs_mth3"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub acqs_mth3: Option<SourceValue>,
     /// 기초 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_qy: Option<SourceValue>,
     /// 변동 수량 취득
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_qy_acqs"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_qy_acqs: Option<SourceValue>,
     /// 변동 수량 처분
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_qy_dsps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_qy_dsps: Option<SourceValue>,
     /// 변동 수량 소각
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_qy_incnr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_qy_incnr: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -604,21 +757,32 @@ pub struct TesstkAcqsDspsSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 주식 종류
     /// 
     /// 보통주, 우선주 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "stock_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stock_knd: Option<SourceValue>,
     /// 기말 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_qy: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -693,16 +857,24 @@ pub(crate) fn decode_tesstk_acqs_dsps_sttus_json_response(value: SourceValue) ->
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct TesstkAcqsDspsSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<TesstkAcqsDspsSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -717,46 +889,67 @@ impl TesstkAcqsDspsSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct TesstkAcqsDspsSttusXmlResponseListItem {
     /// 취득방법 대분류
     /// 
     /// 배당가능이익범위 이내 취득, 기타취득, 총계 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "acqs_mth1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub acqs_mth1: Option<SourceValue>,
     /// 취득방법 중분류
     /// 
     /// 직접취득, 신탁계약에 의한취득, 기타취득, 총계 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "acqs_mth2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub acqs_mth2: Option<SourceValue>,
     /// 취득방법 소분류
     /// 
     /// 장내직접취득, 장외직접취득, 공개매수, 주식매수청구권행사, 수탁자보유물량,
     /// 현물보유량, 기타취득, 소계, 총계 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "acqs_mth3"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub acqs_mth3: Option<SourceValue>,
     /// 기초 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_qy: Option<SourceValue>,
     /// 변동 수량 취득
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_qy_acqs"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_qy_acqs: Option<SourceValue>,
     /// 변동 수량 처분
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_qy_dsps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_qy_dsps: Option<SourceValue>,
     /// 변동 수량 소각
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_qy_incnr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_qy_incnr: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -764,21 +957,32 @@ pub struct TesstkAcqsDspsSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 주식 종류
     /// 
     /// 보통주, 우선주 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "stock_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stock_knd: Option<SourceValue>,
     /// 기말 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_qy: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -853,16 +1057,24 @@ pub(crate) fn decode_tesstk_acqs_dsps_sttus_xml_response(value: SourceValue) -> 
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HyslrSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HyslrSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -877,29 +1089,42 @@ impl HyslrSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HyslrSttusJsonResponseListItem {
     /// 기초 소유 주식 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_posesn_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_posesn_stock_co: Option<SourceValue>,
     /// 기초 소유 주식 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_posesn_stock_qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_posesn_stock_qota_rt: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 성명
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -907,29 +1132,44 @@ pub struct HyslrSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 관계
     /// 
     /// 본인, 친인척 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "relate"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub relate: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 주식 종류
     /// 
     /// 보통주 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "stock_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stock_knd: Option<SourceValue>,
     /// 기말 소유 주식 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_posesn_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_posesn_stock_co: Option<SourceValue>,
     /// 기말 소유 주식 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_posesn_stock_qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_posesn_stock_qota_rt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1000,16 +1240,24 @@ pub(crate) fn decode_hyslr_sttus_json_response(value: SourceValue) -> Result<Hys
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HyslrSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HyslrSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1024,29 +1272,42 @@ impl HyslrSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HyslrSttusXmlResponseListItem {
     /// 기초 소유 주식 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_posesn_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_posesn_stock_co: Option<SourceValue>,
     /// 기초 소유 주식 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_posesn_stock_qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_posesn_stock_qota_rt: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 성명
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -1054,29 +1315,44 @@ pub struct HyslrSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 관계
     /// 
     /// 본인, 친인척 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "relate"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub relate: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 주식 종류
     /// 
     /// 보통주 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "stock_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stock_knd: Option<SourceValue>,
     /// 기말 소유 주식 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_posesn_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_posesn_stock_co: Option<SourceValue>,
     /// 기말 소유 주식 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_posesn_stock_qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_posesn_stock_qota_rt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1147,16 +1423,24 @@ pub(crate) fn decode_hyslr_sttus_xml_response(value: SourceValue) -> Result<Hysl
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HyslrChgSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HyslrChgSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1171,35 +1455,52 @@ impl HyslrChgSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HyslrChgSttusJsonResponseListItem {
     /// 변동 원인
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_cause"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_cause: Option<SourceValue>,
     /// 변동 일
     /// 
     /// YYYY.MM.DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_on"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_on: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 최대 주주 명
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "mxmm_shrholdr_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mxmm_shrholdr_nm: Option<SourceValue>,
     /// 소유 주식 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "posesn_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub posesn_stock_co: Option<SourceValue>,
     /// 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub qota_rt: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -1207,13 +1508,20 @@ pub struct HyslrChgSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1280,16 +1588,24 @@ pub(crate) fn decode_hyslr_chg_sttus_json_response(value: SourceValue) -> Result
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HyslrChgSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HyslrChgSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1304,35 +1620,52 @@ impl HyslrChgSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HyslrChgSttusXmlResponseListItem {
     /// 변동 원인
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_cause"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_cause: Option<SourceValue>,
     /// 변동 일
     /// 
     /// YYYY.MM.DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "change_on"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub change_on: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 최대 주주 명
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "mxmm_shrholdr_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mxmm_shrholdr_nm: Option<SourceValue>,
     /// 소유 주식 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "posesn_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub posesn_stock_co: Option<SourceValue>,
     /// 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub qota_rt: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -1340,13 +1673,20 @@ pub struct HyslrChgSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1413,16 +1753,24 @@ pub(crate) fn decode_hyslr_chg_sttus_xml_response(value: SourceValue) -> Result<
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct MrhlSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<MrhlSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1437,25 +1785,36 @@ impl MrhlSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct MrhlSttusJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 보유 주식수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "hold_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub hold_stock_co: Option<SourceValue>,
     /// 보유 주식 비율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "hold_stock_rate"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub hold_stock_rate: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -1463,31 +1822,46 @@ pub struct MrhlSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 구분
     /// 
     /// 소액주주
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 주주수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "shrholdr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub shrholdr_co: Option<SourceValue>,
     /// 주주 비율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "shrholdr_rate"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub shrholdr_rate: Option<SourceValue>,
     /// 전체 주주수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "shrholdr_tot_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub shrholdr_tot_co: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 총발행 주식수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stock_tot_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stock_tot_co: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1556,16 +1930,24 @@ pub(crate) fn decode_mrhl_sttus_json_response(value: SourceValue) -> Result<Mrhl
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct MrhlSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<MrhlSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1580,25 +1962,36 @@ impl MrhlSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct MrhlSttusXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 보유 주식수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "hold_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub hold_stock_co: Option<SourceValue>,
     /// 보유 주식 비율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "hold_stock_rate"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub hold_stock_rate: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -1606,31 +1999,46 @@ pub struct MrhlSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 구분
     /// 
     /// 소액주주
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 주주수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "shrholdr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub shrholdr_co: Option<SourceValue>,
     /// 주주 비율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "shrholdr_rate"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub shrholdr_rate: Option<SourceValue>,
     /// 전체 주주수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "shrholdr_tot_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub shrholdr_tot_co: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 총발행 주식수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stock_tot_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stock_tot_co: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1699,16 +2107,24 @@ pub(crate) fn decode_mrhl_sttus_xml_response(value: SourceValue) -> Result<MrhlS
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct ExctvSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<ExctvSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1723,43 +2139,66 @@ impl ExctvSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct ExctvSttusJsonResponseListItem {
     /// 출생 년월
     /// 
     /// YYYY년 MM월
+    #[cfg_attr(feature = "serde-json", serde(rename = "birth_ym"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub birth_ym: Option<SourceValue>,
     /// 담당 업무
     /// 
     /// 대표이사, 이사, 사외이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "chrg_job"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub chrg_job: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 상근 여부
     /// 
     /// 상근, 비상근
+    #[cfg_attr(feature = "serde-json", serde(rename = "fte_at"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fte_at: Option<SourceValue>,
     /// 재직 기간
+    #[cfg_attr(feature = "serde-json", serde(rename = "hffc_pd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub hffc_pd: Option<SourceValue>,
     /// 주요 경력
+    #[cfg_attr(feature = "serde-json", serde(rename = "main_career"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub main_career: Option<SourceValue>,
     /// 최대 주주 관계
+    #[cfg_attr(feature = "serde-json", serde(rename = "mxmm_shrholdr_relate"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mxmm_shrholdr_relate: Option<SourceValue>,
     /// 성명
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 회장, 사장, 사외이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -1767,21 +2206,32 @@ pub struct ExctvSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 등기 임원 여부
     /// 
     /// 등기임원, 미등기임원 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "rgist_exctv_at"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rgist_exctv_at: Option<SourceValue>,
     /// 성별
     /// 
     /// 남
+    #[cfg_attr(feature = "serde-json", serde(rename = "sexdstn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sexdstn: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 임기 만료 일
+    #[cfg_attr(feature = "serde-json", serde(rename = "tenure_end_on"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tenure_end_on: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1858,16 +2308,24 @@ pub(crate) fn decode_exctv_sttus_json_response(value: SourceValue) -> Result<Exc
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct ExctvSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<ExctvSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -1882,43 +2340,66 @@ impl ExctvSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct ExctvSttusXmlResponseListItem {
     /// 출생 년월
     /// 
     /// YYYY년 MM월
+    #[cfg_attr(feature = "serde-json", serde(rename = "birth_ym"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub birth_ym: Option<SourceValue>,
     /// 담당 업무
     /// 
     /// 대표이사, 이사, 사외이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "chrg_job"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub chrg_job: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 상근 여부
     /// 
     /// 상근, 비상근
+    #[cfg_attr(feature = "serde-json", serde(rename = "fte_at"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fte_at: Option<SourceValue>,
     /// 재직 기간
+    #[cfg_attr(feature = "serde-json", serde(rename = "hffc_pd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub hffc_pd: Option<SourceValue>,
     /// 주요 경력
+    #[cfg_attr(feature = "serde-json", serde(rename = "main_career"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub main_career: Option<SourceValue>,
     /// 최대 주주 관계
+    #[cfg_attr(feature = "serde-json", serde(rename = "mxmm_shrholdr_relate"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mxmm_shrholdr_relate: Option<SourceValue>,
     /// 성명
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 회장, 사장, 사외이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -1926,21 +2407,32 @@ pub struct ExctvSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 등기 임원 여부
     /// 
     /// 등기임원, 미등기임원 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "rgist_exctv_at"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rgist_exctv_at: Option<SourceValue>,
     /// 성별
     /// 
     /// 남
+    #[cfg_attr(feature = "serde-json", serde(rename = "sexdstn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sexdstn: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 임기 만료 일
+    #[cfg_attr(feature = "serde-json", serde(rename = "tenure_end_on"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tenure_end_on: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2017,16 +2509,24 @@ pub(crate) fn decode_exctv_sttus_xml_response(value: SourceValue) -> Result<Exct
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct EmpSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<EmpSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2041,39 +2541,58 @@ impl EmpSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct EmpSttusJsonResponseListItem {
     /// 평균 근속 연수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "avrg_cnwk_sdytrn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub avrg_cnwk_sdytrn: Option<SourceValue>,
     /// 계약직 단시간 근로자 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "cnttk_abacpt_labrr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cnttk_abacpt_labrr_co: Option<SourceValue>,
     /// 계약직 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "cnttk_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cnttk_co: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 사 업부문
+    #[cfg_attr(feature = "serde-json", serde(rename = "fo_bbm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fo_bbm: Option<SourceValue>,
     /// 연간 급여 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "fyer_salary_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fyer_salary_totamt: Option<SourceValue>,
     /// 1인평균 급여 액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "jan_salary_am"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub jan_salary_am: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -2081,35 +2600,56 @@ pub struct EmpSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 개정 전 직원 수 계약직
+    #[cfg_attr(feature = "serde-json", serde(rename = "reform_bfe_emp_co_cnttk"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub reform_bfe_emp_co_cnttk: Option<SourceValue>,
     /// 개정 전 직원 수 기타
+    #[cfg_attr(feature = "serde-json", serde(rename = "reform_bfe_emp_co_etc"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub reform_bfe_emp_co_etc: Option<SourceValue>,
     /// 개정 전 직원 수 정규직
+    #[cfg_attr(feature = "serde-json", serde(rename = "reform_bfe_emp_co_rgllbr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub reform_bfe_emp_co_rgllbr: Option<SourceValue>,
     /// 정규직 단시간 근로자 수
     /// 
     /// 대표이사, 이사, 사외이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "rgllbr_abacpt_labrr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rgllbr_abacpt_labrr_co: Option<SourceValue>,
     /// 정규직 수
     /// 
     /// 상근, 비상근
+    #[cfg_attr(feature = "serde-json", serde(rename = "rgllbr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rgllbr_co: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 성별
     /// 
     /// 남, 여
+    #[cfg_attr(feature = "serde-json", serde(rename = "sexdstn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sexdstn: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2192,16 +2732,24 @@ pub(crate) fn decode_emp_sttus_json_response(value: SourceValue) -> Result<EmpSt
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct EmpSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<EmpSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2216,39 +2764,58 @@ impl EmpSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct EmpSttusXmlResponseListItem {
     /// 평균 근속 연수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "avrg_cnwk_sdytrn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub avrg_cnwk_sdytrn: Option<SourceValue>,
     /// 계약직 단시간 근로자 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "cnttk_abacpt_labrr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cnttk_abacpt_labrr_co: Option<SourceValue>,
     /// 계약직 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "cnttk_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cnttk_co: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 사 업부문
+    #[cfg_attr(feature = "serde-json", serde(rename = "fo_bbm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fo_bbm: Option<SourceValue>,
     /// 연간 급여 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "fyer_salary_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fyer_salary_totamt: Option<SourceValue>,
     /// 1인평균 급여 액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "jan_salary_am"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub jan_salary_am: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -2256,35 +2823,56 @@ pub struct EmpSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 개정 전 직원 수 계약직
+    #[cfg_attr(feature = "serde-json", serde(rename = "reform_bfe_emp_co_cnttk"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub reform_bfe_emp_co_cnttk: Option<SourceValue>,
     /// 개정 전 직원 수 기타
+    #[cfg_attr(feature = "serde-json", serde(rename = "reform_bfe_emp_co_etc"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub reform_bfe_emp_co_etc: Option<SourceValue>,
     /// 개정 전 직원 수 정규직
+    #[cfg_attr(feature = "serde-json", serde(rename = "reform_bfe_emp_co_rgllbr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub reform_bfe_emp_co_rgllbr: Option<SourceValue>,
     /// 정규직 단시간 근로자 수
     /// 
     /// 대표이사, 이사, 사외이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "rgllbr_abacpt_labrr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rgllbr_abacpt_labrr_co: Option<SourceValue>,
     /// 정규직 수
     /// 
     /// 상근, 비상근
+    #[cfg_attr(feature = "serde-json", serde(rename = "rgllbr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rgllbr_co: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 성별
     /// 
     /// 남, 여
+    #[cfg_attr(feature = "serde-json", serde(rename = "sexdstn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sexdstn: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2367,16 +2955,24 @@ pub(crate) fn decode_emp_sttus_xml_response(value: SourceValue) -> Result<EmpStt
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HmvAuditIndvdlBySttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2391,33 +2987,48 @@ impl HmvAuditIndvdlBySttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 보수 총액 비 포함 보수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt_ct_incls_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt_ct_incls_mendng: Option<SourceValue>,
     /// 이름
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 이사, 대표이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -2425,11 +3036,16 @@ pub struct HmvAuditIndvdlBySttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2492,16 +3108,24 @@ pub(crate) fn decode_hmv_audit_indvdl_by_sttus_json_response(value: SourceValue)
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HmvAuditIndvdlBySttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2516,33 +3140,48 @@ impl HmvAuditIndvdlBySttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 보수 총액 비 포함 보수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt_ct_incls_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt_ct_incls_mendng: Option<SourceValue>,
     /// 이름
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 이사, 대표이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -2550,11 +3189,16 @@ pub struct HmvAuditIndvdlBySttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2617,16 +3261,24 @@ pub(crate) fn decode_hmv_audit_indvdl_by_sttus_xml_response(value: SourceValue) 
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditAllSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HmvAuditAllSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2641,41 +3293,60 @@ impl HmvAuditAllSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditAllSttusJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 1인 평균 보수 액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "jan_avrg_mendng_am"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub jan_avrg_mendng_am: Option<SourceValue>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 인원수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "nmpr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nmpr: Option<SourceValue>,
     /// 그 외 주식기준 보상 시장가치
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_mkt_vl"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_mkt_vl: Option<SourceValue>,
     /// 그 외 주식기준 보상 미지급수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_unpyd_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_unpyd_qty: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -2683,29 +3354,44 @@ pub struct HmvAuditAllSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt: Option<SourceValue>,
     /// 주식매수선택권 행사가능수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrcsbl_qty: Option<SourceValue>,
     /// 주식매수선택권 잔여금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_rmn_blce"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_rmn_blce: Option<SourceValue>,
     /// 주식매수선택권 행사불가수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_unexrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_unexrcsbl_qty: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2782,16 +3468,24 @@ pub(crate) fn decode_hmv_audit_all_sttus_json_response(value: SourceValue) -> Re
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditAllSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HmvAuditAllSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2806,41 +3500,60 @@ impl HmvAuditAllSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditAllSttusXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 1인 평균 보수 액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "jan_avrg_mendng_am"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub jan_avrg_mendng_am: Option<SourceValue>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 인원수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "nmpr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nmpr: Option<SourceValue>,
     /// 그 외 주식기준 보상 시장가치
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_mkt_vl"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_mkt_vl: Option<SourceValue>,
     /// 그 외 주식기준 보상 미지급수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_unpyd_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_unpyd_qty: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -2848,29 +3561,44 @@ pub struct HmvAuditAllSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt: Option<SourceValue>,
     /// 주식매수선택권 행사가능수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrcsbl_qty: Option<SourceValue>,
     /// 주식매수선택권 잔여금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_rmn_blce"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_rmn_blce: Option<SourceValue>,
     /// 주식매수선택권 행사불가수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_unexrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_unexrcsbl_qty: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2947,16 +3675,24 @@ pub(crate) fn decode_hmv_audit_all_sttus_xml_response(value: SourceValue) -> Res
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<IndvdlByPayJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -2971,33 +3707,48 @@ impl IndvdlByPayJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 보수 총액 비 포함 보수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt_ct_incls_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt_ct_incls_mendng: Option<SourceValue>,
     /// 이름
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 대표이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -3005,11 +3756,16 @@ pub struct IndvdlByPayJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3072,16 +3828,24 @@ pub(crate) fn decode_indvdl_by_pay_json_response(value: SourceValue) -> Result<I
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<IndvdlByPayXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3096,33 +3860,48 @@ impl IndvdlByPayXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 보수 총액 비 포함 보수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt_ct_incls_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt_ct_incls_mendng: Option<SourceValue>,
     /// 이름
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 대표이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -3130,11 +3909,16 @@ pub struct IndvdlByPayXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3197,16 +3981,24 @@ pub(crate) fn decode_indvdl_by_pay_xml_response(value: SourceValue) -> Result<In
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct OtrCprInvstmntSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<OtrCprInvstmntSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3221,57 +4013,84 @@ impl OtrCprInvstmntSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct OtrCprInvstmntSttusJsonResponseListItem {
     /// 기초 잔액 장부 가액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_blce_acntbk_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_blce_acntbk_amount: Option<SourceValue>,
     /// 기초 잔액 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_blce_qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_blce_qota_rt: Option<SourceValue>,
     /// 기초 잔액 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_blce_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_blce_qy: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 최초 취득 금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "frst_acqs_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub frst_acqs_amount: Option<SourceValue>,
     /// 최초 취득 일자
     /// 
     /// 최초취득일자(YYYYMMDD)
+    #[cfg_attr(feature = "serde-json", serde(rename = "frst_acqs_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub frst_acqs_de: Option<SourceValue>,
     /// 증가 감소 취득 처분 금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "incrs_dcrs_acqs_dsps_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub incrs_dcrs_acqs_dsps_amount: Option<SourceValue>,
     /// 증가 감소 취득 처분 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "incrs_dcrs_acqs_dsps_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub incrs_dcrs_acqs_dsps_qy: Option<SourceValue>,
     /// 증가 감소 평가 손액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "incrs_dcrs_evl_lstmn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub incrs_dcrs_evl_lstmn: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "inv_prm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub inv_prm: Option<SourceValue>,
     /// 출자 목적
     /// 
     /// 출자목적(자회사 등)
+    #[cfg_attr(feature = "serde-json", serde(rename = "invstmnt_purps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub invstmnt_purps: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -3279,31 +4098,46 @@ pub struct OtrCprInvstmntSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 최근 사업 연도 재무 현황 당기 순이익
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "recent_bsns_year_fnnr_sttus_thstrm_ntpf"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub recent_bsns_year_fnnr_sttus_thstrm_ntpf: Option<SourceValue>,
     /// 최근 사업 연도 재무 현황 총 자산
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "recent_bsns_year_fnnr_sttus_tot_assets"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub recent_bsns_year_fnnr_sttus_tot_assets: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 기말 잔액 장부 가액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_blce_acntbk_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_blce_acntbk_amount: Option<SourceValue>,
     /// 기말 잔액 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_blce_qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_blce_qota_rt: Option<SourceValue>,
     /// 기말 잔액 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_blce_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_blce_qy: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3388,16 +4222,24 @@ pub(crate) fn decode_otr_cpr_invstmnt_sttus_json_response(value: SourceValue) ->
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct OtrCprInvstmntSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<OtrCprInvstmntSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3412,57 +4254,84 @@ impl OtrCprInvstmntSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct OtrCprInvstmntSttusXmlResponseListItem {
     /// 기초 잔액 장부 가액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_blce_acntbk_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_blce_acntbk_amount: Option<SourceValue>,
     /// 기초 잔액 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_blce_qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_blce_qota_rt: Option<SourceValue>,
     /// 기초 잔액 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsis_blce_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsis_blce_qy: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 최초 취득 금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "frst_acqs_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub frst_acqs_amount: Option<SourceValue>,
     /// 최초 취득 일자
     /// 
     /// 최초취득일자(YYYYMMDD)
+    #[cfg_attr(feature = "serde-json", serde(rename = "frst_acqs_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub frst_acqs_de: Option<SourceValue>,
     /// 증가 감소 취득 처분 금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "incrs_dcrs_acqs_dsps_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub incrs_dcrs_acqs_dsps_amount: Option<SourceValue>,
     /// 증가 감소 취득 처분 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "incrs_dcrs_acqs_dsps_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub incrs_dcrs_acqs_dsps_qy: Option<SourceValue>,
     /// 증가 감소 평가 손액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "incrs_dcrs_evl_lstmn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub incrs_dcrs_evl_lstmn: Option<SourceValue>,
     /// 법인명
+    #[cfg_attr(feature = "serde-json", serde(rename = "inv_prm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub inv_prm: Option<SourceValue>,
     /// 출자 목적
     /// 
     /// 출자목적(자회사 등)
+    #[cfg_attr(feature = "serde-json", serde(rename = "invstmnt_purps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub invstmnt_purps: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -3470,31 +4339,46 @@ pub struct OtrCprInvstmntSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 최근 사업 연도 재무 현황 당기 순이익
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "recent_bsns_year_fnnr_sttus_thstrm_ntpf"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub recent_bsns_year_fnnr_sttus_thstrm_ntpf: Option<SourceValue>,
     /// 최근 사업 연도 재무 현황 총 자산
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "recent_bsns_year_fnnr_sttus_tot_assets"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub recent_bsns_year_fnnr_sttus_tot_assets: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 기말 잔액 장부 가액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_blce_acntbk_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_blce_acntbk_amount: Option<SourceValue>,
     /// 기말 잔액 지분 율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_blce_qota_rt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_blce_qota_rt: Option<SourceValue>,
     /// 기말 잔액 수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "trmend_blce_qy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub trmend_blce_qy: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3579,16 +4463,24 @@ pub(crate) fn decode_otr_cpr_invstmnt_sttus_xml_response(value: SourceValue) -> 
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct StockTotqySttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<StockTotqySttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3603,47 +4495,68 @@ impl StockTotqySttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct StockTotqySttusJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 유통주식수
     /// 
     /// Ⅵ. 유통주식수 (Ⅳ-Ⅴ), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "distb_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub distb_stock_co: Option<SourceValue>,
     /// 기타
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수(4. 기타), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "etc"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub etc: Option<SourceValue>,
     /// 발행주식의 총수
     /// 
     /// Ⅳ. 발행주식의 총수 (Ⅱ-Ⅲ), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "istc_totqy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub istc_totqy: Option<SourceValue>,
     /// 발행할 주식의 총수
     /// 
     /// Ⅰ. 발행할 주식의 총수, 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_stock_totqy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_stock_totqy: Option<SourceValue>,
     /// 현재까지 감소한 주식의 총수
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수, 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "now_to_dcrs_stock_totqy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub now_to_dcrs_stock_totqy: Option<SourceValue>,
     /// 현재까지 발행한 주식의 총수
     /// 
     /// Ⅱ. 현재까지 발행한 주식의 총수, 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "now_to_isu_stock_totqy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub now_to_isu_stock_totqy: Option<SourceValue>,
     /// 이익소각
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수(2. 이익소각), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "profit_incnr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub profit_incnr: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -3651,27 +4564,40 @@ pub struct StockTotqySttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 상환주식의 상환
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수(3. 상환주식의 상환), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "rdmstk_repy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rdmstk_repy: Option<SourceValue>,
     /// 감자
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수(1. 감자), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "redc"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub redc: Option<SourceValue>,
     /// 구분
     /// 
     /// 구분(증권의종류, 합계, 비고)
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 자기주식수
     /// 
     /// Ⅴ. 자기주식수, 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "tesstk_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tesstk_co: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3748,16 +4674,24 @@ pub(crate) fn decode_stock_totqy_sttus_json_response(value: SourceValue) -> Resu
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct StockTotqySttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<StockTotqySttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3772,47 +4706,68 @@ impl StockTotqySttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct StockTotqySttusXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 유통주식수
     /// 
     /// Ⅵ. 유통주식수 (Ⅳ-Ⅴ), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "distb_stock_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub distb_stock_co: Option<SourceValue>,
     /// 기타
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수(4. 기타), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "etc"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub etc: Option<SourceValue>,
     /// 발행주식의 총수
     /// 
     /// Ⅳ. 발행주식의 총수 (Ⅱ-Ⅲ), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "istc_totqy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub istc_totqy: Option<SourceValue>,
     /// 발행할 주식의 총수
     /// 
     /// Ⅰ. 발행할 주식의 총수, 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_stock_totqy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_stock_totqy: Option<SourceValue>,
     /// 현재까지 감소한 주식의 총수
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수, 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "now_to_dcrs_stock_totqy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub now_to_dcrs_stock_totqy: Option<SourceValue>,
     /// 현재까지 발행한 주식의 총수
     /// 
     /// Ⅱ. 현재까지 발행한 주식의 총수, 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "now_to_isu_stock_totqy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub now_to_isu_stock_totqy: Option<SourceValue>,
     /// 이익소각
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수(2. 이익소각), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "profit_incnr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub profit_incnr: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -3820,27 +4775,40 @@ pub struct StockTotqySttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 상환주식의 상환
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수(3. 상환주식의 상환), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "rdmstk_repy"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rdmstk_repy: Option<SourceValue>,
     /// 감자
     /// 
     /// Ⅲ. 현재까지 감소한 주식의 총수(1. 감자), 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "redc"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub redc: Option<SourceValue>,
     /// 구분
     /// 
     /// 구분(증권의종류, 합계, 비고)
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 자기주식수
     /// 
     /// Ⅴ. 자기주식수, 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "tesstk_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tesstk_co: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3917,16 +4885,24 @@ pub(crate) fn decode_stock_totqy_sttus_xml_response(value: SourceValue) -> Resul
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DetScritsIsuAcmsltJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<DetScritsIsuAcmsltJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -3941,43 +4917,66 @@ impl DetScritsIsuAcmsltJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DetScritsIsuAcmsltJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 평가등급(평가기관)
+    #[cfg_attr(feature = "serde-json", serde(rename = "evl_grad_instt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub evl_grad_instt: Option<SourceValue>,
     /// 권면(전자등록)총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "facvalu_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub facvalu_totamt: Option<SourceValue>,
     /// 이자율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "intrt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub intrt: Option<SourceValue>,
     /// 발행회사
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_cmpny"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_cmpny: Option<SourceValue>,
     /// 발행일자
     /// 
     /// 발행일자(YYYYMMDD)
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_de: Option<SourceValue>,
     /// 발행방법
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_mth_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_mth_nm: Option<SourceValue>,
     /// 주관회사
+    #[cfg_attr(feature = "serde-json", serde(rename = "mngt_cmpny"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mngt_cmpny: Option<SourceValue>,
     /// 만기일
     /// 
     /// 만기일(YYYYMMDD)
+    #[cfg_attr(feature = "serde-json", serde(rename = "mtd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mtd: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -3985,15 +4984,24 @@ pub struct DetScritsIsuAcmsltJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 상환여부
+    #[cfg_attr(feature = "serde-json", serde(rename = "repy_at"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub repy_at: Option<SourceValue>,
     /// 증권종류
+    #[cfg_attr(feature = "serde-json", serde(rename = "scrits_knd_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub scrits_knd_nm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4068,16 +5076,24 @@ pub(crate) fn decode_det_scrits_isu_acmslt_json_response(value: SourceValue) -> 
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DetScritsIsuAcmsltXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<DetScritsIsuAcmsltXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4092,43 +5108,66 @@ impl DetScritsIsuAcmsltXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DetScritsIsuAcmsltXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 평가등급(평가기관)
+    #[cfg_attr(feature = "serde-json", serde(rename = "evl_grad_instt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub evl_grad_instt: Option<SourceValue>,
     /// 권면(전자등록)총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "facvalu_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub facvalu_totamt: Option<SourceValue>,
     /// 이자율
     /// 
     /// 0.00
+    #[cfg_attr(feature = "serde-json", serde(rename = "intrt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub intrt: Option<SourceValue>,
     /// 발행회사
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_cmpny"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_cmpny: Option<SourceValue>,
     /// 발행일자
     /// 
     /// 발행일자(YYYYMMDD)
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_de: Option<SourceValue>,
     /// 발행방법
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_mth_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_mth_nm: Option<SourceValue>,
     /// 주관회사
+    #[cfg_attr(feature = "serde-json", serde(rename = "mngt_cmpny"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mngt_cmpny: Option<SourceValue>,
     /// 만기일
     /// 
     /// 만기일(YYYYMMDD)
+    #[cfg_attr(feature = "serde-json", serde(rename = "mtd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mtd: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -4136,15 +5175,24 @@ pub struct DetScritsIsuAcmsltXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 상환여부
+    #[cfg_attr(feature = "serde-json", serde(rename = "repy_at"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub repy_at: Option<SourceValue>,
     /// 증권종류
+    #[cfg_attr(feature = "serde-json", serde(rename = "scrits_knd_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub scrits_knd_nm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4219,16 +5267,24 @@ pub(crate) fn decode_det_scrits_isu_acmslt_xml_response(value: SourceValue) -> R
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct EntrprsBilScritsNrdmpBlceJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<EntrprsBilScritsNrdmpBlceJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4243,39 +5299,56 @@ impl EntrprsBilScritsNrdmpBlceJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct EntrprsBilScritsNrdmpBlceJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 10일 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de10_below: Option<SourceValue>,
     /// 10일초과 30일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de10_excess_de30_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de10_excess_de30_below: Option<SourceValue>,
     /// 180일초과 1년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de180_excess_yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de180_excess_yy1_below: Option<SourceValue>,
     /// 30일초과 90일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de30_excess_de90_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de30_excess_de90_below: Option<SourceValue>,
     /// 90일초과 180일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de90_excess_de180_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de90_excess_de180_below: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -4283,31 +5356,48 @@ pub struct EntrprsBilScritsNrdmpBlceJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 1년초과 2년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_excess_yy2_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_excess_yy2_below: Option<SourceValue>,
     /// 2년초과 3년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy2_excess_yy3_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy2_excess_yy3_below: Option<SourceValue>,
     /// 3년 초과
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy3_excess"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy3_excess: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4384,16 +5474,24 @@ pub(crate) fn decode_entrprs_bil_scrits_nrdmp_blce_json_response(value: SourceVa
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct EntrprsBilScritsNrdmpBlceXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<EntrprsBilScritsNrdmpBlceXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4408,39 +5506,56 @@ impl EntrprsBilScritsNrdmpBlceXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct EntrprsBilScritsNrdmpBlceXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 10일 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de10_below: Option<SourceValue>,
     /// 10일초과 30일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de10_excess_de30_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de10_excess_de30_below: Option<SourceValue>,
     /// 180일초과 1년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de180_excess_yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de180_excess_yy1_below: Option<SourceValue>,
     /// 30일초과 90일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de30_excess_de90_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de30_excess_de90_below: Option<SourceValue>,
     /// 90일초과 180일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de90_excess_de180_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de90_excess_de180_below: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -4448,31 +5563,48 @@ pub struct EntrprsBilScritsNrdmpBlceXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 1년초과 2년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_excess_yy2_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_excess_yy2_below: Option<SourceValue>,
     /// 2년초과 3년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy2_excess_yy3_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy2_excess_yy3_below: Option<SourceValue>,
     /// 3년 초과
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy3_excess"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy3_excess: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4549,16 +5681,24 @@ pub(crate) fn decode_entrprs_bil_scrits_nrdmp_blce_xml_response(value: SourceVal
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct SrtpdPsndbtNrdmpBlceJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<SrtpdPsndbtNrdmpBlceJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4573,43 +5713,62 @@ impl SrtpdPsndbtNrdmpBlceJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct SrtpdPsndbtNrdmpBlceJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 10일 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de10_below: Option<SourceValue>,
     /// 10일초과 30일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de10_excess_de30_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de10_excess_de30_below: Option<SourceValue>,
     /// 180일초과 1년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de180_excess_yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de180_excess_yy1_below: Option<SourceValue>,
     /// 30일초과 90일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de30_excess_de90_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de30_excess_de90_below: Option<SourceValue>,
     /// 90일초과 180일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de90_excess_de180_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de90_excess_de180_below: Option<SourceValue>,
     /// 발행 한도
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_lmt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_lmt: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -4617,23 +5776,36 @@ pub struct SrtpdPsndbtNrdmpBlceJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 잔여 한도
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_lmt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_lmt: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4708,16 +5880,24 @@ pub(crate) fn decode_srtpd_psndbt_nrdmp_blce_json_response(value: SourceValue) -
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct SrtpdPsndbtNrdmpBlceXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<SrtpdPsndbtNrdmpBlceXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4732,43 +5912,62 @@ impl SrtpdPsndbtNrdmpBlceXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct SrtpdPsndbtNrdmpBlceXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 10일 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de10_below: Option<SourceValue>,
     /// 10일초과 30일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de10_excess_de30_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de10_excess_de30_below: Option<SourceValue>,
     /// 180일초과 1년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de180_excess_yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de180_excess_yy1_below: Option<SourceValue>,
     /// 30일초과 90일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de30_excess_de90_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de30_excess_de90_below: Option<SourceValue>,
     /// 90일초과 180일이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "de90_excess_de180_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub de90_excess_de180_below: Option<SourceValue>,
     /// 발행 한도
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "isu_lmt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub isu_lmt: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -4776,23 +5975,36 @@ pub struct SrtpdPsndbtNrdmpBlceXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 잔여 한도
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_lmt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_lmt: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4867,16 +6079,24 @@ pub(crate) fn decode_srtpd_psndbt_nrdmp_blce_xml_response(value: SourceValue) ->
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct CprndNrdmpBlceJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<CprndNrdmpBlceJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -4891,19 +6111,26 @@ impl CprndNrdmpBlceJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct CprndNrdmpBlceJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -4911,47 +6138,72 @@ pub struct CprndNrdmpBlceJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 10년초과
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy10_excess"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy10_excess: Option<SourceValue>,
     /// 1년 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_below: Option<SourceValue>,
     /// 1년초과 2년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_excess_yy2_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_excess_yy2_below: Option<SourceValue>,
     /// 2년초과 3년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy2_excess_yy3_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy2_excess_yy3_below: Option<SourceValue>,
     /// 3년초과 4년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy3_excess_yy4_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy3_excess_yy4_below: Option<SourceValue>,
     /// 4년초과 5년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy4_excess_yy5_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy4_excess_yy5_below: Option<SourceValue>,
     /// 5년초과 10년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy5_excess_yy10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy5_excess_yy10_below: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5026,16 +6278,24 @@ pub(crate) fn decode_cprnd_nrdmp_blce_json_response(value: SourceValue) -> Resul
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct CprndNrdmpBlceXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<CprndNrdmpBlceXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5050,19 +6310,26 @@ impl CprndNrdmpBlceXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct CprndNrdmpBlceXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -5070,47 +6337,72 @@ pub struct CprndNrdmpBlceXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 10년초과
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy10_excess"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy10_excess: Option<SourceValue>,
     /// 1년 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_below: Option<SourceValue>,
     /// 1년초과 2년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_excess_yy2_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_excess_yy2_below: Option<SourceValue>,
     /// 2년초과 3년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy2_excess_yy3_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy2_excess_yy3_below: Option<SourceValue>,
     /// 3년초과 4년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy3_excess_yy4_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy3_excess_yy4_below: Option<SourceValue>,
     /// 4년초과 5년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy4_excess_yy5_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy4_excess_yy5_below: Option<SourceValue>,
     /// 5년초과 10년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy5_excess_yy10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy5_excess_yy10_below: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5185,16 +6477,24 @@ pub(crate) fn decode_cprnd_nrdmp_blce_xml_response(value: SourceValue) -> Result
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct NewCaplScritsNrdmpBlceJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<NewCaplScritsNrdmpBlceJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5209,19 +6509,26 @@ impl NewCaplScritsNrdmpBlceJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct NewCaplScritsNrdmpBlceJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -5229,47 +6536,72 @@ pub struct NewCaplScritsNrdmpBlceJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 10년초과 15년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy10_excess_yy15_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy10_excess_yy15_below: Option<SourceValue>,
     /// 15년초과 20년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy15_excess_yy20_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy15_excess_yy20_below: Option<SourceValue>,
     /// 1년 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_below: Option<SourceValue>,
     /// 1년초과 5년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_excess_yy5_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_excess_yy5_below: Option<SourceValue>,
     /// 20년초과 30년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy20_excess_yy30_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy20_excess_yy30_below: Option<SourceValue>,
     /// 30년초과
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy30_excess"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy30_excess: Option<SourceValue>,
     /// 5년초과 10년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy5_excess_yy10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy5_excess_yy10_below: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5344,16 +6676,24 @@ pub(crate) fn decode_new_capl_scrits_nrdmp_blce_json_response(value: SourceValue
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct NewCaplScritsNrdmpBlceXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<NewCaplScritsNrdmpBlceXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5368,19 +6708,26 @@ impl NewCaplScritsNrdmpBlceXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct NewCaplScritsNrdmpBlceXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -5388,47 +6735,72 @@ pub struct NewCaplScritsNrdmpBlceXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 10년초과 15년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy10_excess_yy15_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy10_excess_yy15_below: Option<SourceValue>,
     /// 15년초과 20년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy15_excess_yy20_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy15_excess_yy20_below: Option<SourceValue>,
     /// 1년 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_below: Option<SourceValue>,
     /// 1년초과 5년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_excess_yy5_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_excess_yy5_below: Option<SourceValue>,
     /// 20년초과 30년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy20_excess_yy30_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy20_excess_yy30_below: Option<SourceValue>,
     /// 30년초과
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy30_excess"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy30_excess: Option<SourceValue>,
     /// 5년초과 10년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy5_excess_yy10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy5_excess_yy10_below: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5503,16 +6875,24 @@ pub(crate) fn decode_new_capl_scrits_nrdmp_blce_xml_response(value: SourceValue)
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct CndlCaplScritsNrdmpBlceJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<CndlCaplScritsNrdmpBlceJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5527,19 +6907,26 @@ impl CndlCaplScritsNrdmpBlceJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct CndlCaplScritsNrdmpBlceJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -5547,55 +6934,84 @@ pub struct CndlCaplScritsNrdmpBlceJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 10년초과 20년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy10_excess_yy20_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy10_excess_yy20_below: Option<SourceValue>,
     /// 1년 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_below: Option<SourceValue>,
     /// 1년초과 2년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_excess_yy2_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_excess_yy2_below: Option<SourceValue>,
     /// 20년초과 30년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy20_excess_yy30_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy20_excess_yy30_below: Option<SourceValue>,
     /// 2년초과 3년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy2_excess_yy3_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy2_excess_yy3_below: Option<SourceValue>,
     /// 30년초과
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy30_excess"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy30_excess: Option<SourceValue>,
     /// 3년초과 4년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy3_excess_yy4_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy3_excess_yy4_below: Option<SourceValue>,
     /// 4년초과 5년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy4_excess_yy5_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy4_excess_yy5_below: Option<SourceValue>,
     /// 5년초과 10년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy5_excess_yy10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy5_excess_yy10_below: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5674,16 +7090,24 @@ pub(crate) fn decode_cndl_capl_scrits_nrdmp_blce_json_response(value: SourceValu
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct CndlCaplScritsNrdmpBlceXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<CndlCaplScritsNrdmpBlceXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5698,19 +7122,26 @@ impl CndlCaplScritsNrdmpBlceXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct CndlCaplScritsNrdmpBlceXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -5718,55 +7149,84 @@ pub struct CndlCaplScritsNrdmpBlceXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn1"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn1: Option<SourceValue>,
     /// 잔여만기
+    #[cfg_attr(feature = "serde-json", serde(rename = "remndr_exprtn2"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub remndr_exprtn2: Option<SourceValue>,
     /// 합계
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "sm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub sm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 10년초과 20년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy10_excess_yy20_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy10_excess_yy20_below: Option<SourceValue>,
     /// 1년 이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_below: Option<SourceValue>,
     /// 1년초과 2년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy1_excess_yy2_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy1_excess_yy2_below: Option<SourceValue>,
     /// 20년초과 30년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy20_excess_yy30_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy20_excess_yy30_below: Option<SourceValue>,
     /// 2년초과 3년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy2_excess_yy3_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy2_excess_yy3_below: Option<SourceValue>,
     /// 30년초과
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy30_excess"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy30_excess: Option<SourceValue>,
     /// 3년초과 4년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy3_excess_yy4_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy3_excess_yy4_below: Option<SourceValue>,
     /// 4년초과 5년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy4_excess_yy5_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy4_excess_yy5_below: Option<SourceValue>,
     /// 5년초과 10년이하
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "yy5_excess_yy10_below"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub yy5_excess_yy10_below: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5845,16 +7305,24 @@ pub(crate) fn decode_cndl_capl_scrits_nrdmp_blce_xml_response(value: SourceValue
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AccnutAdtorNmNdAdtOpinionJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<AccnutAdtorNmNdAdtOpinionJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5869,42 +7337,61 @@ impl AccnutAdtorNmNdAdtOpinionJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AccnutAdtorNmNdAdtOpinionJsonResponseListItem {
     /// 감사의견
+    #[cfg_attr(feature = "serde-json", serde(rename = "adt_opinion"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adt_opinion: Option<SourceValue>,
     /// 감사보고서 특기사항
     /// 
     /// 감사보고서 특기사항
     /// ① 2019년 12월 8일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "adt_reprt_spcmnt_matter"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adt_reprt_spcmnt_matter: Option<SourceValue>,
     /// 감사인
+    #[cfg_attr(feature = "serde-json", serde(rename = "adtor"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adtor: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 사업연도(당기, 전기, 전전기)
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsns_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsns_year: Option<SourceValue>,
     /// 핵심감사사항
     /// 
     /// 핵심감사사항
     /// ② 2019년 12월 9일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "core_adt_matter"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub core_adt_matter: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 강조사항 등
     /// 
     /// 강조사항 등
     /// ② 2019년 12월 9일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "emphs_matter"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub emphs_matter: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -5912,11 +7399,16 @@ pub struct AccnutAdtorNmNdAdtOpinionJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -5983,16 +7475,24 @@ pub(crate) fn decode_accnut_adtor_nm_nd_adt_opinion_json_response(value: SourceV
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AccnutAdtorNmNdAdtOpinionXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<AccnutAdtorNmNdAdtOpinionXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6007,42 +7507,61 @@ impl AccnutAdtorNmNdAdtOpinionXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AccnutAdtorNmNdAdtOpinionXmlResponseListItem {
     /// 감사의견
+    #[cfg_attr(feature = "serde-json", serde(rename = "adt_opinion"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adt_opinion: Option<SourceValue>,
     /// 감사보고서 특기사항
     /// 
     /// 감사보고서 특기사항
     /// ① 2019년 12월 8일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "adt_reprt_spcmnt_matter"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adt_reprt_spcmnt_matter: Option<SourceValue>,
     /// 감사인
+    #[cfg_attr(feature = "serde-json", serde(rename = "adtor"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adtor: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 사업연도(당기, 전기, 전전기)
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsns_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsns_year: Option<SourceValue>,
     /// 핵심감사사항
     /// 
     /// 핵심감사사항
     /// ② 2019년 12월 9일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "core_adt_matter"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub core_adt_matter: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 강조사항 등
     /// 
     /// 강조사항 등
     /// ② 2019년 12월 9일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "emphs_matter"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub emphs_matter: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -6050,11 +7569,16 @@ pub struct AccnutAdtorNmNdAdtOpinionXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6121,16 +7645,24 @@ pub(crate) fn decode_accnut_adtor_nm_nd_adt_opinion_xml_response(value: SourceVa
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AdtServcCnclsSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<AdtServcCnclsSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6145,42 +7677,61 @@ impl AdtServcCnclsSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AdtServcCnclsSttusJsonResponseListItem {
     /// 감사계약내역(보수)
     /// 
     /// 감사계약내역(보수)
     /// ② 2020년 7월 6일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "adt_cntrct_dtls_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adt_cntrct_dtls_mendng: Option<SourceValue>,
     /// 감사계약내역(시간)
     /// 
     /// 감사계약내역(시간)
     /// ② 2020년 7월 6일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "adt_cntrct_dtls_time"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adt_cntrct_dtls_time: Option<SourceValue>,
     /// 감사인
+    #[cfg_attr(feature = "serde-json", serde(rename = "adtor"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adtor: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 사업연도(당기, 전기, 전전기)
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsns_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsns_year: Option<SourceValue>,
     /// 내용
+    #[cfg_attr(feature = "serde-json", serde(rename = "cn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cn: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 보수
     /// 
     /// 보수
     /// ① 2020년 7월 5일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -6188,26 +7739,37 @@ pub struct AdtServcCnclsSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 실제수행내역(보수)
     /// 
     /// 실제수행내역(보수)
     /// ② 2020년 7월 6일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_exc_dtls_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_exc_dtls_mendng: Option<SourceValue>,
     /// 실제수행내역(시간)
     /// 
     /// 실제수행내역(시간)
     /// ② 2020년 7월 6일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_exc_dtls_time"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_exc_dtls_time: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 총소요시간
     /// 
     /// 총소요시간
     /// ① 2020년 7월 5일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "tot_reqre_time"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tot_reqre_time: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6280,16 +7842,24 @@ pub(crate) fn decode_adt_servc_cncls_sttus_json_response(value: SourceValue) -> 
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AdtServcCnclsSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<AdtServcCnclsSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6304,42 +7874,61 @@ impl AdtServcCnclsSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AdtServcCnclsSttusXmlResponseListItem {
     /// 감사계약내역(보수)
     /// 
     /// 감사계약내역(보수)
     /// ② 2020년 7월 6일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "adt_cntrct_dtls_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adt_cntrct_dtls_mendng: Option<SourceValue>,
     /// 감사계약내역(시간)
     /// 
     /// 감사계약내역(시간)
     /// ② 2020년 7월 6일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "adt_cntrct_dtls_time"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adt_cntrct_dtls_time: Option<SourceValue>,
     /// 감사인
+    #[cfg_attr(feature = "serde-json", serde(rename = "adtor"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub adtor: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 사업연도(당기, 전기, 전전기)
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsns_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsns_year: Option<SourceValue>,
     /// 내용
+    #[cfg_attr(feature = "serde-json", serde(rename = "cn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cn: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 보수
     /// 
     /// 보수
     /// ① 2020년 7월 5일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -6347,26 +7936,37 @@ pub struct AdtServcCnclsSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 실제수행내역(보수)
     /// 
     /// 실제수행내역(보수)
     /// ② 2020년 7월 6일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_exc_dtls_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_exc_dtls_mendng: Option<SourceValue>,
     /// 실제수행내역(시간)
     /// 
     /// 실제수행내역(시간)
     /// ② 2020년 7월 6일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_exc_dtls_time"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_exc_dtls_time: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 총소요시간
     /// 
     /// 총소요시간
     /// ① 2020년 7월 5일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "tot_reqre_time"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tot_reqre_time: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6439,16 +8039,24 @@ pub(crate) fn decode_adt_servc_cncls_sttus_xml_response(value: SourceValue) -> R
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AccnutAdtorNonAdtServcCnclsSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<AccnutAdtorNonAdtServcCnclsSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6463,25 +8071,36 @@ impl AccnutAdtorNonAdtServcCnclsSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AccnutAdtorNonAdtServcCnclsSttusJsonResponseListItem {
     /// 사업연도
     /// 
     /// 사업연도(당기, 전기, 전전기)
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsns_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsns_year: Option<SourceValue>,
     /// 계약체결일
+    #[cfg_attr(feature = "serde-json", serde(rename = "cntrct_cncls_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cntrct_cncls_de: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -6489,19 +8108,32 @@ pub struct AccnutAdtorNonAdtServcCnclsSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 용역내용
+    #[cfg_attr(feature = "serde-json", serde(rename = "servc_cn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub servc_cn: Option<SourceValue>,
     /// 용역수행기간
+    #[cfg_attr(feature = "serde-json", serde(rename = "servc_exc_pd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub servc_exc_pd: Option<SourceValue>,
     /// 용역보수
+    #[cfg_attr(feature = "serde-json", serde(rename = "servc_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub servc_mendng: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6568,16 +8200,24 @@ pub(crate) fn decode_accnut_adtor_non_adt_servc_cncls_sttus_json_response(value:
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AccnutAdtorNonAdtServcCnclsSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<AccnutAdtorNonAdtServcCnclsSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6592,25 +8232,36 @@ impl AccnutAdtorNonAdtServcCnclsSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct AccnutAdtorNonAdtServcCnclsSttusXmlResponseListItem {
     /// 사업연도
     /// 
     /// 사업연도(당기, 전기, 전전기)
+    #[cfg_attr(feature = "serde-json", serde(rename = "bsns_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub bsns_year: Option<SourceValue>,
     /// 계약체결일
+    #[cfg_attr(feature = "serde-json", serde(rename = "cntrct_cncls_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cntrct_cncls_de: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -6618,19 +8269,32 @@ pub struct AccnutAdtorNonAdtServcCnclsSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 용역내용
+    #[cfg_attr(feature = "serde-json", serde(rename = "servc_cn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub servc_cn: Option<SourceValue>,
     /// 용역수행기간
+    #[cfg_attr(feature = "serde-json", serde(rename = "servc_exc_pd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub servc_exc_pd: Option<SourceValue>,
     /// 용역보수
+    #[cfg_attr(feature = "serde-json", serde(rename = "servc_mendng"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub servc_mendng: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6697,16 +8361,24 @@ pub(crate) fn decode_accnut_adtor_non_adt_servc_cncls_sttus_xml_response(value: 
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct OutcmpnyDrctrNdChangeSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<OutcmpnyDrctrNdChangeSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6721,35 +8393,50 @@ impl OutcmpnyDrctrNdChangeSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct OutcmpnyDrctrNdChangeSttusJsonResponseListItem {
     /// 사외이사 변동현황(선임)
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "apnt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub apnt: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 이사의 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "drctr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub drctr_co: Option<SourceValue>,
     /// 사외이사 변동현황(중도퇴임)
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mdstrm_resig"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mdstrm_resig: Option<SourceValue>,
     /// 사외이사 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "otcmp_drctr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub otcmp_drctr_co: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -6757,15 +8444,22 @@ pub struct OutcmpnyDrctrNdChangeSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 사외이사 변동현황(해임)
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "rlsofc"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rlsofc: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6830,16 +8524,24 @@ pub(crate) fn decode_outcmpny_drctr_nd_change_sttus_json_response(value: SourceV
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct OutcmpnyDrctrNdChangeSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<OutcmpnyDrctrNdChangeSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6854,35 +8556,50 @@ impl OutcmpnyDrctrNdChangeSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct OutcmpnyDrctrNdChangeSttusXmlResponseListItem {
     /// 사외이사 변동현황(선임)
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "apnt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub apnt: Option<SourceValue>,
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 이사의 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "drctr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub drctr_co: Option<SourceValue>,
     /// 사외이사 변동현황(중도퇴임)
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mdstrm_resig"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mdstrm_resig: Option<SourceValue>,
     /// 사외이사 수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "otcmp_drctr_co"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub otcmp_drctr_co: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -6890,15 +8607,22 @@ pub struct OutcmpnyDrctrNdChangeSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 사외이사 변동현황(해임)
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "rlsofc"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rlsofc: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6963,16 +8687,24 @@ pub(crate) fn decode_outcmpny_drctr_nd_change_sttus_xml_response(value: SourceVa
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct UnrstExctvMendngSttusJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<UnrstExctvMendngSttusJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -6987,31 +8719,44 @@ impl UnrstExctvMendngSttusJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct UnrstExctvMendngSttusJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 연간급여 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "fyer_salary_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fyer_salary_totamt: Option<SourceValue>,
     /// 1인평균 급여액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "jan_salary_am"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub jan_salary_am: Option<SourceValue>,
     /// 인원수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "nmpr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nmpr: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -7019,17 +8764,26 @@ pub struct UnrstExctvMendngSttusJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 구분
     /// 
     /// 구분(미등기임원)
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7094,16 +8848,24 @@ pub(crate) fn decode_unrst_exctv_mendng_sttus_json_response(value: SourceValue) 
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct UnrstExctvMendngSttusXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<UnrstExctvMendngSttusXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7118,31 +8880,44 @@ impl UnrstExctvMendngSttusXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct UnrstExctvMendngSttusXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 연간급여 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "fyer_salary_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fyer_salary_totamt: Option<SourceValue>,
     /// 1인평균 급여액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "jan_salary_am"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub jan_salary_am: Option<SourceValue>,
     /// 인원수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "nmpr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nmpr: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -7150,17 +8925,26 @@ pub struct UnrstExctvMendngSttusXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 구분
     /// 
     /// 구분(미등기임원)
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7225,16 +9009,24 @@ pub(crate) fn decode_unrst_exctv_mendng_sttus_xml_response(value: SourceValue) -
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DrctrAdtAllMendngSttusGmtsckConfmAmountJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<DrctrAdtAllMendngSttusGmtsckConfmAmountJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7249,29 +9041,42 @@ impl DrctrAdtAllMendngSttusGmtsckConfmAmountJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DrctrAdtAllMendngSttusGmtsckConfmAmountJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 주주총회 승인금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "gmtsck_confm_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub gmtsck_confm_amount: Option<SourceValue>,
     /// 인원수
+    #[cfg_attr(feature = "serde-json", serde(rename = "nmpr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nmpr: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -7279,15 +9084,24 @@ pub struct DrctrAdtAllMendngSttusGmtsckConfmAmountJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 구분
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7352,16 +9166,24 @@ pub(crate) fn decode_drctr_adt_all_mendng_sttus_gmtsck_confm_amount_json_respons
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DrctrAdtAllMendngSttusGmtsckConfmAmountXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<DrctrAdtAllMendngSttusGmtsckConfmAmountXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7376,29 +9198,42 @@ impl DrctrAdtAllMendngSttusGmtsckConfmAmountXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DrctrAdtAllMendngSttusGmtsckConfmAmountXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 주주총회 승인금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "gmtsck_confm_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub gmtsck_confm_amount: Option<SourceValue>,
     /// 인원수
+    #[cfg_attr(feature = "serde-json", serde(rename = "nmpr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nmpr: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -7406,15 +9241,24 @@ pub struct DrctrAdtAllMendngSttusGmtsckConfmAmountXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 구분
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7479,16 +9323,24 @@ pub(crate) fn decode_drctr_adt_all_mendng_sttus_gmtsck_confm_amount_xml_response
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DrctrAdtAllMendngSttusMendngPymntamtTyClJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<DrctrAdtAllMendngSttusMendngPymntamtTyClJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7503,43 +9355,62 @@ impl DrctrAdtAllMendngSttusMendngPymntamtTyClJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DrctrAdtAllMendngSttusMendngPymntamtTyClJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 인원수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "nmpr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nmpr: Option<SourceValue>,
     /// 그 외 주식기준 보상 시장가치
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_mkt_vl"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_mkt_vl: Option<SourceValue>,
     /// 그 외 주식기준 보상 미지급수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_unpyd_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_unpyd_qty: Option<SourceValue>,
     /// 1인당 평균보수액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "psn1_avrg_pymntamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub psn1_avrg_pymntamt: Option<SourceValue>,
     /// 보수총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "pymnt_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pymnt_totamt: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -7547,31 +9418,48 @@ pub struct DrctrAdtAllMendngSttusMendngPymntamtTyClJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 구분
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt: Option<SourceValue>,
     /// 주식매수선택권 행사가능수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrcsbl_qty: Option<SourceValue>,
     /// 주식매수선택권 잔여금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_rmn_blce"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_rmn_blce: Option<SourceValue>,
     /// 주식매수선택권 행사불가수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_unexrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_unexrcsbl_qty: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7650,16 +9538,24 @@ pub(crate) fn decode_drctr_adt_all_mendng_sttus_mendng_pymntamt_ty_cl_json_respo
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DrctrAdtAllMendngSttusMendngPymntamtTyClXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<DrctrAdtAllMendngSttusMendngPymntamtTyClXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7674,43 +9570,62 @@ impl DrctrAdtAllMendngSttusMendngPymntamtTyClXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct DrctrAdtAllMendngSttusMendngPymntamtTyClXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 인원수
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "nmpr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nmpr: Option<SourceValue>,
     /// 그 외 주식기준 보상 시장가치
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_mkt_vl"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_mkt_vl: Option<SourceValue>,
     /// 그 외 주식기준 보상 미지급수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_unpyd_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_unpyd_qty: Option<SourceValue>,
     /// 1인당 평균보수액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "psn1_avrg_pymntamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub psn1_avrg_pymntamt: Option<SourceValue>,
     /// 보수총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "pymnt_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pymnt_totamt: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -7718,31 +9633,48 @@ pub struct DrctrAdtAllMendngSttusMendngPymntamtTyClXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 구분
+    #[cfg_attr(feature = "serde-json", serde(rename = "se"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt: Option<SourceValue>,
     /// 주식매수선택권 행사가능수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrcsbl_qty: Option<SourceValue>,
     /// 주식매수선택권 잔여금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_rmn_blce"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_rmn_blce: Option<SourceValue>,
     /// 주식매수선택권 행사불가수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_unexrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_unexrcsbl_qty: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7821,16 +9753,24 @@ pub(crate) fn decode_drctr_adt_all_mendng_sttus_mendng_pymntamt_ty_cl_xml_respon
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct PssrpCptalUseDtlsJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<PssrpCptalUseDtlsJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -7845,35 +9785,50 @@ impl PssrpCptalUseDtlsJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct PssrpCptalUseDtlsJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 차이발생 사유 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "dffrnc_occrrnc_resn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub dffrnc_occrrnc_resn: Option<SourceValue>,
     /// 신고서상 자금사용 계획
     /// 
     /// 신고서상 자금사용 계획
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "on_dclrt_cptal_use_plan"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub on_dclrt_cptal_use_plan: Option<SourceValue>,
     /// 납입금액
     /// 
     /// 9,999,999,999
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "pay_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pay_amount: Option<SourceValue>,
     /// 납입일
+    #[cfg_attr(feature = "serde-json", serde(rename = "pay_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pay_de: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -7881,49 +9836,68 @@ pub struct PssrpCptalUseDtlsJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 실제 자금사용 내역(금액)
     /// 
     /// 9,999,999,999
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_dtls_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_dtls_amount: Option<SourceValue>,
     /// 실제 자금사용 내역(내용)
     /// 
     /// 실제 자금사용 내역(내용)
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_dtls_cn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_dtls_cn: Option<SourceValue>,
     /// 실제 자금사용 현황
     /// 
     /// 실제 자금사용 현황
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_sttus"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_sttus: Option<SourceValue>,
     /// 증권신고서 등의 자금사용 계획(조달금액)
     /// 
     /// 9,999,999,999
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "rs_cptal_use_plan_prcure_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rs_cptal_use_plan_prcure_amount: Option<SourceValue>,
     /// 증권신고서 등의 자금사용 계획(사용용도)
     /// 
     /// 증권신고서 등의 자금사용 계획(사용용도)
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "rs_cptal_use_plan_useprps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rs_cptal_use_plan_useprps: Option<SourceValue>,
     /// 구분
+    #[cfg_attr(feature = "serde-json", serde(rename = "se_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se_nm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 회차
     /// 
     /// 회차
     /// 
     /// ③ 2019년 12월 9일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "tm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tm: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8000,16 +9974,24 @@ pub(crate) fn decode_pssrp_cptal_use_dtls_json_response(value: SourceValue) -> R
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct PssrpCptalUseDtlsXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<PssrpCptalUseDtlsXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8024,35 +10006,50 @@ impl PssrpCptalUseDtlsXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct PssrpCptalUseDtlsXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 차이발생 사유 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "dffrnc_occrrnc_resn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub dffrnc_occrrnc_resn: Option<SourceValue>,
     /// 신고서상 자금사용 계획
     /// 
     /// 신고서상 자금사용 계획
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "on_dclrt_cptal_use_plan"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub on_dclrt_cptal_use_plan: Option<SourceValue>,
     /// 납입금액
     /// 
     /// 9,999,999,999
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "pay_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pay_amount: Option<SourceValue>,
     /// 납입일
+    #[cfg_attr(feature = "serde-json", serde(rename = "pay_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pay_de: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -8060,49 +10057,68 @@ pub struct PssrpCptalUseDtlsXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 실제 자금사용 내역(금액)
     /// 
     /// 9,999,999,999
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_dtls_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_dtls_amount: Option<SourceValue>,
     /// 실제 자금사용 내역(내용)
     /// 
     /// 실제 자금사용 내역(내용)
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_dtls_cn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_dtls_cn: Option<SourceValue>,
     /// 실제 자금사용 현황
     /// 
     /// 실제 자금사용 현황
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_sttus"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_sttus: Option<SourceValue>,
     /// 증권신고서 등의 자금사용 계획(조달금액)
     /// 
     /// 9,999,999,999
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "rs_cptal_use_plan_prcure_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rs_cptal_use_plan_prcure_amount: Option<SourceValue>,
     /// 증권신고서 등의 자금사용 계획(사용용도)
     /// 
     /// 증권신고서 등의 자금사용 계획(사용용도)
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "rs_cptal_use_plan_useprps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rs_cptal_use_plan_useprps: Option<SourceValue>,
     /// 구분
+    #[cfg_attr(feature = "serde-json", serde(rename = "se_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se_nm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 회차
     /// 
     /// 회차
     /// 
     /// ③ 2019년 12월 9일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "tm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tm: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8179,16 +10195,24 @@ pub(crate) fn decode_pssrp_cptal_use_dtls_xml_response(value: SourceValue) -> Re
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct PrvsrpCptalUseDtlsJsonResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<PrvsrpCptalUseDtlsJsonResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8203,47 +10227,66 @@ impl PrvsrpCptalUseDtlsJsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct PrvsrpCptalUseDtlsJsonResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 자금사용 계획
     /// 
     /// 자금사용 계획
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "cptal_use_plan"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cptal_use_plan: Option<SourceValue>,
     /// 차이발생 사유 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "dffrnc_occrrnc_resn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub dffrnc_occrrnc_resn: Option<SourceValue>,
     /// 주요사항보고서의 자금사용 계획(조달금액)
     /// 
     /// 9,999,999,999
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "mtrpt_cptal_use_plan_prcure_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mtrpt_cptal_use_plan_prcure_amount: Option<SourceValue>,
     /// 주요사항보고서의 자금사용 계획(사용용도)
     /// 
     /// 주요사항보고서의 자금사용 계획(사용용도)
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "mtrpt_cptal_use_plan_useprps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mtrpt_cptal_use_plan_useprps: Option<SourceValue>,
     /// 납입금액
     /// 
     /// 9,999,999,999
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "pay_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pay_amount: Option<SourceValue>,
     /// 납입일
+    #[cfg_attr(feature = "serde-json", serde(rename = "pay_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pay_de: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -8251,37 +10294,52 @@ pub struct PrvsrpCptalUseDtlsJsonResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 실제 자금사용 내역(금액)
     /// 
     /// 9,999,999,999
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_dtls_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_dtls_amount: Option<SourceValue>,
     /// 실제 자금사용 내역(내용)
     /// 
     /// 실제 자금사용 내역(내용)
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_dtls_cn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_dtls_cn: Option<SourceValue>,
     /// 실제 자금사용 현황
     /// 
     /// 실제 자금사용 현황
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_sttus"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_sttus: Option<SourceValue>,
     /// 구분
+    #[cfg_attr(feature = "serde-json", serde(rename = "se_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se_nm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 회차
     /// 
     /// 회차
     /// 
     /// ③ 2019년 12월 9일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "tm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tm: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8358,16 +10416,24 @@ pub(crate) fn decode_prvsrp_cptal_use_dtls_json_response(value: SourceValue) -> 
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct PrvsrpCptalUseDtlsXmlResponse {
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<PrvsrpCptalUseDtlsXmlResponseListItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8382,47 +10448,66 @@ impl PrvsrpCptalUseDtlsXmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct PrvsrpCptalUseDtlsXmlResponseListItem {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 자금사용 계획
     /// 
     /// 자금사용 계획
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "cptal_use_plan"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub cptal_use_plan: Option<SourceValue>,
     /// 차이발생 사유 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "dffrnc_occrrnc_resn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub dffrnc_occrrnc_resn: Option<SourceValue>,
     /// 주요사항보고서의 자금사용 계획(조달금액)
     /// 
     /// 9,999,999,999
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "mtrpt_cptal_use_plan_prcure_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mtrpt_cptal_use_plan_prcure_amount: Option<SourceValue>,
     /// 주요사항보고서의 자금사용 계획(사용용도)
     /// 
     /// 주요사항보고서의 자금사용 계획(사용용도)
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "mtrpt_cptal_use_plan_useprps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mtrpt_cptal_use_plan_useprps: Option<SourceValue>,
     /// 납입금액
     /// 
     /// 9,999,999,999
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "pay_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pay_amount: Option<SourceValue>,
     /// 납입일
+    #[cfg_attr(feature = "serde-json", serde(rename = "pay_de"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub pay_de: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -8430,37 +10515,52 @@ pub struct PrvsrpCptalUseDtlsXmlResponseListItem {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// 실제 자금사용 내역(금액)
     /// 
     /// 9,999,999,999
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_dtls_amount"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_dtls_amount: Option<SourceValue>,
     /// 실제 자금사용 내역(내용)
     /// 
     /// 실제 자금사용 내역(내용)
     /// 
     /// ② 2018년 1월 19일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_dtls_cn"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_dtls_cn: Option<SourceValue>,
     /// 실제 자금사용 현황
     /// 
     /// 실제 자금사용 현황
     /// 
     /// ① 2018년 1월 18일까지 사용됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "real_cptal_use_sttus"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub real_cptal_use_sttus: Option<SourceValue>,
     /// 구분
+    #[cfg_attr(feature = "serde-json", serde(rename = "se_nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub se_nm: Option<SourceValue>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
     /// 회차
     /// 
     /// 회차
     /// 
     /// ③ 2019년 12월 9일부터 추가됨
+    #[cfg_attr(feature = "serde-json", serde(rename = "tm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub tm: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8537,25 +10637,36 @@ pub(crate) fn decode_prvsrp_cptal_use_dtls_xml_response(value: SourceValue) -> R
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusV2JsonResponse {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "group"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub group: Option<Vec<HmvAuditIndvdlBySttusV2JsonResponseGroupItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -8563,13 +10674,20 @@ pub struct HmvAuditIndvdlBySttusV2JsonResponse {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8584,26 +10702,38 @@ impl HmvAuditIndvdlBySttusV2JsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusV2JsonResponseGroupItem {
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HmvAuditIndvdlBySttusV2JsonResponseGroupItemListItem>>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 이름
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 이사, 대표이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8618,44 +10748,66 @@ impl HmvAuditIndvdlBySttusV2JsonResponseGroupItem {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusV2JsonResponseGroupItemListItem {
     /// 그 외 주식기준 보상 시장가치
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_mkt_vl"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_mkt_vl: Option<SourceValue>,
     /// 그 외 주식기준 보상 미지급수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_unpyd_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_unpyd_qty: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_amt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_amt: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-종류
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_knd: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_qty: Option<SourceValue>,
     /// 주식매수선택권 행사가격
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrc_pr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrc_pr: Option<SourceValue>,
     /// 주식매수선택권 행사가능수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrcsbl_qty: Option<SourceValue>,
     /// 주식매수선택권 잔여금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_rmn_blce"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_rmn_blce: Option<SourceValue>,
     /// 주식매수선택권 행사불가수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_unexrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_unexrcsbl_qty: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8752,25 +10904,36 @@ pub(crate) fn decode_hmv_audit_indvdl_by_sttus_v2_json_response(value: SourceVal
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusV2XmlResponse {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "group"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub group: Option<Vec<HmvAuditIndvdlBySttusV2XmlResponseGroupItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -8778,13 +10941,20 @@ pub struct HmvAuditIndvdlBySttusV2XmlResponse {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8799,26 +10969,38 @@ impl HmvAuditIndvdlBySttusV2XmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusV2XmlResponseGroupItem {
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<HmvAuditIndvdlBySttusV2XmlResponseGroupItemListItem>>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 이름
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 이사, 대표이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8833,44 +11015,66 @@ impl HmvAuditIndvdlBySttusV2XmlResponseGroupItem {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct HmvAuditIndvdlBySttusV2XmlResponseGroupItemListItem {
     /// 그 외 주식기준 보상 시장가치
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_mkt_vl"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_mkt_vl: Option<SourceValue>,
     /// 그 외 주식기준 보상 미지급수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_unpyd_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_unpyd_qty: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_amt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_amt: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-종류
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_knd: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_qty: Option<SourceValue>,
     /// 주식매수선택권 행사가격
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrc_pr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrc_pr: Option<SourceValue>,
     /// 주식매수선택권 행사가능수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrcsbl_qty: Option<SourceValue>,
     /// 주식매수선택권 잔여금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_rmn_blce"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_rmn_blce: Option<SourceValue>,
     /// 주식매수선택권 행사불가수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_unexrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_unexrcsbl_qty: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -8967,25 +11171,36 @@ pub(crate) fn decode_hmv_audit_indvdl_by_sttus_v2_xml_response(value: SourceValu
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayV2JsonResponse {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "group"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub group: Option<Vec<IndvdlByPayV2JsonResponseGroupItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -8993,13 +11208,20 @@ pub struct IndvdlByPayV2JsonResponse {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -9014,26 +11236,38 @@ impl IndvdlByPayV2JsonResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayV2JsonResponseGroupItem {
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<IndvdlByPayV2JsonResponseGroupItemListItem>>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 이름
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 이사, 대표이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -9048,44 +11282,66 @@ impl IndvdlByPayV2JsonResponseGroupItem {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayV2JsonResponseGroupItemListItem {
     /// 그 외 주식기준 보상 시장가치
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_mkt_vl"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_mkt_vl: Option<SourceValue>,
     /// 그 외 주식기준 보상 미지급수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_unpyd_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_unpyd_qty: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_amt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_amt: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-종류
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_knd: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_qty: Option<SourceValue>,
     /// 주식매수선택권 행사가격
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrc_pr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrc_pr: Option<SourceValue>,
     /// 주식매수선택권 행사가능수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrcsbl_qty: Option<SourceValue>,
     /// 주식매수선택권 잔여금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_rmn_blce"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_rmn_blce: Option<SourceValue>,
     /// 주식매수선택권 행사불가수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_unexrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_unexrcsbl_qty: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -9182,25 +11438,36 @@ pub(crate) fn decode_indvdl_by_pay_v2_json_response(value: SourceValue) -> Resul
 
 /// 공식 OpenDART 가이드의 응답 결과 표를 정규화한 보수적 스키마입니다. 가이드가 필드 타입을 제공하지 않으므로 타입을 추정하지 않았습니다.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayV2XmlResponse {
     /// 법인구분
     /// 
     /// 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_cls"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_cls: Option<SourceValue>,
     /// 고유번호
     /// 
     /// 공시대상회사의 고유번호(8자리)
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_code"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_code: Option<SourceValue>,
     /// 회사명
     /// 
     /// 공시대상회사명
+    #[cfg_attr(feature = "serde-json", serde(rename = "corp_name"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub corp_name: Option<SourceValue>,
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "group"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub group: Option<Vec<IndvdlByPayV2XmlResponseGroupItem>>,
     /// 에러 및 정보 메시지
     /// 
     /// (※메시지 설명 참조)
+    #[cfg_attr(feature = "serde-json", serde(rename = "message"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// 접수번호
     /// 
@@ -9208,13 +11475,20 @@ pub struct IndvdlByPayV2XmlResponse {
     /// 
     /// ※ 공시뷰어 연결에 이용예시
     /// - PC용 : `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=접수번호`
+    #[cfg_attr(feature = "serde-json", serde(rename = "rcept_no"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rcept_no: Option<SourceValue>,
     /// OpenDART API 수준 상태 코드입니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "status"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub status: Option<SourceStatus>,
     /// 결산기준일
     /// 
     /// YYYY-MM-DD
+    #[cfg_attr(feature = "serde-json", serde(rename = "stlm_dt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stlm_dt: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -9229,26 +11503,38 @@ impl IndvdlByPayV2XmlResponse {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayV2XmlResponseGroupItem {
     /// 사업연도
     /// 
     /// 당기,전기,전전기
+    #[cfg_attr(feature = "serde-json", serde(rename = "fscl_year"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub fscl_year: Option<SourceValue>,
     /// 공식 가이드의 계층 표시를 바탕으로 배열 컨테이너로 정규화했습니다.
+    #[cfg_attr(feature = "serde-json", serde(rename = "list"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub list: Option<Vec<IndvdlByPayV2XmlResponseGroupItemListItem>>,
     /// 보수 총액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "mendng_totamt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub mendng_totamt: Option<SourceValue>,
     /// 이름
     /// 
     /// 홍길동
+    #[cfg_attr(feature = "serde-json", serde(rename = "nm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub nm: Option<SourceValue>,
     /// 직위
     /// 
     /// 이사, 대표이사 등
+    #[cfg_attr(feature = "serde-json", serde(rename = "ofcps"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub ofcps: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 
@@ -9263,44 +11549,66 @@ impl IndvdlByPayV2XmlResponseGroupItem {
 
 /// Generated OpenDART response object.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct IndvdlByPayV2XmlResponseGroupItemListItem {
     /// 그 외 주식기준 보상 시장가치
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_mkt_vl"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_mkt_vl: Option<SourceValue>,
     /// 그 외 주식기준 보상 미지급수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "othr_stk_bsd_cmpn_unpyd_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub othr_stk_bsd_cmpn_unpyd_qty: Option<SourceValue>,
     /// 비고
+    #[cfg_attr(feature = "serde-json", serde(rename = "rm"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub rm: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_amt"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_amt: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-종류
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_knd"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_knd: Option<SourceValue>,
     /// 보수총액 중 주식기준보상 지급액-수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_bsd_pd_mendng_totamt_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_bsd_pd_mendng_totamt_qty: Option<SourceValue>,
     /// 주식매수선택권 행사가격
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrc_pr"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrc_pr: Option<SourceValue>,
     /// 주식매수선택권 행사가능수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_exrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_exrcsbl_qty: Option<SourceValue>,
     /// 주식매수선택권 잔여금액
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_rmn_blce"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_rmn_blce: Option<SourceValue>,
     /// 주식매수선택권 행사불가수량
     /// 
     /// 9,999,999,999
+    #[cfg_attr(feature = "serde-json", serde(rename = "stk_opt_unexrcsbl_qty"))]
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub stk_opt_unexrcsbl_qty: Option<SourceValue>,
+    #[cfg_attr(feature = "serde-json", serde(flatten))]
     additional_fields: BTreeMap<String, SourceValue>,
 }
 

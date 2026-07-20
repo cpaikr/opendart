@@ -180,6 +180,14 @@ migration to private Go repository tooling. [ADR 0002](docs/decisions/0002-publi
 accepts the first-party Rust SDK boundary. Current packaging and the remaining
 publication/adoption work are tracked in the [public Rust SDK task](tasks/rust/public-rust-sdk.md).
 
+[ADR 0003](docs/decisions/0003-agent-first-opendart-cli.md) accepts a planned
+agent-first public CLI that consumes the SDK through generated typed dispatch.
+Its [target architecture](docs/rust-cli/architecture.md),
+[public contract](docs/rust-cli/public-contract.md), and
+[implementation plan](plans/rust/public-opendart-cli.md) record the accepted
+direction and remaining product decisions, not current runtime state. The CLI
+enters the product boundary and system map only after implementation.
+
 [guide drift](tasks/main/guide-drift.md) owns credential-free acquisition and
 semantic-comparison work. Drift-safe acquisition is implemented; the command,
 report, notifier, and scheduling remain future work. The

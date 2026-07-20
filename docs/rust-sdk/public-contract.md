@@ -38,6 +38,60 @@ unless stronger evidence has promoted it into the specification. The documented
 multi-company cardinality and comma-separated serialization are enforceable
 because they are explicit contract facts.
 
+### Optional JSON response serialization
+
+[ADR 0003](../decisions/0003-agent-first-opendart-cli.md) defines the optional
+`serde-json` feature so typed consumers can serialize this evidence
+directly with `serde_json` without creating mirror response types.
+Implementation and validation evidence remain in the
+[CLI plan](../../plans/rust/public-opendart-cli.md).
+
+With the feature enabled, generated response objects, `SourceResponse`,
+`SourceReply`, status envelopes, sanitized metadata, and `SourceValue` implement
+`Serialize`. The contract is source-shaped rather than a Rust derive accident:
+
+- generated field names remain source names, absent `Option` fields are omitted,
+  explicit source null remains null, and additive fields flatten into their
+  owning object;
+- `SourceStatus` is its exact string and `SourceValue` uses natural null,
+  Boolean, number, string, array, and object values without lossy fallback;
+- known HTTP versions use stable protocol strings, unknown versions preserve
+  their stored string, and sanitized header values remain exact byte arrays; and
+- `SourceReply` uses stable adjacent `kind` and `value` fields for `success` and
+  `status` variants.
+
+Credentials, authorized and prepared requests, clients, and body streams remain
+non-serializable. The supported encoder is direct textual `serde_json` encoding;
+the SDK does not promise equivalent natural-number behavior through arbitrary
+Serde formats or through an intermediate `serde_json::Value`.
+
+`SourceValue` number construction validates exactly one number using this
+SDK-owned JSON grammar, with no leading or trailing whitespace:
+
+```text
+number = ["-"] integer [fraction] [exponent]
+integer = "0" | nonzero-digit *digit
+fraction = "." 1*digit
+exponent = ("e" | "E") ["+" | "-"] 1*digit
+digit = "0".."9"
+nonzero-digit = "1".."9"
+```
+
+There is no leading `+`, no leading zero before another integer digit, and no
+`NaN` or infinity spelling. `SourceValue::number` returns
+`Result<SourceValue, InvalidSourceNumberError>`; invalid caller input is
+rejected before a `SourceValue` exists. There is no fixed magnitude, decimal,
+or exponent range. Wire-originated lexemes remain subject to the enclosing
+document's configured byte and structural limits.
+
+Serialization emits the exact retained lexeme through
+`serde_json::value::RawValue`, preserving details such as `-0`, exponent case
+and sign, and fractional trailing zeros without conversion through a Rust
+integer or float. The encoder is not the grammar authority: compatibility tests
+must fail if a supported `serde_json` update rejects an SDK-valid lexeme. The
+complete document is buffered before process output so a serialization failure
+cannot produce a partial CLI response.
+
 ### Prepared request
 
 `PreparedRequest<T>` is immutable, performs no I/O, and contains no credential.
@@ -114,9 +168,9 @@ another known source code, or an unknown source code into a Rust error.
 HTTP status, version, and a conservative allowlist of representation and
 delivery headers. Redirect targets, cookies, extension headers, and other
 potentially credential-bearing values never cross the public boundary,
-including when their names or values use percent encoding. A future opt-in helper may offer a
-conventional interpretation, but it must return the original response and
-cannot define collection-specific successful-empty or retry policy.
+including when their names or values use percent encoding. A future opt-in
+helper may offer a conventional interpretation, but it must return the original
+response and cannot define collection-specific successful-empty or retry policy.
 
 `SourceStatus` preserves unknown future strings. Known values may be associated
 constants or predicates, not a closed enum. Status `013` remains source status
@@ -219,6 +273,8 @@ client execution remains one stable handwritten path.
 
 Use focused, non-exhaustive error categories with sanitized context:
 
+- `InvalidSourceNumberError`: caller construction supplied a lexeme outside the
+  SDK-owned JSON-number grammar; it retains no partially valid `SourceValue`.
 - `PrepareError`: missing input or an explicit cardinality violation. Unsupported
   representation choices are absent methods rather than runtime errors.
 - `AuthorizationError`: structurally invalid or missing credential without

@@ -6,7 +6,7 @@ Planning source: [Public Rust SDK](../../tasks/rust/public-rust-sdk.md).
 
 Place the public Rust SDK beside the canonical specification while preserving
 clear boundaries between private repository tooling, generated SDK artifacts,
-future language packages, and a possible user-facing CLI.
+future language packages, and the planned public CLI.
 
 ## Current structure
 
@@ -44,13 +44,15 @@ opendart/
     └── rust-sdk/                     stable design and maintainer contracts
 ```
 
-Possible later additions:
+Selected planned addition, not yet implemented:
 
 ```text
-sdk/python/                           Python SDK package
-sdk/typescript/                       TypeScript SDK targeting Node
-sdk/rust/crates/opendart-cli/         Rust user CLI, if selected
+sdk/rust/crates/opendart-cli/         public Rust user CLI
 ```
+
+Its approved design lives in the [CLI architecture](../rust-cli/architecture.md)
+and [public contract](../rust-cli/public-contract.md). Possible later language
+additions remain `sdk/python/` and `sdk/typescript/`.
 
 The user-facing CLI must not be added to `cmd/opendart-tool`. The Go command is
 trusted repository infrastructure with maintainer-oriented commands and a
@@ -99,7 +101,7 @@ The foundation change also extends the repository `.gitignore` for the
 isolated workspace's `target/` output without ignoring `Cargo.lock` or generated
 Rust source.
 
-If the CLI is later implemented in Rust, it joins the same isolated Cargo
+When the planned CLI is implemented, it joins the same isolated Cargo
 workspace as a second crate and depends on `opendart`. Python and TypeScript
 packages retain their native build systems and do not become Cargo members.
 
@@ -177,7 +179,7 @@ may consume the model in memory.
 
 ## Acceptance criteria
 
-- Private Go tooling, the public Rust SDK, and a possible public CLI have
+- Private Go tooling, the public Rust SDK, and the planned public CLI have
   distinct directories, commands, and compatibility policies.
 - The Rust core builds without `reqwest`, Tokio, TLS, or a network runtime.
 - The default client is optional without duplicating operation definitions.
