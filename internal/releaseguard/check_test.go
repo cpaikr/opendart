@@ -613,6 +613,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "uses only the approved verification steps",
 		},
 		{
+			name: "structured CLI loopback tests", artifact: verifyWorkflowArtifact,
+			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback",
+			invariant: "uses only the approved verification steps",
+		},
+		{
 			name: "verify job condition bypass", artifact: verifyWorkflowArtifact,
 			old: "  verify:\n    runs-on:", replacement: "  verify:\n    if: always()\n    runs-on:",
 			invariant: "verify job uses default execution controls",
