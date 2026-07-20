@@ -1117,7 +1117,7 @@ func checkDriftWorkflow(drift workflow, source string) error {
 	preflight := job.Steps[2]
 	run := job.Steps[3]
 	upload := job.Steps[4]
-	if checkout.Uses != checkoutAction || checkout.Run != "" || !reflect.DeepEqual(checkout.With, map[string]any{"persist-credentials": false}) || !defaultStepExecution(checkout) {
+	if checkout.Uses != checkoutAction || checkout.Run != "" || !reflect.DeepEqual(checkout.With, map[string]any{"fetch-depth": 0, "persist-credentials": false}) || !defaultStepExecution(checkout) {
 		return &Error{Artifact: driftWorkflowArtifact, Invariant: "checks out the trusted dispatched revision without credentials"}
 	}
 	if setup.Uses != setupGoAction || setup.Run != "" || !reflect.DeepEqual(setup.With, map[string]any{"cache": true, "go-version-file": "go.mod"}) || !defaultStepExecution(setup) {

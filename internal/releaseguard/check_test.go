@@ -868,6 +868,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "checks out the trusted dispatched revision without credentials",
 		},
 		{
+			name: "drift shallow checkout", artifact: driftWorkflowArtifact,
+			old: "fetch-depth: 0", replacement: "fetch-depth: 1",
+			invariant: "checks out the trusted dispatched revision without credentials",
+		},
+		{
 			name: "drift altered command", artifact: driftWorkflowArtifact,
 			old: driftRunScript, replacement: "go run ./cmd/opendart-tool sync > guide-drift-report.json",
 			invariant: "runs only the canonical credential-free drift command",
