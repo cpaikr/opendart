@@ -1,0 +1,64 @@
+name: Public Guide Drift Notifier
+
+on:
+  workflow_run: # zizmor: ignore[dangerous-triggers] guarded trusted producer; report remains untrusted
+    workflows:
+      - Public Guide Drift
+    types:
+      - completed
+
+permissions: {}
+
+concurrency:
+  group: public-guide-drift-notifier
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == github.event.repository.default_branch }}
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out trusted producer revision
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download sanitized report
+        id: report
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: guide-drift-report-${{ github.event.workflow_run.run_attempt }}
+          path: .
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Update public guide drift issue
+        if: ${{ always() }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NOTIFY_REPOSITORY: ${{ github.repository }}
+          NOTIFY_PRODUCER_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          NOTIFY_ARTIFACT_OUTCOME: ${{ steps.report.outcome }}
+          NOTIFY_RUN_ID: ${{ github.event.workflow_run.id }}
+          NOTIFY_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        run: |
+          go run ./cmd/opendart-tool guide-drift-notify \
+            --report guide-drift-report.json \
+            --repository "${NOTIFY_REPOSITORY}" \
+            --producer-conclusion "${NOTIFY_PRODUCER_CONCLUSION}" \
+            --artifact-outcome "${NOTIFY_ARTIFACT_OUTCOME}" \
+            --run-id "${NOTIFY_RUN_ID}" \
+            --run-attempt "${NOTIFY_RUN_ATTEMPT}"

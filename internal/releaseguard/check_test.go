@@ -837,6 +837,111 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			old: "NOTIFY_ARTIFACT_OUTCOME: ${{ steps.report.outcome }}", replacement: "NOTIFY_ARTIFACT_OUTCOME: ${{ steps.report.outputs.error }}",
 			invariant: "invokes only the isolated notifier with trusted metadata",
 		},
+		{
+			name: "drift workflow schedule", artifact: driftWorkflowArtifact,
+			old: "  workflow_dispatch:", replacement: "  schedule:\n    - cron: '0 0 * * *'",
+			invariant: "is manual only",
+		},
+		{
+			name: "drift non-main ref", artifact: driftWorkflowArtifact,
+			old: "github.ref == 'refs/heads/main'", replacement: "github.ref != ''",
+			invariant: "runs only trusted main code",
+		},
+		{
+			name: "drift non-canonical repository", artifact: driftWorkflowArtifact,
+			old: "github.repository == 'cpaikr/opendart'", replacement: "github.repository != ''",
+			invariant: "runs only trusted main code",
+		},
+		{
+			name: "drift issue permission", artifact: driftWorkflowArtifact,
+			old: "      contents: read", replacement: "      contents: read\n      issues: write",
+			invariant: "uses only read-only repository authority",
+		},
+		{
+			name: "drift credential environment", artifact: driftWorkflowArtifact,
+			old: "      - name: Compare the public guide\n        run:", replacement: "      - name: Compare the public guide\n        env:\n          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}\n        run:",
+			invariant: "producer steps use default credential-free execution settings",
+		},
+		{
+			name: "drift checkout credentials", artifact: driftWorkflowArtifact,
+			old: "persist-credentials: false", replacement: "persist-credentials: true",
+			invariant: "checks out the trusted dispatched revision without credentials",
+		},
+		{
+			name: "drift altered command", artifact: driftWorkflowArtifact,
+			old: driftRunScript, replacement: "go run ./cmd/opendart-tool sync > guide-drift-report.json",
+			invariant: "runs only the canonical credential-free drift command",
+		},
+		{
+			name: "drift arbitrary artifact", artifact: driftWorkflowArtifact,
+			old: "path: guide-drift-report.json", replacement: "path: .",
+			invariant: "uploads only the bounded sanitized report",
+		},
+		{
+			name: "drift artifact is not attempt scoped", artifact: driftWorkflowArtifact,
+			old: "name: guide-drift-report-${{ github.run_attempt }}", replacement: "name: guide-drift-report",
+			invariant: "uploads only the bounded sanitized report",
+		},
+		{
+			name: "drift unpinned upload", artifact: driftWorkflowArtifact,
+			old: uploadArtifactAction, replacement: "actions/upload-artifact@v7",
+			invariant: "uploads only the bounded sanitized report",
+		},
+		{
+			name: "drift upload condition", artifact: driftWorkflowArtifact,
+			old: "if: ${{ always() }}", replacement: "if: ${{ success() }}",
+			invariant: "uploads only the bounded sanitized report",
+		},
+		{
+			name: "drift notifier manual trigger", artifact: driftNotifyArtifact,
+			old: "  workflow_run:", replacement: "  workflow_dispatch:",
+			invariant: "runs only after the public guide drift producer completes",
+		},
+		{
+			name: "drift notifier wrong producer", artifact: driftNotifyArtifact,
+			old: "      - Public Guide Drift", replacement: "      - Other Workflow",
+			invariant: "runs only after the public guide drift producer completes",
+		},
+		{
+			name: "drift notifier accepts branch", artifact: driftNotifyArtifact,
+			old: "github.event.workflow_run.head_branch == github.event.repository.default_branch", replacement: "github.event.workflow_run.head_branch != ''",
+			invariant: "accepts only manual trusted default-branch producer runs",
+		},
+		{
+			name: "drift notifier artifact is not attempt scoped", artifact: driftNotifyArtifact,
+			old: "name: guide-drift-report-${{ github.event.workflow_run.run_attempt }}", replacement: "name: guide-drift-report",
+			invariant: "downloads only the producer report with fixed-failure fallback",
+		},
+		{
+			name: "drift notifier excessive permission", artifact: driftNotifyArtifact,
+			old: "      issues: write", replacement: "      issues: write\n      pull-requests: write",
+			invariant: "isolates minimal issue authority",
+		},
+		{
+			name: "drift notifier protected environment", artifact: driftNotifyArtifact,
+			old: "    permissions:\n      actions: read", replacement: "    environment: opendart-live-conformance\n    permissions:\n      actions: read",
+			invariant: "isolates minimal issue authority",
+		},
+		{
+			name: "drift notifier download failure bypass", artifact: driftNotifyArtifact,
+			old: "continue-on-error: true", replacement: "continue-on-error: false",
+			invariant: "downloads only the producer report with fixed-failure fallback",
+		},
+		{
+			name: "drift notifier untrusted checkout", artifact: driftNotifyArtifact,
+			old: "ref: ${{ github.event.workflow_run.head_sha }}", replacement: "ref: main",
+			invariant: "checks out the exact trusted producer revision",
+		},
+		{
+			name: "drift notifier credential access", artifact: driftNotifyArtifact,
+			old: "GITHUB_TOKEN: ${{ github.token }}", replacement: "GITHUB_TOKEN: ${{ github.token }}\n          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}",
+			invariant: "invokes only the isolated notifier with trusted metadata",
+		},
+		{
+			name: "drift notifier arbitrary producer error", artifact: driftNotifyArtifact,
+			old: "NOTIFY_ARTIFACT_OUTCOME: ${{ steps.report.outcome }}", replacement: "NOTIFY_ARTIFACT_OUTCOME: ${{ steps.report.outputs.error }}",
+			invariant: "invokes only the isolated notifier with trusted metadata",
+		},
 	}
 
 	for _, test := range tests {
@@ -942,6 +1047,8 @@ func copyReleaseArtifacts(t *testing.T) string {
 		verifyWorkflowArtifact,
 		liveWorkflowArtifact,
 		notifyWorkflowArtifact,
+		driftWorkflowArtifact,
+		driftNotifyArtifact,
 	} {
 		source, err := os.ReadFile(filepath.Join(sourceRoot, filepath.FromSlash(artifact)))
 		if err != nil {

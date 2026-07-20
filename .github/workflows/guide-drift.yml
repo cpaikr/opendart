@@ -1,0 +1,47 @@
+name: Public Guide Drift
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: public-guide-drift
+  cancel-in-progress: false
+
+jobs:
+  drift:
+    if: ${{ github.repository == 'cpaikr/opendart' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out trusted revision
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Recheck credential-free repository gates
+        run: go run ./cmd/opendart-tool verify --repository-root .
+
+      - name: Compare the public guide
+        run: go run ./cmd/opendart-tool guide-drift --repository-root . > guide-drift-report.json
+
+      - name: Upload sanitized report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: guide-drift-report-${{ github.run_attempt }}
+          path: guide-drift-report.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          overwrite: false
+          include-hidden-files: false
