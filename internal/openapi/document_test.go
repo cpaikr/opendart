@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"go.yaml.in/yaml/v4"
+	"golang.org/x/text/encoding/korean"
+	"golang.org/x/text/transform"
 )
 
 func TestDocumentFixturePreservesOpenAPIFeatures(t *testing.T) {
@@ -313,6 +315,16 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 	if err := document.ValidateResponse("HEAD", "/document.xml", "application/zip", 200, validZIP); err != nil {
 		t.Fatalf("HEAD-to-GET ZIP: %v", err)
 	}
+	eucKR, _, err := transform.Bytes(
+		korean.EUCKR.NewEncoder(),
+		[]byte(`<?xml version="1.0" encoding="EUC-KR"?><document><name>감사보고서</name></document>`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, zipFixture(t, "document.xml", eucKR)); err != nil {
+		t.Fatalf("valid EUC-KR XML in ZIP: %v", err)
+	}
 	xbrlZIP := zipFixture(t, "report.xbrl", []byte("<xbrl/>"))
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip; charset=binary", 200, xbrlZIP); err != nil {
 		t.Fatalf("valid XBRL ZIP with parameterized media type: %v", err)
@@ -339,6 +351,11 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, malformedXMLZIP); err == nil {
 		t.Fatal("ZIP with malformed XML passed validation")
 	}
+	malformedEncoding := append([]byte(`<document>`), 0xff)
+	malformedEncoding = append(malformedEncoding, []byte(`</document>`)...)
+	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, zipFixture(t, "document.xml", malformedEncoding)); err == nil {
+		t.Fatal("ZIP with replacement-rune XML fallback passed validation")
+	}
 	manyEntries := make(map[string][]byte)
 	for index := 0; index <= maxArchiveEntries; index++ {
 		manyEntries[fmt.Sprintf("%d.xml", index)] = []byte("<document/>")
@@ -349,6 +366,13 @@ func TestRepresentativeResponseValidation(t *testing.T) {
 	oversizedZIP := zipFixture(t, "document.xml", bytes.Repeat([]byte(" "), maxArchiveBytes+1))
 	if err := document.ValidateResponse("GET", "/document.xml", "application/zip", 200, oversizedZIP); err == nil {
 		t.Fatal("ZIP expansion limit was not enforced")
+	}
+}
+
+func TestConsumeDecodedXMLDoesNotReapplyTheDeclaredSourceEncoding(t *testing.T) {
+	decoded := []byte(`<?xml version="1.0" encoding="EUC-KR"?><document><name>감사보고서</name></document>`)
+	if err := consumeDecodedXML(decoded); err != nil {
+		t.Fatalf("consume decoded XML: %v", err)
 	}
 }
 

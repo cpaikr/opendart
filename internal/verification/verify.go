@@ -7,17 +7,22 @@ import (
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
 	"github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/liveconformance"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/releaseguard"
+	"github.com/cpaikr/opendart/internal/sdkgen"
+	"github.com/cpaikr/opendart/internal/sdkgen/model"
 )
 
 const (
-	phaseCatalog         = "catalog"
-	phaseSourceLint      = "source-lint"
-	phaseBundleLint      = "bundle-lint"
-	phaseBundleFreshness = "bundle-freshness"
-	phaseAuditorEvidence = "auditor-evidence"
-	phaseReleaseGuard    = "release-guard"
+	phaseCatalog          = "catalog"
+	phaseSourceLint       = "source-lint"
+	phaseBundleLint       = "bundle-lint"
+	phaseBundleFreshness  = "bundle-freshness"
+	phaseRustSDKFreshness = "rust-sdk-freshness"
+	phaseLiveConformance  = "live-conformance-preflight"
+	phaseAuditorEvidence  = "auditor-evidence"
+	phaseReleaseGuard     = "release-guard"
 )
 
 var passedPhases = []string{
@@ -25,6 +30,8 @@ var passedPhases = []string{
 	phaseSourceLint,
 	phaseBundleFreshness,
 	phaseBundleLint,
+	phaseRustSDKFreshness,
+	phaseLiveConformance,
 	phaseAuditorEvidence,
 	phaseReleaseGuard,
 }
@@ -83,8 +90,10 @@ type dependencies struct {
 	validateCatalog func(guide.CatalogOptions) (guide.CatalogReport, error)
 	lint            func(string) ([]openapispec.LintDiagnostic, error)
 	checkFresh      func(string, string) error
+	checkLive       func(string) error
 	checkEvidence   func(string) error
 	checkRelease    func(string) error
+	checkRustSDK    func(string, string) error
 }
 
 // Verify runs the complete repository gate using only committed local files.
@@ -94,8 +103,13 @@ func Verify(repositoryRoot string) (Report, error) {
 		validateCatalog: guide.ValidateCatalog,
 		lint:            openapispec.Lint,
 		checkFresh:      openapispec.CheckBundleFresh,
-		checkEvidence:   auditorprobe.ValidateEvidenceFile,
-		checkRelease:    releaseguard.Check,
+		checkLive: func(root string) error {
+			_, err := liveconformance.PreflightRepository(root)
+			return err
+		},
+		checkEvidence: auditorprobe.ValidateEvidenceFile,
+		checkRelease:  releaseguard.Check,
+		checkRustSDK:  sdkgen.CheckRustFresh,
 	})
 }
 
@@ -110,6 +124,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	source := filepath.Join(absoluteRoot, "openapi", "openapi.yaml")
 	bundle := filepath.Join(absoluteRoot, "openapi", "generated", "openapi.bundle.yaml")
 	auditorEvidence := filepath.Join(absoluteRoot, "docs", "api", "evidence", "auditor-2026-07-18.json")
+	rustSDKOutput := filepath.Join(absoluteRoot, "sdk", "rust", "crates", "opendart", "src", "generated")
 
 	catalog, err := deps.validateCatalog(guide.CatalogOptions{Root: source})
 	if err != nil {
@@ -130,6 +145,32 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	}
 	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
 		return Report{}, err
+	}
+	if err := deps.checkRustSDK(source, rustSDKOutput); err != nil {
+		rule := "sdk-generation"
+		switch {
+		case errors.Is(err, sdkgen.ErrGeneratedMissing):
+			rule = "generated-missing"
+		case errors.Is(err, sdkgen.ErrGeneratedStale):
+			rule = "generated-stale"
+		case errors.Is(err, sdkgen.ErrGeneratedUnexpected):
+			rule = "generated-unexpected"
+		case errors.Is(err, sdkgen.ErrGeneratedUnowned):
+			rule = "generated-ownership"
+		}
+		operation, location := "", ""
+		var modelError *model.Error
+		if errors.As(err, &modelError) {
+			rule, operation, location = modelError.Rule, modelError.Operation, modelError.Location
+		}
+		var surfaceError *openapispec.SDKSurfaceError
+		if errors.As(err, &surfaceError) {
+			rule, operation, location = surfaceError.Rule, surfaceError.Operation, surfaceError.Location
+		}
+		return Report{}, contextualFailure(phaseRustSDKFreshness, rustSDKOutput, rule, operation, location, err)
+	}
+	if err := deps.checkLive(absoluteRoot); err != nil {
+		return Report{}, liveConformanceFailure(err)
 	}
 	if err := deps.checkEvidence(auditorEvidence); err != nil {
 		return Report{}, failure(phaseAuditorEvidence, auditorEvidence, "sanitized-evidence-manifest", err)
@@ -154,6 +195,28 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 			MessageCodes:     catalog.MessageCodes,
 		},
 	}, nil
+}
+
+func liveConformanceFailure(err error) *Error {
+	artifact, rule, operation, location := "live conformance repository", "", "", ""
+	var verificationError *Error
+	if errors.As(err, &verificationError) {
+		artifact, rule = verificationError.Artifact, verificationError.Rule
+		operation, location = verificationError.Operation, verificationError.Location
+	} else {
+		var conformanceError *liveconformance.Error
+		if errors.As(err, &conformanceError) {
+			artifact = "live conformance inventory"
+			rule = conformanceError.Failure.Code
+			operation = conformanceError.Failure.Operation
+			if conformanceError.Failure.CaseID != "" {
+				artifact = conformanceError.Failure.CaseID
+			} else if conformanceError.Failure.DiscoveryID != "" {
+				artifact = string(conformanceError.Failure.DiscoveryID)
+			}
+		}
+	}
+	return contextualFailure(phaseLiveConformance, artifact, rule, operation, location, err)
 }
 
 func lintArtifact(deps dependencies, phase, artifact string) error {

@@ -1,9 +1,10 @@
-# OpenDART API Specification
+# OpenDART API Specification and Rust SDK
 
 This unofficial, community-maintained repository provides a source-backed
 OpenAPI 3.2 description of the operations published in the official OpenDART
-development guide. It is not affiliated with or endorsed by the Financial
-Supervisory Service or OpenDART.
+development guide and a first-party Rust protocol SDK derived from that
+contract. It is not affiliated with or endorsed by the Financial Supervisory
+Service or OpenDART.
 
 ## Use the specification
 
@@ -62,6 +63,14 @@ and historical availability remain `probe-required` unless empirical evidence
 states otherwise. This keeps guide-sourced facts separate from observations and
 collection analysis.
 
+## Rust SDK
+
+The first-party `opendart` crate provides generated typed requests, bounded
+source-envelope inspection, a one-attempt convenience client, and a
+transport-independent core. Usage examples and the supported caller contract
+live in the [crate guide](sdk/rust/crates/opendart/README.md); repository build
+and package gates live in the [SDK workspace guide](sdk/rust/README.md).
+
 ## Refresh and verify
 
 The repository tooling requires only the Go version declared in `go.mod`:
@@ -74,6 +83,7 @@ go run ./cmd/opendart-tool bundle \
 go vet ./...
 go test -race ./...
 go run ./cmd/opendart-tool verify --repository-root .
+go run ./cmd/opendart-tool live-conformance --preflight-only --repository-root .
 ```
 
 `sync` refreshes the canonical files from the public guide through in-process
@@ -81,21 +91,28 @@ validated staging and owned-output publication, then invalidates the old
 bundle. `bundle` deterministically rebuilds the portable artifact. CI owns Go
 vetting and race-enabled tests separately; `verify` checks catalog and confined
 references, strict linting, the sanitized auditor-evidence manifest,
-release/workflow guards, and byte-for-byte bundle freshness.
+the live-matrix coverage, budget, and sanitization preflight, release/workflow
+guards, and byte-for-byte bundle freshness.
 
 Generated OpenAPI files are reviewed artifacts. Do not edit them by hand; change
 the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is
 canonical. If a consumer requires OpenAPI 3.1, create a separate compatibility
 artifact rather than changing the source contract.
 
+CI also runs the pinned stable and MSRV Rust gates, all-features and
+no-default-features tests, documentation, compatibility fixtures, generated
+coverage checks, and exact crate-package inventory inspection. The complete
+local commands are in [`sdk/rust/README.md`](sdk/rust/README.md).
+
 ## Credentialed probe
 
-Refresh and verification require no OpenDART API key. Credentialed commands are
-focused probes with fixed request matrices:
+Refresh, verification, and live-conformance preflight require no OpenDART API
+key. Credentialed commands use reviewed, bounded request matrices:
 
 ```sh
 varlock run -- go run ./cmd/opendart-tool probe-multi-company
 varlock run -- go run ./cmd/opendart-tool probe-auditor-evidence
+varlock run -- go run ./cmd/opendart-tool live-conformance --repository-root .
 ```
 
 Install the standalone Varlock CLI with `brew install dmno-dev/tap/varlock`.
@@ -111,16 +128,24 @@ sanitized JSON observations; they do not print the key or persist response
 bodies. The auditor probe is the reproducible source for the committed,
 sanitized [auditor evidence manifest](docs/api/evidence/auditor-2026-07-18.json).
 
-The planned full live-conformance runner is not implemented. Its intended
-credential, reporting, and evidence boundaries are tracked in the
-[live-conformance plan](docs/plans/live-conformance.md).
+The full runner covers every canonical physical operation, emits only its
+strict versioned report, and stops on the first discovery or primary-case
+failure. `.github/workflows/live-conformance.yml` is a manual-only producer
+that is constrained to trusted `main` code and declares the protected
+`opendart-live-conformance` environment. A separate `workflow_run` notifier
+validates the report or substitutes a fixed workflow-failure envelope before
+updating one persistent issue; it has no access to the OpenDART credential and
+never closes the issue. The environment and key are intentionally not
+configured yet, and no workflow has been dispatched. Protected setup, the
+first supervised run, and later scheduling remain tracked in the
+[live-conformance task](tasks/main/live-conformance.md).
 
 ## Releases
 
-Humans classify bundle compatibility and choose the corresponding Conventional
-Commit input. Release Please applies the configured version policy, updates the
-generated changelog and manifest, creates the tag and draft release, and the
-release workflow validates, attaches, and publishes the immutable release.
+Humans classify public compatibility and choose the corresponding Conventional
+Commit input. Release Please owns independent specification and Rust SDK
+components. Specification releases use `vX.Y.Z`; crate releases use
+`opendart-vX.Y.Z` and update the crate manifest, lockfile, and changelog.
 [`RELEASING.md`](RELEASING.md) is the maintainer policy and review checklist.
 
 Each release contains `openapi.bundle.yaml` and
@@ -132,22 +157,25 @@ gh release verify vX.Y.Z --repo cpaikr/opendart
 gh release verify-asset vX.Y.Z openapi.bundle.yaml --repo cpaikr/opendart
 ```
 
-This repository publishes no runtime package and exposes no supported tooling
-API.
+The crate is package-ready but is not yet published to crates.io. Publication,
+registry-artifact verification, and adoption are deliberately reserved for
+[work 6](tasks/rust/public-rust-sdk.md). Repository Go tooling remains private.
 
 ## Repository documentation
 
+- [`ROADMAP.md`](ROADMAP.md) is the source of truth for current, scheduled,
+  and unscheduled project work.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) maps repository boundaries, runtime flow,
   and security invariants.
 - The [Go tooling ADR](docs/decisions/0001-go-repository-tooling.md) records the
-  accepted direction; the [migration plan](docs/plans/go-tooling-migration.md)
+  accepted direction; the
+  [migration history](plans/main/go-tooling-migration.md)
   records the completed repository-tooling migration.
-- The [guide-drift plan](docs/plans/guide-drift.md) and
-  [live-conformance plan](docs/plans/live-conformance.md) track remaining
+- The [guide-drift task](tasks/main/guide-drift.md) and
+  [live-conformance task](tasks/main/live-conformance.md) track remaining
   maintenance and empirical work.
 - The [external-auditor retrieval guide](docs/api/auditor.md) separates the
   canonical endpoint contracts from a layered, empirically informed lookup
   strategy.
-- The [Rust SDK plan](docs/plans/rust-sdk/README.md) proposes a future public
-  crate derived from the canonical contract. It does not describe a currently
-  published runtime package.
+- The [Rust SDK task](tasks/rust/public-rust-sdk.md) records the implemented
+  crate and the remaining publication and adoption work.

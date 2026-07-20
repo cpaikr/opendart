@@ -33,7 +33,7 @@ var (
 		"/guide/main.do":   {},
 		"/guide/detail.do": {},
 	}
-	messageCodePattern = regexp.MustCompile(`\d{3}`)
+	messageCodePattern = regexp.MustCompile(`[0-9]+`)
 	indentPattern      = regexp.MustCompile(`mgl(\d+)`)
 	standardCaptions   = map[string]struct{}{
 		"기본 정보":       {},
@@ -42,6 +42,7 @@ var (
 		"OpenAPI 테스트": {},
 		"메시지 설명":      {},
 	}
+	inventoryTableHeaders = []string{"번호", "API명", "상세기능", "개발가이드"}
 )
 
 // SourceError reports a guide contract violation without including response
@@ -124,6 +125,22 @@ func NewHTTPFetcher() *HTTPFetcher {
 	}
 }
 
+func newDriftHTTPFetcher() (*HTTPFetcher, error) {
+	fetcher := NewHTTPFetcher()
+	fetcher.attempts = 1
+	// Both HTTP transports can transparently replay idempotent requests. Drift
+	// trades connection reuse and HTTP/2 for a literal one-wire-attempt policy;
+	// regular synchronization keeps its pooled retry behavior.
+	transport, ok := fetcher.client.Transport.(*http.Transport)
+	if !ok {
+		return nil, sourceError("OpenDART guide HTTP transport does not support drift policy", nil, nil)
+	}
+	transport.DisableKeepAlives = true
+	transport.ForceAttemptHTTP2 = false
+	transport.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+	return fetcher, nil
+}
+
 func (f *HTTPFetcher) Fetch(ctx context.Context, sourceURL *url.URL) ([]byte, error) {
 	if sourceURL == nil {
 		return nil, sourceError("OpenDART guide URL is required", nil, nil)
@@ -199,7 +216,11 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, sourceURL *url.URL) ([]byte, er
 	if cause := safeTransportCause(lastError); cause != "" {
 		context["cause"] = cause
 	}
-	return nil, sourceError("OpenDART guide request failed after retries", context, lastError)
+	message := "OpenDART guide request failed after retries"
+	if attempts == 1 {
+		message = "OpenDART guide request failed"
+	}
+	return nil, sourceError(message, context, lastError)
 }
 
 func safeTransportCause(err error) string {
@@ -235,8 +256,36 @@ func Acquire(ctx context.Context, fetcher Fetcher, only []string) ([]Endpoint, e
 	if fetcher == nil {
 		return nil, sourceError("OpenDART guide fetcher is required", nil, nil)
 	}
+	inventory, err := acquireInventory(ctx, fetcher, acceptedInventory)
+	if err != nil {
+		return nil, err
+	}
+	selected, err := selectInventory(inventory, only)
+	if err != nil {
+		return nil, err
+	}
+	endpoints, err := acquireEndpoints(ctx, fetcher, selected)
+	if err != nil {
+		return nil, err
+	}
+	if len(only) == 0 {
+		if err := validateFullInventory(endpoints); err != nil {
+			return nil, err
+		}
+	}
+	return endpoints, nil
+}
+
+type inventoryPolicy uint8
+
+const (
+	acceptedInventory inventoryPolicy = iota
+	currentInventory
+)
+
+func acquireInventory(ctx context.Context, fetcher Fetcher, policy inventoryPolicy) ([]EndpointSummary, error) {
 	inventoryByGroup, err := mapConcurrent(ctx, Groups, acquireWorkers, func(ctx context.Context, group Group) ([]EndpointSummary, error) {
-		return acquireGroup(ctx, fetcher, group)
+		return acquireGroupWithPolicy(ctx, fetcher, group, policy)
 	})
 	if err != nil {
 		return nil, err
@@ -245,7 +294,13 @@ func Acquire(ctx context.Context, fetcher Fetcher, only []string) ([]Endpoint, e
 	for _, endpoints := range inventoryByGroup {
 		inventory = append(inventory, endpoints...)
 	}
+	if err := validateInventory(inventory); err != nil {
+		return nil, err
+	}
+	return inventory, nil
+}
 
+func selectInventory(inventory []EndpointSummary, only []string) ([]EndpointSummary, error) {
 	selection := make(map[string]struct{}, len(only))
 	for _, identity := range only {
 		selection[identity] = struct{}{}
@@ -268,7 +323,10 @@ func Acquire(ctx context.Context, fetcher Fetcher, only []string) ([]Endpoint, e
 			return nil, sourceError("One or more --only identities were not found", map[string]any{"missing": missing}, nil)
 		}
 	}
+	return selected, nil
+}
 
+func acquireEndpoints(ctx context.Context, fetcher Fetcher, selected []EndpointSummary) ([]Endpoint, error) {
 	endpoints, err := mapConcurrent(ctx, selected, acquireWorkers, func(ctx context.Context, summary EndpointSummary) (Endpoint, error) {
 		return acquireEndpoint(ctx, fetcher, summary)
 	})
@@ -278,15 +336,43 @@ func Acquire(ctx context.Context, fetcher Fetcher, only []string) ([]Endpoint, e
 	if err := validateMessageCodes(endpoints); err != nil {
 		return nil, err
 	}
-	if len(only) == 0 {
-		if err := validateFullInventory(endpoints); err != nil {
-			return nil, err
-		}
-	}
 	return endpoints, nil
 }
 
+func validateInventory(inventory []EndpointSummary) error {
+	seenIdentities := make(map[string]bool, len(inventory))
+	seenURLs := make(map[string]bool, len(inventory))
+	for _, endpoint := range inventory {
+		sourceURL, group, apiID, err := endpointIdentity(endpoint.SourceURL, endpoint.APIGroupCode)
+		if err != nil || group != endpoint.APIGroupCode || apiID != endpoint.APIID || endpoint.LogicalOperationID != group+"-"+apiID {
+			return sourceError("OpenDART guide inventory contains an invalid endpoint identity", map[string]any{
+				"logicalOperationId": endpoint.LogicalOperationID, "sourceUrl": endpoint.SourceURL,
+			}, err)
+		}
+		if seenIdentities[endpoint.LogicalOperationID] {
+			return sourceError("OpenDART guide inventory contains a duplicate endpoint identity", map[string]any{
+				"logicalOperationId": endpoint.LogicalOperationID, "sourceUrl": endpoint.SourceURL,
+			}, nil)
+		}
+		seenIdentities[endpoint.LogicalOperationID] = true
+
+		sourceURL.RawQuery = sourceURL.Query().Encode()
+		canonicalURL := sourceURL.String()
+		if seenURLs[canonicalURL] {
+			return sourceError("OpenDART guide inventory contains a duplicate endpoint URL", map[string]any{
+				"logicalOperationId": endpoint.LogicalOperationID, "sourceUrl": canonicalURL,
+			}, nil)
+		}
+		seenURLs[canonicalURL] = true
+	}
+	return nil
+}
+
 func acquireGroup(ctx context.Context, fetcher Fetcher, group Group) ([]EndpointSummary, error) {
+	return acquireGroupWithPolicy(ctx, fetcher, group, acceptedInventory)
+}
+
+func acquireGroupWithPolicy(ctx context.Context, fetcher Fetcher, group Group, policy inventoryPolicy) ([]EndpointSummary, error) {
 	mainURL, err := trustedGuideURL(guideOrigin+"/guide/main.do?apiGrpCd="+url.QueryEscape(group.Code), "/guide/main.do")
 	if err != nil {
 		return nil, err
@@ -299,25 +385,32 @@ func acquireGroup(ctx context.Context, fetcher Fetcher, group Group) ([]Endpoint
 	if err != nil {
 		return nil, sourceError("OpenDART guide group HTML is invalid", map[string]any{"group": group.Code, "sourceUrl": mainURL.String()}, err)
 	}
+	table, err := canonicalInventoryTable(root, group, mainURL.String())
+	if err != nil {
+		return nil, err
+	}
 	var endpoints []EndpointSummary
-	walk(root, func(node *html.Node) {
-		if node.Type != html.ElementNode || node.Data != "tr" || !hasAncestorElement(node, "tbody") {
-			return
-		}
+	for rowIndex, node := range directBodyRows(table) {
 		cells := directChildElements(node, "td")
-		if len(cells) < 3 {
-			return
+		if len(cells) != len(inventoryTableHeaders) || !allDigits(guideNodeText(cells[0])) {
+			return nil, sourceError("Guide inventory table row changed", map[string]any{
+				"group": group.Code, "row": rowIndex + 1, "sourceUrl": mainURL.String(),
+			}, nil)
 		}
-		link := firstMatchingDescendant(node, func(candidate *html.Node) bool {
-			return candidate.Type == html.ElementNode && candidate.Data == "a" && strings.Contains(attribute(candidate, "href"), "/guide/detail.do")
+		var links []*html.Node
+		walk(cells[3], func(candidate *html.Node) {
+			if candidate.Type == html.ElementNode && candidate.Data == "a" {
+				links = append(links, candidate)
+			}
 		})
-		if link == nil {
-			return
+		if len(links) != 1 {
+			return nil, sourceError("Guide inventory row must contain exactly one detail link", map[string]any{
+				"group": group.Code, "row": rowIndex + 1, "sourceUrl": mainURL.String(),
+			}, nil)
 		}
-		sourceURL, apiGroupCode, apiID, identityError := endpointIdentity(attribute(link, "href"), group.Code)
+		sourceURL, apiGroupCode, apiID, identityError := endpointIdentity(attribute(links[0], "href"), group.Code)
 		if identityError != nil {
-			err = identityError
-			return
+			return nil, identityError
 		}
 		endpoints = append(endpoints, EndpointSummary{
 			APIGroupCode: apiGroupCode, APIGroupName: group.Name, APIID: apiID,
@@ -326,16 +419,80 @@ func acquireGroup(ctx context.Context, fetcher Fetcher, group Group) ([]Endpoint
 			Description:        guideNodeText(cells[2]),
 			SourceURL:          sourceURL.String(), GroupSourceURL: mainURL.String(),
 		})
-	})
-	if err != nil {
-		return nil, err
 	}
-	if len(endpoints) != group.ExpectedCount {
+	if policy == acceptedInventory && len(endpoints) != group.ExpectedCount {
 		return nil, sourceError("Endpoint group count changed", map[string]any{
 			"group": group.Code, "expected": group.ExpectedCount, "actual": len(endpoints), "sourceUrl": mainURL.String(),
 		}, nil)
 	}
 	return endpoints, nil
+}
+
+func canonicalInventoryTable(root *html.Node, group Group, sourceURL string) (*html.Node, error) {
+	var candidates []*html.Node
+	walk(root, func(node *html.Node) {
+		if node.Type == html.ElementNode && node.Data == "table" && hasClass(node, "tb01") && hasAncestorClass(node, "list_area") {
+			candidates = append(candidates, node)
+		}
+	})
+	if len(candidates) == 0 {
+		return nil, sourceError("Canonical guide inventory table is missing", map[string]any{
+			"group": group.Code, "sourceUrl": sourceURL,
+		}, nil)
+	}
+	var matches []*html.Node
+	for _, candidate := range candidates {
+		headers, ok := guideInventoryHeaders(candidate)
+		if ok && slices.Equal(headers, inventoryTableHeaders) {
+			matches = append(matches, candidate)
+		}
+	}
+	if len(matches) != 1 {
+		if len(matches) > 1 {
+			return nil, sourceError("Canonical guide inventory table is duplicated", map[string]any{
+				"group": group.Code, "sourceUrl": sourceURL,
+			}, nil)
+		}
+		if len(candidates) > 1 {
+			return nil, sourceError("Canonical guide inventory table is missing", map[string]any{
+				"group": group.Code, "sourceUrl": sourceURL,
+			}, nil)
+		}
+		matches = candidates
+	}
+	table := matches[0]
+	captions := directChildElements(table, "caption")
+	tableHeads := directChildElements(table, "thead")
+	tableBodies := directChildElements(table, "tbody")
+	if len(captions) != 1 || guideNodeText(captions[0]) == "" || len(tableHeads) != 1 || len(tableBodies) != 1 {
+		return nil, sourceError("Canonical guide inventory table structure changed", map[string]any{
+			"group": group.Code, "sourceUrl": sourceURL,
+		}, nil)
+	}
+	headers, headersValid := guideInventoryHeaders(table)
+	if !headersValid || !slices.Equal(headers, inventoryTableHeaders) {
+		return nil, sourceError("Guide inventory table headers changed", map[string]any{
+			"group": group.Code, "expectedHeaders": inventoryTableHeaders, "actualHeaders": headers, "sourceUrl": sourceURL,
+		}, nil)
+	}
+	return table, nil
+}
+
+func guideInventoryHeaders(table *html.Node) ([]string, bool) {
+	tableHeads := directChildElements(table, "thead")
+	if len(tableHeads) != 1 {
+		return nil, false
+	}
+	headerRows := directChildElements(tableHeads[0], "tr")
+	if len(headerRows) != 1 {
+		return nil, false
+	}
+	headerCells := directChildTableCells(headerRows[0])
+	headers := make([]string, 0, len(headerCells))
+	for _, cell := range headerCells {
+		headers = append(headers, guideNodeText(cell))
+	}
+	return headers, true
 }
 
 func endpointIdentity(href, expectedGroupCode string) (*url.URL, string, string, error) {
@@ -549,10 +706,19 @@ func collectGuideTables(root *html.Node) ([]guideTable, error) {
 }
 
 func requiredGuideTable(tables []guideTable, caption string, endpoint EndpointSummary) (guideTable, error) {
-	for _, table := range tables {
-		if table.Caption == caption {
-			return table, nil
+	match := -1
+	for index := range tables {
+		if tables[index].Caption == caption {
+			if match >= 0 {
+				return guideTable{}, sourceError("Required guide table is duplicated", map[string]any{
+					"logicalOperationId": endpoint.LogicalOperationID, "caption": caption, "sourceUrl": endpoint.SourceURL,
+				}, nil)
+			}
+			match = index
 		}
+	}
+	if match >= 0 {
+		return tables[match], nil
 	}
 	return guideTable{}, sourceError("Required guide table is missing", map[string]any{
 		"logicalOperationId": endpoint.LogicalOperationID, "caption": caption, "sourceUrl": endpoint.SourceURL,
@@ -670,12 +836,13 @@ func extractMessageCodes(table *html.Node, summary EndpointSummary) ([]MessageCo
 			continue
 		}
 		label := guideNodeText(cells[0])
-		code := messageCodePattern.FindString(label)
-		if code == "" {
-			return nil, sourceError("Message-code row has no three-digit code", map[string]any{
+		digitRuns := messageCodePattern.FindAllString(label, 2)
+		if len(digitRuns) != 1 || len(digitRuns[0]) != 3 {
+			return nil, sourceError("Message-code row must contain exactly one three-digit code", map[string]any{
 				"label": label, "logicalOperationId": summary.LogicalOperationID, "sourceUrl": summary.SourceURL,
 			}, nil)
 		}
+		code := digitRuns[0]
 		messages = append(messages, MessageCode{Code: code, Description: guideNodeText(cells[1])})
 	}
 	return messages, nil

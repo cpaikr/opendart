@@ -2,28 +2,36 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "bootstrap-sha": "6a00e5f9edad77be0a2f94b5d1f860be6c58ec7e",
   "packages": {
-    ".": {
+    "openapi/generated": {
       "release-type": "simple",
       "package-name": "opendart-spec",
       "include-component-in-tag": false,
       "include-v-in-tag": true,
       "include-v-in-release-name": true,
+      "changelog-path": "/CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "draft": true,
+      "force-tag-creation": true
+    },
+    "sdk/rust/crates/opendart": {
+      "release-type": "rust",
+      "component": "opendart",
+      "include-component-in-tag": true,
+      "include-v-in-tag": true,
+      "include-v-in-release-name": true,
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
-      "exclude-paths": [
-        ".agents",
-        ".codex",
-        ".github",
-        "ARCHITECTURE.md",
-        "cmd",
-        "docs",
-        "go.mod",
-        "go.sum",
-        "internal"
-      ],
       "draft": true,
-      "force-tag-creation": true
+      "force-tag-creation": false,
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "/sdk/rust/Cargo.lock",
+          "jsonpath": "$.package[?(@.name == \"opendart\")].version"
+        }
+      ]
     }
   }
 }

@@ -36,7 +36,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          version="$(jq -r '.["."]' .release-please-manifest.json)"
+          version="$(jq -r '.["openapi/generated"]' .release-please-manifest.json)"
           tag_name="v${version}"
           release="$(gh release view "${tag_name}" --json isDraft,targetCommitish 2>/dev/null || true)"
           if test -n "${release}" && test "$(jq -r .isDraft <<<"${release}")" = true; then
@@ -55,14 +55,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check out released commit
-        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}
+        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
-          ref: ${{ steps.release.outputs.sha || steps.draft.outputs.sha }}
+          ref: ${{ steps.release.outputs['openapi/generated--sha'] || steps.draft.outputs.sha }}
           persist-credentials: false
 
       - name: Prepare release assets
-        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}
+        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}
         run: |
           mkdir release-assets
           cp openapi/generated/openapi.bundle.yaml release-assets/openapi.bundle.yaml
@@ -70,10 +70,10 @@ jobs:
           sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256
 
       - name: Upload release assets
-        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}
+        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.release.outputs.tag_name || steps.draft.outputs.tag_name }}
+          TAG_NAME: ${{ steps.release.outputs['openapi/generated--tag_name'] || steps.draft.outputs.tag_name }}
         run: |
           for asset_path in \
             release-assets/openapi.bundle.yaml \
@@ -93,8 +93,8 @@ jobs:
           done
 
       - name: Publish immutable release
-        if: ${{ steps.release.outputs.release_created == 'true' || steps.draft.outputs.recovering == 'true' }}
+        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.release.outputs.tag_name || steps.draft.outputs.tag_name }}
+          TAG_NAME: ${{ steps.release.outputs['openapi/generated--tag_name'] || steps.draft.outputs.tag_name }}
         run: gh release edit "${TAG_NAME}" --draft=false --latest

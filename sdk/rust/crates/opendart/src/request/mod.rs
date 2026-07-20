@@ -1,0 +1,476 @@
+use std::fmt;
+#[cfg(not(feature = "client-reqwest"))]
+use std::marker::PhantomData;
+
+use form_urlencoded::{Serializer, byte_serialize};
+use secrecy::{ExposeSecret, SecretString};
+use zeroize::Zeroizing;
+
+use crate::{AuthorizationError, ResponseDecodeError, SourceValue};
+
+/// Stable physical and logical identities for one callable OpenDART operation.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct OperationIdentity {
+    physical: &'static str,
+    logical: &'static str,
+}
+
+impl OperationIdentity {
+    pub(crate) const fn new(physical: &'static str, logical: &'static str) -> Self {
+        Self { physical, logical }
+    }
+
+    /// Returns the canonical physical OpenAPI `operationId`.
+    #[must_use]
+    pub const fn physical(&self) -> &'static str {
+        self.physical
+    }
+
+    /// Returns the stable logical operation identity.
+    #[must_use]
+    pub const fn logical(&self) -> &'static str {
+        self.logical
+    }
+}
+
+impl fmt::Display for OperationIdentity {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{} ({})", self.physical, self.logical)
+    }
+}
+
+/// HTTP methods emitted by the trusted operation inventory.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum RequestMethod {
+    /// An HTTP GET request.
+    Get,
+}
+
+/// Source representations supported by physical OpenDART operations.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum Representation {
+    /// JSON source output.
+    Json,
+    /// XML source output or source-error envelope.
+    Xml,
+    /// ZIP entity bytes.
+    Zip,
+}
+
+/// The credential placement required by a prepared operation.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum Authentication {
+    /// The OpenDART `crtfc_key` query credential.
+    ApiKeyQuery,
+}
+
+pub(crate) type ResponseDecoder<T> = fn(SourceValue) -> Result<T, ResponseDecodeError>;
+
+/// Shared immutable request facts hidden behind typed structured and binary plans.
+pub(crate) struct RequestParts {
+    method: RequestMethod,
+    relative_path: &'static str,
+    encoded_query: String,
+    authentication: Authentication,
+    identity: OperationIdentity,
+    expected_representations: &'static [Representation],
+    #[cfg(feature = "client-reqwest")]
+    expected_xml_root: Option<&'static str>,
+    generator_schema: u32,
+    projection_identity: &'static str,
+}
+
+/// An immutable structured request bound to its generated success payload.
+pub struct PreparedRequest<T> {
+    parts: RequestParts,
+    #[cfg(feature = "client-reqwest")]
+    decoder: ResponseDecoder<T>,
+    #[cfg(not(feature = "client-reqwest"))]
+    _response: PhantomData<fn() -> T>,
+}
+
+/// An immutable ZIP request whose successful body remains a replaying stream.
+pub struct PreparedBinaryRequest {
+    parts: RequestParts,
+}
+
+pub(crate) enum QueryValue<'a> {
+    Scalar(&'a str),
+    CommaSeparated(&'a [String]),
+}
+
+pub(crate) struct QueryParameter<'a> {
+    pub(crate) name: &'static str,
+    pub(crate) value: QueryValue<'a>,
+}
+
+impl RequestParts {
+    pub(crate) fn new(
+        relative_path: &'static str,
+        identity: OperationIdentity,
+        parameters: &[QueryParameter<'_>],
+        expected_representations: &'static [Representation],
+        expected_xml_root: Option<&'static str>,
+        generator_schema: u32,
+        projection_identity: &'static str,
+    ) -> Self {
+        debug_assert!(relative_path.starts_with("/api/"));
+        debug_assert!(!relative_path.contains(['?', '#']));
+        let encoded_query = parameters
+            .iter()
+            .map(|parameter| {
+                debug_assert!(
+                    parameter
+                        .name
+                        .bytes()
+                        .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
+                );
+                let encoded_value = match &parameter.value {
+                    QueryValue::Scalar(value) => encode_query_value(value),
+                    QueryValue::CommaSeparated(values) => values
+                        .iter()
+                        .map(|value| encode_query_value(value))
+                        .collect::<Vec<_>>()
+                        .join(","),
+                };
+                format!("{}={encoded_value}", parameter.name)
+            })
+            .collect::<Vec<_>>()
+            .join("&");
+        #[cfg(not(feature = "client-reqwest"))]
+        let _ = expected_xml_root;
+        Self {
+            method: RequestMethod::Get,
+            relative_path,
+            encoded_query,
+            authentication: Authentication::ApiKeyQuery,
+            identity,
+            expected_representations,
+            #[cfg(feature = "client-reqwest")]
+            expected_xml_root,
+            generator_schema,
+            projection_identity,
+        }
+    }
+
+    fn debug(&self, name: &str, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct(name)
+            .field("method", &self.method)
+            .field("relative_path", &self.relative_path)
+            .field(
+                "query_parameter_count",
+                &if self.encoded_query.is_empty() {
+                    0
+                } else {
+                    self.encoded_query.split('&').count()
+                },
+            )
+            .field("authentication", &self.authentication)
+            .field("identity", &self.identity)
+            .field("expected_representations", &self.expected_representations)
+            .field("generator_schema", &self.generator_schema)
+            .field("projection_identity", &self.projection_identity)
+            .finish()
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn identity(&self) -> OperationIdentity {
+        self.identity
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn method(&self) -> RequestMethod {
+        self.method
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn expected_xml_root(&self) -> Option<&'static str> {
+        self.expected_xml_root
+    }
+
+    pub(crate) fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
+        AuthorizedRequest {
+            prepared: self,
+            api_key,
+        }
+    }
+}
+
+impl<T> PreparedRequest<T> {
+    pub(crate) const fn new(parts: RequestParts, decoder: ResponseDecoder<T>) -> Self {
+        #[cfg(feature = "client-reqwest")]
+        {
+            Self { parts, decoder }
+        }
+        #[cfg(not(feature = "client-reqwest"))]
+        {
+            let _ = decoder;
+            Self {
+                parts,
+                _response: PhantomData,
+            }
+        }
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) fn decode(&self, value: SourceValue) -> Result<T, ResponseDecodeError> {
+        (self.decoder)(value)
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn parts(&self) -> &RequestParts {
+        &self.parts
+    }
+
+    /// Returns the HTTP method.
+    #[must_use]
+    pub const fn method(&self) -> RequestMethod {
+        self.parts.method
+    }
+
+    /// Returns the trusted credential-free relative path.
+    #[must_use]
+    pub const fn relative_path(&self) -> &'static str {
+        self.parts.relative_path
+    }
+
+    /// Returns the deterministically encoded, credential-free query string.
+    #[must_use]
+    pub fn encoded_query(&self) -> &str {
+        &self.parts.encoded_query
+    }
+
+    /// Returns the required credential placement.
+    #[must_use]
+    pub const fn authentication(&self) -> Authentication {
+        self.parts.authentication
+    }
+
+    /// Returns the stable operation identity.
+    #[must_use]
+    pub const fn identity(&self) -> OperationIdentity {
+        self.parts.identity
+    }
+
+    /// Returns the representations expected from this physical operation.
+    #[must_use]
+    pub const fn expected_representations(&self) -> &'static [Representation] {
+        self.parts.expected_representations
+    }
+
+    /// Returns the SDK generator schema version used to prepare this request.
+    #[must_use]
+    pub const fn generator_schema(&self) -> u32 {
+        self.parts.generator_schema
+    }
+
+    /// Returns the SDK projection identity used for safe diagnostics.
+    #[must_use]
+    pub const fn projection_identity(&self) -> &'static str {
+        self.parts.projection_identity
+    }
+
+    /// Adds the API credential at the explicit adapter boundary.
+    #[must_use]
+    pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
+        self.parts.authorize(api_key)
+    }
+}
+
+impl PreparedBinaryRequest {
+    pub(crate) const fn new(parts: RequestParts) -> Self {
+        Self { parts }
+    }
+
+    #[cfg(feature = "client-reqwest")]
+    pub(crate) const fn parts(&self) -> &RequestParts {
+        &self.parts
+    }
+
+    /// Returns the HTTP method.
+    #[must_use]
+    pub const fn method(&self) -> RequestMethod {
+        self.parts.method
+    }
+
+    /// Returns the trusted credential-free relative path.
+    #[must_use]
+    pub const fn relative_path(&self) -> &'static str {
+        self.parts.relative_path
+    }
+
+    /// Returns the deterministically encoded, credential-free query string.
+    #[must_use]
+    pub fn encoded_query(&self) -> &str {
+        &self.parts.encoded_query
+    }
+
+    /// Returns the required credential placement.
+    #[must_use]
+    pub const fn authentication(&self) -> Authentication {
+        self.parts.authentication
+    }
+
+    /// Returns the stable operation identity.
+    #[must_use]
+    pub const fn identity(&self) -> OperationIdentity {
+        self.parts.identity
+    }
+
+    /// Returns the representations expected from this physical operation.
+    #[must_use]
+    pub const fn expected_representations(&self) -> &'static [Representation] {
+        self.parts.expected_representations
+    }
+
+    /// Returns the SDK generator schema version used to prepare this request.
+    #[must_use]
+    pub const fn generator_schema(&self) -> u32 {
+        self.parts.generator_schema
+    }
+
+    /// Returns the SDK projection identity used for safe diagnostics.
+    #[must_use]
+    pub const fn projection_identity(&self) -> &'static str {
+        self.parts.projection_identity
+    }
+
+    /// Adds the API credential at the explicit adapter boundary.
+    #[must_use]
+    pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
+        self.parts.authorize(api_key)
+    }
+}
+
+impl<T> fmt::Debug for PreparedRequest<T> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.parts.debug("PreparedRequest", formatter)
+    }
+}
+
+impl fmt::Debug for PreparedBinaryRequest {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.parts.debug("PreparedBinaryRequest", formatter)
+    }
+}
+
+/// An owned OpenDART API credential with redacted diagnostics and zeroizing drop.
+pub struct ApiKey {
+    secret: SecretString,
+}
+
+impl ApiKey {
+    /// Validates and owns an API key without exposing it through formatting.
+    pub fn new(value: impl Into<String>) -> Result<Self, AuthorizationError> {
+        let value = value.into();
+        if value.is_empty() {
+            return Err(AuthorizationError::EmptyApiKey);
+        }
+        Ok(Self {
+            secret: value.into(),
+        })
+    }
+
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
+    pub(crate) fn with_exposed_secret<T>(&self, adapter: impl FnOnce(&str) -> T) -> T {
+        adapter(self.secret.expose_secret())
+    }
+}
+
+impl fmt::Debug for ApiKey {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("ApiKey([REDACTED])")
+    }
+}
+
+/// A non-cloneable request whose relative URI contains an API credential.
+pub struct AuthorizedRequest<'a> {
+    prepared: &'a RequestParts,
+    api_key: &'a ApiKey,
+}
+
+impl AuthorizedRequest<'_> {
+    /// Returns the HTTP method without exposing the credential-bearing target.
+    #[must_use]
+    pub const fn method(&self) -> RequestMethod {
+        self.prepared.method
+    }
+
+    /// Returns the stable operation identity.
+    #[must_use]
+    pub const fn identity(&self) -> OperationIdentity {
+        self.prepared.identity
+    }
+
+    /// Returns the expected response representations.
+    #[must_use]
+    pub const fn expected_representations(&self) -> &'static [Representation] {
+        self.prepared.expected_representations
+    }
+
+    /// Exposes the credential-bearing relative URI for one consuming adapter call.
+    ///
+    /// The callback must treat the argument as secret and must not log, persist, or include it
+    /// in an error. Callers own all execution policy after crossing this boundary. To execute a
+    /// separate attempt, authorize the credential-free [`PreparedRequest`] again.
+    ///
+    /// ```compile_fail
+    /// # use opendart::{ApiKey, operations::Company};
+    /// # let prepared = Company::new("00126380").prepare_json()?;
+    /// # let key = ApiKey::new("example-key")?;
+    /// let authorized = prepared.authorize(&key);
+    /// authorized.with_exposed_relative_uri(|_| ());
+    /// authorized.with_exposed_relative_uri(|_| ()); // consumed by the first adapter call
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn with_exposed_relative_uri<T>(self, adapter: impl FnOnce(&str) -> T) -> T {
+        let exposed = self.api_key.secret.expose_secret();
+        let credential_capacity = "crtfc_key="
+            .len()
+            .saturating_add(exposed.len().saturating_mul(3));
+        let mut serializer = Serializer::new(String::with_capacity(credential_capacity));
+        serializer.append_pair("crtfc_key", exposed);
+        let credential_query = Zeroizing::new(serializer.finish());
+        let separator_capacity = usize::from(!self.prepared.encoded_query.is_empty());
+        let relative_capacity = self
+            .prepared
+            .relative_path
+            .len()
+            .saturating_add(1)
+            .saturating_add(self.prepared.encoded_query.len())
+            .saturating_add(separator_capacity)
+            .saturating_add(credential_query.len());
+        let mut relative_uri = Zeroizing::new(String::with_capacity(relative_capacity));
+        relative_uri.push_str(self.prepared.relative_path);
+        relative_uri.push('?');
+        if !self.prepared.encoded_query.is_empty() {
+            relative_uri.push_str(&self.prepared.encoded_query);
+            relative_uri.push('&');
+        }
+        relative_uri.push_str(credential_query.as_str());
+        adapter(relative_uri.as_str())
+    }
+}
+
+impl fmt::Debug for AuthorizedRequest<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("AuthorizedRequest")
+            .field("method", &self.prepared.method)
+            .field("identity", &self.prepared.identity)
+            .field(
+                "expected_representations",
+                &self.prepared.expected_representations,
+            )
+            .field("relative_uri", &"[REDACTED]")
+            .finish()
+    }
+}
+
+fn encode_query_value(value: &str) -> String {
+    byte_serialize(value.as_bytes()).collect()
+}

@@ -13,8 +13,11 @@ import (
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
+	"github.com/cpaikr/opendart/internal/liveconformance"
+	"github.com/cpaikr/opendart/internal/livenotifier"
 	"github.com/cpaikr/opendart/internal/multicompanyprobe"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/sdkgen"
 	"github.com/cpaikr/opendart/internal/verification"
 )
 
@@ -39,8 +42,14 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runLint(args[1:], stdout, stderr)
 	case "bundle":
 		return runBundle(args[1:], stdout, stderr)
+	case "generate-sdk":
+		return runGenerateSDK(args[1:], stdout, stderr)
 	case "verify":
 		return runVerify(args[1:], stdout, stderr)
+	case "live-conformance":
+		return runLiveConformance(ctx, args[1:], stdout, stderr)
+	case "live-conformance-notify":
+		return runLiveConformanceNotify(ctx, args[1:], stdout, stderr)
 	case "probe-multi-company":
 		return runProbeMultiCompany(ctx, args[1:], stdout, stderr)
 	case "probe-auditor-evidence":
@@ -137,6 +146,121 @@ func runBundle(args []string, stdout, stderr io.Writer) int {
 }
 
 type verificationRunner func(string) (verification.Report, error)
+
+type sdkGenerationRunner func(string, string) (sdkgen.Report, error)
+
+func runGenerateSDK(args []string, stdout, stderr io.Writer) int {
+	return runGenerateSDKWith(args, stdout, stderr, sdkgen.GenerateRust)
+}
+
+func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGenerationRunner) int {
+	flags := flag.NewFlagSet("generate-sdk", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	language := flags.String("language", "", "SDK language (rust)")
+	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
+	output := flags.String("output", "", "owned generated source directory")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("generate-sdk", flags, stderr); code != 0 {
+		return code
+	}
+	if *language != "rust" {
+		return writeCommandError(stderr, "generate-sdk", errors.New("--language must be rust"), 2)
+	}
+	if strings.TrimSpace(*output) == "" {
+		return writeCommandError(stderr, "generate-sdk", errors.New("--output is required"), 2)
+	}
+	report, err := runner(*root, *output)
+	if err != nil {
+		return writeCommandError(stderr, "generate-sdk", err, 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write generate-sdk report", err, 1)
+	}
+	return 0
+}
+
+type livePreflightRunner func(string) (liveconformance.PreflightReport, error)
+type liveRunner func(context.Context, string) (liveconformance.Report, error)
+type liveNotifierRunner func(context.Context, livenotifier.Options) (livenotifier.Result, error)
+
+func runLiveConformance(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	return runLiveConformanceWith(ctx, args, stdout, stderr, liveconformance.PreflightRepository, liveconformance.RunRepository)
+}
+
+func runLiveConformanceWith(ctx context.Context, args []string, stdout, stderr io.Writer, preflight livePreflightRunner, runner liveRunner) int {
+	flags := flag.NewFlagSet("live-conformance", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	repositoryRoot := flags.String("repository-root", ".", "repository root")
+	preflightOnly := flags.Bool("preflight-only", false, "run credential-free coverage, budget, and sanitization gates")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("live-conformance", flags, stderr); code != 0 {
+		return code
+	}
+	if *preflightOnly {
+		report, err := preflight(*repositoryRoot)
+		if err != nil {
+			return writeCommandError(stderr, "live-conformance", errors.New("preflight failed"), 1)
+		}
+		if err := writeJSON(stdout, report); err != nil {
+			return writeCommandError(stderr, "write live conformance preflight report", err, 1)
+		}
+		return 0
+	}
+	report, err := runner(ctx, *repositoryRoot)
+	if err != nil {
+		if report.Kind == liveconformance.ReportKind {
+			if encodeErr := writeJSON(stdout, report); encodeErr != nil {
+				return 1
+			}
+		}
+		return writeCommandError(stderr, "live-conformance", errors.New("execution failed"), 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write live conformance report", err, 1)
+	}
+	return 0
+}
+
+func runLiveConformanceNotify(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	return runLiveConformanceNotifyWith(ctx, args, stdout, stderr, os.Getenv, livenotifier.Notify)
+}
+
+func runLiveConformanceNotifyWith(ctx context.Context, args []string, stdout, stderr io.Writer, getenv func(string) string, runner liveNotifierRunner) int {
+	flags := flag.NewFlagSet("live-conformance-notify", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	reportPath := flags.String("report", livenotifier.DefaultReportPath, "downloaded live conformance report")
+	repository := flags.String("repository", "", "GitHub owner/repository")
+	producerConclusion := flags.String("producer-conclusion", "", "producer workflow conclusion")
+	artifactOutcome := flags.String("artifact-outcome", "", "artifact download step outcome")
+	runID := flags.Uint64("run-id", 0, "producer workflow run ID")
+	runAttempt := flags.Uint64("run-attempt", 0, "producer workflow run attempt")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("live-conformance-notify", flags, stderr); code != 0 {
+		return code
+	}
+	result, err := runner(ctx, livenotifier.Options{
+		ReportPath:         *reportPath,
+		Repository:         *repository,
+		ProducerConclusion: *producerConclusion,
+		ArtifactOutcome:    *artifactOutcome,
+		RunID:              *runID,
+		RunAttempt:         *runAttempt,
+		Token:              getenv("GITHUB_TOKEN"),
+	})
+	if err != nil {
+		return writeCommandError(stderr, "live-conformance-notify", errors.New("notification failed"), 1)
+	}
+	if err := writeJSON(stdout, result); err != nil {
+		return writeCommandError(stderr, "write live conformance notification result", err, 1)
+	}
+	return 0
+}
 
 func runVerify(args []string, stdout, stderr io.Writer) int {
 	return runVerifyWith(args, stdout, stderr, verification.Verify)
@@ -392,7 +516,10 @@ func usage(output io.Writer) error {
 		"  catalog        validate generated catalog and reference invariants",
 		"  lint           apply strict OpenAPI policy",
 		"  bundle         write the portable OpenAPI bundle",
+		"  generate-sdk   generate one owned language SDK source subtree",
 		"  verify         run credential-free repository verification",
+		"  live-conformance  run the reviewed live matrix (use --preflight-only offline)",
+		"  live-conformance-notify  update the isolated live failure issue",
 		"  probe-multi-company  run the focused credentialed serialization probe",
 		"  probe-auditor-evidence  emit the focused sanitized auditor evidence manifest",
 	} {

@@ -100,6 +100,6 @@ the baseline itself.
 ## Related work
 
 - [Repository architecture](../../ARCHITECTURE.md)
-- [Go tooling migration](../plans/go-tooling-migration.md)
-- [Public-guide drift detection](../plans/guide-drift.md)
-- [Credentialed live conformance](../plans/live-conformance.md)
+- [Go tooling migration](../../plans/main/go-tooling-migration.md)
+- [Public-guide drift detection](../../tasks/main/guide-drift.md)
+- [Credentialed live conformance](../../tasks/main/live-conformance.md)

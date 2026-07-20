@@ -11,6 +11,10 @@ coverage/
 .opendart-stage-*
 .opendart-backup-*
 
+# Isolated Rust SDK workspace build output
+/sdk/rust/target/
+/sdk/rust/compat/reqwest-feature-unification/target/
+
 # Logs and operating-system metadata
 *.log
 .DS_Store
