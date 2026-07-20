@@ -374,15 +374,15 @@ provenance points to the immutable reviewed revision.
   failure, and no-clobber publication after report encoding. Process tests cover
   split and empty ZIP signatures, exact bytes, source status, incomplete streams,
   limits, existing paths and symlinks, destination races, and broken stdout.
-- Work 6 is merged on `rust`. Stable output fixtures,
+- CLI roadmap Work 6 is merged on `rust`. Stable output fixtures,
   CLI no-default/MSRV coverage, exact SDK and CLI package inventories, workspace
   package dry runs, bounded process fixtures, and a strictly dual-gated
   read-only structured/binary live smoke path extend the credential-free gate.
-- Work 7 is implemented in the current delivery slice. The CLI source package
-  includes its lockfile and release documentation, clean locked source installs
-  run on Linux, macOS, and Windows, and Release Please owns an independent CLI
-  version, changelog, tag, and workspace-lock entry. The SDK component updates
-  the CLI's marked exact local SDK pin without releasing the CLI.
+- CLI roadmap Work 7 is implemented in the current delivery slice. The CLI
+  source package includes its lockfile and release documentation, clean locked
+  source installs run on Linux, macOS, and Windows, and Release Please owns an
+  independent CLI version, changelog, tag, and workspace-lock entry. The SDK
+  component updates the CLI's marked exact local SDK pin without releasing the CLI.
 - Local post-publication artifact comparison is prepared behind a bounded,
   credential-free command that accepts already acquired evidence. No current
   workflow can acquire registry crate artifacts for release comparison or
@@ -392,7 +392,10 @@ provenance points to the immutable reviewed revision.
 
 ## Next action
 
-After Work 7 passes review and merges, pause this plan. Resume public Rust SDK
-work 6, publish and verify `opendart`, then return here for Work 8 through a new
-explicitly authorized delivery. Do not check registry ownership, publish a
-crate, finalize a CLI release, or add prebuilt artifacts in the Work 7 slice.
+After CLI roadmap Work 7 passes review and merges, pause this plan. The separate
+public Rust SDK release plan's Work 6 ("crates.io publication") remains
+unimplemented and is not authorized by this delivery. Resume that work only
+through a separately authorized delivery, publish and verify `opendart`, then
+return here for CLI roadmap Work 8 through another explicit authorization. Do
+not check registry ownership, publish a crate, finalize a CLI release, or add
+prebuilt artifacts in the CLI roadmap Work 7 slice.
