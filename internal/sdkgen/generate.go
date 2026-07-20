@@ -122,6 +122,9 @@ func CheckRustFresh(root string, outputs RustOutputs) error {
 		return err
 	}
 	products := rustProducts(generated, files, outputs)
+	if err := validateProductOutputs(products); err != nil {
+		return err
+	}
 	for _, product := range products {
 		actual, err := readOwnedTree(product.output, product, false)
 		if err != nil {

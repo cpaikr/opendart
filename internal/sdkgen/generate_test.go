@@ -98,6 +98,14 @@ func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
 	}
 }
 
+func TestCheckRustFreshRejectsOverlappingOutputs(t *testing.T) {
+	root := t.TempDir()
+	outputs := RustOutputs{SDK: root, CLI: filepath.Join(root, "cli")}
+	if err := CheckRustFresh(canonicalRoot(t), outputs); err == nil || err.Error() != "generated Rust outputs must be distinct non-nested directories" {
+		t.Fatalf("error = %v", err)
+	}
+}
+
 func TestGenerateRustRefusesToReplaceUnownedOutput(t *testing.T) {
 	output := testOutputs(t.TempDir())
 	if err := os.Mkdir(output.SDK, 0o755); err != nil {
