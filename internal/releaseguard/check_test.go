@@ -908,6 +908,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "accepts only manual trusted default-branch producer runs",
 		},
 		{
+			name: "drift notifier accepts non-canonical repository", artifact: driftNotifyArtifact,
+			old: "github.repository == 'cpaikr/opendart'", replacement: "github.repository != ''",
+			invariant: "accepts only manual trusted default-branch producer runs",
+		},
+		{
 			name: "drift notifier artifact is not attempt scoped", artifact: driftNotifyArtifact,
 			old: "name: guide-drift-report-${{ github.event.workflow_run.run_attempt }}", replacement: "name: guide-drift-report",
 			invariant: "downloads only the producer report with fixed-failure fallback",

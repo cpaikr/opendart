@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   notify:
-    if: ${{ github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == github.event.repository.default_branch }}
+    if: ${{ github.repository == 'cpaikr/opendart' && github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == github.event.repository.default_branch }}
     permissions:
       actions: read
       contents: read

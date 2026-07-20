@@ -1183,7 +1183,7 @@ func checkDriftNotifyWorkflow(notify workflow, source string) error {
 		return err
 	}
 	job := notify.Jobs["notify"]
-	expectedCondition := "github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == github.event.repository.default_branch"
+	expectedCondition := "github.repository == 'cpaikr/opendart' && github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == github.event.repository.default_branch"
 	if !exactWorkflowExpression(job.If, expectedCondition) {
 		return &Error{Artifact: driftNotifyArtifact, Invariant: "accepts only manual trusted default-branch producer runs"}
 	}
