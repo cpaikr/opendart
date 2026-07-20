@@ -1,9 +1,13 @@
 use std::time::Duration;
 
 use clap::ArgMatches;
-use opendart::{ApiKey, Client, ClientBuilder, PreparedRequest, SourceReply, SourceResponse};
+use opendart::{
+    ApiKey, Client, ClientBuilder, PreparedBinaryRequest, PreparedRequest, SourceReply,
+    SourceResponse,
+};
 use serde::Serialize;
 
+use crate::artifact::ArtifactTarget;
 use crate::error::ErrorEnvelope;
 
 const USER_AGENT_SUFFIX: &str = concat!("opendart-cli/", env!("CARGO_PKG_VERSION"));
@@ -110,6 +114,21 @@ impl Executor {
             .block_on(self.client.execute(&request))
             .map_err(|error| ErrorEnvelope::client(operation, error))?;
         encode_response(operation, response)
+    }
+
+    pub(crate) fn execute_binary(
+        &self,
+        request: PreparedBinaryRequest,
+        operation: OperationContext,
+        target: ArtifactTarget,
+    ) -> Result<BufferedOutput, ErrorEnvelope> {
+        let staged = target.stage(operation)?;
+        self.runtime.block_on(crate::artifact::execute(
+            &self.client,
+            request,
+            operation,
+            staged,
+        ))
     }
 }
 

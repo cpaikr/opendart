@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 
 mod app;
+mod artifact;
 mod command;
 mod discovery;
 mod error;

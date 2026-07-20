@@ -362,18 +362,23 @@ provenance points to the immutable reviewed revision.
   and keyless machine-readable discovery. Process tests cover every canonical
   name and logical-ID alias, strict usage, representation rules, help/version,
   and a discovery-only invocation consumer.
-- Work 4 is implemented in the current delivery slice. Structured JSON and XML
+- Work 4 is merged on `rust`. Structured JSON and XML
   calls execute once through the typed SDK, buffer direct compact JSON, preserve
   success and source-status replies, and translate sanitized SDK failures.
   Repository-only loopback tests cover exact numbers, Unicode and additive
   values, response limits, decoding, transport failures, and credential
   non-disclosure.
-- Works 5–7 remain. Binary artifact handling has not begun, and no publication
-  or prebuilt-release work is authorized by this plan state.
+- Work 5 is implemented in the current delivery slice. Prepared binary replies
+  stream once into same-directory temporary files with inclusive generated
+  limits, complete status/unrecognized evidence, cleanup on every pre-publication
+  failure, and no-clobber publication after report encoding. Process tests cover
+  split and empty ZIP signatures, exact bytes, source status, incomplete streams,
+  limits, existing paths and symlinks, destination races, and broken stdout.
+- Works 6 and 7 remain. No publication or prebuilt-release work is authorized by
+  this plan state.
 
 ## Next action
 
-After Work 4 passes review and merges, implement Work 5 as the next slice:
-stream prepared ZIP replies through the SDK into explicit same-directory,
-bounded, no-clobber artifacts while preserving status and unrecognized-body
-evidence.
+After Work 5 passes review and merges, implement Work 6 as the next slice:
+close the complete credential-free verification surface and add a strictly
+dual-gated read-only live smoke path for structured and binary calls.
