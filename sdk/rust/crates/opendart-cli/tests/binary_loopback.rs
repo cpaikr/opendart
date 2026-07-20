@@ -5,7 +5,7 @@
 mod common;
 
 use std::fs;
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::path::Path;
 use std::process::{Command, Output};
@@ -132,19 +132,26 @@ fn write_fixed_with_headers(
 }
 
 fn write_chunked(stream: &mut TcpStream, content_type: &str, chunks: &[&[u8]]) {
+    write_chunked_result(stream, content_type, chunks).unwrap();
+}
+
+fn write_chunked_result(
+    stream: &mut TcpStream,
+    content_type: &str,
+    chunks: &[&[u8]],
+) -> io::Result<()> {
     write!(
         stream,
         "HTTP/1.1 200 OK\r\nContent-Type: {content_type}\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n"
-    )
-    .unwrap();
+    )?;
     for chunk in chunks {
-        write!(stream, "{:x}\r\n", chunk.len()).unwrap();
-        stream.write_all(chunk).unwrap();
-        stream.write_all(b"\r\n").unwrap();
-        stream.flush().unwrap();
+        write!(stream, "{:x}\r\n", chunk.len())?;
+        stream.write_all(chunk)?;
+        stream.write_all(b"\r\n")?;
+        stream.flush()?;
         thread::sleep(Duration::from_millis(5));
     }
-    stream.write_all(b"0\r\n\r\n").unwrap();
+    stream.write_all(b"0\r\n\r\n")
 }
 
 fn json(output: &Output, expected_exit: i32) -> Value {
@@ -261,11 +268,21 @@ fn limits_and_incomplete_streams_never_publish_partial_artifacts() {
     let mut arguments = binary_arguments(&overflow);
     arguments.extend(["--artifact-limit-bytes".to_owned(), "7".to_owned()]);
     let output = with_server(&arguments, |stream| {
-        write_chunked(
+        if let Err(error) = write_chunked_result(
             stream,
             "application/zip",
             &[b"P", b"K\x03", b"\x04A", b"BCD"],
-        );
+        ) {
+            assert!(
+                matches!(
+                    error.kind(),
+                    io::ErrorKind::BrokenPipe
+                        | io::ErrorKind::ConnectionAborted
+                        | io::ErrorKind::ConnectionReset
+                ),
+                "overflow fixture write failed unexpectedly: {error}"
+            );
+        }
     });
     let error = json(&output, 1);
     assert_eq!(error["error"]["code"], "artifact_limit");
