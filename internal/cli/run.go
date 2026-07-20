@@ -46,6 +46,8 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runGenerateSDK(args[1:], stdout, stderr)
 	case "verify":
 		return runVerify(args[1:], stdout, stderr)
+	case "guide-drift":
+		return runGuideDrift(ctx, args[1:], stdout, stderr)
 	case "live-conformance":
 		return runLiveConformance(ctx, args[1:], stdout, stderr)
 	case "live-conformance-notify":
@@ -184,6 +186,36 @@ func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGener
 type livePreflightRunner func(string) (liveconformance.PreflightReport, error)
 type liveRunner func(context.Context, string) (liveconformance.Report, error)
 type liveNotifierRunner func(context.Context, livenotifier.Options) (livenotifier.Result, error)
+type guideDriftRunner func(context.Context, string) (guidesync.DriftReport, error)
+
+func runGuideDrift(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	return runGuideDriftWith(ctx, args, stdout, stderr, guidesync.Drift)
+}
+
+func runGuideDriftWith(ctx context.Context, args []string, stdout, stderr io.Writer, runner guideDriftRunner) int {
+	flags := flag.NewFlagSet("guide-drift", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	repositoryRoot := flags.String("repository-root", ".", "repository root")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("guide-drift", flags, stderr); code != 0 {
+		return code
+	}
+	report, err := runner(ctx, *repositoryRoot)
+	if err != nil {
+		if report.Kind == guidesync.DriftReportKind {
+			if encodeErr := writeJSON(stdout, report); encodeErr != nil {
+				return 1
+			}
+		}
+		return writeCommandError(stderr, "guide-drift", errors.New("processing failed"), 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write guide drift report", err, 1)
+	}
+	return 0
+}
 
 func runLiveConformance(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	return runLiveConformanceWith(ctx, args, stdout, stderr, liveconformance.PreflightRepository, liveconformance.RunRepository)
@@ -518,6 +550,7 @@ func usage(output io.Writer) error {
 		"  bundle         write the portable OpenAPI bundle",
 		"  generate-sdk   generate one owned language SDK source subtree",
 		"  verify         run credential-free repository verification",
+		"  guide-drift    compare the current public guide with the committed contract",
 		"  live-conformance  run the reviewed live matrix (use --preflight-only offline)",
 		"  live-conformance-notify  update the isolated live failure issue",
 		"  probe-multi-company  run the focused credentialed serialization probe",

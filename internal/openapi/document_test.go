@@ -123,6 +123,47 @@ func TestSemanticComparisonIgnoresFormattingAndDetectsContractChanges(t *testing
 	})
 }
 
+func TestGuideDriftComparisonNormalizesOnlySnapshotMetadata(t *testing.T) {
+	baseline := copyFixture(t)
+	candidate := copyFixture(t)
+	baselineRoot := filepath.Join(baseline, "openapi.yaml")
+	candidateRoot := filepath.Join(candidate, "openapi.yaml")
+	for root, version := range map[string]string{baselineRoot: "2026-07-17", candidateRoot: "2026-07-20"} {
+		replaceInFile(t, root, "version: 1.0.0", "version: "+version)
+		replaceInFile(t, root, "  source:\n    guideUrl:", "  source:\n    checkedAt: "+version+"\n    guideUrl:")
+	}
+	for directory, version := range map[string]string{baseline: "2026-07-17", candidate: "2026-07-20"} {
+		pathFile := filepath.Join(directory, "paths", "company.json.yaml")
+		replaceInFile(t, pathFile, "  x-opendart:\n    logicalOperationId:", "  x-opendart:\n    source:\n      checkedAt: "+version+"\n    logicalOperationId:")
+	}
+
+	comparison, err := CompareGuideDrift(baselineRoot, candidateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if comparison.TotalChanges != 0 {
+		t.Fatalf("snapshot-only comparison = %+v", comparison)
+	}
+
+	for directory, version := range map[string]string{baseline: "2026-07-17", candidate: "2026-07-20"} {
+		schemaFile := filepath.Join(directory, "schemas", "company.yaml")
+		replaceInFile(t, schemaFile, "x-opendart:\n  schemaStatus:", "x-opendart:\n  source:\n    checkedAt: "+version+"\n  schemaStatus:")
+	}
+	comparison, err = CompareGuideDrift(baselineRoot, candidateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertChangeLocation(t, comparison, "/x-opendart/source/checkedAt")
+	replaceInFile(t, filepath.Join(candidate, "schemas", "company.yaml"), "checkedAt: 2026-07-20", "checkedAt: 2026-07-17")
+
+	replaceInFile(t, filepath.Join(candidate, "paths", "company.json.yaml"), "representation: JSON", "representation: changed")
+	comparison, err = CompareGuideDrift(baselineRoot, candidateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertChangeLocation(t, comparison, "/x-opendart/representation")
+}
+
 func TestSemanticComparisonTreatsSetValuedArraysAsUnordered(t *testing.T) {
 	tests := []struct {
 		name  string

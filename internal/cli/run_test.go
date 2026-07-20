@@ -52,10 +52,40 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-sdk", "verify", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-sdk", "verify", "guide-drift", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
+	}
+}
+
+func TestRunGuideDriftEmitsChangedAndErrorReports(t *testing.T) {
+	changed := guidesync.DriftReport{
+		SchemaVersion: guidesync.DriftReportSchemaVersion,
+		Kind:          guidesync.DriftReportKind,
+		Outcome:       "changed",
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runGuideDriftWith(context.Background(), []string{"--repository-root", "repository"}, &stdout, &stderr, func(_ context.Context, root string) (guidesync.DriftReport, error) {
+		if root != "repository" {
+			t.Fatalf("root = %q", root)
+		}
+		return changed, nil
+	})
+	if code != 0 || stderr.Len() != 0 || !strings.Contains(stdout.String(), `"outcome": "changed"`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+
+	stdout.Reset()
+	errorReport := changed
+	errorReport.Outcome = "error"
+	errorReport.Failure = &guidesync.DriftFailure{Code: "acquisition-failed", Stage: "acquisition"}
+	code = runGuideDriftWith(context.Background(), nil, &stdout, &stderr, func(context.Context, string) (guidesync.DriftReport, error) {
+		return errorReport, errors.New("unsafe source body and URL")
+	})
+	if code != 1 || !strings.Contains(stdout.String(), guidesync.DriftReportKind) || stderr.String() != "guide-drift: processing failed\n" || strings.Contains(stderr.String(), "unsafe") {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }
 
@@ -547,7 +577,7 @@ func TestRunLiveConformanceNotifyFailureIsFixed(t *testing.T) {
 }
 
 func TestNewCommandsRejectPositionalArguments(t *testing.T) {
-	for _, command := range []string{"catalog", "lint", "bundle", "generate-sdk", "verify", "live-conformance", "live-conformance-notify"} {
+	for _, command := range []string{"catalog", "lint", "bundle", "generate-sdk", "verify", "guide-drift", "live-conformance", "live-conformance-notify"} {
 		t.Run(command, func(t *testing.T) {
 			var stderr bytes.Buffer
 			if code := Run([]string{command, "unexpected"}, &bytes.Buffer{}, &stderr); code != 2 {

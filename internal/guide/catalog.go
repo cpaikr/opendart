@@ -1,6 +1,7 @@
 package guide
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -296,16 +297,18 @@ func (v *catalogValidator) validate() (CatalogReport, error) {
 		if operation.Formats["Zip FILE (binary)"] {
 			wantFormats = []string{"Zip FILE (binary)"}
 		}
-		if !reflect.DeepEqual(formats, wantFormats) {
+		if len(formats) == 0 || !v.structuralOnly && !reflect.DeepEqual(formats, wantFormats) {
 			return CatalogReport{}, v.fail("inventory", "representation-set", v.rootFile, identity, "#/paths", "logical endpoint representation set is incomplete", nil)
 		}
-		expectedReference, expected := catalogReferenceTables[identity]
-		if expected {
-			if len(operation.ReferenceTables) != 1 || operation.ReferenceTables[0].Title != expectedReference.Title || len(operation.ReferenceTables[0].Rows) != expectedReference.Rows {
-				return CatalogReport{}, v.fail("inventory", "reference-table", v.rootFile, identity, "#/paths", "expected endpoint reference table changed", nil)
+		if !v.structuralOnly {
+			expectedReference, expected := catalogReferenceTables[identity]
+			if expected {
+				if len(operation.ReferenceTables) != 1 || operation.ReferenceTables[0].Title != expectedReference.Title || len(operation.ReferenceTables[0].Rows) != expectedReference.Rows {
+					return CatalogReport{}, v.fail("inventory", "reference-table", v.rootFile, identity, "#/paths", "expected endpoint reference table changed", nil)
+				}
+			} else if len(operation.ReferenceTables) != 0 {
+				return CatalogReport{}, v.fail("inventory", "reference-table", v.rootFile, identity, "#/paths", "unexpected endpoint reference table appeared", nil)
 			}
-		} else if len(operation.ReferenceTables) != 0 {
-			return CatalogReport{}, v.fail("inventory", "reference-table", v.rootFile, identity, "#/paths", "unexpected endpoint reference table appeared", nil)
 		}
 	}
 	rootGroupCounts, ok := intMap(inventory["groupCounts"])
@@ -406,8 +409,16 @@ func (v *catalogValidator) validateOperation(pathKey, pathFile, pathText string,
 	}
 	endpoint := Endpoint{EndpointSummary: EndpointSummary{APIGroupCode: group, APIID: apiID, LogicalOperationID: identity, Description: stringValue(operation["description"])}, RequestArguments: arguments}
 	if example, multi := catalogMultiCompanyEvidence[identity]; multi {
-		endpoint.GuideTestRequestArguments = []GuideTestArgument{{Key: "corp_code", Value: example}}
-		endpoint.MessageCodes = []MessageCode{{Code: "021", Description: "조회 가능한 회사 개수가 초과하였습니다.(최대 100건)"}}
+		if v.structuralOnly {
+			if hasRequestArgument(arguments, "corp_code") {
+				if err := applyStructuralMultiCompanyEvidence(&endpoint, operation); err != nil {
+					return "", "", "", v.fail("operations", "parameter-normalization", pathFile, identity, "#/get/parameters", "multi-company parameter evidence is malformed", err)
+				}
+			}
+		} else {
+			endpoint.GuideTestRequestArguments = []GuideTestArgument{{Key: "corp_code", Value: example}}
+			endpoint.MessageCodes = []MessageCode{{Code: "021", Description: "조회 가능한 회사 개수가 초과하였습니다.(최대 100건)"}}
+		}
 	}
 	expectedParameters, expectedErr := parameterObjects(endpoint)
 	if expectedErr == nil {
@@ -486,6 +497,41 @@ func (v *catalogValidator) validateOperation(pathKey, pathFile, pathText string,
 		return "", "", "", v.fail("operations", "credential-placeholder", pathFile, identity, "#", "test-form credential placeholder leaked into a path file", nil)
 	}
 	return identity, group, apiID, nil
+}
+
+func hasRequestArgument(arguments []RequestArgument, key string) bool {
+	for _, argument := range arguments {
+		if argument.Key == key {
+			return true
+		}
+	}
+	return false
+}
+
+func applyStructuralMultiCompanyEvidence(endpoint *Endpoint, operation map[string]any) error {
+	parameters, ok := operation["parameters"].([]any)
+	if !ok {
+		return errors.New("parameters are missing")
+	}
+	for _, value := range parameters {
+		parameter, _ := value.(map[string]any)
+		if stringValue(parameter["name"]) != "corp_code" {
+			continue
+		}
+		serialization, _ := parameter["x-opendart-serialization"].(map[string]any)
+		evidence, _ := serialization["guideEvidence"].(map[string]any)
+		serialized := stringValue(evidence["serializedValue"])
+		maximum, _ := evidence["maximumItems"].(map[string]any)
+		code := stringValue(maximum["messageCode"])
+		description := stringValue(maximum["description"])
+		if serialized == "" || code == "" || description == "" {
+			return errors.New("guide evidence is incomplete")
+		}
+		endpoint.GuideTestRequestArguments = []GuideTestArgument{{Key: "corp_code", Value: serialized}}
+		endpoint.MessageCodes = []MessageCode{{Code: code, Description: description}}
+		return nil
+	}
+	return errors.New("corp_code parameter is missing")
 }
 
 func (v *catalogValidator) validateSchemas(root map[string]any, logical map[string]*logicalCatalogOperation, referencedSchemas map[string]bool) (int, int, error) {
@@ -576,7 +622,7 @@ func (v *catalogValidator) validateSchemas(root map[string]any, logical map[stri
 		}
 		actualDiagnostics := extensionValues(schema, "x-opendart-source-diagnostics")
 		expectedDiagnostics := v.expectedResponseDiagnostics(schemaFile)
-		if !sameMembers(actualDiagnostics, expectedDiagnostics) {
+		if !v.structuralOnly && !sameMembers(actualDiagnostics, expectedDiagnostics) {
 			return 0, 0, v.fail("schemas", "response-source-diagnostics", schemaFile, "", "#", "response source diagnostics differ from curated contradictions", nil)
 		}
 		for _, value := range actualDiagnostics {
@@ -584,16 +630,18 @@ func (v *catalogValidator) validateSchemas(root map[string]any, logical map[stri
 				responseDiagnosticCount += len(diagnostics)
 			}
 		}
-		for _, value := range expectedDiagnostics {
-			if diagnostics, ok := value.([]any); ok {
-				expectedDiagnosticCount += len(diagnostics)
+		if !v.structuralOnly {
+			for _, value := range expectedDiagnostics {
+				if diagnostics, ok := value.([]any); ok {
+					expectedDiagnosticCount += len(diagnostics)
+				}
 			}
 		}
 	}
 	if !v.structuralOnly && responseFieldCount != ExpectedFullTotals.ResponseFields {
 		return 0, 0, v.fail("inventory", "response-field-completeness", v.rootFile, "", "#/paths", "response field total changed", nil)
 	}
-	if responseDiagnosticCount != expectedDiagnosticCount {
+	if !v.structuralOnly && responseDiagnosticCount != expectedDiagnosticCount {
 		return 0, 0, v.fail("schemas", "response-source-diagnostic-count", v.rootFile, "", "#/paths", "response source-diagnostic count changed", nil)
 	}
 
@@ -621,7 +669,7 @@ func (v *catalogValidator) validateSchemas(root map[string]any, logical map[stri
 	status, _ := shared["OpenDartStatus"].(map[string]any)
 	enum, _ := status["enum"].([]any)
 	descriptions, _ := status["x-opendart-code-descriptions"].(map[string]any)
-	if len(enum) != ExpectedFullTotals.MessageCodes || len(descriptions) != ExpectedFullTotals.MessageCodes {
+	if len(enum) != len(descriptions) || len(enum) == 0 || !v.structuralOnly && len(enum) != ExpectedFullTotals.MessageCodes {
 		return 0, 0, v.fail("schemas", "message-code-inventory", statusFile, "", "#/OpenDartStatus", "message-code inventory or descriptions changed", nil)
 	}
 	expectedXML, normalizeErr := genericCatalogValue(commonSchemas(nil)["OpenDartXmlError"])
