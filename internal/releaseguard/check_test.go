@@ -79,6 +79,7 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 		{name: "Rust CLI pin updater", artifact: configArtifact, old: `"type": "generic",
           "path": "/sdk/rust/crates/opendart-cli/Cargo.toml"`, replacement: `"type": "generic",
           "path": "/sdk/rust/crates/other/Cargo.toml"`, invariant: "updates the workspace lock and CLI SDK pin"},
+		// The inserted duplicate follows the original release-type, so JSON's last-key-wins behavior targets only the CLI object.
 		{name: "CLI release type", artifact: configArtifact, old: `"component": "opendart-cli"`, replacement: `"release-type": "simple",
       "component": "opendart-cli"`, invariant: "CLI package release-type"},
 		{name: "CLI component", artifact: configArtifact, old: `"component": "opendart-cli"`, replacement: `"component": "other-cli"`, invariant: "CLI package component"},

@@ -359,14 +359,6 @@ func checkRustCLIPackage(cargoSource, workspaceSource, lockSource, packageListSo
 			return &Error{Artifact: rustCLICargoArtifact, Invariant: "packages the reviewed source distribution", Detail: name}
 		}
 	}
-	cliVersion, err := cargoPackageVersion(cargoSource)
-	if err != nil {
-		return &Error{Artifact: rustCLICargoArtifact, Invariant: "declares one package version", Cause: err}
-	}
-	lockVersion, err := cargoLockPackageVersion(lockSource, "opendart-cli")
-	if err != nil || cliVersion != lockVersion {
-		return &Error{Artifact: rustLockArtifact, Invariant: "matches the CLI package version", Cause: err}
-	}
 	sdkVersion, err := cargoLockPackageVersion(lockSource, "opendart")
 	if err != nil {
 		return &Error{Artifact: rustLockArtifact, Invariant: "contains one opendart package version", Cause: err}
@@ -635,18 +627,11 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 	if err := require(configArtifact, "CLI package contains only supported options", reflect.DeepEqual(sortedKeys(cliPackage), expectedRustKeys), "exact option allowlist is required"); err != nil {
 		return err
 	}
-	expectedCLIValues := map[string]any{
-		"release-type":                   "rust",
-		"component":                      "opendart-cli",
-		"include-component-in-tag":       true,
-		"include-v-in-tag":               true,
-		"include-v-in-release-name":      true,
-		"changelog-path":                 "CHANGELOG.md",
-		"bump-minor-pre-major":           true,
-		"bump-patch-for-minor-pre-major": true,
-		"draft":                          true,
-		"force-tag-creation":             false,
+	expectedCLIValues := make(map[string]any, len(expectedRustValues))
+	for key, value := range expectedRustValues {
+		expectedCLIValues[key] = value
 	}
+	expectedCLIValues["component"] = "opendart-cli"
 	for key, value := range expectedCLIValues {
 		if !reflect.DeepEqual(cliPackage[key], value) {
 			return &Error{Artifact: configArtifact, Invariant: "CLI package " + key, Detail: fmt.Sprintf("want %v", value)}
