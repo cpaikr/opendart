@@ -35,10 +35,6 @@ Update it in place and keep authorization-gated actions explicit.
 
 ## Validation
 
-- `go test -race ./...` passes.
-- `go vet ./...` passes.
-- `go run ./cmd/opendart-tool verify --repository-root .` passes all phases.
-- `git diff --check` passes.
 - `go test -race ./...`, `go vet ./...`, credential-free repository
   verification, and `git diff --check` pass.
 - The required security-focused code review is complete. Its bounded issue-body

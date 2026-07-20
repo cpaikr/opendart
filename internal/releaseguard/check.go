@@ -957,7 +957,7 @@ func checkLiveWorkflow(live workflow, source string) error {
 	if err := require(liveWorkflowArtifact, "producer has read-only repository permission", reflect.DeepEqual(job.Permissions, map[string]string{"contents": "read"}), ""); err != nil {
 		return err
 	}
-	if job.Needs != "" || job.ContinueOnError || job.Uses != "" || !defaultRunSettings(job.Defaults) || job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 30 {
+	if !standardJobControls(job, "ubuntu-latest", 30) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "producer uses only approved execution controls"}
 	}
 	expectedNames := []string{"Check out trusted revision", "Set up Go", "Recheck offline gates", "Run live conformance", "Upload sanitized report"}
@@ -990,13 +990,8 @@ func checkLiveWorkflow(live workflow, source string) error {
 	if upload.Uses != uploadArtifactAction || upload.Run != "" || !exactWorkflowExpression(upload.If, "always()") || upload.ContinueOnError || !reflect.DeepEqual(upload.With, expectedUpload) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "uploads only the bounded sanitized report"}
 	}
-	for _, step := range job.Steps {
-		if !defaultStepRunSettings(step) {
-			return &Error{Artifact: liveWorkflowArtifact, Invariant: "producer steps use default run settings", Detail: "step " + step.Name}
-		}
-		if step.Name != "Run live conformance" && len(step.Env) != 0 {
-			return &Error{Artifact: liveWorkflowArtifact, Invariant: "API key is absent outside the request boundary", Detail: "step " + step.Name}
-		}
+	if err := checkStepPolicies(liveWorkflowArtifact, job.Steps, "Run live conformance", "producer steps use default run settings", "API key is absent outside the request boundary"); err != nil {
+		return err
 	}
 	if strings.Count(source, "${{ secrets.OPENDART_API_KEY }}") != 1 || strings.Count(source, "OPENDART_API_KEY") != 2 || strings.Contains(source, "issues: write") || strings.Contains(source, "github.token") || strings.Contains(source, "GITHUB_TOKEN") {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "contains only the single protected credential reference and no issue authority"}
@@ -1037,7 +1032,7 @@ func checkNotifyWorkflow(notify workflow, source string) error {
 	if !reflect.DeepEqual(job.Permissions, expectedPermissions) || job.Environment != "" {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "isolates minimal issue authority without the protected environment"}
 	}
-	if job.Needs != "" || job.ContinueOnError || job.Uses != "" || !defaultRunSettings(job.Defaults) || job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 20 {
+	if !standardJobControls(job, "ubuntu-latest", 20) {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "notifier uses only approved execution controls"}
 	}
 	expectedNames := []string{"Check out trusted producer revision", "Set up Go", "Download sanitized report", "Update live conformance issue"}
@@ -1072,13 +1067,8 @@ func checkNotifyWorkflow(notify workflow, source string) error {
 	if !exactScript(run.Run, notifyRunScript) || run.Uses != "" || !exactWorkflowExpression(run.If, "always()") || run.ContinueOnError || !reflect.DeepEqual(run.Env, expectedEnv) {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "invokes only the isolated notifier with trusted metadata"}
 	}
-	for _, step := range job.Steps {
-		if !defaultStepRunSettings(step) {
-			return &Error{Artifact: notifyWorkflowArtifact, Invariant: "notifier steps use default run settings", Detail: "step " + step.Name}
-		}
-		if step.Name != "Update live conformance issue" && len(step.Env) != 0 {
-			return &Error{Artifact: notifyWorkflowArtifact, Invariant: "job token environment is confined to the notifier boundary", Detail: "step " + step.Name}
-		}
+	if err := checkStepPolicies(notifyWorkflowArtifact, job.Steps, "Update live conformance issue", "notifier steps use default run settings", "job token environment is confined to the notifier boundary"); err != nil {
+		return err
 	}
 	if strings.Contains(source, "OPENDART_API_KEY") || strings.Contains(source, "secrets.") || strings.Contains(source, "secrets[") || strings.Contains(source, "environment:") {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "notifier cannot access the OpenDART credential or protected environment"}
@@ -1115,7 +1105,7 @@ func checkDriftWorkflow(drift workflow, source string) error {
 	if !reflect.DeepEqual(job.Permissions, map[string]string{"contents": "read"}) || job.Environment != "" {
 		return &Error{Artifact: driftWorkflowArtifact, Invariant: "uses only read-only repository authority without a protected environment"}
 	}
-	if job.Needs != "" || job.ContinueOnError || job.Uses != "" || !defaultRunSettings(job.Defaults) || job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 30 {
+	if !standardJobControls(job, "ubuntu-latest", 30) {
 		return &Error{Artifact: driftWorkflowArtifact, Invariant: "producer uses only approved execution controls"}
 	}
 	expectedNames := []string{"Check out trusted revision", "Set up Go", "Recheck credential-free repository gates", "Compare the public guide", "Upload sanitized report"}
@@ -1147,10 +1137,8 @@ func checkDriftWorkflow(drift workflow, source string) error {
 	if upload.Uses != uploadArtifactAction || upload.Run != "" || !exactWorkflowExpression(upload.If, "always()") || upload.ContinueOnError || !reflect.DeepEqual(upload.With, expectedUpload) {
 		return &Error{Artifact: driftWorkflowArtifact, Invariant: "uploads only the bounded sanitized report"}
 	}
-	for _, step := range job.Steps {
-		if !defaultStepRunSettings(step) || len(step.Env) != 0 {
-			return &Error{Artifact: driftWorkflowArtifact, Invariant: "producer steps use default credential-free execution settings", Detail: "step " + step.Name}
-		}
+	if err := checkStepPolicies(driftWorkflowArtifact, job.Steps, "", "producer steps use default credential-free execution settings", "producer steps use default credential-free execution settings"); err != nil {
+		return err
 	}
 	if strings.Contains(source, "secrets.") || strings.Contains(source, "secrets[") || strings.Contains(source, "github.token") || strings.Contains(source, "GITHUB_TOKEN") || strings.Contains(source, "issues: write") || strings.Contains(source, "environment:") || strings.Contains(source, "OPENDART_API_KEY") {
 		return &Error{Artifact: driftWorkflowArtifact, Invariant: "contains no credentials, issue authority, or protected environment"}
@@ -1191,7 +1179,7 @@ func checkDriftNotifyWorkflow(notify workflow, source string) error {
 	if !reflect.DeepEqual(job.Permissions, expectedPermissions) || job.Environment != "" {
 		return &Error{Artifact: driftNotifyArtifact, Invariant: "isolates minimal issue authority without a protected environment"}
 	}
-	if job.Needs != "" || job.ContinueOnError || job.Uses != "" || !defaultRunSettings(job.Defaults) || job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 20 {
+	if !standardJobControls(job, "ubuntu-latest", 20) {
 		return &Error{Artifact: driftNotifyArtifact, Invariant: "notifier uses only approved execution controls"}
 	}
 	expectedNames := []string{"Check out trusted producer revision", "Set up Go", "Download sanitized report", "Update public guide drift issue"}
@@ -1226,13 +1214,8 @@ func checkDriftNotifyWorkflow(notify workflow, source string) error {
 	if !exactScript(run.Run, driftNotifyRunScript) || run.Uses != "" || !exactWorkflowExpression(run.If, "always()") || run.ContinueOnError || !reflect.DeepEqual(run.Env, expectedEnv) {
 		return &Error{Artifact: driftNotifyArtifact, Invariant: "invokes only the isolated notifier with trusted metadata"}
 	}
-	for _, step := range job.Steps {
-		if !defaultStepRunSettings(step) {
-			return &Error{Artifact: driftNotifyArtifact, Invariant: "notifier steps use default run settings", Detail: "step " + step.Name}
-		}
-		if step.Name != "Update public guide drift issue" && len(step.Env) != 0 {
-			return &Error{Artifact: driftNotifyArtifact, Invariant: "job token environment is confined to the notifier boundary", Detail: "step " + step.Name}
-		}
+	if err := checkStepPolicies(driftNotifyArtifact, job.Steps, "Update public guide drift issue", "notifier steps use default run settings", "job token environment is confined to the notifier boundary"); err != nil {
+		return err
 	}
 	if strings.Contains(source, "OPENDART_API_KEY") || strings.Contains(source, "secrets.") || strings.Contains(source, "secrets[") || strings.Contains(source, "environment:") {
 		return &Error{Artifact: driftNotifyArtifact, Invariant: "notifier cannot access OpenDART credentials or a protected environment"}
@@ -1289,6 +1272,23 @@ func exactWorkflowExpression(condition, expected string) bool {
 
 func defaultJobExecution(job workflowJob) bool {
 	return strings.TrimSpace(job.If) == "" && !job.ContinueOnError
+}
+
+func standardJobControls(job workflowJob, runsOn string, timeoutMinutes int) bool {
+	return job.Needs == "" && !job.ContinueOnError && job.Uses == "" &&
+		defaultRunSettings(job.Defaults) && job.RunsOn == runsOn && job.TimeoutMinutes == timeoutMinutes
+}
+
+func checkStepPolicies(artifact string, steps []workflowStep, environmentStep, runInvariant, environmentInvariant string) error {
+	for _, step := range steps {
+		if !defaultStepRunSettings(step) {
+			return &Error{Artifact: artifact, Invariant: runInvariant, Detail: "step " + step.Name}
+		}
+		if step.Name != environmentStep && len(step.Env) != 0 {
+			return &Error{Artifact: artifact, Invariant: environmentInvariant, Detail: "step " + step.Name}
+		}
+	}
+	return nil
 }
 
 func defaultStepExecution(step workflowStep) bool {
