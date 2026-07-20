@@ -214,6 +214,20 @@ func TestVerifyRejectsSameFileAndKeepsLocalPathsOutOfErrors(t *testing.T) {
 	}
 }
 
+func TestVerifyRejectsInventorySymlink(t *testing.T) {
+	fixture := newFixture(t, baseEntries(false))
+	candidate, _ := writeArchive(t, "candidate.crate", fixture.entries, "candidate", time.Unix(1, 0))
+	accepted, checksum := writeArchive(t, "accepted.crate", fixture.entries, "accepted", time.Unix(2, 0))
+	link := filepath.Join(fixture.directory, "inventory-link.txt")
+	if err := os.Symlink(fixture.inventoryPath, link); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+	options := fixture.options(candidate, accepted, checksum)
+	options.InventoryPath = link
+	_, err := Verify(options)
+	assertInvariant(t, err, "inventory", "regular file")
+}
+
 func TestVerifyRejectsMalformedAcceptedGzip(t *testing.T) {
 	fixture := newFixture(t, baseEntries(false))
 	candidate, _ := writeArchive(t, "candidate.crate", fixture.entries, "candidate", time.Unix(1, 0))

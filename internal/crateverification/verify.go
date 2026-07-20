@@ -210,11 +210,19 @@ func validateOptions(options Options) error {
 }
 
 func readInventory(filename string) ([]string, error) {
+	pathInfo, err := os.Lstat(filename)
+	if err != nil || !pathInfo.Mode().IsRegular() {
+		return nil, invariant("inventory", "is a regular file")
+	}
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, invariant("inventory", "is readable")
 	}
 	defer func() { _ = file.Close() }()
+	fileInfo, err := file.Stat()
+	if err != nil || !fileInfo.Mode().IsRegular() || !os.SameFile(pathInfo, fileInfo) {
+		return nil, invariant("inventory", "is a stable regular file")
+	}
 	content, err := io.ReadAll(io.LimitReader(file, maxInventoryBytes+1))
 	if err != nil || len(content) > maxInventoryBytes {
 		return nil, invariant("inventory", "fits the size limit")
