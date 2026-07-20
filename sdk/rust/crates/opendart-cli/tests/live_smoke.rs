@@ -99,14 +99,17 @@ fn structured_and_binary_live_paths_are_read_only_and_sanitized() {
     let binary = parse(&binary, &key);
     assert_eq!(binary["kind"], "response");
     assert_eq!(binary["operation"]["name"], "corp-code");
-    assert_eq!(binary["operation"]["logical_id"], "DS001-2019001");
+    assert_eq!(binary["operation"]["logical_id"], "DS001-2019018");
     assert_eq!(binary["operation"]["representation"], "zip");
     assert_eq!(binary["response"]["reply"]["kind"], "archive");
-    assert_eq!(binary["response"]["reply"]["path"], path_text(&destination));
+    assert_eq!(
+        binary["response"]["reply"]["value"]["path"],
+        path_text(&destination)
+    );
     let artifact = fs::read(&destination).expect("live artifact should be published");
     assert!(artifact.starts_with(b"PK"));
     assert_eq!(
-        binary["response"]["reply"]["bytes"].as_u64(),
+        binary["response"]["reply"]["value"]["bytes"].as_u64(),
         Some(u64::try_from(artifact.len()).unwrap())
     );
     assert_secret_absent(&artifact, &key);
