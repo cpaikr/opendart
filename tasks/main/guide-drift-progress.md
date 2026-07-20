@@ -7,10 +7,13 @@ Update it in place and keep authorization-gated actions explicit.
 
 - Integration target: `dev`; feature work is delivered through sequential,
   non-stacked pull requests and never targets `main`.
-- Ordered work 2 is implemented and validated on `feat/guide-drift-command`.
-  Review findings about candidate-owned multi-company evidence, bounded safe
-  findings, real end-to-end fixtures, and path/location integrity are resolved.
-- Ordered work 3 begins only after the ordered-work-2 PR is reviewed and merged.
+- Ordered work 2 was reviewed in PR #31 and merged into `dev` with its commits
+  preserved.
+- Ordered work 3 implements the manual trusted-main producer, attempt-scoped
+  bounded artifact, isolated notifier, and credential-free workflow-policy
+  checks on `feat/guide-drift-automation`.
+- No workflow has been dispatched, no external issue has been written, and no
+  schedule has been enabled.
 
 ## Decisions
 
@@ -23,6 +26,12 @@ Update it in place and keep authorization-gated actions explicit.
 - Structural candidate validation permits valid inventory, representation,
   reference-table, message-code, and detail changes to reach comparison while
   malformed generation and validation remain errors.
+- The notifier maps validated `changed` and fixed workflow failures to one
+  active marker-owned issue; only validated `unchanged` records recovery once.
+  It never closes the issue and never consumes producer-controlled text.
+- The producer has read-only contents permission and no credential. Issue-write
+  authority exists only in the default-branch `workflow_run` notifier, which
+  checks out the exact trusted producer revision.
 
 ## Validation
 
@@ -30,8 +39,8 @@ Update it in place and keep authorization-gated actions explicit.
 - `go vet ./...` passes.
 - `go run ./cmd/opendart-tool verify --repository-root .` passes all phases.
 - `git diff --check` passes.
-- Required local code review is complete; PR checks and CodeRabbit review are
-  pending.
+- Focused notifier, workflow-policy, and CLI tests pass. Full repository
+  validation and the required security-focused code review are pending.
 
 ## Blockers
 
@@ -39,6 +48,6 @@ None.
 
 ## Next action
 
-Commit ordered work 2, merge its reviewed PR into `dev`, then create the ordered
-work 3 automation branch. Stop before workflow dispatch, external issue writes,
-or schedule enablement.
+Finish validation and review, then merge the ordered-work-3 PR into `dev` with
+its commits preserved. Stop before workflow dispatch, external issue writes, or
+schedule enablement; ordered work 4 remains authorization-gated.
