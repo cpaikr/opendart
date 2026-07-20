@@ -302,6 +302,13 @@ fn zip_output_and_sdk_input_rules_precede_credentials() {
     assert_eq!(error["error"]["code"], "missing_api_key");
     assert!(!Path::new(&destination).exists());
 
+    let output = invoke(&arguments, Some("work-4-binary-boundary"));
+    assert_eq!(output.status.code(), Some(1));
+    let error: Value = serde_json::from_slice(&output.stdout).expect("binary boundary error JSON");
+    assert_eq!(error["error"]["code"], "binary_execution_unavailable");
+    assert_eq!(error["operation"]["name"], "corp-code");
+    assert!(!Path::new(&destination).exists());
+
     let empty_required = json_output(
         &[
             "call",

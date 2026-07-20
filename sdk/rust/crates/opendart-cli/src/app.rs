@@ -97,6 +97,10 @@ fn call(matches: &ArgMatches) -> u8 {
     let Ok(key) = opendart::ApiKey::new(key) else {
         return emit(&ErrorEnvelope::invalid_client_configuration(), 1);
     };
+    if prepared.is_binary() {
+        // Work 5 replaces this explicit boundary with artifact streaming.
+        return emit(&ErrorEnvelope::binary_execution_unavailable(operation), 1);
+    }
     let executor = match Executor::new(key, overrides, operation) {
         Ok(executor) => executor,
         Err(error) => return emit(&error, 1),
@@ -106,8 +110,7 @@ fn call(matches: &ArgMatches) -> u8 {
             Ok(()) => output.exit,
             Err(()) => 1,
         },
-        // Work 5 replaces this temporary binary boundary with artifact streaming.
-        Ok(None) => emit(&ErrorEnvelope::client_initialization(), 1),
+        Ok(None) => emit(&ErrorEnvelope::sdk_contract_mismatch(Some(operation)), 1),
         Err(error) => emit(&error, 1),
     }
 }

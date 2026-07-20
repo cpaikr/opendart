@@ -76,19 +76,6 @@ impl ErrorEnvelope {
         }
     }
 
-    pub(crate) fn client_initialization() -> Self {
-        Self {
-            kind: "error",
-            operation: None,
-            metadata: None,
-            error: Box::new(ErrorBody {
-                code: "client_initialization",
-                message: "the OpenDART client could not be initialized",
-                help: Vec::new(),
-            }),
-        }
-    }
-
     pub(crate) fn executable_resolution() -> Self {
         Self {
             kind: "error",
@@ -108,6 +95,15 @@ impl ErrorEnvelope {
             None,
             "invalid_client_configuration",
             "a client setting cannot be represented safely",
+        )
+    }
+
+    pub(crate) fn binary_execution_unavailable(operation: OperationContext) -> Self {
+        Self::execution(
+            operation,
+            None,
+            "binary_execution_unavailable",
+            "binary artifact execution is not available yet",
         )
     }
 

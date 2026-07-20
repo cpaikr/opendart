@@ -58,6 +58,10 @@ pub(crate) struct BinaryOperation {
 }
 
 impl PreparedCall {
+    pub(crate) const fn is_binary(&self) -> bool {
+        matches!(self, Self::Binary(_))
+    }
+
     pub(crate) fn operation_context(
         &self,
     ) -> Result<OperationContext, crate::error::ErrorEnvelope> {
