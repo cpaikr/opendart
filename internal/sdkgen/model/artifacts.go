@@ -209,7 +209,7 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 				if err != nil {
 					return CLIModel{}, err
 				}
-				shape, err = projectResponseShape(primary)
+				shape, err = projectResponseShape(primary, physicalOperation.OperationID, "responses/"+string(variant.Representation))
 				if err != nil {
 					return CLIModel{}, err
 				}
@@ -266,7 +266,7 @@ func primaryShape(operation PhysicalOperation) (ResponseShape, error) {
 	return ResponseShape{}, reject("missing-cli-response-shape", operation.OperationID, "responses", string(operation.PrimaryRepresentation))
 }
 
-func projectResponseShape(shape ResponseShape) (CLIResponseShape, error) {
+func projectResponseShape(shape ResponseShape, operation, location string) (CLIResponseShape, error) {
 	switch shape.Kind {
 	case "binary":
 		return CLIResponseShape{Kind: "binary"}, nil
@@ -276,12 +276,12 @@ func projectResponseShape(shape ResponseShape) (CLIResponseShape, error) {
 		if shape.OpenStatus {
 			return CLIResponseShape{Kind: "source_status"}, nil
 		}
-		return CLIResponseShape{}, fmt.Errorf("project CLI response shape: ordinary string kind has no public discovery representation")
+		return CLIResponseShape{}, reject("unsupported-cli-response-shape", operation, location, "project CLI response shape: ordinary string kind has no public discovery representation")
 	case "array":
 		if shape.Items == nil {
-			return CLIResponseShape{}, fmt.Errorf("project CLI response shape: array has no items")
+			return CLIResponseShape{}, reject("invalid-cli-response-shape", operation, location, "project CLI response shape: array has no items")
 		}
-		items, err := projectResponseShape(*shape.Items)
+		items, err := projectResponseShape(*shape.Items, operation, location+"/items")
 		if err != nil {
 			return CLIResponseShape{}, err
 		}
@@ -289,7 +289,7 @@ func projectResponseShape(shape ResponseShape) (CLIResponseShape, error) {
 	case "object":
 		fields := make([]CLIResponseField, 0, len(shape.Properties))
 		for _, property := range shape.Properties {
-			child, err := projectResponseShape(property.Shape)
+			child, err := projectResponseShape(property.Shape, operation, location+"/properties/"+property.Name)
 			if err != nil {
 				return CLIResponseShape{}, err
 			}
@@ -300,7 +300,7 @@ func projectResponseShape(shape ResponseShape) (CLIResponseShape, error) {
 		}
 		return CLIResponseShape{Kind: "object", AdditionalFields: shape.AdditionalPropertiesPolicy == "allowed", Fields: fields}, nil
 	default:
-		return CLIResponseShape{}, fmt.Errorf("project CLI response shape: unsupported kind %q", shape.Kind)
+		return CLIResponseShape{}, reject("unsupported-cli-response-shape", operation, location, fmt.Sprintf("project CLI response shape: unsupported kind %q", shape.Kind))
 	}
 }
 

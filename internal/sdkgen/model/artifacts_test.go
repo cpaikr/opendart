@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
 	rustemitter "github.com/cpaikr/opendart/internal/sdkgen/rust"
 )
@@ -95,6 +96,30 @@ func TestBuildArtifactsProjectsCanonicalDiscoveryFacts(t *testing.T) {
 }
 
 func TestBuildArtifactsRejectsCLIOnlyCollisionsAndDivergence(t *testing.T) {
+	t.Run("response shape context", func(t *testing.T) {
+		surface := canonicalSurface(t)
+		for operationIndex := range surface.Operations {
+			operation := &surface.Operations[operationIndex]
+			for responseIndex := range operation.Responses {
+				response := &operation.Responses[responseIndex]
+				for mediaIndex := range response.MediaTypes {
+					media := &response.MediaTypes[mediaIndex]
+					if media.ContentTypeStatus != "inferred-from-documented-output-format" || media.Name == "application/zip" {
+						continue
+					}
+					media.Schema = openapispec.SDKSurfaceSchema{Types: []string{"string"}}
+					_, err := model.BuildArtifacts(surface)
+					var modelError *model.Error
+					if !errors.As(err, &modelError) || modelError.Rule != "unsupported-cli-response-shape" || modelError.Operation != operation.OperationID || modelError.Location == "" {
+						t.Fatalf("error = %#v, want structured response-shape context", err)
+					}
+					return
+				}
+			}
+		}
+		t.Fatal("canonical surface has no structured primary response")
+	})
+
 	t.Run("missing parameter description", func(t *testing.T) {
 		surface := canonicalSurface(t)
 		logicalID := firstOperationWithParameters(t, &surface).LogicalOperationID
