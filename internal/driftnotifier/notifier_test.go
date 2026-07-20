@@ -212,6 +212,24 @@ func TestFindingRenderingIsSafeAndBounded(t *testing.T) {
 	}
 }
 
+func TestFindingRenderingOmitsValidLinesThatExceedIssueBody(t *testing.T) {
+	identifier := strings.Repeat("A", maximumBody)
+	report := validReport("changed")
+	report.Comparison.Findings = []guide.DriftFinding{{
+		Change: "modified", LogicalOperationID: identifier, OperationID: identifier,
+		Method: "GET", Path: "/company.json", Location: "#/paths/~1company.json/get/summary",
+	}}
+	store := &fakeStore{}
+	options := validOptions(writeReport(t, report), "success")
+	if _, err := notifyWith(context.Background(), options, store); err != nil {
+		t.Fatal(err)
+	}
+	body := store.issues[0].Body
+	if len(body) > maximumBody || !strings.Contains(body, "Findings shown in issue: `0/1`") || strings.Contains(body, identifier) {
+		t.Fatalf("body size = %d, body = %q", len(body), body)
+	}
+}
+
 func TestNotifyNeverChangesIssueState(t *testing.T) {
 	var received map[string]json.RawMessage
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {

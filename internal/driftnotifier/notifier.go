@@ -24,16 +24,18 @@ import (
 const (
 	DefaultReportPath = "guide-drift-report.json"
 
-	issueTitle      = "OpenDART public guide semantic drift"
-	issueMarker     = "<!-- opendart-guide-drift -->"
-	activeMarker    = "<!-- opendart-guide-drift-state:active -->"
-	recoveredMarker = "<!-- opendart-guide-drift-state:recovered -->"
-	githubAPIBase   = "https://api.github.com"
-	githubWebBase   = "https://github.com"
-	maximumBody     = 64 << 10
-	maximumResponse = 16 << 20
-	issuesPerPage   = 100
-	maximumPages    = 10
+	issueTitle            = "OpenDART public guide semantic drift"
+	issueMarker           = "<!-- opendart-guide-drift -->"
+	activeMarker          = "<!-- opendart-guide-drift-state:active -->"
+	recoveredMarker       = "<!-- opendart-guide-drift-state:recovered -->"
+	githubAPIBase         = "https://api.github.com"
+	githubWebBase         = "https://github.com"
+	maximumBody           = 64 << 10
+	maximumResponse       = 16 << 20
+	issuesPerPage         = 100
+	maximumPages          = 10
+	notificationFooter    = "\nThis issue is updated by trusted automation and is never closed automatically.\n"
+	findingSummaryReserve = 80
 )
 
 var repositoryName = regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`)
@@ -228,7 +230,7 @@ func activeBody(observed observation) (string, error) {
 	fmt.Fprintf(&body, "%s\n%s\n\n# OpenDART public guide semantic drift\n\n- Source: %s\n- Run: %s\n", issueMarker, activeMarker, observed.source, observed.runURL)
 	if observed.source != "validated report" {
 		body.WriteString("- Failure code: `workflow-failure`\n")
-		body.WriteString("\nThis issue is updated by trusted automation and is never closed automatically.\n")
+		body.WriteString(notificationFooter)
 		return boundedBody(body.String())
 	}
 
@@ -240,12 +242,17 @@ func activeBody(observed observation) (string, error) {
 		fmt.Fprintf(&body, "- Total changes: `%d`\n- Breaking changes: `%d`\n- Findings retained: `%d`\n- Findings truncated: `%t`\n", comparison.TotalChanges, comparison.BreakingChanges, len(comparison.Findings), comparison.Truncated)
 		if len(comparison.Findings) > 0 {
 			body.WriteString("\n## Findings\n\n")
+			rendered := 0
 			for _, finding := range comparison.Findings {
-				fmt.Fprintf(&body, "- `%s` at `%s`", finding.Change, finding.Location)
-				if finding.Path != "" {
-					fmt.Fprintf(&body, ": `%s %s` (`%s`, `%s`)", finding.Method, finding.Path, finding.LogicalOperationID, finding.OperationID)
+				line := driftFindingLine(finding)
+				if body.Len()+len(line)+findingSummaryReserve+len(notificationFooter) > maximumBody {
+					continue
 				}
-				body.WriteByte('\n')
+				body.WriteString(line)
+				rendered++
+			}
+			if rendered < len(comparison.Findings) {
+				fmt.Fprintf(&body, "\n- Findings shown in issue: `%d/%d`\n", rendered, len(comparison.Findings))
 			}
 		}
 	case "error":
@@ -253,8 +260,18 @@ func activeBody(observed observation) (string, error) {
 	default:
 		return "", errors.New("guide drift observation is invalid")
 	}
-	body.WriteString("\nThis issue is updated by trusted automation and is never closed automatically.\n")
+	body.WriteString(notificationFooter)
 	return boundedBody(body.String())
+}
+
+func driftFindingLine(finding guide.DriftFinding) string {
+	var line strings.Builder
+	fmt.Fprintf(&line, "- `%s` at `%s`", finding.Change, finding.Location)
+	if finding.Path != "" {
+		fmt.Fprintf(&line, ": `%s %s` (`%s`, `%s`)", finding.Method, finding.Path, finding.LogicalOperationID, finding.OperationID)
+	}
+	line.WriteByte('\n')
+	return line.String()
 }
 
 func recoveryBody(runURL string) (string, error) {

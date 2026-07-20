@@ -154,7 +154,7 @@ func (e *Error) Unwrap() error {
 }
 
 // Check validates the repository's release, credential-free verification, and
-// protected live-automation workflow policies.
+// automated observation workflow policies.
 func Check(repositoryRoot string) error {
 	if strings.TrimSpace(repositoryRoot) == "" {
 		return &Error{Artifact: "repository", Invariant: "root is required"}
