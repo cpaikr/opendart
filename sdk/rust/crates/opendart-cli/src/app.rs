@@ -41,7 +41,7 @@ fn dispatch(matches: &ArgMatches) -> u8 {
 
 fn home() -> u8 {
     let Ok(executable) = std::env::current_exe() else {
-        return emit(&ErrorEnvelope::client_initialization(), 1);
+        return emit(&ErrorEnvelope::executable_resolution(), 1);
     };
     let display = display_path(&executable);
     emit(&Home::new(&executable, display), 0)

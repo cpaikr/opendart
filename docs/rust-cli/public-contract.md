@@ -293,8 +293,9 @@ The initial stable error-code inventory is:
   `transport_protocol`, `transport_other`;
 - structured response: `body_limit`, `malformed_envelope`, `response_decode`;
   and
-- local output and invariants: `output_encode`, `destination_exists`,
-  `artifact_limit`, `artifact_io`, `sdk_contract_mismatch`.
+- local output and invariants: `executable_resolution`, `output_encode`,
+  `destination_exists`, `artifact_limit`, `artifact_io`,
+  `sdk_contract_mismatch`.
 
 Binary stream transport failures use the matching `transport_*` code. New codes
 may be additive; changing the meaning or exit class of an existing code is a

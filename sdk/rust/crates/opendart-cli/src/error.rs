@@ -86,4 +86,30 @@ impl ErrorEnvelope {
             },
         }
     }
+
+    pub(crate) fn executable_resolution() -> Self {
+        Self {
+            kind: "error",
+            operation: None,
+            error: ErrorBody {
+                code: "executable_resolution",
+                message: "the current executable path could not be resolved",
+                help: Vec::new(),
+            },
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ErrorEnvelope;
+
+    #[test]
+    fn executable_resolution_has_a_dedicated_stable_code() {
+        let encoded = serde_json::to_string(&ErrorEnvelope::executable_resolution()).unwrap();
+        assert_eq!(
+            encoded,
+            r#"{"kind":"error","error":{"code":"executable_resolution","message":"the current executable path could not be resolved"}}"#
+        );
+    }
 }
