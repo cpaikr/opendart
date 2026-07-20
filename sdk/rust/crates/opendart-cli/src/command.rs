@@ -52,23 +52,20 @@ fn usage_help(arguments: &[std::ffi::OsString]) -> Vec<String> {
     {
         flags.extend(["--output", "--artifact-limit-bytes"]);
     }
-    flags.extend([
-        "--connect-timeout-ms",
-        "--read-timeout-ms",
-        "--total-timeout-ms",
-        "--envelope-limit-bytes",
-        "--help",
-        "--version",
-    ]);
+    flags.extend(crate::discovery::CALL_FLAGS.iter().map(|flag| flag.name));
+    flags.extend(["--help", "--version"]);
     vec![format!("Valid flags: {}", flags.join(", "))]
 }
 
 pub(crate) fn execution_arguments(command: Command, binary: bool) -> Command {
-    let mut command = command
-        .arg(positive_integer("connect-timeout-ms"))
-        .arg(positive_integer("read-timeout-ms"))
-        .arg(positive_integer("total-timeout-ms"))
-        .arg(positive_integer("envelope-limit-bytes"));
+    let mut command = command;
+    for flag in crate::discovery::CALL_FLAGS {
+        let name = flag
+            .name
+            .strip_prefix("--")
+            .expect("call flag names use their CLI spelling");
+        command = command.arg(positive_integer(name));
+    }
     if binary {
         command = command.arg(positive_integer("artifact-limit-bytes"));
     }

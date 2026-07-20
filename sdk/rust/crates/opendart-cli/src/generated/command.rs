@@ -22,8 +22,10 @@ pub(crate) fn command() -> Command {
         .subcommand_required(true);
     for operation in OPERATIONS {
         let mut generated = Command::new(operation.name)
-            .alias(operation.logical_id)
             .about(operation.description);
+        if operation.logical_id != operation.name {
+            generated = generated.alias(operation.logical_id);
+        }
         for flag in operation.flags {
             let action = if flag.occurrence == "repeat" { ArgAction::Append } else { ArgAction::Set };
             generated = generated.arg(

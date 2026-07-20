@@ -56,6 +56,22 @@ fn keyless_home_and_inventory_are_self_describing_and_deterministic() {
             .iter()
             .all(|flag| flag["name"] != "--artifact-limit-bytes")
     );
+    for flag in call_flags {
+        let arguments = vec![
+            "call".to_owned(),
+            "company".to_owned(),
+            "--corp-code".to_owned(),
+            "00126380".to_owned(),
+            "--representation".to_owned(),
+            "json".to_owned(),
+            flag["name"].as_str().expect("call flag name").to_owned(),
+            "1".to_owned(),
+        ];
+        let output = invoke(&arguments, None);
+        assert_eq!(output.status.code(), Some(1));
+        let error: Value = serde_json::from_slice(&output.stdout).expect("error JSON");
+        assert_eq!(error["error"]["code"], "missing_api_key");
+    }
 
     let first = json_output(&["operations", "list"], 0);
     let second = json_output(&["operations", "list"], 0);
