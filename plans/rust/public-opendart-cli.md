@@ -385,8 +385,10 @@ provenance points to the immutable reviewed revision.
   the CLI's marked exact local SDK pin without releasing the CLI.
 - Local post-publication artifact comparison is prepared behind a bounded,
   credential-free command that accepts already acquired evidence. No current
-  workflow can download from or publish to crates.io, and both unpublished Rust
-  components remain absent from the release manifest.
+  workflow can acquire registry crate artifacts for release comparison or
+  publication, or publish crates; ordinary locked dependency downloads remain
+  permitted. Both unpublished Rust components remain absent from the release
+  manifest.
 
 ## Next action
 

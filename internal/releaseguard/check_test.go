@@ -89,6 +89,7 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 		{name: "CLI lock selector", artifact: configArtifact, old: `$.package[?(@.name == \"opendart-cli\")].version`, replacement: `$.package.version`, invariant: "CLI package updates its workspace lock version"},
 		{name: "Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart\"\nversion = \"0.1.0\"", replacement: "name = \"opendart\"\nversion = \"0.1.1\"", invariant: "matches the crate package version"},
 		{name: "CLI Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "name = \"opendart-cli\"\nversion = \"0.1.1\"", invariant: "matches the CLI crate package version"},
+		{name: "duplicate CLI Cargo lock package", artifact: rustLockArtifact, old: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"\n\n[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", invariant: "contains one opendart-cli package version"},
 		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "does not publish packages"},
 		{name: "registry publish in verify", artifact: verifyWorkflowArtifact, old: "go vet ./...", replacement: "cargo publish", invariant: "excludes package publication"},
 	}
@@ -168,6 +169,16 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 		{
 			name: "CLI packaged release documentation", artifact: rustCLICargoArtifact,
 			old: `, "CHANGELOG.md"`, replacement: ``,
+			invariant: "packages the reviewed source distribution",
+		},
+		{
+			name: "CLI package include allowlist", artifact: rustCLICargoArtifact,
+			old: `, "LICENSE"]`, replacement: `, "LICENSE", ".*"]`,
+			invariant: "packages the reviewed source distribution",
+		},
+		{
+			name: "CLI package duplicate include", artifact: rustCLICargoArtifact,
+			old: `, "LICENSE"]`, replacement: `, "src/**"]`,
 			invariant: "packages the reviewed source distribution",
 		},
 		{

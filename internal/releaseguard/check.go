@@ -350,14 +350,19 @@ func checkRustCLIPackage(cargoSource, workspaceSource, lockSource, packageListSo
 	if err != nil {
 		return &Error{Artifact: rustCLICargoArtifact, Invariant: "packages the reviewed source distribution", Cause: err}
 	}
-	includeSet := make(map[string]bool, len(include))
-	for _, name := range include {
-		includeSet[name] = true
+	approvedIncludes := map[string]bool{
+		"src/**": true, "tests/**": true, "Cargo.toml": true, "Cargo.lock": true,
+		"README.md": true, "CHANGELOG.md": true, "LICENSE": true,
 	}
-	for _, name := range []string{"src/**", "tests/**", "Cargo.toml", "Cargo.lock", "README.md", "CHANGELOG.md", "LICENSE"} {
-		if !includeSet[name] {
+	if len(include) != len(approvedIncludes) {
+		return &Error{Artifact: rustCLICargoArtifact, Invariant: "packages the reviewed source distribution", Detail: "exact include allowlist is required"}
+	}
+	seenIncludes := make(map[string]bool, len(include))
+	for _, name := range include {
+		if !approvedIncludes[name] || seenIncludes[name] {
 			return &Error{Artifact: rustCLICargoArtifact, Invariant: "packages the reviewed source distribution", Detail: name}
 		}
+		seenIncludes[name] = true
 	}
 	sdkVersion, err := cargoLockPackageVersion(lockSource, "opendart")
 	if err != nil {
@@ -708,15 +713,16 @@ func cargoPackageStringArray(source []byte, key string) ([]string, error) {
 
 func cargoLockPackageVersion(source []byte, packageName string) (string, error) {
 	var name, version string
-	flush := func() (string, bool) {
-		return version, name == packageName && version != ""
+	var matches []string
+	flush := func() {
+		if name == packageName {
+			matches = append(matches, version)
+		}
 	}
 	for _, line := range strings.Split(string(source), "\n") {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "[[package]]" {
-			if value, ok := flush(); ok {
-				return value, nil
-			}
+			flush()
 			name, version = "", ""
 			continue
 		}
@@ -727,10 +733,11 @@ func cargoLockPackageVersion(source []byte, packageName string) (string, error) 
 			version, _ = quotedTOMLValue(trimmed)
 		}
 	}
-	if value, ok := flush(); ok {
-		return value, nil
+	flush()
+	if len(matches) != 1 || matches[0] == "" {
+		return "", fmt.Errorf("package %q must appear exactly once with a version", packageName)
 	}
-	return "", fmt.Errorf("package %q is missing", packageName)
+	return matches[0], nil
 }
 
 func quotedTOMLValue(line string) (string, error) {

@@ -81,6 +81,12 @@ func TestVerifyRejectsChecksumContentInventoryManifestAndVCSMismatches(t *testin
 			wantArtifact: "candidate", wantInvariant: "manifest identity",
 		},
 		{
+			name:         "workspace-inherited manifest identity",
+			candidate:    replaceEntry(baseEntries(false), "Cargo.toml", "[package]\nname.workspace = true\nversion.workspace = true\n"),
+			accepted:     replaceEntry(baseEntries(false), "Cargo.toml", "[package]\nname.workspace = true\nversion.workspace = true\n"),
+			wantArtifact: "candidate", wantInvariant: "manifest identity",
+		},
+		{
 			name: "revision", candidate: baseEntries(false), accepted: baseEntries(false),
 			revision: strings.Repeat("f", 40), wantArtifact: "candidate", wantInvariant: "reviewed clean revision",
 		},

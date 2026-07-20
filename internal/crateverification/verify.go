@@ -124,12 +124,12 @@ func verifyWithLimits(options Options, bounds limits) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	defer candidateFile.Close()
+	defer func() { _ = candidateFile.Close() }()
 	acceptedFile, acceptedInfo, err := openArtifact("accepted", options.AcceptedPath, bounds.maxArchiveBytes)
 	if err != nil {
 		return Report{}, err
 	}
-	defer acceptedFile.Close()
+	defer func() { _ = acceptedFile.Close() }()
 	if os.SameFile(candidateInfo, acceptedInfo) {
 		return Report{}, invariant("artifacts", "are distinct candidate and accepted files")
 	}
@@ -214,7 +214,7 @@ func readInventory(filename string) ([]string, error) {
 	if err != nil {
 		return nil, invariant("inventory", "is readable")
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	content, err := io.ReadAll(io.LimitReader(file, maxInventoryBytes+1))
 	if err != nil || len(content) > maxInventoryBytes {
 		return nil, invariant("inventory", "fits the size limit")
@@ -248,7 +248,7 @@ func openArtifact(artifact, filename string, maximum int64) (*os.File, os.FileIn
 	}
 	fileInfo, err := file.Stat()
 	if err != nil || !fileInfo.Mode().IsRegular() || fileInfo.Size() > maximum || !os.SameFile(pathInfo, fileInfo) {
-		file.Close()
+		_ = file.Close()
 		return nil, nil, invariant(artifact, "is a stable bounded regular file")
 	}
 	return file, fileInfo, nil
