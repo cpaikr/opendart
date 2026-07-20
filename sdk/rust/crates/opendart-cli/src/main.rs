@@ -5,6 +5,7 @@ mod app;
 mod command;
 mod discovery;
 mod error;
+mod execution;
 #[rustfmt::skip]
 mod generated;
 mod output;

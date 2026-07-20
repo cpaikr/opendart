@@ -6,6 +6,7 @@ use clap::ArgMatches;
 use crate::command::ParseOutcome;
 use crate::discovery::{Home, Operation, Operations};
 use crate::error::ErrorEnvelope;
+use crate::execution::{ClientOverrides, Executor};
 use crate::generated::catalog;
 
 pub(crate) fn run<I, T>(args: I) -> u8
@@ -74,15 +75,16 @@ fn call(matches: &ArgMatches) -> u8 {
     let operation_name = matches
         .subcommand_name()
         .expect("clap requires generated operation");
-    // Work 4 attaches this generated catalog identity to the execution outcome.
     let _operation = catalog::operation(operation_name).expect("clap operation has catalog entry");
     let prepared = match crate::generated::dispatch::prepare_call(matches) {
         Ok(prepared) => prepared,
         Err(_) => return emit(&ErrorEnvelope::invalid_request(), 2),
     };
-    // Force the prepared SDK identity through the erased dispatch seam before
-    // credential access; Work 4 validates and emits it during execution.
-    let _identity = prepared.identity();
+    let operation = match prepared.operation_context() {
+        Ok(operation) => operation,
+        Err(error) => return emit(&error, 1),
+    };
+    let overrides = ClientOverrides::from_matches(matches);
     let Some(key) = std::env::var_os("OPENDART_API_KEY") else {
         return emit(&ErrorEnvelope::missing_api_key(), 1);
     };
@@ -92,10 +94,22 @@ fn call(matches: &ArgMatches) -> u8 {
     let Ok(key) = key.into_string() else {
         return emit(&ErrorEnvelope::invalid_client_configuration(), 1);
     };
-    if opendart::ApiKey::new(key).is_err() {
+    let Ok(key) = opendart::ApiKey::new(key) else {
         return emit(&ErrorEnvelope::invalid_client_configuration(), 1);
+    };
+    let executor = match Executor::new(key, overrides, operation) {
+        Ok(executor) => executor,
+        Err(error) => return emit(&error, 1),
+    };
+    match prepared.execute_structured(&executor) {
+        Ok(Some(output)) => match crate::output::write(output.bytes) {
+            Ok(()) => output.exit,
+            Err(()) => 1,
+        },
+        // Work 5 replaces this temporary binary boundary with artifact streaming.
+        Ok(None) => emit(&ErrorEnvelope::client_initialization(), 1),
+        Err(error) => emit(&error, 1),
     }
-    emit(&ErrorEnvelope::client_initialization(), 1)
 }
 
 fn emit(value: &impl serde::Serialize, success: u8) -> u8 {
