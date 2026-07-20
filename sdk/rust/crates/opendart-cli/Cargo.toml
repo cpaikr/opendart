@@ -6,7 +6,11 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-publish = false
+readme = "README.md"
+keywords = ["opendart", "dart", "finance", "cli"]
+categories = ["command-line-utilities"]
+publish = ["crates-io"]
+include = ["src/**", "tests/**", "Cargo.toml", "Cargo.lock", "README.md", "CHANGELOG.md", "LICENSE"]
 
 [[bin]]
 name = "opendart"

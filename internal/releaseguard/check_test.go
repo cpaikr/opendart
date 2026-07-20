@@ -131,7 +131,7 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 		},
 		{
 			name: "CLI inventory order", artifact: rustCLIPackageListArtifact,
-			old: ".cargo_vcs_info.json\nCargo.lock\n", replacement: "Cargo.lock\n.cargo_vcs_info.json\n",
+			old: ".cargo_vcs_info.json\nCHANGELOG.md\n", replacement: "CHANGELOG.md\n.cargo_vcs_info.json\n",
 			invariant: "is sorted for deterministic comparison",
 		},
 		{
@@ -141,7 +141,7 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 		},
 		{
 			name: "private CLI package input", artifact: rustCLIPackageListArtifact,
-			old: ".cargo_vcs_info.json\nCargo.lock\n", replacement: ".cargo_vcs_info.json\n.github/secret\nCargo.lock\n",
+			old: ".cargo_vcs_info.json\nCHANGELOG.md\n", replacement: ".cargo_vcs_info.json\n.github/secret\nCHANGELOG.md\n",
 			invariant: "excludes repository-private inputs",
 		},
 	}
