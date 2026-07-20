@@ -40,12 +40,11 @@ because they are explicit contract facts.
 
 ### Optional JSON response serialization
 
-[ADR 0003](../decisions/0003-agent-first-opendart-cli.md) accepts a planned
-optional `serde-json` feature so typed consumers can serialize this evidence
+[ADR 0003](../decisions/0003-agent-first-opendart-cli.md) defines the optional
+`serde-json` feature so typed consumers can serialize this evidence
 directly with `serde_json` without creating mirror response types.
-Implementation and validation remain in the
-[CLI plan](../../plans/rust/public-opendart-cli.md); this interface is not
-present until that work lands.
+Implementation and validation evidence remain in the
+[CLI plan](../../plans/rust/public-opendart-cli.md).
 
 With the feature enabled, generated response objects, `SourceResponse`,
 `SourceReply`, status envelopes, sanitized metadata, and `SourceValue` implement

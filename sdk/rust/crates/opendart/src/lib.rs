@@ -27,7 +27,7 @@ pub use client::{
     BinaryReply, BodyChunk, BodyStream, BodyStreamError, Client, ClientBuildError, ClientBuilder,
     ClientError, TransportError, TransportFailureKind,
 };
-pub use error::{AuthorizationError, PrepareError};
+pub use error::{AuthorizationError, InvalidSourceNumberError, PrepareError};
 pub use request::{
     ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedBinaryRequest,
     PreparedRequest, Representation, RequestMethod,

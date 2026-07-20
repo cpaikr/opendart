@@ -14,12 +14,12 @@ without duplicating endpoint contracts or adding a second output notation.
   accepts the separate public CLI, shared-generator, typed-response,
   agent-output, credential, and independent-release decisions.
 - The [target architecture](../../docs/rust-cli/architecture.md) and
-  [public contract](../../docs/rust-cli/public-contract.md) define the planned
-  module seams and user-visible behavior. No CLI crate or SDK serialization
-  feature exists yet.
+  [public contract](../../docs/rust-cli/public-contract.md) define the target
+  module seams and user-visible behavior. No CLI crate exists yet.
 - The `opendart` SDK already provides complete generated logical operations,
   representation-specific typed responses, one-attempt client execution,
-  sanitized metadata, and replaying binary streams.
+  sanitized metadata, replaying binary streams, and optional source-faithful
+  JSON serialization.
 - The private Go model already owns logical/physical identity, Rust names,
   parameters, constraints, representations, guide identity, and response
   shapes. It does not yet provide CLI presentation metadata or independently
@@ -30,7 +30,7 @@ without duplicating endpoint contracts or adding a second output notation.
 - Registry availability checks are dated evidence, not reservations. Recheck
   both package names immediately before any authorized publication.
 - The output decision has been narrowed to compact JSON only. SDK-owned direct
-  `serde_json` encoding will preserve exact `SourceValue` number lexemes through
+  `serde_json` encoding preserves exact `SourceValue` number lexemes through
   `RawValue`; TOON compatibility, dependencies, flags, and numeric-domain
   restrictions are out of scope.
 - Review has resolved the exact SDK-pin workflow, self-sufficient discovery,
@@ -348,10 +348,21 @@ provenance points to the immutable reviewed revision.
 - SDK, CLI, and specification release eligibility, versions, tags, changelogs,
   package contents, and publication authority remain independent.
 
+## Progress
+
+- Work 1 is implemented in the first delivery slice: the SDK feature graph,
+  fallible JSON-number boundary, generated/shared serialization, exact-number
+  snapshots, and non-serialization assertions are present.
+- Stable all-feature and no-default-feature tests, Clippy, rustdoc, MSRV checks,
+  generator freshness, and package inventory validation are the merge gate for
+  this slice. No credential or live network access is required.
+- Works 2–7 remain. There is no implementation blocker and no publication or
+  prebuilt-release work is authorized by this plan state.
+
 ## Next action
 
-Implement work 1 as one reviewable slice: add the optional SDK `serde-json`
-interface, generate response serialization, and prove exact source-value
-fidelity and secret non-serialization across enabled and disabled feature
-graphs. Do not scaffold the CLI crate until that interface passes compatibility
-review.
+After work 1 passes compatibility review and merges, implement works 2 and 3 as
+the next substantial slice: deepen the generator into independently checksummed
+SDK and CLI projections, atomically own both generated trees, and establish the
+binary crate with complete keyless discovery. Do not begin authenticated
+execution until discovery passes process-level review.

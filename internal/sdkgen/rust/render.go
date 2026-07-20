@@ -466,15 +466,18 @@ func primaryResponseShape(operation model.PhysicalOperation) (model.ResponseShap
 
 func renderResponseObject(output *strings.Builder, name, decoder string, shape model.ResponseShape, arrayDecoder, objectConstructor string) {
 	renderRustDoc(output, "", shape.Description, "Generated OpenDART response object.")
-	fmt.Fprintf(output, "#[derive(Clone, Debug, PartialEq)]\n#[non_exhaustive]\npub struct %s {\n", name)
+	fmt.Fprintf(output, "#[derive(Clone, Debug, PartialEq)]\n#[cfg_attr(feature = \"serde-json\", derive(serde::Serialize))]\n#[non_exhaustive]\npub struct %s {\n", name)
 	for _, property := range shape.Properties {
 		renderRustDoc(output, "    ", property.Shape.Description, "Documented source field `"+property.Name+"`.")
+		fmt.Fprintf(output, "    #[cfg_attr(feature = \"serde-json\", serde(rename = %s))]\n", quote(property.Name))
 		fieldType := responseFieldType(name, property.RustName, property.Shape)
 		if !responsePropertyRequired(shape, property.Name) {
+			output.WriteString("    #[cfg_attr(feature = \"serde-json\", serde(skip_serializing_if = \"Option::is_none\"))]\n")
 			fieldType = "Option<" + fieldType + ">"
 		}
 		fmt.Fprintf(output, "    pub %s: %s,\n", property.RustName, fieldType)
 	}
+	output.WriteString("    #[cfg_attr(feature = \"serde-json\", serde(flatten))]\n")
 	output.WriteString("    additional_fields: BTreeMap<String, SourceValue>,\n")
 	output.WriteString("}\n\n")
 	fmt.Fprintf(output, "impl %s {\n", name)

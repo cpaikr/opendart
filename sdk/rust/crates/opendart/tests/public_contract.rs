@@ -4,17 +4,62 @@ use std::fmt::Display;
 
 use opendart::{
     ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedBinaryRequest,
-    PreparedRequest, Representation, RequestMethod, SourceReply, SourceValueKind, WireInspector,
+    PreparedRequest, Representation, RequestMethod, ResponseMetadata, SourceReply, SourceValue,
+    SourceValueKind, WireInspector,
     operations::{AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttMultiAcnt, List},
     responses::CompanyJsonResponse,
     source_provenance,
 };
 use static_assertions::assert_not_impl_any;
 
+#[cfg(feature = "serde-json")]
+use opendart::SourceResponse;
+#[cfg(feature = "serde-json")]
+use static_assertions::assert_impl_all;
+
 assert_not_impl_any!(ApiKey: Clone, Display);
 assert_not_impl_any!(AuthorizedRequest<'static>: Clone, Display);
 assert_not_impl_any!(PreparedRequest<CompanyJsonResponse>: Clone);
 assert_not_impl_any!(PreparedBinaryRequest: Clone);
+assert_not_impl_any!(ApiKey: serde::Serialize);
+assert_not_impl_any!(AuthorizedRequest<'static>: serde::Serialize);
+assert_not_impl_any!(PreparedRequest<CompanyJsonResponse>: serde::Serialize);
+assert_not_impl_any!(PreparedBinaryRequest: serde::Serialize);
+
+#[cfg(feature = "serde-json")]
+assert_impl_all!(CompanyJsonResponse: serde::Serialize);
+#[cfg(feature = "serde-json")]
+assert_impl_all!(SourceValue: serde::Serialize);
+#[cfg(feature = "serde-json")]
+assert_impl_all!(ResponseMetadata: serde::Serialize);
+#[cfg(feature = "serde-json")]
+assert_impl_all!(SourceResponse<SourceReply<CompanyJsonResponse>>: serde::Serialize);
+
+#[cfg(not(feature = "serde-json"))]
+assert_not_impl_any!(CompanyJsonResponse: serde::Serialize);
+#[cfg(not(feature = "serde-json"))]
+assert_not_impl_any!(SourceValue: serde::Serialize);
+#[cfg(not(feature = "serde-json"))]
+assert_not_impl_any!(ResponseMetadata: serde::Serialize);
+
+#[cfg(all(
+    feature = "serde-json",
+    feature = "client-reqwest",
+    not(target_family = "wasm")
+))]
+assert_not_impl_any!(opendart::Client: serde::Serialize);
+#[cfg(all(
+    feature = "serde-json",
+    feature = "client-reqwest",
+    not(target_family = "wasm")
+))]
+assert_not_impl_any!(opendart::ClientBuilder: serde::Serialize);
+#[cfg(all(
+    feature = "serde-json",
+    feature = "client-reqwest",
+    not(target_family = "wasm")
+))]
+assert_not_impl_any!(opendart::BodyStream: serde::Serialize);
 
 #[test]
 fn representative_json_request_is_deterministic_and_credential_free() {

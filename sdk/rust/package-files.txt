@@ -30,4 +30,5 @@ src/request/mod.rs
 src/wire/decode.rs
 src/wire/inspect.rs
 src/wire/mod.rs
+src/wire/serialize.rs
 tests/public_contract.rs

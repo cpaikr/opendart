@@ -55,6 +55,12 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 	if !strings.Contains(responses, "pub struct OptionalInputJsonResponse") || !strings.Contains(responses, "source description") {
 		t.Fatal("typed response or selected description was not emitted")
 	}
+	if !strings.Contains(responses, `#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]`) {
+		t.Fatal("typed responses do not gate serialization on the public feature")
+	}
+	if !strings.Contains(responses, `#[cfg_attr(feature = "serde-json", serde(flatten))]`) {
+		t.Fatal("typed responses do not flatten additive source fields")
+	}
 }
 
 func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
