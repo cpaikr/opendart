@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"testing"
 
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
@@ -41,8 +42,8 @@ func TestCLIProjectionRejectsMixedStructuredAndBinaryVariants(t *testing.T) {
 	surface.Operations[1].OperationID = "mixed.xml"
 
 	_, err := buildCLIProjection(surface, sdk)
-	modelError, ok := err.(*Error)
-	if !ok || modelError.Rule != "mixed-cli-representation-kinds" {
+	var modelError *Error
+	if !errors.As(err, &modelError) || modelError.Rule != "mixed-cli-representation-kinds" {
 		t.Fatalf("error = %#v", err)
 	}
 }
