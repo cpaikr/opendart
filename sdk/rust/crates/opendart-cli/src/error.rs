@@ -98,15 +98,6 @@ impl ErrorEnvelope {
         )
     }
 
-    pub(crate) fn binary_execution_unavailable(operation: OperationContext) -> Self {
-        Self::execution(
-            operation,
-            None,
-            "binary_execution_unavailable",
-            "binary artifact execution is not available yet",
-        )
-    }
-
     pub(crate) fn client_initialization_for(operation: OperationContext) -> Self {
         Self::execution(
             operation,
@@ -129,28 +120,7 @@ impl ErrorEnvelope {
     pub(crate) fn client(operation: OperationContext, error: ClientError) -> Self {
         let metadata = error.metadata().cloned().map(Box::new);
         let (code, message) = match error {
-            ClientError::Transport(error) => match error.kind() {
-                TransportFailureKind::Timeout => (
-                    "transport_timeout",
-                    "the OpenDART request exceeded a configured deadline",
-                ),
-                TransportFailureKind::Connection => (
-                    "transport_connection",
-                    "the OpenDART connection could not be established or retained",
-                ),
-                TransportFailureKind::Body => (
-                    "transport_body",
-                    "the OpenDART response body could not be received",
-                ),
-                TransportFailureKind::Protocol => (
-                    "transport_protocol",
-                    "the OpenDART HTTP exchange violated the transport contract",
-                ),
-                TransportFailureKind::Other => {
-                    ("transport_other", "the OpenDART HTTP exchange failed")
-                }
-                _ => ("transport_other", "the OpenDART HTTP exchange failed"),
-            },
+            ClientError::Transport(error) => transport_fields(error.kind()),
             ClientError::BodyLimit { .. } => (
                 "body_limit",
                 "the OpenDART response exceeded the configured envelope limit",
@@ -175,10 +145,64 @@ impl ErrorEnvelope {
         Self::execution(operation, metadata, code, message)
     }
 
+    pub(crate) fn body_stream(
+        operation: OperationContext,
+        metadata: ResponseMetadata,
+        kind: TransportFailureKind,
+    ) -> Self {
+        let (code, message) = transport_fields(kind);
+        Self::execution(operation, Some(Box::new(metadata)), code, message)
+    }
+
+    pub(crate) fn destination_exists(
+        operation: OperationContext,
+        metadata: Option<ResponseMetadata>,
+    ) -> Self {
+        Self::execution(
+            operation,
+            metadata.map(Box::new),
+            "destination_exists",
+            "the artifact destination already exists",
+        )
+    }
+
+    pub(crate) fn artifact_limit(operation: OperationContext, metadata: ResponseMetadata) -> Self {
+        Self::execution(
+            operation,
+            Some(Box::new(metadata)),
+            "artifact_limit",
+            "the binary response exceeded the configured artifact limit",
+        )
+    }
+
+    pub(crate) fn artifact_io(
+        operation: OperationContext,
+        metadata: Option<ResponseMetadata>,
+    ) -> Self {
+        Self::execution(
+            operation,
+            metadata.map(Box::new),
+            "artifact_io",
+            "the artifact could not be written or published safely",
+        )
+    }
+
     pub(crate) fn output_encode(operation: OperationContext) -> Self {
         Self::execution(
             operation,
             None,
+            "output_encode",
+            "the structured result could not be encoded safely",
+        )
+    }
+
+    pub(crate) fn output_encode_with_metadata(
+        operation: OperationContext,
+        metadata: ResponseMetadata,
+    ) -> Self {
+        Self::execution(
+            operation,
+            Some(Box::new(metadata)),
             "output_encode",
             "the structured result could not be encoded safely",
         )
@@ -213,6 +237,29 @@ impl ErrorEnvelope {
                 help: Vec::new(),
             }),
         }
+    }
+}
+
+fn transport_fields(kind: TransportFailureKind) -> (&'static str, &'static str) {
+    match kind {
+        TransportFailureKind::Timeout => (
+            "transport_timeout",
+            "the OpenDART request exceeded a configured deadline",
+        ),
+        TransportFailureKind::Connection => (
+            "transport_connection",
+            "the OpenDART connection could not be established or retained",
+        ),
+        TransportFailureKind::Body => (
+            "transport_body",
+            "the OpenDART response body could not be received",
+        ),
+        TransportFailureKind::Protocol => (
+            "transport_protocol",
+            "the OpenDART HTTP exchange violated the transport contract",
+        ),
+        TransportFailureKind::Other => ("transport_other", "the OpenDART HTTP exchange failed"),
+        _ => ("transport_other", "the OpenDART HTTP exchange failed"),
     }
 }
 

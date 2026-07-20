@@ -580,7 +580,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "verify extra job", artifact: verifyWorkflowArtifact,
 			old: "jobs:\n  verify:", replacement: "jobs:\n  extra:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - name: Unexpected\n        run: echo unexpected\n\n  verify:",
-			invariant: "contains only the verify job",
+			invariant: "contains only approved verification jobs",
 		},
 		{
 			name: "verify workflow shell bypass", artifact: verifyWorkflowArtifact,
@@ -616,6 +616,26 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "structured CLI loopback tests", artifact: verifyWorkflowArtifact,
 			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback",
 			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "binary CLI loopback tests", artifact: verifyWorkflowArtifact,
+			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "native artifact compatibility cfg", artifact: verifyWorkflowArtifact,
+			old: "RUSTFLAGS: --cfg opendart_compat", replacement: "RUSTFLAGS: --cfg other",
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "native artifact command", artifact: verifyWorkflowArtifact,
+			old: "run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback", replacement: "run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli",
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "native artifact runner", artifact: verifyWorkflowArtifact,
+			old: "runs-on: macos-latest", replacement: "runs-on: ubuntu-latest",
+			invariant: "native artifact jobs use approved runners and timeouts",
 		},
 		{
 			name: "verify job condition bypass", artifact: verifyWorkflowArtifact,

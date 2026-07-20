@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 use clap::ArgMatches;
 
+use crate::artifact::TargetError;
 use crate::command::ParseOutcome;
 use crate::discovery::{Home, Operation, Operations};
 use crate::error::ErrorEnvelope;
@@ -84,6 +85,11 @@ fn call(matches: &ArgMatches) -> u8 {
         Ok(operation) => operation,
         Err(error) => return emit(&error, 1),
     };
+    let artifact = match prepared.artifact_target(matches, operation) {
+        Ok(artifact) => artifact,
+        Err(TargetError::Usage(error)) => return emit(&error, 2),
+        Err(TargetError::Execution(error)) => return emit(&error, 1),
+    };
     let overrides = ClientOverrides::from_matches(matches);
     let Some(key) = std::env::var_os("OPENDART_API_KEY") else {
         return emit(&ErrorEnvelope::missing_api_key(), 1);
@@ -97,20 +103,15 @@ fn call(matches: &ArgMatches) -> u8 {
     let Ok(key) = opendart::ApiKey::new(key) else {
         return emit(&ErrorEnvelope::invalid_client_configuration(), 1);
     };
-    if prepared.is_binary() {
-        // Work 5 replaces this explicit boundary with artifact streaming.
-        return emit(&ErrorEnvelope::binary_execution_unavailable(operation), 1);
-    }
     let executor = match Executor::new(key, overrides, operation) {
         Ok(executor) => executor,
         Err(error) => return emit(&error, 1),
     };
-    match prepared.execute_structured(&executor) {
-        Ok(Some(output)) => match crate::output::write(output.bytes) {
+    match prepared.execute(&executor, artifact, operation) {
+        Ok(output) => match crate::output::write(output.bytes) {
             Ok(()) => output.exit,
             Err(()) => 1,
         },
-        Ok(None) => emit(&ErrorEnvelope::sdk_contract_mismatch(Some(operation)), 1),
         Err(error) => emit(&error, 1),
     }
 }

@@ -927,10 +927,12 @@ name = "opendart-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "futures-core",
  "opendart",
  "reqwest",
  "serde",
  "serde_json",
+ "tempfile",
  "tokio",
 ]
 

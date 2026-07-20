@@ -86,8 +86,11 @@ cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml --wo
 cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --all-targets --no-default-features -- -D warnings
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features
 RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback
+RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
 RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features --no-deps`
+	nativeArtifactFetchScript       = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
+	nativeArtifactTestScript        = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
 	compatibilityVerificationScript = `RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
 	transportIndependentGraphScript = `no_default_tree="$(mktemp)"
 trap 'rm -f "${no_default_tree}"' EXIT
@@ -808,8 +811,19 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "supports " + trigger}
 		}
 	}
-	if err := require(verifyWorkflowArtifact, "contains only the verify job", reflect.DeepEqual(sortedKeys(verify.Jobs), []string{"verify"}), ""); err != nil {
+	if err := require(verifyWorkflowArtifact, "contains only approved verification jobs", reflect.DeepEqual(sortedKeys(verify.Jobs), []string{"artifact-macos", "artifact-windows", "verify"}), ""); err != nil {
 		return err
+	}
+	for _, native := range []struct {
+		name   string
+		runner string
+	}{
+		{name: "artifact-macos", runner: "macos-latest"},
+		{name: "artifact-windows", runner: "windows-latest"},
+	} {
+		if err := checkNativeArtifactJob(native.name, native.runner, verify.Jobs[native.name]); err != nil {
+			return err
+		}
 	}
 	job, exists := verify.Jobs["verify"]
 	if err := require(verifyWorkflowArtifact, "has the verify job", exists, ""); err != nil {
@@ -893,6 +907,44 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	}
 	if err := checkCheckoutCredentials(verifyWorkflowArtifact, verify); err != nil {
 		return err
+	}
+	return nil
+}
+
+func checkNativeArtifactJob(name, runner string, job workflowJob) error {
+	if !defaultJobExecution(job) || job.Needs != "" || job.Uses != "" || len(job.Permissions) != 0 || !defaultRunSettings(job.Defaults) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use default execution controls", Detail: name}
+	}
+	if job.RunsOn != runner || job.TimeoutMinutes != 20 {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use approved runners and timeouts", Detail: name}
+	}
+	expected := []struct {
+		name string
+		run  string
+		uses string
+		with map[string]any
+		env  map[string]string
+	}{
+		{name: "Check out repository", uses: "actions/checkout", with: map[string]any{"fetch-depth": 0, "persist-credentials": false}},
+		{name: "Install pinned Rust toolchain", run: "rustup toolchain install 1.97.1 --profile minimal"},
+		{name: "Fetch locked Rust dependencies", run: nativeArtifactFetchScript},
+		{name: "Verify native binary artifact behavior", run: nativeArtifactTestScript, env: map[string]string{"RUSTFLAGS": "--cfg opendart_compat"}},
+	}
+	if len(job.Steps) != len(expected) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved steps", Detail: name}
+	}
+	for index, want := range expected {
+		step := job.Steps[index]
+		if step.Name != want.name || !exactScript(step.Run, want.run) || !reflect.DeepEqual(step.Env, want.env) || !defaultStepExecution(step) || !defaultStepRunSettings(step) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved steps", Detail: name + ": " + step.Name}
+		}
+		if want.uses == "" {
+			if step.Uses != "" || len(step.With) != 0 {
+				return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved steps", Detail: name + ": " + step.Name}
+			}
+		} else if !strings.HasPrefix(step.Uses, want.uses+"@") || !reflect.DeepEqual(step.With, want.with) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved actions", Detail: name + ": " + step.Name}
+		}
 	}
 	return nil
 }

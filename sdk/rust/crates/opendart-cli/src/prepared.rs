@@ -1,6 +1,9 @@
 use opendart::{OperationIdentity, PreparedBinaryRequest, PreparedRequest, Representation};
 
-use crate::discovery::{OperationSpec, OutputSpec};
+use clap::ArgMatches;
+
+use crate::artifact::{ArtifactTarget, TargetError};
+use crate::discovery::{OperationSpec, OutputSpec, RepresentationSpec};
 use crate::execution::{BufferedOutput, Executor, OperationContext};
 
 pub(crate) enum PreparedCall {
@@ -58,10 +61,6 @@ pub(crate) struct BinaryOperation {
 }
 
 impl PreparedCall {
-    pub(crate) const fn is_binary(&self) -> bool {
-        matches!(self, Self::Binary(_))
-    }
-
     pub(crate) fn operation_context(
         &self,
     ) -> Result<OperationContext, crate::error::ErrorEnvelope> {
@@ -75,13 +74,44 @@ impl PreparedCall {
         }
     }
 
-    pub(crate) fn execute_structured(
+    pub(crate) fn artifact_target(
+        &self,
+        matches: &ArgMatches,
+        operation: OperationContext,
+    ) -> Result<Option<ArtifactTarget>, TargetError> {
+        match self {
+            Self::Structured(_) => Ok(None),
+            Self::Binary(prepared) => {
+                let representation =
+                    binary_representation(prepared).map_err(TargetError::Execution)?;
+                let OutputSpec::Artifact {
+                    default_limit_bytes,
+                    ..
+                } = representation.output
+                else {
+                    return Err(TargetError::Execution(
+                        crate::error::ErrorEnvelope::sdk_contract_mismatch(Some(operation)),
+                    ));
+                };
+                ArtifactTarget::from_matches(matches, default_limit_bytes, operation).map(Some)
+            }
+        }
+    }
+
+    pub(crate) fn execute(
         self,
         executor: &Executor,
-    ) -> Result<Option<BufferedOutput>, crate::error::ErrorEnvelope> {
-        match self {
-            Self::Structured(request) => request.execute(executor).map(Some),
-            Self::Binary(_) => Ok(None),
+        artifact: Option<ArtifactTarget>,
+        operation: OperationContext,
+    ) -> Result<BufferedOutput, crate::error::ErrorEnvelope> {
+        match (self, artifact) {
+            (Self::Structured(request), None) => request.execute(executor),
+            (Self::Binary(request), Some(artifact)) => {
+                executor.execute_binary(request.request, operation, artifact)
+            }
+            _ => Err(crate::error::ErrorEnvelope::sdk_contract_mismatch(Some(
+                operation,
+            ))),
         }
     }
 }
@@ -137,6 +167,18 @@ fn operation_context(
 fn binary_operation_context(
     prepared: &BinaryOperation,
 ) -> Result<OperationContext, crate::error::ErrorEnvelope> {
+    let representation = binary_representation(prepared)?;
+    Ok(OperationContext::new(
+        prepared.operation.name,
+        prepared.operation.logical_id,
+        representation.physical_id,
+        representation.name,
+    ))
+}
+
+fn binary_representation(
+    prepared: &BinaryOperation,
+) -> Result<&'static RepresentationSpec, crate::error::ErrorEnvelope> {
     let identity = prepared.request.identity();
     if prepared.operation.logical_id != identity.logical()
         || prepared.request.expected_representations() != [Representation::Zip, Representation::Xml]
@@ -157,10 +199,5 @@ fn binary_operation_context(
     {
         return Err(crate::error::ErrorEnvelope::sdk_contract_mismatch(None));
     }
-    Ok(OperationContext::new(
-        prepared.operation.name,
-        prepared.operation.logical_id,
-        representation.physical_id,
-        representation.name,
-    ))
+    Ok(representation)
 }
