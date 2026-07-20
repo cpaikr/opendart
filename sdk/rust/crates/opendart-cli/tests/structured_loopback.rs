@@ -2,6 +2,8 @@
 
 #![cfg(opendart_compat)]
 
+mod common;
+
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::process::{Command, Output};
@@ -43,7 +45,7 @@ fn with_response(response: Vec<u8>, arguments: &[String]) -> Output {
     let listener = TcpListener::bind("127.0.0.1:0").expect("loopback listener");
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let (mut stream, _) = listener.accept().expect("one CLI connection");
+        let mut stream = common::accept_within(&listener);
         assert_valid_request(&mut stream);
         stream.write_all(&response).expect("write fixture response");
     });
@@ -226,7 +228,7 @@ fn timeout_incomplete_body_and_refused_connection_have_stable_classes() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
-        let (mut stream, _) = listener.accept().unwrap();
+        let mut stream = common::accept_within(&listener);
         assert_valid_request(&mut stream);
         stream
             .write_all(
@@ -268,4 +270,38 @@ fn timeout_incomplete_body_and_refused_connection_have_stable_classes() {
     let error = json(&output, 1);
     assert_eq!(error["error"]["code"], "transport_connection");
     assert!(error.get("metadata").is_none());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn stdout_failure_after_structured_encoding_exits_without_a_replacement_document() {
+    use std::fs::OpenOptions;
+    use std::process::Stdio;
+
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let server = thread::spawn(move || {
+        let mut stream = common::accept_within(&listener);
+        assert_valid_request(&mut stream);
+        stream
+            .write_all(&http_response(
+                "application/json",
+                br#"{"status":"000","corp_name":"complete"}"#,
+                &[],
+            ))
+            .unwrap();
+    });
+    let full = OpenOptions::new().write(true).open("/dev/full").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_opendart"))
+        .args(company_arguments("json"))
+        .env("OPENDART_API_KEY", SYNTHETIC_KEY)
+        .env("OPENDART_COMPAT_ORIGIN", origin)
+        .stdout(Stdio::from(full))
+        .stderr(Stdio::piped())
+        .output()
+        .unwrap();
+    server.join().unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stdout.is_empty());
+    assert!(output.stderr.is_empty());
 }

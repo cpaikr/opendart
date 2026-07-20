@@ -368,17 +368,21 @@ provenance points to the immutable reviewed revision.
   Repository-only loopback tests cover exact numbers, Unicode and additive
   values, response limits, decoding, transport failures, and credential
   non-disclosure.
-- Work 5 is implemented in the current delivery slice. Prepared binary replies
+- Work 5 is merged on `rust`. Prepared binary replies
   stream once into same-directory temporary files with inclusive generated
   limits, complete status/unrecognized evidence, cleanup on every pre-publication
   failure, and no-clobber publication after report encoding. Process tests cover
   split and empty ZIP signatures, exact bytes, source status, incomplete streams,
   limits, existing paths and symlinks, destination races, and broken stdout.
-- Works 6 and 7 remain. No publication or prebuilt-release work is authorized by
-  this plan state.
+- Work 6 is implemented in the current delivery slice. Stable output fixtures,
+  CLI no-default/MSRV coverage, exact SDK and CLI package inventories, workspace
+  package dry runs, bounded process fixtures, and a strictly dual-gated
+  read-only structured/binary live smoke path extend the credential-free gate.
+- Work 7 remains. No publication or prebuilt-release work is authorized by this
+  plan state.
 
 ## Next action
 
-After Work 5 passes review and merges, implement Work 6 as the next slice:
-close the complete credential-free verification surface and add a strictly
-dual-gated read-only live smoke path for structured and binary calls.
+After Work 6 passes review and merges, implement Work 7 as the next slice:
+prepare independent CLI packaging and release ownership without granting
+registry publication authority.

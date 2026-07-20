@@ -18,26 +18,38 @@ import (
 )
 
 const (
-	releaseWorkflowArtifact  = ".github/workflows/release-please.yml"
-	verifyWorkflowArtifact   = ".github/workflows/verify.yml"
-	liveWorkflowArtifact     = ".github/workflows/live-conformance.yml"
-	notifyWorkflowArtifact   = ".github/workflows/live-conformance-notify.yml"
-	configArtifact           = "release-please-config.json"
-	manifestArtifact         = ".release-please-manifest.json"
-	specificationPackagePath = "openapi/generated"
-	rustPackagePath          = "sdk/rust/crates/opendart"
-	rustCargoArtifact        = "sdk/rust/crates/opendart/Cargo.toml"
-	rustLockArtifact         = "sdk/rust/Cargo.lock"
-	rustProvenanceArtifact   = "sdk/rust/crates/opendart/src/provenance.rs"
-	rustPackageListArtifact  = "sdk/rust/package-files.txt"
-	canonicalBundleArtifact  = "openapi/generated/openapi.bundle.yaml"
-	releasePleaseAction      = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
-	checkoutAction           = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
-	setupGoAction            = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
-	uploadArtifactAction     = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
-	downloadArtifactAction   = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
+	releaseWorkflowArtifact    = ".github/workflows/release-please.yml"
+	verifyWorkflowArtifact     = ".github/workflows/verify.yml"
+	liveWorkflowArtifact       = ".github/workflows/live-conformance.yml"
+	notifyWorkflowArtifact     = ".github/workflows/live-conformance-notify.yml"
+	configArtifact             = "release-please-config.json"
+	manifestArtifact           = ".release-please-manifest.json"
+	specificationPackagePath   = "openapi/generated"
+	rustPackagePath            = "sdk/rust/crates/opendart"
+	rustCargoArtifact          = "sdk/rust/crates/opendart/Cargo.toml"
+	rustLockArtifact           = "sdk/rust/Cargo.lock"
+	rustProvenanceArtifact     = "sdk/rust/crates/opendart/src/provenance.rs"
+	rustPackageListArtifact    = "sdk/rust/package-files.txt"
+	rustCLIPackageListArtifact = "sdk/rust/opendart-cli-package-files.txt"
+	canonicalBundleArtifact    = "openapi/generated/openapi.bundle.yaml"
+	releasePleaseAction        = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
+	checkoutAction             = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+	setupGoAction              = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
+	uploadArtifactAction       = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+	downloadArtifactAction     = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
 
-	liveRunScript   = "go run ./cmd/opendart-tool live-conformance --repository-root . > live-conformance-report.json"
+	liveBuildScript = `mkdir -p .live-bin
+go build -o .live-bin/opendart-tool ./cmd/opendart-tool
+live_smoke_executable="$(
+  cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test live_smoke --no-run --message-format=json |
+    jq -r 'select(.reason == "compiler-artifact" and .target.name == "live_smoke" and .executable != null) | .executable' |
+    tail -n 1
+)"
+test -n "${live_smoke_executable}"
+test -x "${live_smoke_executable}"
+cp "${live_smoke_executable}" .live-bin/live-smoke`
+	liveRunScript = `.live-bin/opendart-tool live-conformance --repository-root . > live-conformance-report.json
+.live-bin/live-smoke --exact structured_and_binary_live_paths_are_read_only_and_sanitized`
 	notifyRunScript = `go run ./cmd/opendart-tool live-conformance-notify \
   --report live-conformance-report.json \
   --repository "${NOTIFY_REPOSITORY}" \
@@ -88,6 +100,7 @@ cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml --work
 RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback
 RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
+cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features
 RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features --no-deps`
 	nativeArtifactFetchScript       = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
 	nativeArtifactTestScript        = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
@@ -101,12 +114,16 @@ if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body
 fi`
 	msrvVerificationScript = `cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features
 cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
+cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features
 cargo +1.85.0 metadata --locked --offline --manifest-path sdk/rust/Cargo.toml --no-deps > /dev/null`
-	packageVerificationScript = `package_files="$(mktemp)"
-trap 'rm -f "${package_files}"' EXIT
-cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${package_files}"
-diff -u sdk/rust/package-files.txt "${package_files}"
-cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml`
+	packageVerificationScript = `sdk_package_files="$(mktemp)"
+cli_package_files="$(mktemp)"
+trap 'rm -f "${sdk_package_files}" "${cli_package_files}"' EXIT
+cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${sdk_package_files}"
+diff -u sdk/rust/package-files.txt "${sdk_package_files}"
+cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
+diff -u sdk/rust/opendart-cli-package-files.txt "${cli_package_files}"
+cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml`
 )
 
 var canonicalSpecificationSources = []string{
@@ -193,6 +210,13 @@ func Check(repositoryRoot string) error {
 		return err
 	}
 	if err := checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSource); err != nil {
+		return err
+	}
+	cliPackageListSource, err := readArtifact(absoluteRoot, rustCLIPackageListArtifact)
+	if err != nil {
+		return err
+	}
+	if err := checkRustCLIPackageInventory(cliPackageListSource); err != nil {
 		return err
 	}
 
@@ -289,10 +313,43 @@ func checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSo
 			return &Error{Artifact: rustPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
 		}
 	}
+	return checkPackageInventoryPrivateInputs(rustPackageListArtifact, lines)
+}
+
+func checkRustCLIPackageInventory(packageListSource []byte) error {
+	lines := strings.Fields(string(packageListSource))
+	if !sort.StringsAreSorted(lines) {
+		return &Error{Artifact: rustCLIPackageListArtifact, Invariant: "is sorted for deterministic comparison"}
+	}
+	for _, name := range []string{
+		".cargo_vcs_info.json",
+		"Cargo.lock",
+		"Cargo.toml",
+		"src/generated/.opendart-cli-generated",
+		"src/generated/catalog.rs",
+		"src/generated/command.rs",
+		"src/generated/dispatch.rs",
+		"src/main.rs",
+		"tests/binary_loopback.rs",
+		"tests/common/mod.rs",
+		"tests/discovery.rs",
+		"tests/fixtures/invalid-invocation.json",
+		"tests/fixtures/missing-api-key.json",
+		"tests/live_smoke.rs",
+		"tests/structured_loopback.rs",
+	} {
+		if !sortedContains(lines, name) {
+			return &Error{Artifact: rustCLIPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
+		}
+	}
+	return checkPackageInventoryPrivateInputs(rustCLIPackageListArtifact, lines)
+}
+
+func checkPackageInventoryPrivateInputs(artifact string, lines []string) error {
 	for _, name := range lines {
 		for _, prefix := range []string{".github/", "compat/", "internal/", "openapi/", "target/"} {
 			if strings.HasPrefix(name, prefix) {
-				return &Error{Artifact: rustPackageListArtifact, Invariant: "excludes repository-private inputs", Detail: name}
+				return &Error{Artifact: artifact, Invariant: "excludes repository-private inputs", Detail: name}
 			}
 		}
 	}
@@ -872,7 +929,7 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		{name: "Verify transport-independent dependency graph offline", run: transportIndependentGraphScript},
 		{name: "Verify reqwest feature compatibility offline", run: compatibilityVerificationScript},
 		{name: "Verify Rust MSRV offline", run: msrvVerificationScript},
-		{name: "Verify crate package contents offline", run: packageVerificationScript},
+		{name: "Verify workspace package contents offline", run: packageVerificationScript},
 	}
 	if len(job.Steps) != len(expectedSteps) {
 		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification steps"}
@@ -981,27 +1038,48 @@ func checkLiveWorkflow(live workflow, source string) error {
 	if job.Needs != "" || job.ContinueOnError || job.Uses != "" || !defaultRunSettings(job.Defaults) || job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 30 {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "producer uses only approved execution controls"}
 	}
-	expectedNames := []string{"Check out trusted revision", "Set up Go", "Recheck offline gates", "Run live conformance", "Upload sanitized report"}
+	expectedNames := []string{"Check out trusted revision", "Set up Go", "Install pinned Rust toolchain", "Fetch locked Rust dependencies", "Build live runners without credentials", "Recheck offline gates", "Run live conformance and Rust CLI smoke", "Upload sanitized report"}
 	if !reflect.DeepEqual(stepNames(job.Steps), expectedNames) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "uses only approved producer steps in order"}
 	}
 	checkout := job.Steps[0]
 	setup := job.Steps[1]
-	preflight := job.Steps[2]
-	run := job.Steps[3]
-	upload := job.Steps[4]
+	installRust := job.Steps[2]
+	fetchRust := job.Steps[3]
+	build := job.Steps[4]
+	preflight := job.Steps[5]
+	run := job.Steps[6]
+	upload := job.Steps[7]
 	if checkout.Uses != checkoutAction || checkout.Run != "" || !reflect.DeepEqual(checkout.With, map[string]any{"persist-credentials": false}) || !defaultStepExecution(checkout) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "checks out the trusted dispatched revision without credentials"}
 	}
 	if setup.Uses != setupGoAction || setup.Run != "" || !reflect.DeepEqual(setup.With, map[string]any{"cache": true, "go-version-file": "go.mod"}) || !defaultStepExecution(setup) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "uses the approved Go setup"}
 	}
-	if preflight.Run != "go run ./cmd/opendart-tool live-conformance --preflight-only --repository-root ." || preflight.Uses != "" || !defaultStepExecution(preflight) {
+	if installRust.Run != "rustup toolchain install 1.97.1 --profile minimal" || installRust.Uses != "" || !defaultStepExecution(installRust) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "installs the approved Rust toolchain before credential exposure"}
+	}
+	if fetchRust.Run != nativeArtifactFetchScript || fetchRust.Uses != "" || !defaultStepExecution(fetchRust) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "fetches locked Rust dependencies before credential exposure"}
+	}
+	if build.Run != liveBuildScript || build.Uses != "" || !defaultStepExecution(build) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "builds only the approved live runners before credential exposure"}
+	}
+	if preflight.Run != ".live-bin/opendart-tool live-conformance --preflight-only --repository-root ." || preflight.Uses != "" || !defaultStepExecution(preflight) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "rechecks credential-free live gates before secret exposure"}
 	}
-	expectedCredential := map[string]string{"OPENDART_API_KEY": "${{ secrets.OPENDART_API_KEY }}"}
-	if run.Run != liveRunScript || run.Uses != "" || !defaultStepExecution(run) || !reflect.DeepEqual(run.Env, expectedCredential) {
-		return &Error{Artifact: liveWorkflowArtifact, Invariant: "exposes the API key only to the canonical request boundary"}
+	expectedCredential := map[string]string{
+		"OPENDART_API_KEY":    "${{ secrets.OPENDART_API_KEY }}",
+		"OPENDART_LIVE_TESTS": "1",
+	}
+	if run.Run != liveRunScript {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "runs only the approved live conformance commands"}
+	}
+	if run.Uses != "" || !defaultStepExecution(run) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "exposes credentials only through a direct fail-closed request step"}
+	}
+	if !reflect.DeepEqual(run.Env, expectedCredential) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "sets only the approved live request gates"}
 	}
 	expectedUpload := map[string]any{
 		"name": "live-conformance-report-${{ github.run_attempt }}", "path": "live-conformance-report.json",
@@ -1015,11 +1093,11 @@ func checkLiveWorkflow(live workflow, source string) error {
 		if !defaultStepRunSettings(step) {
 			return &Error{Artifact: liveWorkflowArtifact, Invariant: "producer steps use default run settings", Detail: "step " + step.Name}
 		}
-		if step.Name != "Run live conformance" && len(step.Env) != 0 {
+		if step.Name != "Run live conformance and Rust CLI smoke" && len(step.Env) != 0 {
 			return &Error{Artifact: liveWorkflowArtifact, Invariant: "API key is absent outside the request boundary", Detail: "step " + step.Name}
 		}
 	}
-	if strings.Count(source, "${{ secrets.OPENDART_API_KEY }}") != 1 || strings.Count(source, "OPENDART_API_KEY") != 2 || strings.Contains(source, "issues: write") || strings.Contains(source, "github.token") || strings.Contains(source, "GITHUB_TOKEN") {
+	if strings.Count(source, "${{ secrets.OPENDART_API_KEY }}") != 1 || strings.Count(source, "OPENDART_API_KEY") != 2 || strings.Count(source, "OPENDART_LIVE_TESTS") != 1 || strings.Contains(source, "issues: write") || strings.Contains(source, "github.token") || strings.Contains(source, "GITHUB_TOKEN") {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "contains only the single protected credential reference and no issue authority"}
 	}
 	if err := checkActionPins(liveWorkflowArtifact, live); err != nil {

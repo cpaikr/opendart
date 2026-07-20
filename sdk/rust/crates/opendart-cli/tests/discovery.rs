@@ -5,6 +5,9 @@ use std::process::{Command, Output};
 
 use serde_json::Value;
 
+const MISSING_API_KEY_FIXTURE: &[u8] = include_bytes!("fixtures/missing-api-key.json");
+const INVALID_INVOCATION_FIXTURE: &[u8] = include_bytes!("fixtures/invalid-invocation.json");
+
 fn invoke(arguments: &[String], api_key: Option<&str>) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_opendart"));
     command.args(arguments);
@@ -277,6 +280,29 @@ fn invalid_invocations_are_strict_json_usage_errors_before_credentials() {
     assert!(correction.contains("--corp-code"));
     assert!(correction.contains("--representation"));
     assert!(!correction.contains("--unknown"));
+}
+
+#[test]
+fn stable_error_outputs_match_repository_fixtures() {
+    let invalid = invoke(&["unknown".to_owned()], None);
+    assert_eq!(invalid.status.code(), Some(2));
+    assert!(invalid.stderr.is_empty());
+    assert_eq!(invalid.stdout, INVALID_INVOCATION_FIXTURE);
+
+    let missing = invoke(
+        &[
+            "call".to_owned(),
+            "company".to_owned(),
+            "--corp-code".to_owned(),
+            "00126380".to_owned(),
+            "--representation".to_owned(),
+            "json".to_owned(),
+        ],
+        None,
+    );
+    assert_eq!(missing.status.code(), Some(1));
+    assert!(missing.stderr.is_empty());
+    assert_eq!(missing.stdout, MISSING_API_KEY_FIXTURE);
 }
 
 #[test]

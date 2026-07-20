@@ -16,6 +16,7 @@ cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml --wo
 cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --all-targets --no-default-features -- -D warnings
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
+cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features
 RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features --no-deps
 RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml
 cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features -e normal --prefix none
@@ -26,19 +27,27 @@ Run the MSRV boundary independently:
 ```sh
 cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features
 cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
+cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features
 cargo +1.85.0 metadata --locked --offline --manifest-path sdk/rust/Cargo.toml --no-deps
 ```
 
-Verify the reviewed SDK package inventory exactly. CLI package inventory and
-publication remain gated by its release-preparation work:
+Verify both reviewed package inventories exactly, then dry-run the dependent
+workspace packages together:
 
 ```sh
-package_files="$(mktemp)"
-trap 'rm -f "${package_files}"' EXIT
-cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${package_files}"
-diff -u sdk/rust/package-files.txt "${package_files}"
-cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml
+sdk_package_files="$(mktemp)"
+cli_package_files="$(mktemp)"
+trap 'rm -f "${sdk_package_files}" "${cli_package_files}"' EXIT
+cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${sdk_package_files}"
+diff -u sdk/rust/package-files.txt "${sdk_package_files}"
+cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
+diff -u sdk/rust/opendart-cli-package-files.txt "${cli_package_files}"
+cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml
 ```
+
+The CLI live smoke test is skipped unless `OPENDART_LIVE_TESTS=1` and
+`OPENDART_API_KEY` are both present. It performs only the reviewed read-only
+structured and binary calls and keeps assertions structural.
 
 The no-default-features normal dependency graph must not contain `reqwest`,
 Tokio, Hyper, TLS, proxy, DNS, or streaming-runtime dependencies. The default

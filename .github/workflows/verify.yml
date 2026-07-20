@@ -53,6 +53,7 @@ jobs:
           RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback
           RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
           cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
+          cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features
           RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features --no-deps
 
       - name: Verify transport-independent dependency graph offline
@@ -72,15 +73,19 @@ jobs:
         run: |
           cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features
           cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
+          cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features
           cargo +1.85.0 metadata --locked --offline --manifest-path sdk/rust/Cargo.toml --no-deps > /dev/null
 
-      - name: Verify crate package contents offline
+      - name: Verify workspace package contents offline
         run: |
-          package_files="$(mktemp)"
-          trap 'rm -f "${package_files}"' EXIT
-          cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${package_files}"
-          diff -u sdk/rust/package-files.txt "${package_files}"
-          cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml
+          sdk_package_files="$(mktemp)"
+          cli_package_files="$(mktemp)"
+          trap 'rm -f "${sdk_package_files}" "${cli_package_files}"' EXIT
+          cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${sdk_package_files}"
+          diff -u sdk/rust/package-files.txt "${sdk_package_files}"
+          cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
+          diff -u sdk/rust/opendart-cli-package-files.txt "${cli_package_files}"
+          cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml
 
   artifact-macos:
     runs-on: macos-latest
