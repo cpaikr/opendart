@@ -91,6 +91,10 @@ Release Please owns independent components:
 - root `vX.Y.Z` tags and `CHANGELOG.md` for the OpenAPI bundle; and
 - `opendart-vX.Y.Z` tags and the crate changelog/version for the Rust SDK.
 
+The `opendart-cli` crate is an unreleased third component. Work 7 owns its
+independent version, changelog, and tag configuration; the current Release
+Please configuration does not prepare or publish CLI releases.
+
 Rust changes are excluded from root release eligibility. The Rust component is
 configured to prepare a draft component release and keep the crate manifest and
 workspace lock aligned. This repository does not yet authorize `cargo publish`;

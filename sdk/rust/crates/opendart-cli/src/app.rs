@@ -27,6 +27,8 @@ where
 }
 
 fn dispatch(matches: &ArgMatches) -> u8 {
+    // Compile every generated projection identity into the consumer binary;
+    // repository freshness verifies the corresponding generated headers.
     let _generated_identity = (
         crate::generated::GENERATOR_SCHEMA,
         crate::generated::PROJECTION_CHECKSUM,
@@ -72,11 +74,14 @@ fn call(matches: &ArgMatches) -> u8 {
     let operation_name = matches
         .subcommand_name()
         .expect("clap requires generated operation");
+    // Work 4 attaches this generated catalog identity to the execution outcome.
     let _operation = catalog::operation(operation_name).expect("clap operation has catalog entry");
     let prepared = match crate::generated::dispatch::prepare_call(matches) {
         Ok(prepared) => prepared,
         Err(_) => return emit(&ErrorEnvelope::invalid_request(), 2),
     };
+    // Force the prepared SDK identity through the erased dispatch seam before
+    // credential access; Work 4 validates and emits it during execution.
     let _identity = prepared.identity();
     let Some(key) = std::env::var_os("OPENDART_API_KEY") else {
         return emit(&ErrorEnvelope::missing_api_key(), 1);

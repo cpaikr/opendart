@@ -25,6 +25,7 @@ impl PreparedCall {
 }
 
 pub(crate) fn structured<T: 'static>(
+    // Work 4 retains this generated catalog entry beside the typed request.
     _operation: &'static crate::discovery::OperationSpec,
     request: PreparedRequest<T>,
 ) -> PreparedCall {
@@ -32,6 +33,7 @@ pub(crate) fn structured<T: 'static>(
 }
 
 pub(crate) fn binary(
+    // Work 5 retains this generated catalog entry for artifact reporting.
     _operation: &'static crate::discovery::OperationSpec,
     request: PreparedBinaryRequest,
 ) -> PreparedCall {

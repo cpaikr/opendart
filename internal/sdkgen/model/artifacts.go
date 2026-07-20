@@ -190,10 +190,16 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 		}
 
 		structuredCount := 0
+		hasBinary := false
 		for _, variant := range operation.Variants {
-			if variant.Representation != RepresentationZIP {
+			if variant.Representation == RepresentationZIP {
+				hasBinary = true
+			} else {
 				structuredCount++
 			}
+		}
+		if hasBinary && structuredCount != 0 {
+			return CLIModel{}, reject("mixed-cli-representation-kinds", operation.ID, "variants", "structured and ZIP variants require incompatible CLI output contracts")
 		}
 		representations := make([]CLIRepresentation, 0, len(operation.Variants))
 		for _, variant := range operation.Variants {
