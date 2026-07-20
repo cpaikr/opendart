@@ -341,12 +341,12 @@ func checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSo
 	return checkPackageInventoryPrivateInputs(rustPackageListArtifact, lines)
 }
 
-func checkRustCLIPackage(cargoSource, workspaceSource, lockSource, packageListSource []byte) error {
-	publish, err := cargoPackageStringArray(cargoSource, "publish")
+func checkRustCLIPackage(cliCargoSource, workspaceSource, lockSource, packageListSource []byte) error {
+	publish, err := cargoPackageStringArray(cliCargoSource, "publish")
 	if err != nil || !reflect.DeepEqual(publish, []string{"crates-io"}) {
 		return &Error{Artifact: rustCLICargoArtifact, Invariant: "authorizes only the crates.io registry", Cause: err}
 	}
-	include, err := cargoPackageStringArray(cargoSource, "include")
+	include, err := cargoPackageStringArray(cliCargoSource, "include")
 	if err != nil {
 		return &Error{Artifact: rustCLICargoArtifact, Invariant: "packages the reviewed source distribution", Cause: err}
 	}
@@ -368,14 +368,14 @@ func checkRustCLIPackage(cargoSource, workspaceSource, lockSource, packageListSo
 	if err != nil {
 		return &Error{Artifact: rustLockArtifact, Invariant: "contains one opendart package version", Cause: err}
 	}
-	pin, err := cargoInlineDependencyVersion(cargoSource, "opendart")
+	pin, err := cargoInlineDependencyVersion(cliCargoSource, "opendart")
 	if err != nil || pin != "="+sdkVersion {
 		return &Error{Artifact: rustCLICargoArtifact, Invariant: "exact-pins the workspace SDK version", Cause: err}
 	}
-	if !bytes.Contains(cargoSource, []byte(`opendart = { path = "../opendart", version = "=`+sdkVersion+`", default-features = false, features = ["client-reqwest", "serde-json"] } # x-release-please-version`)) {
+	if !bytes.Contains(cliCargoSource, []byte(`opendart = { path = "../opendart", version = "=`+sdkVersion+`", default-features = false, features = ["client-reqwest", "serde-json"] } # x-release-please-version`)) {
 		return &Error{Artifact: rustCLICargoArtifact, Invariant: "marks the exact SDK pin for SDK-owned release updates"}
 	}
-	if !bytes.Contains(cargoSource, []byte("serde_json.workspace = true")) {
+	if !bytes.Contains(cliCargoSource, []byte("serde_json.workspace = true")) {
 		return &Error{Artifact: rustCLICargoArtifact, Invariant: "inherits the reviewed JSON encoder behavior"}
 	}
 	if !bytes.Contains(workspaceSource, []byte(`serde_json = { version = "=1.0.150", features = ["arbitrary_precision", "preserve_order"] }`)) {
