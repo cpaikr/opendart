@@ -293,7 +293,7 @@ func readCrate(artifact string, file *os.File, size int64, options Options, boun
 		if len(files) >= bounds.maxFiles {
 			return crateArchive{}, invariant(artifact, "fits the file-count limit")
 		}
-		if header.Typeflag != tar.TypeReg && header.Typeflag != tar.TypeRegA {
+		if header.Typeflag != tar.TypeReg {
 			return crateArchive{}, invariant(artifact, "contains regular files only")
 		}
 		if header.Size < 0 || header.Size > bounds.maxFileBytes {

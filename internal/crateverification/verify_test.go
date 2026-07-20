@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -394,12 +395,5 @@ func assertInvariant(t *testing.T, err error, artifact, invariant string) {
 }
 
 func errorsAs(err error, target **Error) bool {
-	if err == nil {
-		return false
-	}
-	value, ok := err.(*Error)
-	if ok {
-		*target = value
-	}
-	return ok
+	return errors.As(err, target)
 }

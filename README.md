@@ -155,8 +155,10 @@ first supervised run, and later scheduling remain tracked in the
 Humans classify public compatibility and choose the corresponding Conventional
 Commit input. Release Please owns independent specification, Rust SDK, and Rust
 CLI components. Specification releases use `vX.Y.Z`; crate releases use
-`opendart-vX.Y.Z` or `opendart-cli-vX.Y.Z` and update only their owned manifest,
-lockfile entry, and changelog.
+`opendart-vX.Y.Z` or `opendart-cli-vX.Y.Z` and update their owned manifest,
+lockfile entry, and changelog. An SDK proposal also updates the CLI manifest's
+marked exact local SDK pin without changing the CLI version or changelog; this
+does not constitute a CLI release.
 [`RELEASING.md`](RELEASING.md) is the maintainer policy and review checklist.
 
 Each release contains `openapi.bundle.yaml` and
