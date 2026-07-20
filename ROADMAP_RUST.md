@@ -5,7 +5,7 @@ its linked work items from this worktree.
 
 ## Current
 
-- [Public Rust SDK](tasks/rust/public-rust-sdk.md)
+- [Public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
 
 ## Plans
 
@@ -13,4 +13,5 @@ _None._
 
 ## Tasks
 
-_None._
+- [Public Rust SDK](tasks/rust/public-rust-sdk.md)
+- [Harden prebuilt OpenDART CLI releases](tasks/rust/opendart-cli-prebuilt-releases.md)
