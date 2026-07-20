@@ -353,7 +353,7 @@ provenance points to the immutable reviewed revision.
 - Work 1 is merged on `rust`: the SDK feature graph, fallible JSON-number
   boundary, generated/shared serialization, exact-number snapshots, and
   non-serialization assertions are present.
-- Works 2 and 3 are implemented in the current delivery slice. One normalized
+- Works 2 and 3 are merged on `rust`. One normalized
   build produces separately identified SDK and CLI projections, validates both
   owned trees before publication, and verifies both offline. CLI-only prose is
   covered against SDK checksum and byte drift.
@@ -362,12 +362,18 @@ provenance points to the immutable reviewed revision.
   and keyless machine-readable discovery. Process tests cover every canonical
   name and logical-ID alias, strict usage, representation rules, help/version,
   and a discovery-only invocation consumer.
-- Works 4–7 remain. Authenticated execution has not begun, and no publication
+- Work 4 is implemented in the current delivery slice. Structured JSON and XML
+  calls execute once through the typed SDK, buffer direct compact JSON, preserve
+  success and source-status replies, and translate sanitized SDK failures.
+  Repository-only loopback tests cover exact numbers, Unicode and additive
+  values, response limits, decoding, transport failures, and credential
+  non-disclosure.
+- Works 5–7 remain. Binary artifact handling has not begun, and no publication
   or prebuilt-release work is authorized by this plan state.
 
 ## Next action
 
-After works 2 and 3 pass review and merge, implement Work 4 as the next slice:
-execute prepared structured requests through the SDK, apply the approved client
-controls, and encode typed success, source status, and sanitized failure
-outcomes. Keep ZIP artifact handling in Work 5.
+After Work 4 passes review and merges, implement Work 5 as the next slice:
+stream prepared ZIP replies through the SDK into explicit same-directory,
+bounded, no-clobber artifacts while preserving status and unrecognized-body
+evidence.
