@@ -87,6 +87,13 @@ jobs:
           diff -u sdk/rust/opendart-cli-package-files.txt "${cli_package_files}"
           cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml
 
+      - name: Install CLI from reviewed source offline
+        run: |
+          install_workspace="$(mktemp -d)"
+          CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"
+          "${install_workspace}/root/bin/opendart" --version
+          "${install_workspace}/root/bin/opendart" operations list > /dev/null
+
   artifact-macos:
     runs-on: macos-latest
     timeout-minutes: 20
@@ -108,6 +115,13 @@ jobs:
         env:
           RUSTFLAGS: --cfg opendart_compat
 
+      - name: Install CLI from reviewed source offline
+        run: |
+          install_workspace="$(mktemp -d)"
+          CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"
+          "${install_workspace}/root/bin/opendart" --version
+          "${install_workspace}/root/bin/opendart" operations list > /dev/null
+
   artifact-windows:
     runs-on: windows-latest
     timeout-minutes: 20
@@ -128,3 +142,16 @@ jobs:
         run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
         env:
           RUSTFLAGS: --cfg opendart_compat
+
+      - name: Install CLI from reviewed source offline
+        run: |
+          $installWorkspace = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid().ToString())
+          $installRoot = Join-Path $installWorkspace "root"
+          $env:CARGO_TARGET_DIR = Join-Path $installWorkspace "target"
+          cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root $installRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $binary = Join-Path $installRoot "bin/opendart.exe"
+          & $binary --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $binary operations list | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

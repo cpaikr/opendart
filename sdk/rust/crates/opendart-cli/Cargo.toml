@@ -20,7 +20,7 @@ doc = false
 [dependencies]
 clap.workspace = true
 futures-core.workspace = true
-opendart = { path = "../opendart", version = "=0.1.0", default-features = false, features = ["client-reqwest", "serde-json"] }
+opendart = { path = "../opendart", version = "=0.1.0", default-features = false, features = ["client-reqwest", "serde-json"] } # x-release-please-version
 serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true

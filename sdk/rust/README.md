@@ -65,6 +65,10 @@ The CLI live smoke test is skipped unless `OPENDART_LIVE_TESTS=1` and
 `OPENDART_API_KEY` are both present. It performs only the reviewed read-only
 structured and binary calls and keeps assertions structural.
 
+CLI package ownership, local accepted-artifact comparison, and the mandatory
+pause before publication are documented in the
+[CLI verification and release guide](../../docs/rust-cli/verification-and-release.md).
+
 The no-default-features normal dependency graph must not contain `reqwest`,
 Tokio, Hyper, TLS, proxy, DNS, or streaming-runtime dependencies. The default
 `client-reqwest` feature is native-target-only; the transport-independent core

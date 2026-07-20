@@ -374,15 +374,23 @@ provenance points to the immutable reviewed revision.
   failure, and no-clobber publication after report encoding. Process tests cover
   split and empty ZIP signatures, exact bytes, source status, incomplete streams,
   limits, existing paths and symlinks, destination races, and broken stdout.
-- Work 6 is implemented in the current delivery slice. Stable output fixtures,
+- Work 6 is merged on `rust`. Stable output fixtures,
   CLI no-default/MSRV coverage, exact SDK and CLI package inventories, workspace
   package dry runs, bounded process fixtures, and a strictly dual-gated
   read-only structured/binary live smoke path extend the credential-free gate.
-- Work 7 remains. No publication or prebuilt-release work is authorized by this
-  plan state.
+- Work 7 is implemented in the current delivery slice. The CLI source package
+  includes its lockfile and release documentation, clean locked source installs
+  run on Linux, macOS, and Windows, and Release Please owns an independent CLI
+  version, changelog, tag, and workspace-lock entry. The SDK component updates
+  the CLI's marked exact local SDK pin without releasing the CLI.
+- Local post-publication artifact comparison is prepared behind a bounded,
+  credential-free command that accepts already acquired evidence. No current
+  workflow can download from or publish to crates.io, and both unpublished Rust
+  components remain absent from the release manifest.
 
 ## Next action
 
-After Work 6 passes review and merges, implement Work 7 as the next slice:
-prepare independent CLI packaging and release ownership without granting
-registry publication authority.
+After Work 7 passes review and merges, pause this plan. Resume public Rust SDK
+work 6, publish and verify `opendart`, then return here for Work 8 through a new
+explicitly authorized delivery. Do not check registry ownership, publish a
+crate, finalize a CLI release, or add prebuilt artifacts in the Work 7 slice.
