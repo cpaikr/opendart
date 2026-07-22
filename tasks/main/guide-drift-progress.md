@@ -5,13 +5,14 @@ Update it in place and keep authorization-gated actions explicit.
 
 ## Current slice
 
-- Integration target: `dev`; feature work is delivered through sequential,
-  non-stacked pull requests and never targets `main`.
+- Current integration target: `main` through PR #42, which promotes the
+  sequential, non-stacked work already merged into `dev`.
 - Ordered work 2 was reviewed in PR #31 and merged into `dev` with its commits
   preserved.
-- Ordered work 3 implements and validates the manual trusted-main producer,
+- Ordered work 3 was reviewed in PR #33 and merged into `dev`; it implements
+  and validates the manual trusted-main producer,
   attempt-scoped bounded artifact, isolated notifier, and credential-free
-  workflow-policy checks in PR #33 for `dev`.
+  workflow-policy checks.
 - No workflow has been dispatched, no external issue has been written, and no
   schedule has been enabled.
 
