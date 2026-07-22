@@ -377,6 +377,11 @@ provenance points to the immutable reviewed revision.
   CLI no-default/MSRV coverage, exact SDK and CLI package inventories, workspace
   package dry runs, bounded process fixtures, and a strictly dual-gated
   read-only structured/binary live smoke path extend the credential-free gate.
+- On 2026-07-22, the explicitly authorized local CLI smoke passed with both
+  gates enabled. It exercised the structured `company` JSON path and binary
+  `corp-code` ZIP path, including the test's credential non-disclosure and
+  temporary-artifact assertions; no credential or source response body was
+  recorded or retained.
 - CLI roadmap Work 7 is merged on `rust`. The CLI
   source package includes its lockfile and release documentation, clean locked
   source installs run on Linux, macOS, and Windows, and Release Please owns an
@@ -391,8 +396,9 @@ provenance points to the immutable reviewed revision.
 
 ## Next action
 
-This plan is paused after the reviewed Work 7 merge. The separate public Rust
-SDK release plan's Work 6 ("crates.io publication") remains
+Reviewed work 1 through 7, including the gated local live evidence, is complete.
+This plan is paused before Work 8. The separate public Rust SDK release plan's
+Work 6 ("crates.io publication") remains
 unimplemented and is not authorized by this delivery. Resume that work only
 through a separately authorized delivery, publish and verify `opendart`, then
 return here for CLI roadmap Work 8 through another explicit authorization. Do
