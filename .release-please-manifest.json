@@ -1,3 +1,4 @@
 {
-  "openapi/generated": "0.1.0"
+  "openapi/generated": "0.1.1",
+  "sdk/rust/crates/opendart": "0.1.0"
 }
