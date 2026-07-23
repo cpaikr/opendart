@@ -17,7 +17,7 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 				RustName: "OptionalInput",
 				Group:    "group",
 				Parameters: []model.Parameter{
-					{WireName: "page_no", RustName: "page_no", Shape: model.ScalarString},
+					{WireName: "page_no", RustName: "page_no", Shape: model.ScalarString, Constraints: model.StringConstraints{MinLength: int64Pointer(1)}},
 				},
 				Variants: []model.PhysicalReference{{OperationID: "optional.json", Representation: model.RepresentationJSON}},
 			},
@@ -64,6 +64,9 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 	if strings.Contains(generated, "let mut parameters = Vec::with_capacity(1);\n        parameters.push") {
 		t.Fatal("required-only operation uses push-based vector initialization")
 	}
+	if !strings.Contains(generated, `require_length(identity, "page_no", value, 1, usize::MAX)?;`) {
+		t.Fatal("one-sided length constraint depends on the generator host word size")
+	}
 	responses := string(files["responses/group.rs"])
 	if !strings.Contains(responses, "pub struct OptionalInputJsonResponse") || !strings.Contains(responses, "source description") {
 		t.Fatal("typed response or selected description was not emitted")
@@ -102,7 +105,7 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 		t.Fatal(err)
 	}
 	operation := string(files["operations/group.rs"])
-	if !strings.Contains(operation, `for value in &self.corp_code { require_nonempty(identity, "corp_code", value)?; }`) {
+	if !strings.Contains(operation, "for value in &self.corp_code {\n            require_nonempty(identity, \"corp_code\", value)?;") {
 		t.Fatal("array elements are not checked for empty strings")
 	}
 	responses := string(files["responses/group.rs"])

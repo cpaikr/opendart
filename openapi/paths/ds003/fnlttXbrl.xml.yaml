@@ -40,6 +40,11 @@ get:
         사업보고서 : 11011
       schema:
         type: string
+        enum:
+          - "11013"
+          - "11012"
+          - "11014"
+          - "11011"
       x-opendart-korean-name: 보고서 코드
       x-opendart-documented-type: STRING(5)
       x-opendart-documented-required: Y

@@ -27,6 +27,17 @@ Moving the SDK or JSON encoder pin requires explicit CLI compatibility review.
 The SDK Release Please component updates the CLI's exact local dependency pin,
 but that dependency-only update does not change the CLI version or changelog.
 
+## Credentialed developer checks
+
+Varlock 1.12.0 appends its own child-failure diagnostic to standard output when
+the wrapped command exits nonzero. Do not run a CLI failure-contract assertion
+as `varlock run -- opendart ...`: the wrapper turns the CLI's single JSON output
+document into a concatenated stream. Instead, use Varlock to run a test harness
+that invokes and captures the CLI as its child, or provide the credential to the
+CLI through another inherited environment that preserves its process channels.
+This is Varlock behavior, not part of the public CLI contract; recheck it before
+updating this note.
+
 ## Independent release ownership
 
 Release Please has an independent `sdk/rust/crates/opendart-cli` component. It

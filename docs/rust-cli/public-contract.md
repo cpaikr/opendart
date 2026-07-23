@@ -87,13 +87,29 @@ a shell command string or expand `~`.
 operation:
 
 - canonical name and logical ID;
-- source group and API ID; and
+- source group and API ID;
+- a one-sentence description; and
 - available representations.
 
 The exact outer shape is `{"kind":"operations","operations":[...]}`.
-Each record has string fields `name`, `logical_id`, `group`, and `api_id`, plus
-a `representations` array containing `json`, `xml`, or `zip`. Records sort by
-canonical name and then logical ID; representations use that fixed order.
+Each record has string fields `name`, `logical_id`, `group`, `api_id`, and
+`description`, plus a `representations` array containing `json`, `xml`, or
+`zip`. Records sort by canonical name and then logical ID; representations use
+that fixed order.
+
+The inventory can be narrowed without changing its JSON shape:
+
+```text
+opendart operations list --query <text>
+opendart operations list --group <group>
+opendart operations list --representation <json|xml|zip>
+```
+
+Filters combine with AND semantics. `--query` is a case-insensitive substring
+search over the canonical name, logical ID, group, API ID, and description;
+`--group` is a case-insensitive exact match; and `--representation` requires
+membership in the advertised representation set. A valid filter with no
+matches succeeds with an empty `operations` array.
 
 `operations describe` emits `kind: operation` and is self-sufficient for
 constructing a valid call. It adds operation-specific flags, requiredness, list
@@ -113,7 +129,10 @@ records so the detail document stands alone.
 Each operation flag has `name`, `sdk_field`, `description`, `required`,
 `value_kind`, and `occurrence`. Scalar flags use `occurrence: "once"`; list
 flags use `occurrence: "repeat"`. `min_items` and `max_items` appear only when
-the SDK enforces them.
+the SDK enforces them. `constraints` appears only when the generated SDK
+enforces request-value rules. Its optional fields are `format`,
+`allowed_values`, `min_length`, `max_length`, `decimal_minimum`, and
+`decimal_maximum`; omitted fields have no implied constraint.
 
 Each representation has `name`, `physical_id`, `response_type`,
 `response_shape`, `selector_argv`, and `output`. `selector_argv` is
@@ -173,7 +192,9 @@ user-agent suffix internally.
 ## Credentials
 
 Authenticated calls read only `OPENDART_API_KEY` from the inherited process
-environment. An absent or empty value is a structured execution error.
+environment. An absent, empty, Unicode-whitespace-only, or control-character
+value is a structured execution error. The key has no fixed-length or
+ASCII-only requirement.
 
 The CLI has no API-key value flag, file flag, dotenv loading, config file,
 keychain integration, or prompt. It passes the exact non-empty value into the
@@ -268,9 +289,16 @@ Failures that do not produce a typed source reply use a CLI error envelope:
 ```json
 {
   "kind": "error",
+  "operation": {
+    "name": "company",
+    "logical_id": "DS001-2019002",
+    "physical_id": "get_company_json",
+    "representation": "json"
+  },
   "error": {
     "code": "missing_api_key",
     "message": "OPENDART_API_KEY is required",
+    "reason": "missing_environment_value",
     "help": ["Set OPENDART_API_KEY and retry the same command"]
   }
 }
@@ -278,11 +306,15 @@ Failures that do not produce a typed source reply use a CLI error envelope:
 
 `code` is a stable machine identifier. `message` is sanitized and actionable.
 `help` is omitted when no safe deterministic next action exists. Optional error
-response `metadata` appears beside `error` only when the SDK observed it.
-Other optional context uses repository-owned values only; raw `clap`, `reqwest`,
-filesystem, or parser errors never cross the interface. Every encodable usage
-or execution error uses JSON. Failure of stdout itself is the sole case in which
-the process cannot return this envelope on stdout.
+response `operation` identifies a parsed call before credentials, network I/O,
+or artifact work; `metadata` appears beside `error` only when the SDK observed
+it. Stable optional error details include `reason`, `argument`, `allowed`,
+`minimum`, `maximum`, `format`, and `path`. Except for `path`, which deliberately
+echoes the caller-owned `--output` spelling, this context uses repository-owned
+values only. Raw rejected values and raw `clap`, `reqwest`, filesystem, or
+parser errors never cross the interface. Every encodable usage or execution
+error uses JSON. Failure of stdout itself is the sole case in which the process
+cannot return this envelope on stdout.
 
 The initial stable error-code inventory is:
 
@@ -323,10 +355,26 @@ reference:
 
 ```json
 {
-  "kind": "archive",
-  "value": {
-    "path": "./corp-code.zip",
-    "bytes": 1234
+  "kind": "response",
+  "operation": {
+    "name": "corp-code",
+    "logical_id": "DS001-2019018",
+    "physical_id": "get_corpCode_xml",
+    "representation": "zip"
+  },
+  "response": {
+    "metadata": {
+      "status": 200,
+      "version": "http/1.1",
+      "headers": []
+    },
+    "reply": {
+      "kind": "archive",
+      "value": {
+        "path": "./corp-code.zip",
+        "bytes": 1234
+      }
+    }
   }
 }
 ```

@@ -191,14 +191,14 @@ func TestGenerateRustReplacesOnlyOlderOwnedSchemas(t *testing.T) {
 			t.Fatalf("replace previous owned schema: %v", err)
 		}
 		content, err := os.ReadFile(marker)
-		if err != nil || string(content) != "opendart-sdk-generator-schema=2\n" {
+		if err != nil || string(content) != "opendart-sdk-generator-schema=3\n" {
 			t.Fatalf("marker = %q, %v", content, err)
 		}
 	})
 
 	for _, marker := range []string{
 		"opendart-sdk-generator-schema=0\n",
-		"opendart-sdk-generator-schema=3\n",
+		"opendart-sdk-generator-schema=4\n",
 		"opendart-sdk-generator-schema=1",
 		"opendart-sdk-generator-schema=1\nextra",
 	} {

@@ -63,6 +63,24 @@ pub(crate) struct FlagSpec {
     pub(crate) min_items: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) max_items: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) constraints: Option<StringConstraintSpec>,
+}
+
+#[derive(Clone, Copy, Serialize)]
+pub(crate) struct StringConstraintSpec {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) format: Option<&'static str>,
+    #[serde(skip_serializing_if = "<[&str]>::is_empty")]
+    pub(crate) allowed_values: &'static [&'static str],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) min_length: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) max_length: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) decimal_minimum: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) decimal_maximum: Option<i64>,
 }
 
 #[derive(Clone, Copy, Serialize)]
@@ -188,20 +206,48 @@ struct CompactOperation<'a> {
     logical_id: &'a str,
     group: &'a str,
     api_id: &'a str,
+    description: &'a str,
     representations: Vec<&'a str>,
 }
 
 impl<'a> Operations<'a> {
-    pub(crate) fn new(operations: &'a [OperationSpec]) -> Self {
+    pub(crate) fn new(
+        operations: &'a [OperationSpec],
+        query: Option<&str>,
+        group: Option<&str>,
+        representation: Option<&str>,
+    ) -> Self {
+        let query = query.map(str::to_lowercase);
         Self {
             kind: "operations",
             operations: operations
                 .iter()
+                .filter(|operation| {
+                    group.is_none_or(|group| operation.group.eq_ignore_ascii_case(group))
+                        && representation.is_none_or(|representation| {
+                            operation
+                                .representations
+                                .iter()
+                                .any(|item| item.name == representation)
+                        })
+                        && query.as_ref().is_none_or(|query| {
+                            [
+                                operation.name,
+                                operation.logical_id,
+                                operation.group,
+                                operation.api_id,
+                                operation.description,
+                            ]
+                            .iter()
+                            .any(|value| value.to_lowercase().contains(query))
+                        })
+                })
                 .map(|operation| CompactOperation {
                     name: operation.name,
                     logical_id: operation.logical_id,
                     group: operation.group,
                     api_id: operation.api_id,
+                    description: operation.description,
                     representations: operation
                         .representations
                         .iter()

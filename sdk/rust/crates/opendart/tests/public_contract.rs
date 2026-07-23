@@ -136,12 +136,11 @@ fn multi_company_request_enforces_cardinality_and_comma_serialization() {
             .is_ok()
     );
 
-    let escaped = FnlttMultiAcnt::new(["a,b", "회사 /+"], "2025", "11011")
-        .prepare_json()
-        .expect("reserved list data should remain distinct from delimiters");
-    assert_eq!(
-        escaped.encoded_query(),
-        "corp_code=a%2Cb,%ED%9A%8C%EC%82%AC+%2F%2B&bsns_year=2025&reprt_code=11011"
+    assert!(
+        FnlttMultiAcnt::new(["a,b", "회사 /+"], "2025", "11011")
+            .prepare_json()
+            .is_err(),
+        "company-code format validation must run before comma serialization"
     );
 }
 
@@ -173,6 +172,44 @@ fn authorization_is_explicit_and_redacted() {
 }
 
 #[test]
+fn api_key_validation_rejects_unsafe_values_without_retaining_them() {
+    for value in ["", " ", "\t\n", "\u{a0}"] {
+        assert!(
+            matches!(
+                ApiKey::new(value),
+                Err(opendart::AuthorizationError::EmptyApiKey)
+            ),
+            "empty and whitespace-only keys must be rejected"
+        );
+    }
+
+    for value in [
+        "key\0suffix",
+        "key\nsuffix",
+        "key\u{7f}suffix",
+        "key\u{85}suffix",
+    ] {
+        let error = ApiKey::new(value).expect_err("control characters must be rejected");
+        assert!(matches!(
+            &error,
+            opendart::AuthorizationError::ControlCharacterApiKey
+        ));
+        assert_eq!(
+            error.to_string(),
+            "the OpenDART API key must not contain control characters"
+        );
+        assert_eq!(format!("{error:?}"), "ControlCharacterApiKey");
+    }
+}
+
+#[test]
+fn api_key_validation_does_not_impose_length_or_character_set_rules() {
+    assert!(ApiKey::new("x").is_ok());
+    assert!(ApiKey::new("x".repeat(512)).is_ok());
+    assert!(ApiKey::new(" key with spaces and 한글 ").is_ok());
+}
+
+#[test]
 fn empty_inputs_fail_without_echoing_values() {
     let error = Company::new("")
         .prepare_json()
@@ -185,6 +222,47 @@ fn empty_inputs_fail_without_echoing_values() {
         .prepare_json()
         .expect_err("a supplied optional query value must not be empty");
     assert!(error.to_string().contains("page_no"));
+}
+
+#[test]
+fn canonical_input_constraints_fail_during_preparation_without_echoing_values() {
+    let cases = [
+        Company::new("１２３４５６７８")
+            .prepare_json()
+            .expect_err("company codes require ASCII digits"),
+        List::new()
+            .with_bgn_de("20230229")
+            .prepare_json()
+            .expect_err("compact dates require a valid calendar day"),
+        List::new()
+            .with_last_reprt_at("maybe")
+            .prepare_json()
+            .expect_err("closed values must be enforced"),
+        List::new()
+            .with_page_count("101")
+            .prepare_json()
+            .expect_err("page count must remain within its bound"),
+        AccnutAdtorNmNdAdtOpinion::new("00126380", "２０２５", "11011")
+            .prepare_json()
+            .expect_err("business years require ASCII digits"),
+        AccnutAdtorNmNdAdtOpinion::new("00126380", "2025", "99999")
+            .prepare_json()
+            .expect_err("report codes require documented values"),
+    ];
+
+    for error in cases {
+        let diagnostic = error.to_string();
+        for rejected in [
+            "１２３４５６７８",
+            "20230229",
+            "maybe",
+            "101",
+            "２０２５",
+            "99999",
+        ] {
+            assert!(!diagnostic.contains(rejected));
+        }
+    }
 }
 
 #[test]

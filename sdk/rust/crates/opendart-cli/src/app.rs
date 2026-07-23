@@ -24,7 +24,7 @@ where
                 1
             }
         }
-        ParseOutcome::Usage(help) => emit(&ErrorEnvelope::usage(help), 2),
+        ParseOutcome::Usage(error) => emit(&ErrorEnvelope::invocation(error), 2),
     }
 }
 
@@ -53,7 +53,17 @@ fn home() -> u8 {
 
 fn operations(matches: &ArgMatches) -> u8 {
     match matches.subcommand() {
-        Some(("list", _)) => emit(&Operations::new(catalog::OPERATIONS), 0),
+        Some(("list", matches)) => emit(
+            &Operations::new(
+                catalog::OPERATIONS,
+                matches.get_one::<String>("query").map(String::as_str),
+                matches.get_one::<String>("group").map(String::as_str),
+                matches
+                    .get_one::<String>("representation")
+                    .map(String::as_str),
+            ),
+            0,
+        ),
         Some(("describe", matches)) => {
             let name = matches
                 .get_one::<String>("operation")
@@ -76,15 +86,30 @@ fn call(matches: &ArgMatches) -> u8 {
     let operation_name = matches
         .subcommand_name()
         .expect("clap requires generated operation");
-    let _operation = catalog::operation(operation_name).expect("clap operation has catalog entry");
+    let operation_spec =
+        catalog::operation(operation_name).expect("clap operation has catalog entry");
+    let Some(requested_operation) = requested_operation_context(operation_spec, matches) else {
+        return emit(&ErrorEnvelope::sdk_contract_mismatch(None), 1);
+    };
     let prepared = match crate::generated::dispatch::prepare_call(matches) {
         Ok(prepared) => prepared,
-        Err(_) => return emit(&ErrorEnvelope::invalid_request(), 2),
+        Err(error) => {
+            return emit(
+                &ErrorEnvelope::invalid_request(requested_operation, operation_spec, error),
+                2,
+            );
+        }
     };
     let operation = match prepared.operation_context() {
         Ok(operation) => operation,
         Err(error) => return emit(&error, 1),
     };
+    if operation != requested_operation {
+        return emit(
+            &ErrorEnvelope::sdk_contract_mismatch(Some(requested_operation)),
+            1,
+        );
+    }
     let artifact = match prepared.artifact_target(matches, operation) {
         Ok(artifact) => artifact,
         Err(TargetError::Usage(error)) => return emit(&error, 2),
@@ -92,16 +117,40 @@ fn call(matches: &ArgMatches) -> u8 {
     };
     let overrides = ClientOverrides::from_matches(matches);
     let Some(key) = std::env::var_os("OPENDART_API_KEY") else {
-        return emit(&ErrorEnvelope::missing_api_key(), 1);
+        return emit(&ErrorEnvelope::missing_api_key(operation), 1);
     };
     if key.is_empty() {
-        return emit(&ErrorEnvelope::missing_api_key(), 1);
+        return emit(&ErrorEnvelope::missing_api_key(operation), 1);
     }
     let Ok(key) = key.into_string() else {
-        return emit(&ErrorEnvelope::invalid_client_configuration(), 1);
+        return emit(
+            &ErrorEnvelope::invalid_client_configuration(operation, "non_text_api_key"),
+            1,
+        );
     };
-    let Ok(key) = opendart::ApiKey::new(key) else {
-        return emit(&ErrorEnvelope::invalid_client_configuration(), 1);
+    let key = match opendart::ApiKey::new(key) {
+        Ok(key) => key,
+        Err(opendart::AuthorizationError::EmptyApiKey) => {
+            return emit(
+                &ErrorEnvelope::invalid_client_configuration(operation, "whitespace_only_api_key"),
+                1,
+            );
+        }
+        Err(opendart::AuthorizationError::ControlCharacterApiKey) => {
+            return emit(
+                &ErrorEnvelope::invalid_client_configuration(
+                    operation,
+                    "control_character_api_key",
+                ),
+                1,
+            );
+        }
+        Err(_) => {
+            return emit(
+                &ErrorEnvelope::invalid_client_configuration(operation, "invalid_api_key"),
+                1,
+            );
+        }
     };
     let executor = match Executor::new(key, overrides, operation) {
         Ok(executor) => executor,
@@ -114,6 +163,30 @@ fn call(matches: &ArgMatches) -> u8 {
         },
         Err(error) => emit(&error, 1),
     }
+}
+
+fn requested_operation_context(
+    operation: &'static crate::discovery::OperationSpec,
+    matches: &ArgMatches,
+) -> Option<crate::execution::OperationContext> {
+    let operation_matches = matches.subcommand().map(|(_, matches)| matches)?;
+    let representation = if operation.representations.len() == 1 {
+        operation.representations.first()?
+    } else {
+        let name = operation_matches
+            .get_one::<String>("representation")
+            .map(String::as_str)?;
+        operation
+            .representations
+            .iter()
+            .find(|representation| representation.name == name)?
+    };
+    Some(crate::execution::OperationContext::new(
+        operation.name,
+        operation.logical_id,
+        representation.physical_id,
+        representation.name,
+    ))
 }
 
 fn emit(value: &impl serde::Serialize, success: u8) -> u8 {

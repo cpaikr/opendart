@@ -24,6 +24,9 @@ get:
         maxItems: 100
         items:
           type: string
+          format: opendart-corp-code
+          minLength: 8
+          maxLength: 8
       examples:
         officialGuide:
           summary: 공식 개발가이드 테스트 예시
@@ -67,6 +70,9 @@ get:
         ※ 2023년 3분기 이후 부터 정보제공
       schema:
         type: string
+        format: opendart-year
+        minLength: 4
+        maxLength: 4
       x-opendart-korean-name: 사업연도
       x-opendart-documented-type: STRING(4)
       x-opendart-documented-required: Y
@@ -80,6 +86,11 @@ get:
         사업보고서 : 11011
       schema:
         type: string
+        enum:
+          - "11013"
+          - "11012"
+          - "11014"
+          - "11011"
       x-opendart-korean-name: 보고서 코드
       x-opendart-documented-type: STRING(5)
       x-opendart-documented-required: Y

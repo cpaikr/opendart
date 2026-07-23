@@ -1,1 +1,1 @@
-{"kind":"error","error":{"code":"invalid_invocation","message":"the command invocation is invalid","help":["Valid commands: operations, call, --help, --version"]}}
+{"kind":"error","error":{"code":"invalid_invocation","message":"the command invocation is invalid","reason":"unknown_command","allowed":["operations","call"],"help":["Valid commands: operations, call, --help, --version"]}}

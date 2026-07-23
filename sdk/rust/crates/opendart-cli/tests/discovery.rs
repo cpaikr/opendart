@@ -107,6 +107,7 @@ fn every_generated_operation_is_described_equally_by_name_and_logical_id() {
         assert_eq!(by_name, by_id, "discovery alias mismatch for {name}");
         assert_eq!(by_name["operation"]["name"], name);
         assert_eq!(by_name["operation"]["logical_id"], logical_id);
+        assert_eq!(compact["description"], by_name["operation"]["description"]);
         assert_eq!(
             by_name["operation"]["invocation"]["argv_prefix"],
             serde_json::json!(["call", name])
@@ -122,6 +123,180 @@ fn every_generated_operation_is_described_equally_by_name_and_logical_id() {
             ])
         );
     }
+}
+
+#[test]
+fn discovery_exposes_canonical_string_constraints() {
+    let company = json_output(&["operations", "describe", "company"], 0);
+    let corp_code = company["operation"]["flags"]
+        .as_array()
+        .expect("company flags")
+        .iter()
+        .find(|flag| flag["name"] == "--corp-code")
+        .expect("corp-code flag");
+    assert_eq!(
+        corp_code["constraints"],
+        serde_json::json!({
+            "format": "opendart-corp-code",
+            "min_length": 8,
+            "max_length": 8
+        })
+    );
+
+    let list = json_output(&["operations", "describe", "list"], 0);
+    let flags = list["operation"]["flags"].as_array().expect("list flags");
+    let constraint = |name: &str| {
+        &flags
+            .iter()
+            .find(|flag| flag["name"] == name)
+            .unwrap_or_else(|| panic!("missing {name}"))["constraints"]
+    };
+    assert_eq!(
+        constraint("--last-reprt-at")["allowed_values"],
+        serde_json::json!(["Y", "N"])
+    );
+    assert_eq!(constraint("--bgn-de")["format"], "opendart-date");
+    assert_eq!(constraint("--page-no")["decimal_minimum"], 1);
+    assert_eq!(constraint("--page-count")["decimal_maximum"], 100);
+}
+
+#[test]
+fn request_constraint_errors_are_actionable_and_do_not_echo_values() {
+    let format = json_output(
+        &[
+            "call",
+            "company",
+            "--corp-code",
+            "１２３４５６７８",
+            "--representation",
+            "json",
+        ],
+        2,
+    );
+    assert_eq!(format["error"]["reason"], "invalid_format");
+    assert_eq!(format["error"]["argument"], "--corp-code");
+    assert_eq!(format["error"]["format"], "opendart-corp-code");
+    assert_eq!(format["operation"]["name"], "company");
+    assert!(!format.to_string().contains("１２３４５６７８"));
+
+    let allowed = json_output(
+        &[
+            "call",
+            "list",
+            "--last-reprt-at",
+            "private-value",
+            "--representation",
+            "json",
+        ],
+        2,
+    );
+    assert_eq!(allowed["error"]["reason"], "invalid_allowed_value");
+    assert_eq!(allowed["error"]["argument"], "--last-reprt-at");
+    assert_eq!(allowed["error"]["allowed"], serde_json::json!(["Y", "N"]));
+    assert!(!allowed.to_string().contains("private-value"));
+
+    let range = json_output(
+        &[
+            "call",
+            "list",
+            "--page-count",
+            "101",
+            "--representation",
+            "json",
+        ],
+        2,
+    );
+    assert_eq!(range["error"]["reason"], "invalid_decimal_range");
+    assert_eq!(range["error"]["argument"], "--page-count");
+    assert_eq!(range["error"]["minimum"], 1);
+    assert_eq!(range["error"]["maximum"], 100);
+    assert!(!range.to_string().contains("101"));
+}
+
+#[test]
+fn operation_inventory_filters_are_keyless_deterministic_and_composable() {
+    let company_by_name = json_output(&["operations", "list", "--query", "COMPANY"], 0);
+    let company_by_name = company_by_name["operations"]
+        .as_array()
+        .expect("filtered operations");
+    assert_eq!(company_by_name.len(), 1);
+    assert_eq!(company_by_name[0]["name"], "company");
+
+    for query in ["ds001-2019002", "2019002", "개황정보"] {
+        let filtered = json_output(&["operations", "list", "--query", query], 0);
+        let operations = filtered["operations"]
+            .as_array()
+            .expect("filtered operations");
+        assert_eq!(
+            operations.len(),
+            1,
+            "query did not narrow to company: {query}"
+        );
+        assert_eq!(operations[0]["name"], "company");
+    }
+
+    let group = json_output(&["operations", "list", "--group", "ds001"], 0);
+    let grouped = group["operations"].as_array().expect("grouped operations");
+    assert!(!grouped.is_empty());
+    assert!(
+        grouped
+            .iter()
+            .all(|operation| operation["group"] == "DS001")
+    );
+
+    let zip = json_output(&["operations", "list", "--representation", "zip"], 0);
+    assert_eq!(
+        zip,
+        json_output(&["operations", "list", "--representation", "zip"], 0)
+    );
+    let zip_operations = zip["operations"].as_array().expect("ZIP operations");
+    assert!(!zip_operations.is_empty());
+    assert!(zip_operations.iter().all(|operation| {
+        operation["representations"]
+            .as_array()
+            .expect("representations")
+            .iter()
+            .any(|representation| representation == "zip")
+    }));
+
+    let combined = json_output(
+        &[
+            "operations",
+            "list",
+            "--query",
+            "code",
+            "--group",
+            "DS001",
+            "--representation",
+            "zip",
+        ],
+        0,
+    );
+    let combined = combined["operations"]
+        .as_array()
+        .expect("combined operations");
+    assert_eq!(combined.len(), 1);
+    assert_eq!(combined[0]["name"], "corp-code");
+    assert_eq!(combined[0]["representations"], serde_json::json!(["zip"]));
+    assert!(
+        combined[0]["description"]
+            .as_str()
+            .is_some_and(|description| !description.is_empty())
+    );
+
+    let empty = json_output(
+        &[
+            "operations",
+            "list",
+            "--query",
+            "no-such-opendart-operation",
+        ],
+        0,
+    );
+    assert_eq!(
+        empty,
+        serde_json::json!({"kind": "operations", "operations": []})
+    );
 }
 
 #[test]
@@ -153,7 +328,10 @@ fn discovery_json_alone_constructs_an_sdk_prepared_call() {
     assert_eq!(output.status.code(), Some(1));
     let error: Value = serde_json::from_slice(&output.stdout).expect("error JSON");
     assert_eq!(error["error"]["code"], "missing_api_key");
-    assert!(error.get("operation").is_none());
+    assert_eq!(error["operation"]["name"], "company");
+    assert_eq!(error["operation"]["logical_id"], "DS001-2019002");
+    assert_eq!(error["operation"]["physical_id"], "get_company_json");
+    assert_eq!(error["operation"]["representation"], "json");
 
     arguments[1] = operation["logical_id"]
         .as_str()
@@ -202,7 +380,36 @@ fn non_text_api_key_is_invalid_client_configuration() {
     assert!(output.stderr.is_empty());
     let error: Value = serde_json::from_slice(&output.stdout).expect("error JSON");
     assert_eq!(error["error"]["code"], "invalid_client_configuration");
-    assert!(error.get("operation").is_none());
+    assert_eq!(error["error"]["reason"], "non_text_api_key");
+    assert_eq!(error["operation"]["name"], "company");
+}
+
+#[test]
+fn whitespace_and_control_api_keys_are_rejected_without_disclosure() {
+    let arguments = vec![
+        "call".to_owned(),
+        "company".to_owned(),
+        "--corp-code".to_owned(),
+        "00126380".to_owned(),
+        "--representation".to_owned(),
+        "json".to_owned(),
+    ];
+    for (key, reason) in [
+        (" \t\u{2003}", "whitespace_only_api_key"),
+        ("sentinel\nsecret", "control_character_api_key"),
+    ] {
+        let output = invoke(&arguments, Some(key));
+        assert_eq!(output.status.code(), Some(1));
+        assert!(output.stderr.is_empty());
+        let text = String::from_utf8(output.stdout).expect("error JSON should be UTF-8");
+        assert!(!text.contains(key));
+        assert!(!text.contains("sentinel"));
+        assert!(!text.contains("secret"));
+        let error: Value = serde_json::from_str(&text).expect("error JSON");
+        assert_eq!(error["error"]["code"], "invalid_client_configuration");
+        assert_eq!(error["error"]["reason"], reason);
+        assert_eq!(error["operation"]["name"], "company");
+    }
 }
 
 #[test]
@@ -249,6 +456,7 @@ fn invalid_invocations_are_strict_json_usage_errors_before_credentials() {
             "zip",
         ],
         &["call", "corp-code"],
+        &["operations", "list", "--representation", "yaml"],
     ];
     for arguments in cases {
         let owned: Vec<String> = arguments.iter().map(|value| (*value).to_owned()).collect();
@@ -280,6 +488,65 @@ fn invalid_invocations_are_strict_json_usage_errors_before_credentials() {
     assert!(correction.contains("--corp-code"));
     assert!(correction.contains("--representation"));
     assert!(!correction.contains("--unknown"));
+    assert_eq!(unknown_flag["error"]["reason"], "unknown_argument");
+    assert!(unknown_flag["error"].get("argument").is_none());
+    assert!(!unknown_flag.to_string().contains("--unknown"));
+
+    let missing = json_output(&["call", "company", "--corp-code", "00126380"], 2);
+    assert_eq!(missing["error"]["reason"], "missing_required_argument");
+    assert_eq!(missing["error"]["argument"], "--representation");
+
+    let invalid = json_output(
+        &[
+            "call",
+            "company",
+            "--corp-code",
+            "00126380",
+            "--representation",
+            "private-value",
+        ],
+        2,
+    );
+    assert_eq!(invalid["error"]["reason"], "invalid_value");
+    assert_eq!(invalid["error"]["argument"], "--representation");
+    assert_eq!(
+        invalid["error"]["allowed"],
+        serde_json::json!(["json", "xml"])
+    );
+    assert!(!invalid.to_string().contains("private-value"));
+
+    let conflict = json_output(
+        &[
+            "call",
+            "company",
+            "--corp-code",
+            "00126380",
+            "--corp-code",
+            "00126381",
+            "--representation",
+            "json",
+        ],
+        2,
+    );
+    assert_eq!(conflict["error"]["reason"], "argument_conflict");
+    assert_eq!(conflict["error"]["argument"], "--corp-code");
+
+    let invalid_filter = json_output(
+        &["operations", "list", "--representation", "private-value"],
+        2,
+    );
+    assert_eq!(invalid_filter["error"]["reason"], "invalid_value");
+    assert_eq!(invalid_filter["error"]["argument"], "--representation");
+    assert_eq!(
+        invalid_filter["error"]["allowed"],
+        serde_json::json!(["json", "xml", "zip"])
+    );
+    assert!(
+        invalid_filter["error"]["help"][0]
+            .as_str()
+            .is_some_and(|help| help.contains("--query") && help.contains("--representation"))
+    );
+    assert!(!invalid_filter.to_string().contains("private-value"));
 }
 
 #[test]
@@ -340,6 +607,9 @@ fn zip_output_and_sdk_input_rules_precede_credentials() {
         2,
     );
     assert_eq!(empty_required["error"]["code"], "invalid_request");
+    assert_eq!(empty_required["error"]["reason"], "missing_input");
+    assert_eq!(empty_required["error"]["argument"], "--corp-code");
+    assert_eq!(empty_required["operation"]["name"], "company");
 }
 
 #[test]
@@ -347,13 +617,103 @@ fn help_and_version_are_the_only_plain_text_successes() {
     for arguments in [
         ["--help"].as_slice(),
         ["operations", "--help"].as_slice(),
+        ["operations", "list", "--help"].as_slice(),
+        ["call", "--help"].as_slice(),
+        ["call", "company", "--help"].as_slice(),
         ["--version"].as_slice(),
         ["operations", "--version"].as_slice(),
+        ["operations", "list", "--version"].as_slice(),
+        ["call", "--version"].as_slice(),
+        ["call", "company", "--version"].as_slice(),
     ] {
         let owned: Vec<String> = arguments.iter().map(|value| (*value).to_owned()).collect();
         let output = invoke(&owned, None);
         assert_eq!(output.status.code(), Some(0));
         assert!(!output.stdout.is_empty());
         assert!(serde_json::from_slice::<Value>(&output.stdout).is_err());
+    }
+}
+
+#[test]
+fn call_help_is_concise_and_operation_help_explains_shared_controls() {
+    let call = invoke(&["call".to_owned(), "--help".to_owned()], None);
+    assert_eq!(call.status.code(), Some(0));
+    assert!(call.stderr.is_empty());
+    let call = String::from_utf8(call.stdout).expect("call help should be UTF-8");
+    assert!(call.contains("opendart operations list"));
+    assert!(call.contains("opendart operations describe <operation>"));
+    assert!(call.contains("Usage: opendart call <OPERATION> [OPTIONS]"));
+    assert!(!call.contains("accnut-adtor-nm-nd-adt-opinion"));
+    assert!(!call.contains("company\n"));
+
+    let company = invoke(
+        &["call".to_owned(), "company".to_owned(), "--help".to_owned()],
+        None,
+    );
+    assert_eq!(company.status.code(), Some(0));
+    assert!(company.stderr.is_empty());
+    let company = String::from_utf8(company.stdout).expect("operation help should be UTF-8");
+    for expected in [
+        "--representation <REPRESENTATION>",
+        "Select the structured response representation",
+        "--connect-timeout-ms <MILLISECONDS>",
+        "Set the connection timeout in milliseconds",
+        "--read-timeout-ms <MILLISECONDS>",
+        "Set the response-read timeout in milliseconds",
+        "--total-timeout-ms <MILLISECONDS>",
+        "Set the total request timeout in milliseconds",
+        "--envelope-limit-bytes <BYTES>",
+        "Set the maximum buffered structured-response size in bytes",
+    ] {
+        assert!(
+            company.contains(expected),
+            "operation help omitted {expected:?}"
+        );
+    }
+
+    let artifact = invoke(
+        &[
+            "call".to_owned(),
+            "corp-code".to_owned(),
+            "--help".to_owned(),
+        ],
+        None,
+    );
+    assert_eq!(artifact.status.code(), Some(0));
+    assert!(artifact.stderr.is_empty());
+    let artifact = String::from_utf8(artifact.stdout).expect("artifact help should be UTF-8");
+    for expected in [
+        "--output <PATH>",
+        "Write the binary response to a new file without overwriting",
+        "--artifact-limit-bytes <BYTES>",
+        "Set the maximum binary artifact size in bytes",
+    ] {
+        assert!(
+            artifact.contains(expected),
+            "artifact help omitted {expected:?}"
+        );
+    }
+}
+
+#[test]
+fn every_command_depth_reports_the_cli_package_identity() {
+    let expected = format!("opendart {}\n", env!("CARGO_PKG_VERSION"));
+    for arguments in [
+        ["--version"].as_slice(),
+        ["operations", "--version"].as_slice(),
+        ["operations", "list", "--version"].as_slice(),
+        ["operations", "describe", "--version"].as_slice(),
+        ["call", "--version"].as_slice(),
+        ["call", "company", "--version"].as_slice(),
+    ] {
+        let owned: Vec<String> = arguments.iter().map(|value| (*value).to_owned()).collect();
+        let output = invoke(&owned, None);
+        assert_eq!(output.status.code(), Some(0), "arguments: {arguments:?}");
+        assert!(output.stderr.is_empty());
+        assert_eq!(
+            String::from_utf8(output.stdout).expect("version should be UTF-8"),
+            expected,
+            "arguments: {arguments:?}"
+        );
     }
 }

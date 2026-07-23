@@ -14,9 +14,9 @@ import (
 
 const (
 	// SemanticSchemaVersion identifies the combined normalized artifact model.
-	SemanticSchemaVersion uint32 = 1
+	SemanticSchemaVersion uint32 = 2
 	// CLIProjectionSchemaVersion identifies the generated CLI contract projection.
-	CLIProjectionSchemaVersion uint32 = 1
+	CLIProjectionSchemaVersion uint32 = 2
 )
 
 // ArtifactSet is one normalized build with independently identified projections.
@@ -56,14 +56,15 @@ type CLIOperation struct {
 
 // CLIParameter describes one generated operation-specific flag.
 type CLIParameter struct {
-	Flag        string         `json:"flag"`
-	WireName    string         `json:"wireName"`
-	SDKField    string         `json:"sdkField"`
-	Description string         `json:"description"`
-	Required    bool           `json:"required"`
-	Shape       ParameterShape `json:"shape"`
-	MinItems    *int64         `json:"minItems,omitempty"`
-	MaxItems    *int64         `json:"maxItems,omitempty"`
+	Flag        string            `json:"flag"`
+	WireName    string            `json:"wireName"`
+	SDKField    string            `json:"sdkField"`
+	Description string            `json:"description"`
+	Required    bool              `json:"required"`
+	Shape       ParameterShape    `json:"shape"`
+	MinItems    *int64            `json:"minItems,omitempty"`
+	MaxItems    *int64            `json:"maxItems,omitempty"`
+	Constraints StringConstraints `json:"constraints,omitempty"`
 }
 
 // CLIRepresentation binds one public selector to its SDK preparation surface.
@@ -186,6 +187,7 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 				Flag: flag, WireName: parameter.WireName, SDKField: parameter.RustName,
 				Description: parameterDescriptions[parameter.WireName], Required: parameter.Required,
 				Shape: parameter.Shape, MinItems: parameter.MinItems, MaxItems: parameter.MaxItems,
+				Constraints: parameter.Constraints,
 			})
 		}
 

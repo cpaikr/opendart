@@ -1,7 +1,7 @@
 use crate::generated::{GENERATOR_SCHEMA, PROJECTION_CHECKSUM};
 
 const CANONICAL_BUNDLE_SHA256: &str =
-    "76711f2e9c886eb1977f1292c07fcefdd60528a910982cc92b2df565ab97fe24";
+    "230905dec268096f7d57a3b48cc2772b7bfcccf733ece124de9b7586f5f2d338";
 const SPECIFICATION_SOURCE_RELEASE: Option<&str> = Some("v0.1.0");
 
 /// The reviewed specification sources, generated artifact, and SDK projection.

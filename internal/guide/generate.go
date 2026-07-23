@@ -490,7 +490,7 @@ func parameterObjects(endpoint Endpoint) ([]any, error) {
 		}
 		parameter := map[string]any{
 			"name": argument.Key, "in": "query", "required": argument.Required == "Y",
-			"description": argument.Description, "schema": map[string]any{"type": "string"},
+			"description": argument.Description, "schema": stringSchema(argument),
 			"x-opendart-korean-name":         argument.Name,
 			"x-opendart-documented-type":     argument.DocumentedType,
 			"x-opendart-documented-required": argument.Required,
@@ -504,7 +504,7 @@ func parameterObjects(endpoint Endpoint) ([]any, error) {
 		if serialization != nil {
 			parameter["style"] = "form"
 			parameter["explode"] = false
-			parameter["schema"] = map[string]any{"type": "array", "minItems": 1, "maxItems": serialization.maximumItems, "items": map[string]any{"type": "string"}}
+			parameter["schema"] = map[string]any{"type": "array", "minItems": 1, "maxItems": serialization.maximumItems, "items": stringSchema(argument)}
 			parameter["examples"] = map[string]any{"officialGuide": map[string]any{
 				"summary": "공식 개발가이드 테스트 예시", "dataValue": serialization.values, "serializedValue": "corp_code=" + serialization.serializedValue,
 			}}

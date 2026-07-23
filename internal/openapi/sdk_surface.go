@@ -58,19 +58,31 @@ type SDKSurfaceOperation struct {
 // SDKSurfaceParameter records the request serialization and schema facts that
 // must cross the private OpenAPI boundary during SDK generation.
 type SDKSurfaceParameter struct {
-	Name            string
-	Description     string
-	Location        string
-	Required        bool
-	Style           string
-	Explode         bool
-	AllowEmptyValue bool
-	AllowReserved   bool
-	Types           []string
-	ItemTypes       []string
-	MinItems        *int64
-	MaxItems        *int64
-	HasSchema       bool
+	Name              string
+	Description       string
+	Location          string
+	Required          bool
+	Style             string
+	Explode           bool
+	AllowEmptyValue   bool
+	AllowReserved     bool
+	Types             []string
+	ItemTypes         []string
+	MinItems          *int64
+	MaxItems          *int64
+	StringConstraints SDKSurfaceStringConstraints
+	HasSchema         bool
+}
+
+// SDKSurfaceStringConstraints is the closed request-value validation surface
+// supported by generators. For array parameters it applies to each item.
+type SDKSurfaceStringConstraints struct {
+	Format         string
+	AllowedValues  []string
+	MinLength      *int64
+	MaxLength      *int64
+	DecimalMinimum *int64
+	DecimalMaximum *int64
 }
 
 // SDKSurfaceSchema is the conservative, repository-owned response-shape
@@ -202,6 +214,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 					}
 					evidence.HasSchema = true
 					evidence.Types = append([]string(nil), schema.Type...)
+					constraintSchema := schema
 					if schema.Items != nil {
 						if !schema.Items.IsA() || schema.Items.A == nil || schema.Items.A.Schema() == nil {
 							return SDKSurface{}, fmt.Errorf("%s parameter %q has unsupported items schema", identity, parameter.Name)
@@ -211,7 +224,13 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 							return SDKSurface{}, rejectSDKSurface("unsupported-request-schema", operation.OperationId, pathName+"/"+method+"/parameters/"+parameter.Name+"/schema/items", keyword)
 						}
 						evidence.ItemTypes = append([]string(nil), itemSchema.Type...)
+						constraintSchema = itemSchema
 					}
+					constraints, err := inspectSDKStringConstraints(constraintSchema)
+					if err != nil {
+						return SDKSurface{}, rejectSDKSurface("invalid-request-constraint", operation.OperationId, pathName+"/"+method+"/parameters/"+parameter.Name+"/schema", err.Error())
+					}
+					evidence.StringConstraints = constraints
 					evidence.MinItems = copyInt64(schema.MinItems)
 					evidence.MaxItems = copyInt64(schema.MaxItems)
 				}
@@ -480,8 +499,23 @@ func inspectSDKSchema(proxy interface {
 }
 
 func unsupportedSDKParameterSchema(source *base.Schema, item bool) string {
+	if !item && reflect.DeepEqual(source.Type, []string{"array"}) {
+		switch {
+		case source.Format != "":
+			return "format"
+		case len(source.Enum) > 0:
+			return "enum"
+		case source.MinLength != nil:
+			return "minLength"
+		case source.MaxLength != nil:
+			return "maxLength"
+		case hasSDKExtension(source.Extensions, "x-opendart-decimal-range"):
+			return "x-opendart-decimal-range"
+		}
+	}
 	allowed := map[string]bool{
 		"Type": true, "Title": true, "Description": true, "Format": true,
+		"Enum": true, "MinLength": true, "MaxLength": true,
 		"Examples": true, "Example": true, "ExternalDocs": true, "Deprecated": true,
 		"Extensions": true, "ParentProxy": true,
 	}
@@ -491,8 +525,16 @@ func unsupportedSDKParameterSchema(source *base.Schema, item bool) string {
 		allowed["MaxItems"] = true
 	}
 	return firstUnsupportedSchemaField(source, allowed, func(field string) bool {
-		return field == "Extensions" && !supportedSDKSchemaExtensions(source.Extensions)
+		return field == "Extensions" && !supportedSDKParameterSchemaExtensions(source.Extensions)
 	})
+}
+
+func hasSDKExtension(extensions *orderedmap.Map[string, *yaml.Node], name string) bool {
+	if extensions == nil {
+		return false
+	}
+	_, exists := extensions.Get(name)
+	return exists
 }
 
 func unsupportedSDKResponseSchema(source *base.Schema, openStatus bool) string {
@@ -514,12 +556,87 @@ func unsupportedSDKResponseSchema(source *base.Schema, openStatus bool) string {
 }
 
 func supportedSDKSchemaExtensions(extensions *orderedmap.Map[string, *yaml.Node]) bool {
+	return supportedSDKExtensions(extensions, false)
+}
+
+func supportedSDKParameterSchemaExtensions(extensions *orderedmap.Map[string, *yaml.Node]) bool {
+	return supportedSDKExtensions(extensions, true)
+}
+
+func supportedSDKExtensions(extensions *orderedmap.Map[string, *yaml.Node], request bool) bool {
 	if extensions == nil {
 		return true
 	}
 	for name := range extensions.KeysFromOldest() {
 		switch name {
 		case "x-opendart", "x-opendart-code-descriptions", "x-opendart-documented-type", "x-opendart-korean-name", "x-opendart-normalization", "x-opendart-source-diagnostics":
+		case "x-opendart-decimal-range":
+			if request {
+				continue
+			}
+			return false
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func inspectSDKStringConstraints(source *base.Schema) (SDKSurfaceStringConstraints, error) {
+	if source == nil || !reflect.DeepEqual(source.Type, []string{"string"}) {
+		return SDKSurfaceStringConstraints{}, nil
+	}
+	constraints := SDKSurfaceStringConstraints{
+		Format: source.Format, MinLength: copyInt64(source.MinLength), MaxLength: copyInt64(source.MaxLength),
+	}
+	switch constraints.Format {
+	case "", "opendart-corp-code", "opendart-date", "opendart-year":
+	default:
+		return SDKSurfaceStringConstraints{}, fmt.Errorf("unsupported format %q", constraints.Format)
+	}
+	if constraints.MinLength != nil && *constraints.MinLength < 1 || constraints.MaxLength != nil && *constraints.MaxLength < 1 || constraints.MinLength != nil && constraints.MaxLength != nil && *constraints.MinLength > *constraints.MaxLength {
+		return SDKSurfaceStringConstraints{}, errors.New("invalid string length range")
+	}
+	seen := make(map[string]bool, len(source.Enum))
+	for _, value := range source.Enum {
+		if value == nil || value.Kind != yaml.ScalarNode || value.ShortTag() != "!!str" || value.Value == "" || seen[value.Value] {
+			return SDKSurfaceStringConstraints{}, errors.New("allowed values must be unique non-empty strings")
+		}
+		seen[value.Value] = true
+		constraints.AllowedValues = append(constraints.AllowedValues, value.Value)
+	}
+	if source.Extensions != nil {
+		if node, ok := source.Extensions.Get("x-opendart-decimal-range"); ok {
+			if !validSDKDecimalRangeNode(node) {
+				return SDKSurfaceStringConstraints{}, errors.New("invalid decimal range")
+			}
+			var value struct {
+				Minimum *int64 `yaml:"minimum"`
+				Maximum *int64 `yaml:"maximum"`
+			}
+			if node == nil || node.Decode(&value) != nil || value.Minimum == nil || *value.Minimum < 0 || value.Maximum != nil && *value.Maximum < *value.Minimum {
+				return SDKSurfaceStringConstraints{}, errors.New("invalid decimal range")
+			}
+			constraints.DecimalMinimum = copyInt64(value.Minimum)
+			constraints.DecimalMaximum = copyInt64(value.Maximum)
+		}
+	}
+	return constraints, nil
+}
+
+func validSDKDecimalRangeNode(node *yaml.Node) bool {
+	if node == nil || node.Kind != yaml.MappingNode || len(node.Content)%2 != 0 {
+		return false
+	}
+	seen := make(map[string]bool, 2)
+	for index := 0; index < len(node.Content); index += 2 {
+		key := node.Content[index]
+		if key == nil || key.Kind != yaml.ScalarNode || key.ShortTag() != "!!str" || seen[key.Value] {
+			return false
+		}
+		switch key.Value {
+		case "minimum", "maximum":
+			seen[key.Value] = true
 		default:
 			return false
 		}
