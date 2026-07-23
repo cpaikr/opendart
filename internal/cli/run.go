@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
+	"github.com/cpaikr/opendart/internal/driftnotifier"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/liveconformance"
 	"github.com/cpaikr/opendart/internal/livenotifier"
@@ -46,6 +47,10 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runGenerateSDK(args[1:], stdout, stderr)
 	case "verify":
 		return runVerify(args[1:], stdout, stderr)
+	case "guide-drift":
+		return runGuideDrift(ctx, args[1:], stdout, stderr)
+	case "guide-drift-notify":
+		return runGuideDriftNotify(ctx, args[1:], stdout, stderr)
 	case "live-conformance":
 		return runLiveConformance(ctx, args[1:], stdout, stderr)
 	case "live-conformance-notify":
@@ -184,6 +189,74 @@ func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGener
 type livePreflightRunner func(string) (liveconformance.PreflightReport, error)
 type liveRunner func(context.Context, string) (liveconformance.Report, error)
 type liveNotifierRunner func(context.Context, livenotifier.Options) (livenotifier.Result, error)
+type guideDriftRunner func(context.Context, string) (guidesync.DriftReport, error)
+type driftNotifierRunner func(context.Context, driftnotifier.Options) (driftnotifier.Result, error)
+
+func runGuideDrift(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	return runGuideDriftWith(ctx, args, stdout, stderr, guidesync.Drift)
+}
+
+func runGuideDriftWith(ctx context.Context, args []string, stdout, stderr io.Writer, runner guideDriftRunner) int {
+	flags := flag.NewFlagSet("guide-drift", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	repositoryRoot := flags.String("repository-root", ".", "repository root")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("guide-drift", flags, stderr); code != 0 {
+		return code
+	}
+	report, err := runner(ctx, *repositoryRoot)
+	if err != nil {
+		if report.Kind == guidesync.DriftReportKind {
+			if encodeErr := writeJSON(stdout, report); encodeErr != nil {
+				return 1
+			}
+		}
+		return writeCommandError(stderr, "guide-drift", errors.New("processing failed"), 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write guide drift report", err, 1)
+	}
+	return 0
+}
+
+func runGuideDriftNotify(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	return runGuideDriftNotifyWith(ctx, args, stdout, stderr, os.Getenv, driftnotifier.Notify)
+}
+
+func runGuideDriftNotifyWith(ctx context.Context, args []string, stdout, stderr io.Writer, getenv func(string) string, runner driftNotifierRunner) int {
+	flags := flag.NewFlagSet("guide-drift-notify", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	reportPath := flags.String("report", driftnotifier.DefaultReportPath, "downloaded guide drift report")
+	repository := flags.String("repository", "", "GitHub owner/repository")
+	producerConclusion := flags.String("producer-conclusion", "", "producer workflow conclusion")
+	artifactOutcome := flags.String("artifact-outcome", "", "artifact download step outcome")
+	runID := flags.Uint64("run-id", 0, "producer workflow run ID")
+	runAttempt := flags.Uint64("run-attempt", 0, "producer workflow run attempt")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("guide-drift-notify", flags, stderr); code != 0 {
+		return code
+	}
+	result, err := runner(ctx, driftnotifier.Options{
+		ReportPath:         *reportPath,
+		Repository:         *repository,
+		ProducerConclusion: *producerConclusion,
+		ArtifactOutcome:    *artifactOutcome,
+		RunID:              *runID,
+		RunAttempt:         *runAttempt,
+		Token:              getenv("GITHUB_TOKEN"),
+	})
+	if err != nil {
+		return writeCommandError(stderr, "guide-drift-notify", errors.New("notification failed"), 1)
+	}
+	if err := writeJSON(stdout, result); err != nil {
+		return writeCommandError(stderr, "write guide drift notification result", err, 1)
+	}
+	return 0
+}
 
 func runLiveConformance(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	return runLiveConformanceWith(ctx, args, stdout, stderr, liveconformance.PreflightRepository, liveconformance.RunRepository)
@@ -518,6 +591,8 @@ func usage(output io.Writer) error {
 		"  bundle         write the portable OpenAPI bundle",
 		"  generate-sdk   generate one owned language SDK source subtree",
 		"  verify         run credential-free repository verification",
+		"  guide-drift    compare the current public guide with the committed contract",
+		"  guide-drift-notify  update the isolated public guide drift issue",
 		"  live-conformance  run the reviewed live matrix (use --preflight-only offline)",
 		"  live-conformance-notify  update the isolated live failure issue",
 		"  probe-multi-company  run the focused credentialed serialization probe",

@@ -3,8 +3,9 @@
 ## Outcome
 
 Detect whether the current public OpenDART development guide would change the
-generated OpenAPI contract. The weekly job reports evidence only; it never
-edits the specification, creates a pull request, or publishes a release.
+generated OpenAPI contract. The planned weekly job will report evidence only;
+it will never edit the specification, create a pull request, or publish a
+release.
 
 This credential-free work is independent of authenticated
 [live conformance](live-conformance.md).
@@ -24,17 +25,25 @@ This credential-free work is independent of authenticated
   inventory checks and its retrying connection pool.
 - Required guide tables reject duplicates and malformed message-code labels
   fail closed.
-- No drift command, scheduled workflow, or drift issue automation is committed.
+- The offline drift command generates and structurally validates a temporary
+  candidate, normalizes only snapshot metadata, and emits a bounded versioned
+  semantic report.
+- Manual-only default-branch automation uploads exactly that bounded report.
+  A separate notifier validates the report, substitutes fixed trusted failure
+  state when necessary, and updates one marker-owned drift issue. Workflow
+  policy is enforced offline. No workflow has been dispatched, no issue has
+  been written, and no schedule is enabled.
 
 ## Implementation checklist
 
 - [x] Add drift-safe acquisition with canonical inventory-table validation,
   dynamic inventory cardinality, one attempt per page, and enforced request
   budgets.
-- [ ] Add the drift command, narrow snapshot normalization, bounded versioned
-  report, and offline unchanged/change/error fixtures.
-- [ ] Add isolated manual automation and notifier validation, then complete a
-  supervised permissions and artifact review before scheduling.
+- [x] Add the drift command, narrow snapshot normalization, bounded versioned
+  report, and offline fixtures for unchanged content, additions, removals,
+  multi-company changes, truncation, unsafe evidence, and processing errors.
+- [x] Add isolated manual automation, notifier validation, bounded artifacts,
+  and credential-free workflow-policy verification.
 
 ## Constraints
 
@@ -81,12 +90,13 @@ This credential-free work is independent of authenticated
 
 1. **Complete.** The Go generation, validation, and semantic-comparison gate
    can compare a temporary candidate with the committed baseline.
-2. Implement the drift command, request budget, versioned report, and offline
-   fixtures for unchanged content, semantic additions and removals, malformed
-   sources, and processing failures.
-3. Add manual default-branch automation, bounded artifacts, and the isolated
-   drift notifier. Test missing, oversized, invalid, and conclusion-inconsistent
-   reports without trusting producer-controlled text.
+2. **Complete.** Implement the drift command, request budget, versioned report,
+   and offline fixtures for unchanged content, semantic additions and removals,
+   multi-company changes, truncation, unsafe evidence, malformed sources, and
+   processing failures.
+3. **Complete.** Add manual default-branch automation, bounded artifacts, and
+   the isolated drift notifier. Test missing, oversized, invalid, and
+   conclusion-inconsistent reports without trusting producer-controlled text.
 4. Run one supervised check, inspect its permissions and artifacts, then enable
    the weekly schedule.
 
@@ -117,8 +127,7 @@ This credential-free work is independent of authenticated
 
 ## Next action
 
-Implement the offline drift command and bounded report: generate and
-structurally validate a candidate, normalize only snapshot metadata, compare
-baseline to candidate, and cover unchanged, addition, removal, truncation, and
-processing-error outcomes with fixtures. Do not add GitHub write permissions
-or scheduling until that slice is complete.
+Authorization-gated: run one supervised manual default-branch check and inspect
+its permissions, bounded artifact, and issue behavior. Enable a weekly schedule
+only after that separate review and authorization. Do not dispatch the workflow,
+write a GitHub issue, or enable scheduling in the completed work-3 slice.

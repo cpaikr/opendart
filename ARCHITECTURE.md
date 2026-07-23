@@ -22,6 +22,12 @@ OpenDART guide
     -> repository-owned SDK model
     -> deterministic checked-in Rust -------------> opendart crate package
 
+OpenDART guide
+    -> manual trusted-main semantic comparison
+    -> bounded sanitized report artifact
+    -> isolated default-branch notifier
+    -> one persistent drift issue
+
 OpenDART API + local API key
     -> fixed, bounded probes
     -> sanitized empirical evidence
@@ -127,12 +133,33 @@ toolchain changes, and remove the exception when the default handshake works.
 Ambient proxies are disabled so authenticated queries reach only the fixed
 OpenDART origin.
 
+### Public guide drift
+
+`opendart-tool guide-drift` acquires the current public guide without a
+credential, generates and structurally validates a temporary candidate, and
+compares OpenAPI meaning after normalizing only snapshot metadata. It emits a
+strict bounded report with `unchanged`, `changed`, or `error`; raw guide values
+and exhaustive differences are never report fields.
+
+`.github/workflows/guide-drift.yml` is manual-only and restricted to the
+canonical repository's `main` ref with read-only contents permission. It
+uploads only the attempt-scoped report. The separate default-branch
+`workflow_run` notifier checks out the exact trusted producer revision and is
+the only job with issue-write authority. Missing, oversized, malformed, or
+conclusion-inconsistent artifacts become fixed failure state derived from
+trusted Actions metadata. Changed and error outcomes update one drift issue;
+only validated unchanged state records recovery once, and automation never
+closes the issue. Offline release guards enforce these boundaries. Neither
+workflow has been dispatched and no schedule is enabled.
+
 ## Code map
 
 - `openapi/openapi.yaml` and its referenced fragments are the canonical source;
   `openapi/generated/openapi.bundle.yaml` is the portable bundle.
 - `cmd/opendart-tool` is the private command surface.
 - `internal/guide` owns guide acquisition and guarded generation.
+- `internal/driftnotifier` owns strict drift-report consumption, fixed workflow
+  failure fallback, issue deduplication, and recovery recording.
 - `internal/openapi` confines OpenAPI dependencies and owns SDK projection.
 - `internal/sdkgen/model` and `internal/sdkgen/rust` own deterministic SDK
   normalization and rendering.
@@ -150,7 +177,9 @@ OpenDART origin.
 - `.github/workflows/verify.yml` is the credential-free repository gate.
   Release Please configuration and `.github/workflows/release-please.yml` own
   component release preparation and specification asset publication. The two
-  live-conformance workflows are the protected producer and isolated notifier.
+  guide-drift workflows are the credential-free producer and isolated
+  notifier; the two live-conformance workflows are the protected producer and
+  isolated notifier.
 
 ## Invariants
 
@@ -181,8 +210,9 @@ accepts the first-party Rust SDK boundary. Current packaging and the remaining
 publication/adoption work are tracked in the [public Rust SDK task](tasks/rust/public-rust-sdk.md).
 
 [guide drift](tasks/main/guide-drift.md) owns credential-free acquisition and
-semantic-comparison work. Drift-safe acquisition is implemented; the command,
-report, notifier, and scheduling remain future work. The
+semantic-comparison work. Drift-safe acquisition, the bounded command and
+report, the manual producer, and the isolated notifier are implemented.
+Supervised execution and scheduling remain authorization-gated. The
 [live-conformance](tasks/main/live-conformance.md) task defers protected
 environment setup, supervised execution, and weekly scheduling pending
 explicit authorization; the runner, protected workflow definition, and

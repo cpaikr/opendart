@@ -20,15 +20,18 @@ language decision is recorded in
   toolchain directly. The accepted multi-file OpenAPI 3.2 contract and Go bundle
   passed the former Node and Redocly checks as one-time cutover evidence; those
   implementations and temporary compatibility scaffolding are now removed.
-- [Guide drift](../../tasks/main/guide-drift.md) remains an unscheduled
-  follow-on. [Live conformance](../../tasks/main/live-conformance.md) now has
-  its general runner, reviewed case inventory, manual protected workflow,
-  isolated notifier, and credential-free repository gates. Protected
-  environment setup, credential configuration, supervised execution, and
+- [Guide drift](../../tasks/main/guide-drift.md) now has drift-safe
+  acquisition, a bounded semantic report, a manual trusted-main workflow, an
+  isolated notifier, and credential-free policy gates. Its supervised run and
   scheduling remain explicitly deferred.
+  [Live conformance](../../tasks/main/live-conformance.md) has its general
+  runner, reviewed case inventory, manual protected workflow, isolated
+  notifier, and credential-free repository gates. Protected environment setup,
+  credential configuration, supervised execution, and scheduling also remain
+  explicitly deferred.
 - The [Go-only cleanup](go-only-tooling-cleanup.md) and this migration are
-  complete. Future drift and live-conformance work remains intentionally
-  separate and does not reopen the tooling migration.
+  complete. Remaining supervised drift and live-conformance work remains
+  intentionally separate and does not reopen the tooling migration.
 
 ## Constraints
 
@@ -58,9 +61,9 @@ trusted GitHub Actions metadata. Producer logs and arbitrary error text are
 never notification input. Guide drift and live conformance own independent
 deduplicated issues; recovery is recorded once and automation never closes an
 issue. This is settled cross-plan policy, not an implemented shared module or a
-tooling-migration completion prerequisite. The live-conformance implementation
-is now the concrete reference for that contract; future guide-drift work must
-reuse the policy without sharing credentials or issue state.
+tooling-migration completion prerequisite. The live-conformance and guide-drift
+implementations now apply that contract independently without sharing
+credentials or issue state.
 
 ## Ordered work
 
@@ -78,10 +81,9 @@ reuse the policy without sharing credentials or issue state.
    focused probe behind a narrow Go interface, cut local and CI entry points
    over to direct Go commands, and removed repository-owned Node.js, npm,
    Redocly, and temporary compatibility surfaces.
-5. **Complete through live conformance.** The general live-conformance runner
-   made the versioned report contract, bounded HTTP policy, and isolated
-   notifier concrete without adding a public Go API. Guide drift remains a
-   separate deferred consumer.
+5. **Complete.** The general live-conformance runner and credential-free guide
+   drift command apply the versioned report contract through independent
+   isolated notifiers without adding a public Go API.
 
 ## Acceptance criteria
 
@@ -128,9 +130,12 @@ None — complete.
   focused probe, cut documentation and CI directly to Go, removed the Node/npm/
   Redocly dependency graph and duplicate implementations, and retired temporary
   compatibility adapters while retaining lasting Go coverage. Ordered work 5
-  remains a deferred follow-on owned by the drift or live-conformance plans.
+  remained a follow-on owned by the drift and live-conformance plans.
 - 2026-07-19: Completed ordered work 5 through the credentialed
   live-conformance implementation. Added the bounded report and HTTP seams,
   credential-free preflight, manual protected producer, and isolated notifier;
   environment setup, credentials, supervised execution, and scheduling remain
   outside the completed migration.
+- 2026-07-20: Applied the same bounded-report and isolated-notifier contract to
+  credential-free guide drift with manual trusted-main automation and offline
+  policy checks. Supervised execution and scheduling remain in the drift task.

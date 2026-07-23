@@ -1,0 +1,54 @@
+# Public guide semantic drift progress
+
+This current-state handoff tracks [Public guide semantic drift](guide-drift.md).
+Update it in place and keep authorization-gated actions explicit.
+
+## Current slice
+
+- Current integration target: `main` through PR #42, which promotes the
+  sequential, non-stacked work already merged into `dev`.
+- Ordered work 2 was reviewed in PR #31 and merged into `dev` with its commits
+  preserved.
+- Ordered work 3 was reviewed in PR #33 and merged into `dev`; it implements
+  and validates the manual trusted-main producer,
+  attempt-scoped bounded artifact, isolated notifier, and credential-free
+  workflow-policy checks.
+- No workflow has been dispatched, no external issue has been written, and no
+  schedule has been enabled.
+
+## Decisions
+
+- Compare the committed baseline as original and the generated candidate as
+  updated after replacing only `info.version` and root/operation source
+  `checkedAt` values in the candidate comparison model.
+- Count every semantic difference, retain a deterministic bounded set of
+  allowlisted operation/location findings, and never report source values or
+  arbitrary diagnostics.
+- Structural candidate validation permits valid inventory, representation,
+  reference-table, message-code, and detail changes to reach comparison while
+  malformed generation and validation remain errors.
+- The notifier maps validated `changed` and fixed workflow failures to one
+  active marker-owned issue; only validated `unchanged` records recovery once.
+  It never closes the issue and never consumes producer-controlled text.
+- The producer has read-only contents permission and no credential. Issue-write
+  authority exists only in the default-branch `workflow_run` notifier, which
+  checks out the exact trusted producer revision.
+
+## Validation
+
+- `go test -race ./...`, `go vet ./...`, credential-free repository
+  verification, and `git diff --check` pass.
+- The required security-focused code review is complete. Its bounded issue-body
+  finding was fixed with complete-line omission and an explicit shown count;
+  the decoder-valid oversized-identifier regression test passes.
+
+## Blockers
+
+None.
+
+## Next action
+
+Authorization-gated ordered work 4: run one supervised manual default-branch
+check and inspect its permissions, artifact, and issue behavior before separately
+authorizing a schedule. Do not dispatch a workflow, write an external issue, or
+enable scheduling without that authorization.

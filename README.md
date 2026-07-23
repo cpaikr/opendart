@@ -99,6 +99,13 @@ the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is
 canonical. If a consumer requires OpenAPI 3.1, create a separate compatibility
 artifact rather than changing the source contract.
 
+`opendart-tool guide-drift` compares the current public guide with the
+committed contract without modifying either. The manual-only trusted-main
+workflow uploads its bounded report; an isolated default-branch notifier owns
+the persistent drift issue and validates every artifact before use. The
+workflow remains undispatched and unscheduled pending the supervised check in
+the [guide-drift task](tasks/main/guide-drift.md).
+
 CI also runs the pinned stable and MSRV Rust gates, all-features and
 no-default-features tests, documentation, compatibility fixtures, generated
 coverage checks, and exact crate-package inventory inspection. The complete

@@ -22,6 +22,8 @@ const (
 	verifyWorkflowArtifact   = ".github/workflows/verify.yml"
 	liveWorkflowArtifact     = ".github/workflows/live-conformance.yml"
 	notifyWorkflowArtifact   = ".github/workflows/live-conformance-notify.yml"
+	driftWorkflowArtifact    = ".github/workflows/guide-drift.yml"
+	driftNotifyArtifact      = ".github/workflows/guide-drift-notify.yml"
 	configArtifact           = "release-please-config.json"
 	manifestArtifact         = ".release-please-manifest.json"
 	specificationPackagePath = "openapi/generated"
@@ -40,6 +42,14 @@ const (
 	liveRunScript   = "go run ./cmd/opendart-tool live-conformance --repository-root . > live-conformance-report.json"
 	notifyRunScript = `go run ./cmd/opendart-tool live-conformance-notify \
   --report live-conformance-report.json \
+  --repository "${NOTIFY_REPOSITORY}" \
+  --producer-conclusion "${NOTIFY_PRODUCER_CONCLUSION}" \
+  --artifact-outcome "${NOTIFY_ARTIFACT_OUTCOME}" \
+  --run-id "${NOTIFY_RUN_ID}" \
+  --run-attempt "${NOTIFY_RUN_ATTEMPT}"`
+	driftRunScript       = "go run ./cmd/opendart-tool guide-drift --repository-root . > guide-drift-report.json"
+	driftNotifyRunScript = `go run ./cmd/opendart-tool guide-drift-notify \
+  --report guide-drift-report.json \
   --repository "${NOTIFY_REPOSITORY}" \
   --producer-conclusion "${NOTIFY_PRODUCER_CONCLUSION}" \
   --artifact-outcome "${NOTIFY_ARTIFACT_OUTCOME}" \
@@ -144,7 +154,7 @@ func (e *Error) Unwrap() error {
 }
 
 // Check validates the repository's release, credential-free verification, and
-// protected live-automation workflow policies.
+// automated observation workflow policies.
 func Check(repositoryRoot string) error {
 	if strings.TrimSpace(repositoryRoot) == "" {
 		return &Error{Artifact: "repository", Invariant: "root is required"}
@@ -208,7 +218,15 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
-	return checkWorkflows(releaseSource, verifySource, liveSource, notifySource)
+	driftSource, err := readArtifact(absoluteRoot, driftWorkflowArtifact)
+	if err != nil {
+		return err
+	}
+	driftNotifySource, err := readArtifact(absoluteRoot, driftNotifyArtifact)
+	if err != nil {
+		return err
+	}
+	return checkWorkflows(releaseSource, verifySource, liveSource, notifySource, driftSource, driftNotifySource)
 }
 
 func checkSpecificationSourceRelease(repositoryRoot string, provenanceSource []byte) error {
@@ -575,7 +593,7 @@ func quotedTOMLValue(line string) (string, error) {
 	return value[1 : len(value)-1], nil
 }
 
-func checkWorkflows(releaseSource, verifySource, liveSource, notifySource []byte) error {
+func checkWorkflows(releaseSource, verifySource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
 	release, err := decodeWorkflow(releaseWorkflowArtifact, releaseSource)
 	if err != nil {
 		return err
@@ -592,6 +610,14 @@ func checkWorkflows(releaseSource, verifySource, liveSource, notifySource []byte
 	if err != nil {
 		return err
 	}
+	drift, err := decodeWorkflow(driftWorkflowArtifact, driftSource)
+	if err != nil {
+		return err
+	}
+	driftNotify, err := decodeWorkflow(driftNotifyArtifact, driftNotifySource)
+	if err != nil {
+		return err
+	}
 
 	if err := checkReleaseWorkflow(release, string(releaseSource)); err != nil {
 		return err
@@ -602,7 +628,13 @@ func checkWorkflows(releaseSource, verifySource, liveSource, notifySource []byte
 	if err := checkLiveWorkflow(live, string(liveSource)); err != nil {
 		return err
 	}
-	return checkNotifyWorkflow(notify, string(notifySource))
+	if err := checkNotifyWorkflow(notify, string(notifySource)); err != nil {
+		return err
+	}
+	if err := checkDriftWorkflow(drift, string(driftSource)); err != nil {
+		return err
+	}
+	return checkDriftNotifyWorkflow(driftNotify, string(driftNotifySource))
 }
 
 func decodeWorkflow(artifact string, source []byte) (workflow, error) {
@@ -925,7 +957,7 @@ func checkLiveWorkflow(live workflow, source string) error {
 	if err := require(liveWorkflowArtifact, "producer has read-only repository permission", reflect.DeepEqual(job.Permissions, map[string]string{"contents": "read"}), ""); err != nil {
 		return err
 	}
-	if job.Needs != "" || job.ContinueOnError || job.Uses != "" || !defaultRunSettings(job.Defaults) || job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 30 {
+	if !standardJobControls(job, "ubuntu-latest", 30) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "producer uses only approved execution controls"}
 	}
 	expectedNames := []string{"Check out trusted revision", "Set up Go", "Recheck offline gates", "Run live conformance", "Upload sanitized report"}
@@ -958,13 +990,8 @@ func checkLiveWorkflow(live workflow, source string) error {
 	if upload.Uses != uploadArtifactAction || upload.Run != "" || !exactWorkflowExpression(upload.If, "always()") || upload.ContinueOnError || !reflect.DeepEqual(upload.With, expectedUpload) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "uploads only the bounded sanitized report"}
 	}
-	for _, step := range job.Steps {
-		if !defaultStepRunSettings(step) {
-			return &Error{Artifact: liveWorkflowArtifact, Invariant: "producer steps use default run settings", Detail: "step " + step.Name}
-		}
-		if step.Name != "Run live conformance" && len(step.Env) != 0 {
-			return &Error{Artifact: liveWorkflowArtifact, Invariant: "API key is absent outside the request boundary", Detail: "step " + step.Name}
-		}
+	if err := checkStepPolicies(liveWorkflowArtifact, job.Steps, "Run live conformance", "producer steps use default run settings", "API key is absent outside the request boundary"); err != nil {
+		return err
 	}
 	if strings.Count(source, "${{ secrets.OPENDART_API_KEY }}") != 1 || strings.Count(source, "OPENDART_API_KEY") != 2 || strings.Contains(source, "issues: write") || strings.Contains(source, "github.token") || strings.Contains(source, "GITHUB_TOKEN") {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "contains only the single protected credential reference and no issue authority"}
@@ -1005,7 +1032,7 @@ func checkNotifyWorkflow(notify workflow, source string) error {
 	if !reflect.DeepEqual(job.Permissions, expectedPermissions) || job.Environment != "" {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "isolates minimal issue authority without the protected environment"}
 	}
-	if job.Needs != "" || job.ContinueOnError || job.Uses != "" || !defaultRunSettings(job.Defaults) || job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 20 {
+	if !standardJobControls(job, "ubuntu-latest", 20) {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "notifier uses only approved execution controls"}
 	}
 	expectedNames := []string{"Check out trusted producer revision", "Set up Go", "Download sanitized report", "Update live conformance issue"}
@@ -1040,13 +1067,8 @@ func checkNotifyWorkflow(notify workflow, source string) error {
 	if !exactScript(run.Run, notifyRunScript) || run.Uses != "" || !exactWorkflowExpression(run.If, "always()") || run.ContinueOnError || !reflect.DeepEqual(run.Env, expectedEnv) {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "invokes only the isolated notifier with trusted metadata"}
 	}
-	for _, step := range job.Steps {
-		if !defaultStepRunSettings(step) {
-			return &Error{Artifact: notifyWorkflowArtifact, Invariant: "notifier steps use default run settings", Detail: "step " + step.Name}
-		}
-		if step.Name != "Update live conformance issue" && len(step.Env) != 0 {
-			return &Error{Artifact: notifyWorkflowArtifact, Invariant: "job token environment is confined to the notifier boundary", Detail: "step " + step.Name}
-		}
+	if err := checkStepPolicies(notifyWorkflowArtifact, job.Steps, "Update live conformance issue", "notifier steps use default run settings", "job token environment is confined to the notifier boundary"); err != nil {
+		return err
 	}
 	if strings.Contains(source, "OPENDART_API_KEY") || strings.Contains(source, "secrets.") || strings.Contains(source, "secrets[") || strings.Contains(source, "environment:") {
 		return &Error{Artifact: notifyWorkflowArtifact, Invariant: "notifier cannot access the OpenDART credential or protected environment"}
@@ -1055,6 +1077,153 @@ func checkNotifyWorkflow(notify workflow, source string) error {
 		return err
 	}
 	return checkCheckoutCredentials(notifyWorkflowArtifact, notify)
+}
+
+func checkDriftWorkflow(drift workflow, source string) error {
+	if err := require(driftWorkflowArtifact, "has the expected workflow name", drift.Name == "Public Guide Drift", ""); err != nil {
+		return err
+	}
+	if err := require(driftWorkflowArtifact, "is manual only", reflect.DeepEqual(sortedKeys(drift.On), []string{"workflow_dispatch"}), ""); err != nil {
+		return err
+	}
+	if err := require(driftWorkflowArtifact, "root permissions are empty", len(drift.Permissions) == 0, ""); err != nil {
+		return err
+	}
+	if err := require(driftWorkflowArtifact, "serializes public guide drift runs", drift.Concurrency.Group == "public-guide-drift" && !drift.Concurrency.CancelInProgress, ""); err != nil {
+		return err
+	}
+	if err := require(driftWorkflowArtifact, "workflow uses default run settings", defaultRunSettings(drift.Defaults), ""); err != nil {
+		return err
+	}
+	if err := require(driftWorkflowArtifact, "contains only the drift job", reflect.DeepEqual(sortedKeys(drift.Jobs), []string{"drift"}), ""); err != nil {
+		return err
+	}
+	job := drift.Jobs["drift"]
+	if !exactWorkflowExpression(job.If, "github.repository == 'cpaikr/opendart' && github.ref == 'refs/heads/main'") {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "runs only trusted main code in the canonical repository"}
+	}
+	if !reflect.DeepEqual(job.Permissions, map[string]string{"contents": "read"}) || job.Environment != "" {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "uses only read-only repository authority without a protected environment"}
+	}
+	if !standardJobControls(job, "ubuntu-latest", 30) {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "producer uses only approved execution controls"}
+	}
+	expectedNames := []string{"Check out trusted revision", "Set up Go", "Recheck credential-free repository gates", "Compare the public guide", "Upload sanitized report"}
+	if !reflect.DeepEqual(stepNames(job.Steps), expectedNames) {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "uses only approved producer steps in order"}
+	}
+	checkout := job.Steps[0]
+	setup := job.Steps[1]
+	preflight := job.Steps[2]
+	run := job.Steps[3]
+	upload := job.Steps[4]
+	if checkout.Uses != checkoutAction || checkout.Run != "" || !reflect.DeepEqual(checkout.With, map[string]any{"fetch-depth": 0, "persist-credentials": false}) || !defaultStepExecution(checkout) {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "checks out the trusted dispatched revision without credentials"}
+	}
+	if setup.Uses != setupGoAction || setup.Run != "" || !reflect.DeepEqual(setup.With, map[string]any{"cache": true, "go-version-file": "go.mod"}) || !defaultStepExecution(setup) {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "uses the approved Go setup"}
+	}
+	if preflight.Run != "go run ./cmd/opendart-tool verify --repository-root ." || preflight.Uses != "" || !defaultStepExecution(preflight) {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "rechecks credential-free repository gates before acquisition"}
+	}
+	if run.Run != driftRunScript || run.Uses != "" || !defaultStepExecution(run) {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "runs only the canonical credential-free drift command"}
+	}
+	expectedUpload := map[string]any{
+		"name": "guide-drift-report-${{ github.run_attempt }}", "path": "guide-drift-report.json",
+		"if-no-files-found": "error", "retention-days": 7, "compression-level": 0,
+		"overwrite": false, "include-hidden-files": false,
+	}
+	if upload.Uses != uploadArtifactAction || upload.Run != "" || !exactWorkflowExpression(upload.If, "always()") || upload.ContinueOnError || !reflect.DeepEqual(upload.With, expectedUpload) {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "uploads only the bounded sanitized report"}
+	}
+	if err := checkStepPolicies(driftWorkflowArtifact, job.Steps, "", "producer steps use default credential-free execution settings", "producer steps use default credential-free execution settings"); err != nil {
+		return err
+	}
+	if strings.Contains(source, "secrets.") || strings.Contains(source, "secrets[") || strings.Contains(source, "github.token") || strings.Contains(source, "GITHUB_TOKEN") || strings.Contains(source, "issues: write") || strings.Contains(source, "environment:") || strings.Contains(source, "OPENDART_API_KEY") {
+		return &Error{Artifact: driftWorkflowArtifact, Invariant: "contains no credentials, issue authority, or protected environment"}
+	}
+	if err := checkActionPins(driftWorkflowArtifact, drift); err != nil {
+		return err
+	}
+	return checkCheckoutCredentials(driftWorkflowArtifact, drift)
+}
+
+func checkDriftNotifyWorkflow(notify workflow, source string) error {
+	if err := require(driftNotifyArtifact, "has the expected workflow name", notify.Name == "Public Guide Drift Notifier", ""); err != nil {
+		return err
+	}
+	workflowRun, ok := notify.On["workflow_run"].(map[string]any)
+	expectedTrigger := map[string]any{"types": []any{"completed"}, "workflows": []any{"Public Guide Drift"}}
+	if err := require(driftNotifyArtifact, "runs only after the public guide drift producer completes", reflect.DeepEqual(sortedKeys(notify.On), []string{"workflow_run"}) && ok && reflect.DeepEqual(workflowRun, expectedTrigger), ""); err != nil {
+		return err
+	}
+	if err := require(driftNotifyArtifact, "root permissions are empty", len(notify.Permissions) == 0, ""); err != nil {
+		return err
+	}
+	if err := require(driftNotifyArtifact, "serializes notifier runs", notify.Concurrency.Group == "public-guide-drift-notifier" && !notify.Concurrency.CancelInProgress, ""); err != nil {
+		return err
+	}
+	if err := require(driftNotifyArtifact, "workflow uses default run settings", defaultRunSettings(notify.Defaults), ""); err != nil {
+		return err
+	}
+	if err := require(driftNotifyArtifact, "contains only the notifier job", reflect.DeepEqual(sortedKeys(notify.Jobs), []string{"notify"}), ""); err != nil {
+		return err
+	}
+	job := notify.Jobs["notify"]
+	expectedCondition := "github.repository == 'cpaikr/opendart' && github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == github.event.repository.default_branch"
+	if !exactWorkflowExpression(job.If, expectedCondition) {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "accepts only manual trusted default-branch producer runs"}
+	}
+	expectedPermissions := map[string]string{"actions": "read", "contents": "read", "issues": "write"}
+	if !reflect.DeepEqual(job.Permissions, expectedPermissions) || job.Environment != "" {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "isolates minimal issue authority without a protected environment"}
+	}
+	if !standardJobControls(job, "ubuntu-latest", 20) {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "notifier uses only approved execution controls"}
+	}
+	expectedNames := []string{"Check out trusted producer revision", "Set up Go", "Download sanitized report", "Update public guide drift issue"}
+	if !reflect.DeepEqual(stepNames(job.Steps), expectedNames) {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "uses only approved notifier steps in order"}
+	}
+	checkout := job.Steps[0]
+	setup := job.Steps[1]
+	download := job.Steps[2]
+	run := job.Steps[3]
+	if checkout.Uses != checkoutAction || checkout.Run != "" || !defaultStepExecution(checkout) || !reflect.DeepEqual(checkout.With, map[string]any{"persist-credentials": false, "ref": "${{ github.event.workflow_run.head_sha }}"}) {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "checks out the exact trusted producer revision without credentials"}
+	}
+	if setup.Uses != setupGoAction || setup.Run != "" || !defaultStepExecution(setup) || !reflect.DeepEqual(setup.With, map[string]any{"cache": true, "go-version-file": "go.mod"}) {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "uses the approved Go setup"}
+	}
+	expectedDownload := map[string]any{
+		"name": "guide-drift-report-${{ github.event.workflow_run.run_attempt }}", "path": ".", "github-token": "${{ github.token }}",
+		"run-id": "${{ github.event.workflow_run.id }}",
+	}
+	if download.ID != "report" || download.Uses != downloadArtifactAction || download.Run != "" || !download.ContinueOnError || strings.TrimSpace(download.If) != "" || !reflect.DeepEqual(download.With, expectedDownload) {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "downloads only the producer report with fixed-failure fallback"}
+	}
+	expectedEnv := map[string]string{
+		"GITHUB_TOKEN":               "${{ github.token }}",
+		"NOTIFY_REPOSITORY":          "${{ github.repository }}",
+		"NOTIFY_PRODUCER_CONCLUSION": "${{ github.event.workflow_run.conclusion }}",
+		"NOTIFY_ARTIFACT_OUTCOME":    "${{ steps.report.outcome }}",
+		"NOTIFY_RUN_ID":              "${{ github.event.workflow_run.id }}",
+		"NOTIFY_RUN_ATTEMPT":         "${{ github.event.workflow_run.run_attempt }}",
+	}
+	if !exactScript(run.Run, driftNotifyRunScript) || run.Uses != "" || !exactWorkflowExpression(run.If, "always()") || run.ContinueOnError || !reflect.DeepEqual(run.Env, expectedEnv) {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "invokes only the isolated notifier with trusted metadata"}
+	}
+	if err := checkStepPolicies(driftNotifyArtifact, job.Steps, "Update public guide drift issue", "notifier steps use default run settings", "job token environment is confined to the notifier boundary"); err != nil {
+		return err
+	}
+	if strings.Contains(source, "OPENDART_API_KEY") || strings.Contains(source, "secrets.") || strings.Contains(source, "secrets[") || strings.Contains(source, "environment:") {
+		return &Error{Artifact: driftNotifyArtifact, Invariant: "notifier cannot access OpenDART credentials or a protected environment"}
+	}
+	if err := checkActionPins(driftNotifyArtifact, notify); err != nil {
+		return err
+	}
+	return checkCheckoutCredentials(driftNotifyArtifact, notify)
 }
 
 func checkActionPins(artifact string, workflow workflow) error {
@@ -1103,6 +1272,23 @@ func exactWorkflowExpression(condition, expected string) bool {
 
 func defaultJobExecution(job workflowJob) bool {
 	return strings.TrimSpace(job.If) == "" && !job.ContinueOnError
+}
+
+func standardJobControls(job workflowJob, runsOn string, timeoutMinutes int) bool {
+	return job.Needs == "" && !job.ContinueOnError && job.Uses == "" &&
+		defaultRunSettings(job.Defaults) && job.RunsOn == runsOn && job.TimeoutMinutes == timeoutMinutes
+}
+
+func checkStepPolicies(artifact string, steps []workflowStep, environmentStep, runInvariant, environmentInvariant string) error {
+	for _, step := range steps {
+		if !defaultStepRunSettings(step) {
+			return &Error{Artifact: artifact, Invariant: runInvariant, Detail: "step " + step.Name}
+		}
+		if step.Name != environmentStep && len(step.Env) != 0 {
+			return &Error{Artifact: artifact, Invariant: environmentInvariant, Detail: "step " + step.Name}
+		}
+	}
+	return nil
 }
 
 func defaultStepExecution(step workflowStep) bool {
