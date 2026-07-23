@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/cpaikr/opendart/compare/v0.1.0...v0.1.1) (2026-07-23)
+
+
+### Features
+
+* **tooling:** cut over offline verification to Go ([534742b](https://github.com/cpaikr/opendart/commit/534742ba1a63f608c8810ccc421a4963576ea5ba))
+
 ## 0.1.0 (2026-07-17)
 
 
