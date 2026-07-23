@@ -47,13 +47,23 @@ func TestDecimalRangeExtensionIsRequestOnly(t *testing.T) {
 
 func TestRequestConstraintClassificationRejectsDiscardedOrMalformedValues(t *testing.T) {
 	one := int64(1)
+	decimalRange := orderedmap.New[string, *yaml.Node]()
+	decimalRange.Set("x-opendart-decimal-range", &yaml.Node{Kind: yaml.MappingNode})
 	for name, schema := range map[string]*base.Schema{
-		"array format":     {Type: []string{"array"}, Format: "opendart-date"},
-		"array enum":       {Type: []string{"array"}, Enum: []*yaml.Node{{Kind: yaml.ScalarNode, Tag: "!!str", Value: "value"}}},
-		"array min length": {Type: []string{"array"}, MinLength: &one},
+		"array format":          {Type: []string{"array"}, Format: "opendart-date"},
+		"array enum":            {Type: []string{"array"}, Enum: []*yaml.Node{{Kind: yaml.ScalarNode, Tag: "!!str", Value: "value"}}},
+		"array min length":      {Type: []string{"array"}, MinLength: &one},
+		"integer format":        {Type: []string{"integer"}, Format: "opendart-date"},
+		"integer enum":          {Type: []string{"integer"}, Enum: []*yaml.Node{{Kind: yaml.ScalarNode, Tag: "!!str", Value: "value"}}},
+		"integer min length":    {Type: []string{"integer"}, MinLength: &one},
+		"integer max length":    {Type: []string{"integer"}, MaxLength: &one},
+		"integer decimal range": {Type: []string{"integer"}, Extensions: decimalRange},
 	} {
 		if got := unsupportedSDKParameterSchema(schema, false); got == "" {
 			t.Fatalf("%s was accepted and would be discarded", name)
+		}
+		if _, err := inspectSDKStringConstraints(schema); err == nil {
+			t.Fatalf("%s was silently discarded by constraint inspection", name)
 		}
 	}
 

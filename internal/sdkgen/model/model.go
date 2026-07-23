@@ -74,7 +74,7 @@ type Parameter struct {
 	Explode     bool              `json:"explode"`
 	MinItems    *int64            `json:"minItems,omitempty"`
 	MaxItems    *int64            `json:"maxItems,omitempty"`
-	Constraints StringConstraints `json:"constraints,omitempty"`
+	Constraints StringConstraints `json:"constraints,omitzero"`
 }
 
 // StringConstraints is the closed set of generated validations for scalar

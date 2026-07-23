@@ -64,7 +64,7 @@ type CLIParameter struct {
 	Shape       ParameterShape    `json:"shape"`
 	MinItems    *int64            `json:"minItems,omitempty"`
 	MaxItems    *int64            `json:"maxItems,omitempty"`
-	Constraints StringConstraints `json:"constraints,omitempty"`
+	Constraints StringConstraints `json:"constraints,omitzero"`
 }
 
 // CLIRepresentation binds one public selector to its SDK preparation surface.

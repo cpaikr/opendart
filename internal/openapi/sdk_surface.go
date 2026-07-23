@@ -499,18 +499,9 @@ func inspectSDKSchema(proxy interface {
 }
 
 func unsupportedSDKParameterSchema(source *base.Schema, item bool) string {
-	if !item && reflect.DeepEqual(source.Type, []string{"array"}) {
-		switch {
-		case source.Format != "":
-			return "format"
-		case len(source.Enum) > 0:
-			return "enum"
-		case source.MinLength != nil:
-			return "minLength"
-		case source.MaxLength != nil:
-			return "maxLength"
-		case hasSDKExtension(source.Extensions, "x-opendart-decimal-range"):
-			return "x-opendart-decimal-range"
+	if !reflect.DeepEqual(source.Type, []string{"string"}) {
+		if keyword := discardedSDKStringConstraint(source); keyword != "" {
+			return keyword
 		}
 	}
 	allowed := map[string]bool{
@@ -527,6 +518,23 @@ func unsupportedSDKParameterSchema(source *base.Schema, item bool) string {
 	return firstUnsupportedSchemaField(source, allowed, func(field string) bool {
 		return field == "Extensions" && !supportedSDKParameterSchemaExtensions(source.Extensions)
 	})
+}
+
+func discardedSDKStringConstraint(source *base.Schema) string {
+	switch {
+	case source.Format != "":
+		return "format"
+	case len(source.Enum) > 0:
+		return "enum"
+	case source.MinLength != nil:
+		return "minLength"
+	case source.MaxLength != nil:
+		return "maxLength"
+	case hasSDKExtension(source.Extensions, "x-opendart-decimal-range"):
+		return "x-opendart-decimal-range"
+	default:
+		return ""
+	}
 }
 
 func hasSDKExtension(extensions *orderedmap.Map[string, *yaml.Node], name string) bool {
@@ -583,7 +591,13 @@ func supportedSDKExtensions(extensions *orderedmap.Map[string, *yaml.Node], requ
 }
 
 func inspectSDKStringConstraints(source *base.Schema) (SDKSurfaceStringConstraints, error) {
-	if source == nil || !reflect.DeepEqual(source.Type, []string{"string"}) {
+	if source == nil {
+		return SDKSurfaceStringConstraints{}, nil
+	}
+	if !reflect.DeepEqual(source.Type, []string{"string"}) {
+		if keyword := discardedSDKStringConstraint(source); keyword != "" {
+			return SDKSurfaceStringConstraints{}, fmt.Errorf("%s requires a string schema", keyword)
+		}
 		return SDKSurfaceStringConstraints{}, nil
 	}
 	constraints := SDKSurfaceStringConstraints{

@@ -62,6 +62,9 @@ get:
       description: OFS:재무제표, CFS:연결재무제표
       schema:
         type: string
+        enum:
+          - OFS
+          - CFS
       x-opendart-korean-name: 개별/연결구분
       x-opendart-documented-type: STRING(3)
       x-opendart-documented-required: Y

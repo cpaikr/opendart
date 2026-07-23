@@ -14,6 +14,8 @@ func TestStringSchemaPromotesOnlyCuratedRequestConstraints(t *testing.T) {
 		{name: "bgn_de", want: map[string]any{"type": "string", "format": "opendart-date", "minLength": 8, "maxLength": 8}},
 		{name: "bsns_year", want: map[string]any{"type": "string", "format": "opendart-year", "minLength": 4, "maxLength": 4}},
 		{name: "reprt_code", want: map[string]any{"type": "string", "enum": []string{"11013", "11012", "11014", "11011"}}},
+		{name: "idx_cl_code", want: map[string]any{"type": "string", "enum": []string{"M210000", "M220000", "M230000", "M240000"}}},
+		{name: "fs_div", want: map[string]any{"type": "string", "enum": []string{"OFS", "CFS"}}},
 		{name: "page_count", want: map[string]any{"type": "string", "x-opendart-decimal-range": map[string]any{"minimum": 1, "maximum": 100}}},
 		{name: "rcept_no", want: map[string]any{"type": "string"}},
 		{name: "pblntf_detail_ty", want: map[string]any{"type": "string"}},
@@ -39,9 +41,12 @@ func TestParameterObjectsApplyElementConstraintsToMultiCompanyArrays(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	parameter := parameters[0].(map[string]any)
-	schema := parameter["schema"].(map[string]any)
-	items := schema["items"].(map[string]any)
+	if len(parameters) != 1 {
+		t.Fatalf("parameters = %#v, want one parameter", parameters)
+	}
+	parameter := yamlMap(t, parameters[0])
+	schema := yamlMap(t, parameter["schema"])
+	items := yamlMap(t, schema["items"])
 	if items["format"] != "opendart-corp-code" || items["minLength"] != 8 || items["maxLength"] != 8 {
 		t.Fatalf("array item constraints = %#v", items)
 	}

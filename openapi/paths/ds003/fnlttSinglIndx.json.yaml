@@ -66,6 +66,11 @@ get:
         활동성지표 : M240000
       schema:
         type: string
+        enum:
+          - M210000
+          - M220000
+          - M230000
+          - M240000
       x-opendart-korean-name: 지표분류코드
       x-opendart-documented-type: STRING(7)
       x-opendart-documented-required: Y

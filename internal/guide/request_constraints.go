@@ -23,6 +23,10 @@ func constraintsForRequestArgument(argument RequestArgument) requestStringConstr
 		return requestStringConstraints{format: "opendart-year", minimumLength: 4, maximumLength: 4}
 	case "reprt_code":
 		return requestStringConstraints{allowedValues: []string{"11013", "11012", "11014", "11011"}}
+	case "idx_cl_code":
+		return requestStringConstraints{allowedValues: []string{"M210000", "M220000", "M230000", "M240000"}}
+	case "fs_div":
+		return requestStringConstraints{allowedValues: []string{"OFS", "CFS"}}
 	case "last_reprt_at":
 		return requestStringConstraints{allowedValues: []string{"Y", "N"}}
 	case "pblntf_ty":
