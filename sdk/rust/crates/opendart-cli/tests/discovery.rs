@@ -482,6 +482,13 @@ fn invalid_invocations_are_strict_json_usage_errors_before_credentials() {
     );
     assert!(!nested_command.to_string().contains("typo"));
 
+    let repeated_ancestor = json_output(&["operations", "operations"], 2);
+    assert_eq!(repeated_ancestor["error"]["reason"], "unknown_command");
+    assert_eq!(
+        repeated_ancestor["error"]["allowed"],
+        serde_json::json!(["list", "describe"])
+    );
+
     let unknown_flag = json_output(
         &[
             "call",

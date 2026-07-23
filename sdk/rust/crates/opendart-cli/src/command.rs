@@ -101,22 +101,22 @@ fn unknown_root_command(arguments: &[std::ffi::OsString]) -> bool {
 
 fn valid_subcommands(arguments: &[std::ffi::OsString], error: &clap::Error) -> Vec<String> {
     let contextual = context_strings(error, ContextKind::ValidSubcommand).unwrap_or_default();
-    let invalid = match (error.kind(), error.get(ContextKind::InvalidSubcommand)) {
-        (ErrorKind::InvalidSubcommand, Some(ContextValue::String(value))) => Some(value.as_str()),
-        (ErrorKind::InvalidSubcommand, _) => return Vec::new(),
-        _ => None,
-    };
+    if error.kind() == ErrorKind::InvalidSubcommand
+        && !matches!(
+            error.get(ContextKind::InvalidSubcommand),
+            Some(ContextValue::String(_))
+        )
+    {
+        return Vec::new();
+    }
     let root = crate::generated::command::command();
     let mut parent = &root;
     for argument in arguments.iter().skip(1) {
         let Some(argument) = argument.to_str() else {
             return Vec::new();
         };
-        if invalid == Some(argument) {
-            break;
-        }
         let Some(subcommand) = parent.find_subcommand(argument) else {
-            return Vec::new();
+            break;
         };
         parent = subcommand;
     }
