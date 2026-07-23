@@ -102,6 +102,11 @@ varlock run -- opendart call company \
   --representation json
 ```
 
+On a nonzero exit, Varlock 1.12.0 can append its own diagnostic to stdout, so
+do not parse this wrapper's failure output as a single JSON document. For
+machine-readable failure checks, use the
+[harness pattern](docs/rust-cli/verification-and-release.md#credentialed-developer-checks).
+
 ## Refresh and verify
 
 The repository tooling requires only the Go version declared in `go.mod`:

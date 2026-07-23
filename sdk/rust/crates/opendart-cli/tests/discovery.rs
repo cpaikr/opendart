@@ -469,6 +469,19 @@ fn invalid_invocations_are_strict_json_usage_errors_before_credentials() {
         assert!(!String::from_utf8_lossy(&output.stdout).contains("must-not-be-read"));
     }
 
+    let nested_command = json_output(&["operations", "typo"], 2);
+    assert_eq!(nested_command["error"]["reason"], "unknown_command");
+    assert_eq!(
+        nested_command["error"]["allowed"],
+        serde_json::json!(["list", "describe"])
+    );
+    assert!(
+        nested_command["error"]["help"][0]
+            .as_str()
+            .is_some_and(|help| help.contains("list") && help.contains("describe"))
+    );
+    assert!(!nested_command.to_string().contains("typo"));
+
     let unknown_flag = json_output(
         &[
             "call",

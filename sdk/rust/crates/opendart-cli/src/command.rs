@@ -6,7 +6,7 @@ use clap::{
 pub(crate) struct InvocationError {
     pub(crate) reason: &'static str,
     pub(crate) argument: Option<&'static str>,
-    pub(crate) allowed: Vec<&'static str>,
+    pub(crate) allowed: Vec<String>,
     pub(crate) help: Vec<String>,
 }
 
@@ -44,23 +44,28 @@ fn invocation_error(arguments: &[std::ffi::OsString], error: &clap::Error) -> In
             operation
                 .into_iter()
                 .flat_map(|operation| operation.representations)
-                .map(|representation| representation.name)
+                .map(|representation| representation.name.to_owned())
                 .collect()
         } else if is_operations_list(arguments) {
-            vec!["json", "xml", "zip"]
+            ["json", "xml", "zip"].map(str::to_owned).to_vec()
         } else {
             Vec::new()
         }
-    } else if unknown_root_command(arguments) {
-        vec!["operations", "call"]
+    } else if matches!(
+        error.kind(),
+        ErrorKind::InvalidSubcommand
+            | ErrorKind::MissingSubcommand
+            | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+    ) {
+        valid_subcommands(arguments, error)
     } else {
         Vec::new()
     };
     InvocationError {
         reason: invocation_reason(arguments, error.kind()),
         argument,
+        help: usage_help(arguments, error.kind(), &allowed),
         allowed,
-        help: usage_help(arguments),
     }
 }
 
@@ -92,6 +97,49 @@ fn unknown_root_command(arguments: &[std::ffi::OsString]) -> bool {
             .to_str()
             .is_some_and(|value| !value.starts_with('-') && !matches!(value, "operations" | "call"))
     })
+}
+
+fn valid_subcommands(arguments: &[std::ffi::OsString], error: &clap::Error) -> Vec<String> {
+    let contextual = context_strings(error, ContextKind::ValidSubcommand).unwrap_or_default();
+    let invalid = match (error.kind(), error.get(ContextKind::InvalidSubcommand)) {
+        (ErrorKind::InvalidSubcommand, Some(ContextValue::String(value))) => Some(value.as_str()),
+        (ErrorKind::InvalidSubcommand, _) => return Vec::new(),
+        _ => None,
+    };
+    let root = crate::generated::command::command();
+    let mut parent = &root;
+    for argument in arguments.iter().skip(1) {
+        let Some(argument) = argument.to_str() else {
+            return Vec::new();
+        };
+        if invalid == Some(argument) {
+            break;
+        }
+        let Some(subcommand) = parent.find_subcommand(argument) else {
+            return Vec::new();
+        };
+        parent = subcommand;
+    }
+    parent
+        .get_subcommands()
+        .filter(|subcommand| !subcommand.is_hide_set())
+        .filter(|subcommand| {
+            contextual.is_empty()
+                || subcommand
+                    .get_name_and_visible_aliases()
+                    .into_iter()
+                    .any(|name| contextual.iter().any(|value| value == name))
+        })
+        .map(|subcommand| subcommand.get_name().to_owned())
+        .collect()
+}
+
+fn context_strings(error: &clap::Error, kind: ContextKind) -> Option<Vec<String>> {
+    match error.get(kind) {
+        Some(ContextValue::String(value)) => Some(vec![value.clone()]),
+        Some(ContextValue::Strings(values)) => Some(values.clone()),
+        _ => None,
+    }
 }
 
 fn requested_operation(
@@ -136,7 +184,14 @@ fn known_arguments(
     command_line: &[std::ffi::OsString],
     operation: Option<&'static crate::discovery::OperationSpec>,
 ) -> Vec<&'static str> {
-    let mut arguments = operation
+    valid_flag_names(command_line, operation)
+}
+
+fn valid_flag_names(
+    command_line: &[std::ffi::OsString],
+    operation: Option<&'static crate::discovery::OperationSpec>,
+) -> Vec<&'static str> {
+    let mut flags = operation
         .into_iter()
         .flat_map(|operation| operation.flags)
         .map(|flag| flag.name)
@@ -147,21 +202,20 @@ fn known_arguments(
             .iter()
             .any(|representation| !representation.selector_argv.is_empty())
         {
-            arguments.push("--representation");
+            flags.push("--representation");
         }
         if operation
             .representations
             .iter()
             .any(|representation| representation.name == "zip")
         {
-            arguments.extend(["--output", "--artifact-limit-bytes"]);
+            flags.extend(["--output", "--artifact-limit-bytes"]);
         }
+        flags.extend(crate::discovery::CALL_FLAGS.iter().map(|flag| flag.name));
+    } else if is_operations_list(command_line) {
+        flags.extend(["--query", "--group", "--representation"]);
     }
-    arguments.extend(crate::discovery::CALL_FLAGS.iter().map(|flag| flag.name));
-    if is_operations_list(command_line) {
-        arguments.extend(["--query", "--group", "--representation"]);
-    }
-    arguments
+    flags
 }
 
 fn is_operations_list(arguments: &[std::ffi::OsString]) -> bool {
@@ -174,33 +228,29 @@ fn is_operations_list(arguments: &[std::ffi::OsString]) -> bool {
     )
 }
 
-fn usage_help(arguments: &[std::ffi::OsString]) -> Vec<String> {
-    if is_operations_list(arguments) {
-        return vec![
-            "Valid flags: --query, --group, --representation, --help, --version".to_owned(),
-        ];
+fn usage_help(
+    arguments: &[std::ffi::OsString],
+    kind: ErrorKind,
+    allowed: &[String],
+) -> Vec<String> {
+    if matches!(
+        kind,
+        ErrorKind::InvalidSubcommand
+            | ErrorKind::MissingSubcommand
+            | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+    ) && !allowed.is_empty()
+    {
+        return vec![format!(
+            "Valid commands: {}, --help, --version",
+            allowed.join(", ")
+        )];
     }
     let operation = requested_operation(arguments);
-    let Some(operation) = operation else {
+    if operation.is_none() && !is_operations_list(arguments) {
         return vec!["Valid commands: operations, call, --help, --version".to_owned()];
-    };
+    }
 
-    let mut flags: Vec<&str> = operation.flags.iter().map(|flag| flag.name).collect();
-    if operation
-        .representations
-        .iter()
-        .any(|representation| !representation.selector_argv.is_empty())
-    {
-        flags.push("--representation");
-    }
-    if operation
-        .representations
-        .iter()
-        .any(|representation| representation.name == "zip")
-    {
-        flags.extend(["--output", "--artifact-limit-bytes"]);
-    }
-    flags.extend(crate::discovery::CALL_FLAGS.iter().map(|flag| flag.name));
+    let mut flags = valid_flag_names(arguments, operation);
     flags.extend(["--help", "--version"]);
     vec![format!("Valid flags: {}", flags.join(", "))]
 }

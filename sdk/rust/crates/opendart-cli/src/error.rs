@@ -28,11 +28,11 @@ struct ErrorBody {
     #[serde(skip_serializing_if = "Option::is_none")]
     argument: Option<&'static str>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    allowed: Vec<&'static str>,
+    allowed: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    minimum: Option<usize>,
+    minimum: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    maximum: Option<usize>,
+    maximum: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     format: Option<&'static str>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -150,8 +150,8 @@ impl ErrorEnvelope {
                 Some("invalid_cardinality"),
                 canonical_flag(spec, parameter),
                 Vec::new(),
-                Some(minimum),
-                Some(maximum),
+                Some(u64::try_from(minimum).expect("supported targets use at most 64-bit usize")),
+                Some(u64::try_from(maximum).expect("supported targets use at most 64-bit usize")),
                 None,
             ),
             PrepareError::InvalidLength {
@@ -163,8 +163,8 @@ impl ErrorEnvelope {
                 Some("invalid_length"),
                 canonical_flag(spec, parameter),
                 Vec::new(),
-                Some(minimum),
-                Some(maximum),
+                Some(u64::try_from(minimum).expect("supported targets use at most 64-bit usize")),
+                Some(u64::try_from(maximum).expect("supported targets use at most 64-bit usize")),
                 None,
             ),
             PrepareError::InvalidFormat {
@@ -183,7 +183,13 @@ impl ErrorEnvelope {
                     Some("invalid_allowed_value"),
                     flag.map(|flag| flag.name),
                     flag.and_then(|flag| flag.constraints)
-                        .map(|constraints| constraints.allowed_values.to_vec())
+                        .map(|constraints| {
+                            constraints
+                                .allowed_values
+                                .iter()
+                                .map(|value| (*value).to_owned())
+                                .collect()
+                        })
                         .unwrap_or_default(),
                     None,
                     None,
@@ -199,8 +205,8 @@ impl ErrorEnvelope {
                 Some("invalid_decimal_range"),
                 canonical_flag(spec, parameter),
                 Vec::new(),
-                usize::try_from(minimum).ok(),
-                maximum.and_then(|maximum| usize::try_from(maximum).ok()),
+                Some(minimum),
+                maximum,
                 None,
             ),
             _ => (None, None, Vec::new(), None, None, None),
@@ -549,7 +555,7 @@ fn transport_fields(kind: TransportFailureKind) -> (&'static str, &'static str) 
 
 #[cfg(test)]
 mod tests {
-    use super::ErrorEnvelope;
+    use super::{ErrorBody, ErrorEnvelope};
     use crate::execution::OperationContext;
 
     #[test]
@@ -572,5 +578,24 @@ mod tests {
         let encoded = serde_json::to_string(&error).unwrap();
         assert!(encoded.contains(r#""code":"invalid_client_configuration""#));
         assert!(!encoded.contains("fixture"));
+    }
+
+    #[test]
+    fn decimal_bounds_remain_target_independent_json_numbers() {
+        let body = ErrorBody {
+            code: "invalid_request",
+            message: "fixture",
+            path: None,
+            reason: Some("invalid_decimal_range"),
+            argument: Some("--page-count"),
+            allowed: Vec::new(),
+            minimum: Some(u64::MAX),
+            maximum: Some(u64::MAX),
+            format: None,
+            help: Vec::new(),
+        };
+        let encoded = serde_json::to_value(body).unwrap();
+        assert_eq!(encoded["minimum"], serde_json::json!(u64::MAX));
+        assert_eq!(encoded["maximum"], serde_json::json!(u64::MAX));
     }
 }
