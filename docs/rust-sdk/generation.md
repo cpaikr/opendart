@@ -148,18 +148,21 @@ implementation, equivalent to:
 go run ./cmd/opendart-tool generate-sdk \
   --language rust \
   --root openapi/openapi.yaml \
-  --output sdk/rust/crates/opendart/src/generated
+  --output sdk/rust/crates/opendart/src/generated \
+  --cli-output sdk/rust/crates/opendart-cli/src/generated
 ```
 
 The command:
 
 1. Loads and validates the complete canonical document.
-2. Builds and validates the normalized SDK model.
-3. Renders into a new staging directory.
+2. Builds and validates one normalized semantic model with separately
+   checksummed SDK and CLI projections.
+3. Renders both owned trees into new staging directories.
 4. Emits deterministic generator-owned Rust formatting.
-5. Validates the complete staged output and ownership marker.
-6. Replaces only the owned generated subtree with rollback on publication
-   failure.
+5. Validates both complete staged outputs and ownership markers before
+   replacing either accepted tree.
+6. Replaces only the owned generated subtrees with transaction rollback on
+   publication failure.
 
 Do not invoke Cargo from Go merely to hide validation. Repository CI may run
 Cargo after generation/freshness checks. Do not add Make, Just, npm, shell, or a
@@ -171,7 +174,7 @@ Generated files are reviewed source artifacts. Each includes:
 
 - a do-not-edit marker;
 - generator schema/version identity;
-- the deterministic SDK-projection checksum; and
+- the deterministic owning-projection checksum; and
 - stable formatting independent of local paths or timestamps.
 
 The generated module is intentionally marked `#[rustfmt::skip]`. Generator
@@ -197,9 +200,9 @@ does not claim byte identity with the selected generated bundle. That metadata
 advances only in a crate release PR, so an SDK-irrelevant specification change
 neither touches the Rust component nor creates a crate release.
 
-Extend `opendart-tool verify` to render the Rust output in a confined temporary
-location and compare it byte for byte with the committed tree. Verification is
-offline and cannot rewrite the working tree.
+`opendart-tool verify` renders both Rust projections in memory and compares
+them byte for byte with the committed owned trees. Verification is offline and
+cannot rewrite the working tree.
 
 Consumer compilation reads only committed Rust. Do not use `build.rs`, a proc
 macro that parses OpenAPI, a Git submodule, network download, or an environment

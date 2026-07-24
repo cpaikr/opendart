@@ -20,6 +20,9 @@ get:
         ※ 개발가이드 > 공시정보 > 고유번호 참고
       schema:
         type: string
+        format: opendart-corp-code
+        minLength: 8
+        maxLength: 8
       x-opendart-korean-name: 고유번호
       x-opendart-documented-type: STRING(8)
       x-opendart-documented-required: Y

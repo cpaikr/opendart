@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
+	"github.com/cpaikr/opendart/internal/crateverification"
 	"github.com/cpaikr/opendart/internal/driftnotifier"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/liveconformance"
@@ -51,6 +52,8 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runGuideDrift(ctx, args[1:], stdout, stderr)
 	case "guide-drift-notify":
 		return runGuideDriftNotify(ctx, args[1:], stdout, stderr)
+	case "verify-crate-artifact":
+		return runVerifyCrateArtifact(args[1:], stdout, stderr)
 	case "live-conformance":
 		return runLiveConformance(ctx, args[1:], stdout, stderr)
 	case "live-conformance-notify":
@@ -151,8 +154,9 @@ func runBundle(args []string, stdout, stderr io.Writer) int {
 }
 
 type verificationRunner func(string) (verification.Report, error)
+type crateVerificationRunner func(crateverification.Options) (crateverification.Report, error)
 
-type sdkGenerationRunner func(string, string) (sdkgen.Report, error)
+type sdkGenerationRunner func(string, sdkgen.RustOutputs) (sdkgen.Report, error)
 
 func runGenerateSDK(args []string, stdout, stderr io.Writer) int {
 	return runGenerateSDKWith(args, stdout, stderr, sdkgen.GenerateRust)
@@ -164,6 +168,7 @@ func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGener
 	language := flags.String("language", "", "SDK language (rust)")
 	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
 	output := flags.String("output", "", "owned generated source directory")
+	cliOutput := flags.String("cli-output", "", "owned generated CLI source directory")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -176,7 +181,10 @@ func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGener
 	if strings.TrimSpace(*output) == "" {
 		return writeCommandError(stderr, "generate-sdk", errors.New("--output is required"), 2)
 	}
-	report, err := runner(*root, *output)
+	if strings.TrimSpace(*cliOutput) == "" {
+		return writeCommandError(stderr, "generate-sdk", errors.New("--cli-output is required"), 2)
+	}
+	report, err := runner(*root, sdkgen.RustOutputs{SDK: *output, CLI: *cliOutput})
 	if err != nil {
 		return writeCommandError(stderr, "generate-sdk", err, 1)
 	}
@@ -337,6 +345,66 @@ func runLiveConformanceNotifyWith(ctx context.Context, args []string, stdout, st
 
 func runVerify(args []string, stdout, stderr io.Writer) int {
 	return runVerifyWith(args, stdout, stderr, verification.Verify)
+}
+
+func runVerifyCrateArtifact(args []string, stdout, stderr io.Writer) int {
+	return runVerifyCrateArtifactWith(args, stdout, stderr, crateverification.Verify)
+}
+
+func runVerifyCrateArtifactWith(args []string, stdout, stderr io.Writer, runner crateVerificationRunner) int {
+	flags := flag.NewFlagSet("verify-crate-artifact", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	candidate := flags.String("candidate", "", "local reviewed .crate candidate")
+	accepted := flags.String("accepted", "", "local accepted .crate artifact")
+	inventory := flags.String("inventory", "", "reviewed newline-delimited package inventory")
+	packageName := flags.String("package", "", "expected Cargo package name")
+	version := flags.String("version", "", "expected Cargo package version")
+	revision := flags.String("revision", "", "expected full Git revision")
+	vcsPath := flags.String("vcs-path", "", "expected package path in Cargo VCS metadata")
+	registryChecksum := flags.String("registry-checksum", "", "accepted registry SHA-256")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if code := rejectPositionalArguments("verify-crate-artifact", flags, stderr); code != 0 {
+		return code
+	}
+	options := crateverification.Options{
+		CandidatePath: *candidate, AcceptedPath: *accepted, InventoryPath: *inventory,
+		Package: *packageName, Version: *version, Revision: *revision,
+		VCSPath: *vcsPath, RegistryChecksum: *registryChecksum,
+	}
+	for _, required := range []struct {
+		name  string
+		value string
+	}{
+		{"candidate", options.CandidatePath}, {"accepted", options.AcceptedPath},
+		{"inventory", options.InventoryPath}, {"package", options.Package},
+		{"version", options.Version}, {"revision", options.Revision},
+		{"vcs-path", options.VCSPath}, {"registry-checksum", options.RegistryChecksum},
+	} {
+		if strings.TrimSpace(required.value) == "" {
+			return writeCommandError(stderr, "verify-crate-artifact", fmt.Errorf("--%s is required", required.name), 2)
+		}
+	}
+	report, err := runner(options)
+	if err != nil {
+		var verificationError *crateverification.Error
+		if errors.As(err, &verificationError) {
+			diagnostic := struct {
+				Artifact  string `json:"artifact"`
+				Invariant string `json:"invariant"`
+			}{Artifact: verificationError.Artifact, Invariant: verificationError.Invariant}
+			if encodeErr := writeJSON(stderr, diagnostic); encodeErr != nil {
+				return 1
+			}
+			return 1
+		}
+		return writeCommandError(stderr, "verify-crate-artifact", errors.New("unexpected artifact verification failure"), 1)
+	}
+	if err := writeJSON(stdout, report); err != nil {
+		return writeCommandError(stderr, "write crate artifact verification report", err, 1)
+	}
+	return 0
 }
 
 func runVerifyWith(args []string, stdout, stderr io.Writer, runner verificationRunner) int {
@@ -589,10 +657,11 @@ func usage(output io.Writer) error {
 		"  catalog        validate generated catalog and reference invariants",
 		"  lint           apply strict OpenAPI policy",
 		"  bundle         write the portable OpenAPI bundle",
-		"  generate-sdk   generate one owned language SDK source subtree",
+		"  generate-sdk   generate the owned Rust SDK and CLI source trees",
 		"  verify         run credential-free repository verification",
 		"  guide-drift    compare the current public guide with the committed contract",
 		"  guide-drift-notify  update the isolated public guide drift issue",
+		"  verify-crate-artifact  compare local candidate and accepted Rust crate artifacts",
 		"  live-conformance  run the reviewed live matrix (use --preflight-only offline)",
 		"  live-conformance-notify  update the isolated live failure issue",
 		"  probe-multi-company  run the focused credentialed serialization probe",

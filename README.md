@@ -42,7 +42,10 @@ validation.
 Request arguments are generally strings, matching the guide's `STRING(n)`
 declarations. Documented types, required flags, and descriptions are retained,
 but narrative lengths, enums, defaults, ranges, and date shapes are not promoted
-to validators without stronger evidence.
+automatically. A closed, reviewed set of stable request constraints—such as
+company-code and date formats, documented code sets, and pagination bounds—is
+curated explicitly by the guide generator and enforced through the canonical
+OpenAPI and generated SDK rather than inferred from prose.
 
 The multi-company operations are the deliberate exception. Their guide test
 forms use comma-separated company codes and the guide documents a maximum of 100
@@ -70,6 +73,34 @@ source-envelope inspection, a one-attempt convenience client, and a
 transport-independent core. Usage examples and the supported caller contract
 live in the [crate guide](sdk/rust/crates/opendart/README.md); repository build
 and package gates live in the [SDK workspace guide](sdk/rust/README.md).
+
+## Rust CLI
+
+The binary-only `opendart-cli` crate provides strict machine-readable discovery
+and one-attempt structured or binary execution through the typed SDK. Its public
+behavior is documented in the
+[CLI contract](docs/rust-cli/public-contract.md), and source-package and release
+boundaries are in the [CLI verification guide](docs/rust-cli/verification-and-release.md).
+The CLI is package-ready but not published.
+
+From the repository root, install and inspect one operation with:
+
+```sh
+cargo +1.97.1 install --locked --path sdk/rust/crates/opendart-cli
+opendart --version
+opendart operations describe company
+opendart call company --help
+```
+
+After configuring `OPENDART_API_KEY` as described under
+[Credentialed probe](#credentialed-probe), make a read-only call through the
+repository's local environment wrapper:
+
+```sh
+./scripts/with-opendart-env -- opendart call company \
+  --corp-code 00126380 \
+  --representation json
+```
 
 ## Refresh and verify
 
@@ -117,17 +148,28 @@ Refresh, verification, and live-conformance preflight require no OpenDART API
 key. Credentialed commands use reviewed, bounded request matrices:
 
 ```sh
-varlock run -- go run ./cmd/opendart-tool probe-multi-company
-varlock run -- go run ./cmd/opendart-tool probe-auditor-evidence
-varlock run -- go run ./cmd/opendart-tool live-conformance --repository-root .
+./scripts/with-opendart-env -- go run ./cmd/opendart-tool probe-multi-company
+./scripts/with-opendart-env -- go run ./cmd/opendart-tool probe-auditor-evidence
+./scripts/with-opendart-env -- \
+  go run ./cmd/opendart-tool live-conformance --repository-root .
 ```
 
-Install the standalone Varlock CLI with `brew install dmno-dev/tap/varlock`.
-The committed `.env.schema` marks `OPENDART_API_KEY` as required and sensitive;
-put the local value in the ignored `.env.local`, then run
-`varlock encrypt --file .env.local` if it is plaintext. Varlock validates and
-injects the key into the child process without putting it in command arguments.
-The Go command still reads only `OPENDART_API_KEY` from its process environment.
+Copy `.env.example` to the ignored `.env.local`, add the 40-character
+`OPENDART_API_KEY`, and set its permissions to `600`. The dependency-free
+wrapper rejects symbolic links, unsafe ownership or permissions, unexpected
+entries, and invalid key syntax before injecting the key only into its child
+process:
+
+```sh
+cp .env.example .env.local
+chmod 600 .env.local
+```
+
+The Go and Rust commands still read only `OPENDART_API_KEY` from their inherited
+process environment. They do not load dotenv files themselves.
+
+`.env.local` is plaintext. Its file mode and ignore rule reduce accidental
+exposure, but any process running as the same user can read it.
 
 Do not commit the local override or capture authenticated URLs or raw response
 bodies. The probes run sequentially without automatic retries and emit
@@ -150,9 +192,12 @@ first supervised run, and later scheduling remain tracked in the
 ## Releases
 
 Humans classify public compatibility and choose the corresponding Conventional
-Commit input. Release Please owns independent specification and Rust SDK
-components. Specification releases use `vX.Y.Z`; crate releases use
-`opendart-vX.Y.Z` and update the crate manifest, lockfile, and changelog.
+Commit input. Release Please owns independent specification, Rust SDK, and Rust
+CLI components. Specification releases use `vX.Y.Z`; crate releases use
+`opendart-vX.Y.Z` or `opendart-cli-vX.Y.Z` and update their owned manifest,
+lockfile entry, and changelog. An SDK proposal also updates the CLI manifest's
+marked exact local SDK pin without changing the CLI version or changelog; this
+does not constitute a CLI release.
 [`RELEASING.md`](RELEASING.md) is the maintainer policy and review checklist.
 
 Each release contains `openapi.bundle.yaml` and
@@ -164,9 +209,10 @@ gh release verify vX.Y.Z --repo cpaikr/opendart
 gh release verify-asset vX.Y.Z openapi.bundle.yaml --repo cpaikr/opendart
 ```
 
-The crate is package-ready but is not yet published to crates.io. Publication,
-registry-artifact verification, and adoption are deliberately reserved for
-[work 6](tasks/rust/public-rust-sdk.md). Repository Go tooling remains private.
+Both crates are package-ready but are not yet published to crates.io. Publish
+and verify the SDK first through [SDK work 6](tasks/rust/public-rust-sdk.md),
+then return to [CLI work 8](plans/rust/public-opendart-cli.md). Repository Go
+tooling remains private, and no current workflow has registry authority.
 
 ## Repository documentation
 

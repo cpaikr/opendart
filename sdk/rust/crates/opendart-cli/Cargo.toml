@@ -1,0 +1,33 @@
+[package]
+name = "opendart-cli"
+version = "0.1.0"
+description = "Machine-readable OpenDART command-line client backed by the typed Rust SDK"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+readme = "README.md"
+keywords = ["opendart", "dart", "finance", "cli"]
+categories = ["command-line-utilities"]
+publish = ["crates-io"]
+include = ["src/**", "tests/**", "Cargo.toml", "Cargo.lock", "README.md", "CHANGELOG.md", "LICENSE"]
+
+[[bin]]
+name = "opendart"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+clap.workspace = true
+futures-core.workspace = true
+opendart = { path = "../opendart", version = "=0.1.0", default-features = false, features = ["client-reqwest", "serde-json"] } # x-release-please-version
+serde.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["net", "rt", "time"] }
+
+[dev-dependencies]
+reqwest = { version = "0.13.4", default-features = false, features = ["http2"] }
+
+[lints]
+workspace = true

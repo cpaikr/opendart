@@ -2,11 +2,12 @@
 
 ## Product boundary
 
-This repository maintains two public products derived from one source-backed
+This repository maintains three public products derived from one source-backed
 OpenDART contract:
 
 - the portable OpenAPI bundle; and
-- the `opendart` Rust protocol SDK.
+- the `opendart` Rust protocol SDK; and
+- the `opendart` command-line client.
 
 The official OpenDART development guide is authoritative for documented
 behavior. Authenticated observations remain separate evidence. Go packages and
@@ -19,8 +20,9 @@ OpenDART guide
     -> staged acquisition and normalization
     -> canonical multi-file OpenAPI 3.2
     -> deterministic bundle ----------------------> GitHub specification release
-    -> repository-owned SDK model
-    -> deterministic checked-in Rust -------------> opendart crate package
+    -> repository-owned Rust artifact model
+       -> deterministic checked-in SDK -----------> opendart crate package
+       -> deterministic checked-in CLI breadth ---> opendart-cli crate package
 
 OpenDART guide
     -> manual trusted-main semantic comparison
@@ -58,17 +60,22 @@ response validation, and the repository-owned SDK input projection.
 
 ### Rust generation and use
 
-`opendart-tool generate-sdk` passes the canonical contract through
-`internal/sdkgen/model` and the Rust renderer. Generated source is reviewed and
-committed beneath `sdk/rust/crates/opendart/src/generated`; consumer builds do
-not run Go or parse OpenAPI.
+`opendart-tool generate-sdk` passes the canonical contract through one
+`internal/sdkgen/model` build and the Rust artifact renderer. It stages and
+validates independently owned SDK and CLI trees before publishing either.
+Generated source is reviewed and committed beneath each crate's `src/generated`
+directory; consumer builds do not run Go or parse OpenAPI.
 
-The crate exposes generated operation types plus handwritten request,
+The SDK crate exposes generated operation types plus handwritten request,
 authorization, wire-inspection, and provenance contracts. Its core performs no
 I/O. The optional default `client-reqwest` feature adds one-attempt bounded HTTP
 execution with redirects, retries, ambient proxies, and automatic response
 decoding disabled. Applications retain persistence, quota, retry, collection,
 and domain policy.
+
+The binary-only CLI crate keeps orchestration and output policy handwritten.
+Generated code owns its operation catalog, clap command breadth, response-shape
+discovery, typed SDK input construction, and exhaustive preparation dispatch.
 
 ### Verify and package
 
@@ -88,18 +95,26 @@ SDK projection, generator schema, and applicable specification release.
 Release Please owns independent components:
 
 - root `vX.Y.Z` tags and `CHANGELOG.md` for the OpenAPI bundle; and
-- `opendart-vX.Y.Z` tags and the crate changelog/version for the Rust SDK.
+- `opendart-vX.Y.Z` tags and the crate changelog/version for the Rust SDK; and
+- `opendart-cli-vX.Y.Z` tags and the crate changelog/version for the Rust CLI.
 
-Rust changes are excluded from root release eligibility. The Rust component is
-configured to prepare a draft component release and keep the crate manifest and
-workspace lock aligned. This repository does not yet authorize `cargo publish`;
-registry publication and post-publication verification belong to work 6.
+The SDK and CLI components update separate workspace-lock entries. SDK version
+proposals also update the CLI's exact local SDK pin for workspace resolution
+without changing the CLI version or changelog.
+
+Rust changes are excluded from root release eligibility. Both Rust components
+are configured for independent draft proposals, but remain absent from the
+released-version manifest until their guarded publication flows exist. This
+repository does not yet authorize `cargo publish`: SDK publication belongs to
+SDK work 6, after which CLI work 8 may publish the dependent source package.
 
 ### Focused live probes
 
-`probe-multi-company` and `probe-auditor-evidence` use a Varlock-injected local
-`OPENDART_API_KEY`, fixed request matrices, bounded bodies, sequential attempts,
-and sanitized output. They do not change the specification or SDK.
+`probe-multi-company` and `probe-auditor-evidence` use a local
+`OPENDART_API_KEY` injected by `scripts/with-opendart-env`, fixed request
+matrices, bounded bodies, sequential attempts, and sanitized output. The
+ignored plaintext source remains developer-owned and is never loaded by the
+applications themselves. The probes do not change the specification or SDK.
 
 ### General live conformance
 
@@ -161,13 +176,16 @@ workflow has been dispatched and no schedule is enabled.
 - `internal/driftnotifier` owns strict drift-report consumption, fixed workflow
   failure fallback, issue deduplication, and recovery recording.
 - `internal/openapi` confines OpenAPI dependencies and owns SDK projection.
-- `internal/sdkgen/model` and `internal/sdkgen/rust` own deterministic SDK
-  normalization and rendering.
+- `internal/sdkgen/model` and `internal/sdkgen/rust` own deterministic Rust
+  semantic normalization plus the independent SDK and CLI projections.
 - `sdk/rust` is the isolated Cargo workspace. The public crate lives under
-  `sdk/rust/crates/opendart`; generated files have one owned subtree.
+  `sdk/rust/crates/opendart`, and the binary-only CLI lives under
+  `sdk/rust/crates/opendart-cli`; each has an independently owned generated
+  subtree.
 - `internal/verification` coordinates repository verification, while
   `internal/releaseguard` enforces workflow, package, provenance, and release
-  policy.
+  policy. `internal/crateverification` compares local candidate and accepted
+  Rust crate artifacts without network or publication authority.
 - `internal/multicompanyprobe`, `internal/auditorprobe`, and
   `internal/liveprobe` own focused credentialed evidence collection.
 - `internal/liveconformance` owns the canonical case registry, bounded
@@ -183,8 +201,8 @@ workflow has been dispatched and no schedule is enabled.
 
 ## Invariants
 
-- OpenAPI 3.2 remains canonical; generated SDK files never become an alternate
-  endpoint inventory.
+- OpenAPI 3.2 remains canonical; generated SDK and CLI files never become an
+  alternate endpoint inventory.
 - Generated OpenAPI and Rust files change through their generators, not by
   hand, and verification requires byte-for-byte freshness.
 - Guide facts, empirical observations, and executable policy remain separate.
@@ -208,6 +226,13 @@ workflow has been dispatched and no schedule is enabled.
 migration to private Go repository tooling. [ADR 0002](docs/decisions/0002-public-rust-sdk.md)
 accepts the first-party Rust SDK boundary. Current packaging and the remaining
 publication/adoption work are tracked in the [public Rust SDK task](tasks/rust/public-rust-sdk.md).
+
+[ADR 0003](docs/decisions/0003-agent-first-opendart-cli.md) accepts the
+agent-first public CLI that consumes the SDK through generated typed dispatch.
+Its [architecture](docs/rust-cli/architecture.md),
+[public contract](docs/rust-cli/public-contract.md), and
+[implementation plan](plans/rust/public-opendart-cli.md) record the implemented
+source-distribution boundary and the remaining publication decision.
 
 [guide drift](tasks/main/guide-drift.md) owns credential-free acquisition and
 semantic-comparison work. Drift-safe acquisition, the bounded command and

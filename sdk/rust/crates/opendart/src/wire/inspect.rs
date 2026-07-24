@@ -156,7 +156,7 @@ fn json_value(
     match value {
         serde_json::Value::Null => Some(SourceValue::null()),
         serde_json::Value::Bool(value) => Some(SourceValue::boolean(value)),
-        serde_json::Value::Number(_) => Some(SourceValue::number(numbers.next()?)),
+        serde_json::Value::Number(_) => Some(SourceValue::number_from_valid_json(numbers.next()?)),
         serde_json::Value::String(value) => Some(SourceValue::string(value)),
         serde_json::Value::Array(values) => values
             .into_iter()

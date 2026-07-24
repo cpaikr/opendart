@@ -18,6 +18,9 @@ get:
         ※ 개발가이드 > 공시정보 > 고유번호 참고
       schema:
         type: string
+        format: opendart-corp-code
+        minLength: 8
+        maxLength: 8
       x-opendart-korean-name: 고유번호
       x-opendart-documented-type: STRING(8)
       x-opendart-documented-required: Y
@@ -29,6 +32,9 @@ get:
         ※ 2015년 이후 부터 정보제공
       schema:
         type: string
+        format: opendart-date
+        minLength: 8
+        maxLength: 8
       x-opendart-korean-name: 시작일(최초접수일)
       x-opendart-documented-type: STRING(8)
       x-opendart-documented-required: Y
@@ -40,6 +46,9 @@ get:
         ※ 2015년 이후 부터 정보제공
       schema:
         type: string
+        format: opendart-date
+        minLength: 8
+        maxLength: 8
       x-opendart-korean-name: 종료일(최초접수일)
       x-opendart-documented-type: STRING(8)
       x-opendart-documented-required: Y

@@ -33,26 +33,30 @@ func TestSemanticVersionPolicy(t *testing.T) {
 	}
 }
 
-func TestCheckRejectsRustReleaseManifestUntilPublicationRecoveryExists(t *testing.T) {
-	root := copyReleaseArtifacts(t)
-	path := filepath.Join(root, manifestArtifact)
-	source, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	updated := strings.Replace(
-		string(source),
-		`"openapi/generated": "0.1.0"`,
-		`"openapi/generated": "0.1.0", "sdk/rust/crates/opendart": "0.1.0"`,
-		1,
-	)
-	if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	err = Check(root)
-	var guardError *Error
-	if !errors.As(err, &guardError) || guardError.Artifact != manifestArtifact || !strings.Contains(guardError.Invariant, "existing-draft recovery") {
-		t.Fatalf("Check() error = %#v", err)
+func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
+	for _, packagePath := range []string{rustPackagePath, rustCLIPackagePath} {
+		t.Run(packagePath, func(t *testing.T) {
+			root := copyReleaseArtifacts(t)
+			path := filepath.Join(root, manifestArtifact)
+			source, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			updated := strings.Replace(
+				string(source),
+				`"openapi/generated": "0.1.0"`,
+				`"openapi/generated": "0.1.0", "`+packagePath+`": "0.1.0"`,
+				1,
+			)
+			if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			err = Check(root)
+			var guardError *Error
+			if !errors.As(err, &guardError) || guardError.Artifact != manifestArtifact || !strings.Contains(guardError.Invariant, "only the published specification") {
+				t.Fatalf("Check() error = %#v", err)
+			}
+		})
 	}
 }
 
@@ -70,9 +74,22 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
       "include-component-in-tag": true`, replacement: `"component": "opendart",
       "include-component-in-tag": false`, invariant: "Rust package include-component-in-tag"},
 		{name: "Rust forced tag", artifact: configArtifact, old: `"force-tag-creation": false`, replacement: `"force-tag-creation": true`, invariant: "Rust package force-tag-creation"},
-		{name: "Rust lock path", artifact: configArtifact, old: `"path": "/sdk/rust/Cargo.lock"`, replacement: `"path": "Cargo.lock"`, invariant: "updates the workspace lock version"},
-		{name: "Rust lock selector", artifact: configArtifact, old: `$.package[?(@.name == \"opendart\")].version`, replacement: `$.package.version`, invariant: "updates the workspace lock version"},
+		{name: "Rust lock path", artifact: configArtifact, old: `"path": "/sdk/rust/Cargo.lock"`, replacement: `"path": "Cargo.lock"`, invariant: "updates the workspace lock and CLI SDK pin"},
+		{name: "Rust lock selector", artifact: configArtifact, old: `$.package[?(@.name == \"opendart\")].version`, replacement: `$.package.version`, invariant: "updates the workspace lock and CLI SDK pin"},
+		{name: "Rust CLI pin updater", artifact: configArtifact, old: `"type": "generic",
+          "path": "/sdk/rust/crates/opendart-cli/Cargo.toml"`, replacement: `"type": "generic",
+          "path": "/sdk/rust/crates/other/Cargo.toml"`, invariant: "updates the workspace lock and CLI SDK pin"},
+		// The inserted duplicate follows the original release-type, so JSON's last-key-wins behavior targets only the CLI object.
+		{name: "CLI release type", artifact: configArtifact, old: `"component": "opendart-cli"`, replacement: `"release-type": "simple",
+      "component": "opendart-cli"`, invariant: "CLI package release-type"},
+		{name: "CLI component", artifact: configArtifact, old: `"component": "opendart-cli"`, replacement: `"component": "other-cli"`, invariant: "CLI package component"},
+		{name: "CLI component tag", artifact: configArtifact, old: `"component": "opendart-cli",
+      "include-component-in-tag": true`, replacement: `"component": "opendart-cli",
+      "include-component-in-tag": false`, invariant: "CLI package include-component-in-tag"},
+		{name: "CLI lock selector", artifact: configArtifact, old: `$.package[?(@.name == \"opendart-cli\")].version`, replacement: `$.package.version`, invariant: "CLI package updates its workspace lock version"},
 		{name: "Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart\"\nversion = \"0.1.0\"", replacement: "name = \"opendart\"\nversion = \"0.1.1\"", invariant: "matches the crate package version"},
+		{name: "CLI Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "name = \"opendart-cli\"\nversion = \"0.1.1\"", invariant: "matches the CLI crate package version"},
+		{name: "duplicate CLI Cargo lock package", artifact: rustLockArtifact, old: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"\n\n[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", invariant: "contains one opendart-cli package version"},
 		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "does not publish packages"},
 		{name: "registry publish in verify", artifact: verifyWorkflowArtifact, old: "go vet ./...", replacement: "cargo publish", invariant: "excludes package publication"},
 	}
@@ -128,6 +145,61 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 			name: "private package input", artifact: rustPackageListArtifact,
 			old: "tests/public_contract.rs\n", replacement: "target/secret\ntests/public_contract.rs\n",
 			invariant: "excludes repository-private inputs",
+		},
+		{
+			name: "CLI inventory order", artifact: rustCLIPackageListArtifact,
+			old: ".cargo_vcs_info.json\nCHANGELOG.md\n", replacement: "CHANGELOG.md\n.cargo_vcs_info.json\n",
+			invariant: "is sorted for deterministic comparison",
+		},
+		{
+			name: "required CLI package evidence", artifact: rustCLIPackageListArtifact,
+			old: "tests/live_smoke.rs\n", replacement: "",
+			invariant: "contains required package evidence",
+		},
+		{
+			name: "private CLI package input", artifact: rustCLIPackageListArtifact,
+			old: ".cargo_vcs_info.json\nCHANGELOG.md\n", replacement: ".cargo_vcs_info.json\n.github/secret\nCHANGELOG.md\n",
+			invariant: "excludes repository-private inputs",
+		},
+		{
+			name: "CLI registry scope", artifact: rustCLICargoArtifact,
+			old: `publish = ["crates-io"]`, replacement: `publish = true`,
+			invariant: "authorizes only the crates.io registry",
+		},
+		{
+			name: "CLI packaged release documentation", artifact: rustCLICargoArtifact,
+			old: `, "CHANGELOG.md"`, replacement: ``,
+			invariant: "packages the reviewed source distribution",
+		},
+		{
+			name: "CLI package include allowlist", artifact: rustCLICargoArtifact,
+			old: `, "LICENSE"]`, replacement: `, "LICENSE", ".*"]`,
+			invariant: "packages the reviewed source distribution",
+		},
+		{
+			name: "CLI package duplicate include", artifact: rustCLICargoArtifact,
+			old: `, "LICENSE"]`, replacement: `, "src/**"]`,
+			invariant: "packages the reviewed source distribution",
+		},
+		{
+			name: "CLI SDK exact pin", artifact: rustCLICargoArtifact,
+			old: `version = "=0.1.0"`, replacement: `version = "0.1.0"`,
+			invariant: "exact-pins the workspace SDK version",
+		},
+		{
+			name: "CLI SDK release marker", artifact: rustCLICargoArtifact,
+			old: ` # x-release-please-version`, replacement: ``,
+			invariant: "marks the exact SDK pin",
+		},
+		{
+			name: "CLI JSON workspace inheritance", artifact: rustCLICargoArtifact,
+			old: `serde_json.workspace = true`, replacement: `serde_json = "1"`,
+			invariant: "inherits the reviewed JSON encoder behavior",
+		},
+		{
+			name: "JSON encoder exact pin", artifact: rustWorkspaceArtifact,
+			old: `serde_json = { version = "=1.0.150", features = ["arbitrary_precision", "preserve_order"] }`, replacement: `serde_json = "1"`,
+			invariant: "exact-pins the reviewed JSON encoder behavior",
 		},
 	}
 
@@ -234,7 +306,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "manifest component scope", artifact: manifestArtifact,
 			old: `"openapi/generated": "0.1.0"`, replacement: `"openapi/generated": "0.1.0", "extra": "0.1.0"`,
-			invariant: "contains the specification and optional bootstrapped Rust component",
+			invariant: "contains only the published specification component",
 		},
 		{
 			name: "manifest SemVer", artifact: manifestArtifact,
@@ -244,12 +316,12 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "config package scope", artifact: configArtifact,
 			old: `"packages": {`, replacement: `"packages": { "extra": {},`,
-			invariant: "contains only the specification and Rust packages",
+			invariant: "contains only the specification, SDK, and CLI packages",
 		},
 		{
 			name: "specification component path", artifact: configArtifact,
 			old: `"openapi/generated": {`, replacement: `".": {`,
-			invariant: "contains only the specification and Rust packages",
+			invariant: "contains only the specification, SDK, and CLI packages",
 		},
 		{
 			name: "config top-level option allowlist", artifact: configArtifact,
@@ -580,7 +652,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "verify extra job", artifact: verifyWorkflowArtifact,
 			old: "jobs:\n  verify:", replacement: "jobs:\n  extra:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - name: Unexpected\n        run: echo unexpected\n\n  verify:",
-			invariant: "contains only the verify job",
+			invariant: "contains only approved verification jobs",
 		},
 		{
 			name: "verify workflow shell bypass", artifact: verifyWorkflowArtifact,
@@ -611,6 +683,84 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "race-enabled Go tests", artifact: verifyWorkflowArtifact,
 			old: "go test -race ./...", replacement: "go test ./...",
 			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "structured CLI loopback tests", artifact: verifyWorkflowArtifact,
+			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "binary CLI loopback tests", artifact: verifyWorkflowArtifact,
+			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "CLI no-default-features tests", artifact: verifyWorkflowArtifact,
+			old: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "CLI MSRV no-default-features check", artifact: verifyWorkflowArtifact,
+			old: "cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features", replacement: "cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "CLI package inventory diff", artifact: verifyWorkflowArtifact,
+			old: "diff -u sdk/rust/opendart-cli-package-files.txt \"${cli_package_files}\"", replacement: "test -s \"${cli_package_files}\"",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "workspace package dry run", artifact: verifyWorkflowArtifact,
+			old: "cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml", replacement: "cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "Linux locked source install", artifact: verifyWorkflowArtifact,
+			old: `CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"`, replacement: `CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"`,
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "Windows locked source install", artifact: verifyWorkflowArtifact,
+			old: `cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root $installRoot`, replacement: `cargo +1.97.1 install --offline --path sdk/rust/crates/opendart-cli --root $installRoot`,
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "Windows installed discovery", artifact: verifyWorkflowArtifact,
+			old: `& $binary operations list | Out-Null`, replacement: `& $binary --help | Out-Null`,
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "Windows source install failure", artifact: verifyWorkflowArtifact,
+			old: `cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root $installRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }`, replacement: `cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root $installRoot`,
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "Windows installed version failure", artifact: verifyWorkflowArtifact,
+			old: `& $binary --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }`, replacement: `& $binary --version`,
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "Windows installed discovery failure", artifact: verifyWorkflowArtifact,
+			old: `& $binary operations list | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }`, replacement: `& $binary operations list | Out-Null`,
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "native artifact compatibility cfg", artifact: verifyWorkflowArtifact,
+			old: "RUSTFLAGS: --cfg opendart_compat", replacement: "RUSTFLAGS: --cfg other",
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "native artifact command", artifact: verifyWorkflowArtifact,
+			old: "run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback", replacement: "run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli",
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
+			name: "native artifact runner", artifact: verifyWorkflowArtifact,
+			old: "runs-on: macos-latest", replacement: "runs-on: ubuntu-latest",
+			invariant: "native artifact jobs use approved runners and timeouts",
 		},
 		{
 			name: "verify job condition bypass", artifact: verifyWorkflowArtifact,
@@ -771,6 +921,36 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "live issue permission", artifact: liveWorkflowArtifact,
 			old: "      contents: read", replacement: "      contents: read\n      issues: write",
 			invariant: "producer has read-only repository permission",
+		},
+		{
+			name: "live Rust toolchain", artifact: liveWorkflowArtifact,
+			old: "rustup toolchain install 1.97.1 --profile minimal", replacement: "rustup toolchain install stable --profile minimal",
+			invariant: "installs the approved Rust toolchain",
+		},
+		{
+			name: "live Rust dependency fetch", artifact: liveWorkflowArtifact,
+			old: "cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml", replacement: "cargo +1.97.1 fetch --manifest-path sdk/rust/Cargo.toml",
+			invariant: "fetches locked Rust dependencies",
+		},
+		{
+			name: "live credential-free runner build", artifact: liveWorkflowArtifact,
+			old: "go build -o .live-bin/opendart-tool ./cmd/opendart-tool", replacement: "go build ./cmd/opendart-tool",
+			invariant: "builds only the approved live runners",
+		},
+		{
+			name: "live Rust CLI smoke", artifact: liveWorkflowArtifact,
+			old: ".live-bin/live-smoke --exact structured_and_binary_live_paths_are_read_only_and_sanitized", replacement: ".live-bin/live-smoke",
+			invariant: "runs only the approved live conformance commands",
+		},
+		{
+			name: "live Rust CLI gate", artifact: liveWorkflowArtifact,
+			old: "OPENDART_LIVE_TESTS: \"1\"", replacement: "OPENDART_LIVE_TESTS: \"true\"",
+			invariant: "sets only the approved live request gates",
+		},
+		{
+			name: "live preflight runner", artifact: liveWorkflowArtifact,
+			old: ".live-bin/opendart-tool live-conformance --preflight-only --repository-root .", replacement: "go run ./cmd/opendart-tool live-conformance --preflight-only --repository-root .",
+			invariant: "rechecks credential-free live gates",
 		},
 		{
 			name: "live secret at preflight", artifact: liveWorkflowArtifact,
@@ -1049,9 +1229,12 @@ func copyReleaseArtifacts(t *testing.T) string {
 		configArtifact,
 		manifestArtifact,
 		rustCargoArtifact,
+		rustCLICargoArtifact,
+		rustWorkspaceArtifact,
 		rustLockArtifact,
 		rustProvenanceArtifact,
 		rustPackageListArtifact,
+		rustCLIPackageListArtifact,
 		canonicalBundleArtifact,
 		releaseWorkflowArtifact,
 		verifyWorkflowArtifact,

@@ -55,6 +55,25 @@ ZIP operations use `Client::execute_binary`. The result distinguishes a
 positive ZIP signature, a bounded alternate XML status envelope, and an
 unrecognized replaying byte stream without losing inspected prefix bytes.
 
+## Optional JSON serialization
+
+Enable `serde-json` when a typed consumer needs to encode complete response
+evidence directly with `serde_json`:
+
+```toml
+[dependencies]
+opendart = { version = "0.1", features = ["serde-json"] }
+serde_json = "1"
+```
+
+Generated response objects and the shared response, status, metadata, and
+`SourceValue` types then implement `serde::Serialize`. Source numbers are
+validated when constructed and direct `serde_json` text encoding preserves
+their exact lexemes, including arbitrary-size integers, decimals, and
+exponents. Do not pass them through `serde_json::Value` or another numeric
+model first. Credentials, prepared and authorized requests, clients, and body
+streams deliberately remain non-serializable.
+
 ## Advanced transport ownership
 
 Disable default features when the application owns HTTP execution:
