@@ -12,7 +12,7 @@ use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
 
-use serde_json::Value;
+use serde_json::{Value, json};
 
 const SYNTHETIC_KEY: &str = "work5-synthetic-sentinel";
 
@@ -182,6 +182,25 @@ fn assert_artifact_reply(
         u64::try_from(body.len()).unwrap()
     );
     assert_eq!(fs::read(destination).unwrap(), body);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        assert_eq!(
+            fs::metadata(destination).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+    }
+}
+
+fn assert_artifact_error(error: &Value, code: &str, destination: &Path, reason: &str, help: &str) {
+    assert_eq!(error["error"]["code"], code);
+    assert_eq!(
+        error["error"]["path"],
+        destination.to_string_lossy().as_ref()
+    );
+    assert_eq!(error["error"]["reason"], reason);
+    assert_eq!(error["error"]["help"], json!([help]));
 }
 
 fn assert_directory_empty(directory: &Path) {
@@ -320,23 +339,55 @@ fn invalid_and_existing_destinations_fail_before_credentials_or_network() {
         ];
         let error = json(&invoke_keyless(&arguments), 2);
         assert_eq!(error["error"]["code"], "invalid_invocation");
+        assert_eq!(error["error"]["reason"], "invalid_output_path");
+        assert_eq!(error["error"]["argument"], "--output");
+        assert_eq!(error["operation"]["name"], "corp-code");
+        assert!(error["error"].get("path").is_none());
     }
 
     let directory = tempfile::tempdir().unwrap();
     let existing_file = directory.path().join("existing.zip");
     fs::write(&existing_file, b"keep").unwrap();
     let error = json(&invoke_keyless(&binary_arguments(&existing_file)), 1);
-    assert_eq!(error["error"]["code"], "destination_exists");
+    assert_artifact_error(
+        &error,
+        "destination_exists",
+        &existing_file,
+        "destination_exists",
+        "Choose a different --output path and retry",
+    );
     assert_eq!(fs::read(&existing_file).unwrap(), b"keep");
 
     let existing_directory = directory.path().join("existing-dir");
     fs::create_dir(&existing_directory).unwrap();
     let error = json(&invoke_keyless(&binary_arguments(&existing_directory)), 1);
-    assert_eq!(error["error"]["code"], "destination_exists");
+    assert_artifact_error(
+        &error,
+        "destination_exists",
+        &existing_directory,
+        "destination_exists",
+        "Choose a different --output path and retry",
+    );
 
     let invalid_parent = existing_file.join("child.zip");
     let error = json(&invoke_keyless(&binary_arguments(&invalid_parent)), 1);
-    assert_eq!(error["error"]["code"], "artifact_io");
+    assert_artifact_error(
+        &error,
+        "artifact_io",
+        &invalid_parent,
+        "parent_not_directory",
+        "Choose an --output path whose parent is a directory",
+    );
+
+    let missing_parent = directory.path().join("missing").join("child.zip");
+    let error = json(&invoke_keyless(&binary_arguments(&missing_parent)), 1);
+    assert_artifact_error(
+        &error,
+        "artifact_io",
+        &missing_parent,
+        "parent_unavailable",
+        "Create or grant access to the --output parent directory and retry",
+    );
 
     let mut zero_limit = binary_arguments(&directory.path().join("zero.zip"));
     zero_limit.extend(["--artifact-limit-bytes".to_owned(), "0".to_owned()]);
@@ -353,7 +404,13 @@ fn dangling_symlink_is_an_existing_destination() {
     let destination = directory.path().join("dangling.zip");
     symlink("missing-target", &destination).unwrap();
     let error = json(&invoke_keyless(&binary_arguments(&destination)), 1);
-    assert_eq!(error["error"]["code"], "destination_exists");
+    assert_artifact_error(
+        &error,
+        "destination_exists",
+        &destination,
+        "destination_exists",
+        "Choose a different --output path and retry",
+    );
     assert!(
         fs::symlink_metadata(&destination)
             .unwrap()
@@ -382,7 +439,13 @@ fn publication_race_preserves_the_rival_destination_and_cleans_the_tempfile() {
         );
     });
     let error = json(&output, 1);
-    assert_eq!(error["error"]["code"], "destination_exists");
+    assert_artifact_error(
+        &error,
+        "destination_exists",
+        &destination,
+        "destination_exists",
+        "Choose a different --output path and retry",
+    );
     assert_eq!(error["metadata"]["status"], 200);
     assert_eq!(fs::read(&destination).unwrap(), b"rival");
     assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);

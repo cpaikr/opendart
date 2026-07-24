@@ -42,7 +42,10 @@ validation.
 Request arguments are generally strings, matching the guide's `STRING(n)`
 declarations. Documented types, required flags, and descriptions are retained,
 but narrative lengths, enums, defaults, ranges, and date shapes are not promoted
-to validators without stronger evidence.
+automatically. A closed, reviewed set of stable request constraints—such as
+company-code and date formats, documented code sets, and pagination bounds—is
+curated explicitly by the guide generator and enforced through the canonical
+OpenAPI and generated SDK rather than inferred from prose.
 
 The multi-company operations are the deliberate exception. Their guide test
 forms use comma-separated company codes and the guide documents a maximum of 100
@@ -74,12 +77,35 @@ and package gates live in the [SDK workspace guide](sdk/rust/README.md).
 ## Rust CLI
 
 The binary-only `opendart-cli` crate provides strict machine-readable discovery
-and one-attempt structured or binary execution through the typed SDK. Install a
-reviewed checkout reproducibly with `cargo install --locked --path
-sdk/rust/crates/opendart-cli`. Its public behavior is documented in the
+and one-attempt structured or binary execution through the typed SDK. Its public
+behavior is documented in the
 [CLI contract](docs/rust-cli/public-contract.md), and source-package and release
 boundaries are in the [CLI verification guide](docs/rust-cli/verification-and-release.md).
 The CLI is package-ready but not published.
+
+From the repository root, install and inspect one operation with:
+
+```sh
+cargo +1.97.1 install --locked --path sdk/rust/crates/opendart-cli
+opendart --version
+opendart operations describe company
+opendart call company --help
+```
+
+After configuring `OPENDART_API_KEY` as described under
+[Credentialed probe](#credentialed-probe), make a read-only call through the
+repository's Varlock setup:
+
+```sh
+varlock run -- opendart call company \
+  --corp-code 00126380 \
+  --representation json
+```
+
+On a nonzero exit, Varlock 1.12.0 can append its own diagnostic to stdout, so
+do not parse this wrapper's failure output as a single JSON document. For
+machine-readable failure checks, use the
+[harness pattern](docs/rust-cli/verification-and-release.md#credentialed-developer-checks).
 
 ## Refresh and verify
 

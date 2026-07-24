@@ -1,6 +1,7 @@
 package model_test
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
@@ -9,6 +10,51 @@ import (
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
 	rustemitter "github.com/cpaikr/opendart/internal/sdkgen/rust"
 )
+
+func TestConstraintProjectionsOmitOnlyZeroValues(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		zero  any
+		value any
+	}{
+		{
+			name:  "SDK",
+			zero:  model.Parameter{},
+			value: model.Parameter{Constraints: model.StringConstraints{Format: "opendart-date"}},
+		},
+		{
+			name:  "CLI",
+			zero:  model.CLIParameter{},
+			value: model.CLIParameter{Constraints: model.StringConstraints{Format: "opendart-date"}},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			zero, err := json.Marshal(test.zero)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var zeroFields map[string]any
+			if err := json.Unmarshal(zero, &zeroFields); err != nil {
+				t.Fatal(err)
+			}
+			if _, exists := zeroFields["constraints"]; exists {
+				t.Fatalf("zero constraints were serialized: %s", zero)
+			}
+
+			value, err := json.Marshal(test.value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var valueFields map[string]any
+			if err := json.Unmarshal(value, &valueFields); err != nil {
+				t.Fatal(err)
+			}
+			if _, exists := valueFields["constraints"]; !exists {
+				t.Fatalf("nonzero constraints were omitted: %s", value)
+			}
+		})
+	}
+}
 
 func TestBuildArtifactsSeparatesSemanticSDKAndCLIIdentities(t *testing.T) {
 	surface := canonicalSurface(t)

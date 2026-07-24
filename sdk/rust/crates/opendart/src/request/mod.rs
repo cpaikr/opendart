@@ -367,8 +367,11 @@ impl ApiKey {
     /// Validates and owns an API key without exposing it through formatting.
     pub fn new(value: impl Into<String>) -> Result<Self, AuthorizationError> {
         let value = value.into();
-        if value.is_empty() {
+        if value.chars().all(char::is_whitespace) {
             return Err(AuthorizationError::EmptyApiKey);
+        }
+        if value.chars().any(char::is_control) {
+            return Err(AuthorizationError::ControlCharacterApiKey);
         }
         Ok(Self {
             secret: value.into(),

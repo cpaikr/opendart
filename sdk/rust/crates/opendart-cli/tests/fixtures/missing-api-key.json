@@ -1,1 +1,1 @@
-{"kind":"error","error":{"code":"missing_api_key","message":"OPENDART_API_KEY is required","help":["Set OPENDART_API_KEY and retry the same command"]}}
+{"kind":"error","operation":{"name":"company","logical_id":"DS001-2019002","physical_id":"get_company_json","representation":"json"},"error":{"code":"missing_api_key","message":"OPENDART_API_KEY is required","reason":"missing_environment_value","help":["Set OPENDART_API_KEY and retry the same command"]}}

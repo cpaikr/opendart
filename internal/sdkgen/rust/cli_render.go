@@ -56,7 +56,7 @@ func renderCLIModule(source model.CLIModel) string {
 func renderCLICatalog(source model.CLIModel) string {
 	var output strings.Builder
 	output.WriteString(cliHeader(source))
-	output.WriteString("use crate::discovery::{CALL_FLAGS, FlagSpec, InvocationSpec, OperationSpec, OutputSpec, RepresentationSpec, ResponseField, ResponseShape};\n\n")
+	output.WriteString("use crate::discovery::{CALL_FLAGS, FlagSpec, InvocationSpec, OperationSpec, OutputSpec, RepresentationSpec, ResponseField, ResponseShape, StringConstraintSpec};\n\n")
 	output.WriteString("pub(crate) const OPERATIONS: &[OperationSpec] = &[\n")
 	for _, operation := range source.Operations {
 		output.WriteString("    OperationSpec {\n")
@@ -69,8 +69,8 @@ func renderCLICatalog(source model.CLIModel) string {
 			if parameter.Shape == model.StringArray {
 				occurrence, kind = "repeat", "string_list"
 			}
-			fmt.Fprintf(&output, "            FlagSpec { name: %s, id: %s, sdk_field: %s, description: %s, required: %t, value_kind: %s, occurrence: %s, min_items: %s, max_items: %s },\n",
-				quote("--"+parameter.Flag), quote(parameter.SDKField), quote(parameter.SDKField), quote(parameter.Description), parameter.Required, quote(kind), quote(occurrence), rustIntOption(parameter.MinItems), rustIntOption(parameter.MaxItems))
+			fmt.Fprintf(&output, "            FlagSpec { name: %s, id: %s, sdk_field: %s, description: %s, required: %t, value_kind: %s, occurrence: %s, min_items: %s, max_items: %s, constraints: %s },\n",
+				quote("--"+parameter.Flag), quote(parameter.SDKField), quote(parameter.SDKField), quote(parameter.Description), parameter.Required, quote(kind), quote(occurrence), rustIntOption(parameter.MinItems), rustIntOption(parameter.MaxItems), renderCLIStringConstraints(parameter.Constraints))
 		}
 		output.WriteString("        ],\n        representations: &[\n")
 		for _, representation := range operation.Representations {
@@ -89,6 +89,18 @@ func renderCLICatalog(source model.CLIModel) string {
 	}
 	output.WriteString("];\n\npub(crate) fn operation(name_or_id: &str) -> Option<&'static OperationSpec> {\n    OPERATIONS.iter().find(|operation| operation.name == name_or_id || operation.logical_id == name_or_id)\n}\n")
 	return output.String()
+}
+
+func renderCLIStringConstraints(constraints model.StringConstraints) string {
+	if constraints.Format == "" && len(constraints.AllowedValues) == 0 && constraints.MinLength == nil && constraints.MaxLength == nil && constraints.DecimalMinimum == nil && constraints.DecimalMaximum == nil {
+		return "None"
+	}
+	allowed := make([]string, 0, len(constraints.AllowedValues))
+	for _, value := range constraints.AllowedValues {
+		allowed = append(allowed, quote(value))
+	}
+	return fmt.Sprintf("Some(StringConstraintSpec { format: %s, allowed_values: &[%s], min_length: %s, max_length: %s, decimal_minimum: %s, decimal_maximum: %s })",
+		rustStringOption(constraints.Format), strings.Join(allowed, ", "), rustIntOption(constraints.MinLength), rustIntOption(constraints.MaxLength), rustIntOption(constraints.DecimalMinimum), rustIntOption(constraints.DecimalMaximum))
 }
 
 func renderCLIResponseShape(shape model.CLIResponseShape) string {
@@ -122,20 +134,52 @@ use crate::command::execution_arguments;
 use super::catalog::OPERATIONS;
 
 pub(crate) fn command() -> Command {
+    let list = Command::new("list")
+        .display_name("opendart")
+        .about("List logical operations")
+        .arg(
+            Arg::new("query")
+                .long("query")
+                .value_name("TEXT")
+                .num_args(1)
+                .help("Match operation identity or description"),
+        )
+        .arg(
+            Arg::new("group")
+                .long("group")
+                .value_name("GROUP")
+                .num_args(1)
+                .help("Match one OpenDART source group"),
+        )
+        .arg(
+            Arg::new("representation")
+                .long("representation")
+                .value_name("REPRESENTATION")
+                .num_args(1)
+                .value_parser(["json", "xml", "zip"])
+                .help("Require a supported response representation"),
+        );
     let operations = Command::new("operations")
+        .display_name("opendart")
         .about("Discover generated OpenDART operations")
         .subcommand_required(true)
-        .subcommand(Command::new("list").about("List logical operations"))
+        .subcommand(list)
         .subcommand(
             Command::new("describe")
+                .display_name("opendart")
                 .about("Describe one logical operation")
                 .arg(Arg::new("operation").required(true).value_name("OPERATION")),
         );
     let mut call = Command::new("call")
+        .display_name("opendart")
         .about("Prepare and execute one typed OpenDART operation")
+        .override_usage("opendart call <OPERATION> [OPTIONS]")
+        .after_help("Discover operation names with 'opendart operations list'; inspect one with 'opendart operations describe <operation>'.")
         .subcommand_required(true);
     for operation in OPERATIONS {
         let mut generated = Command::new(operation.name)
+            .display_name("opendart")
+            .hide(true)
             .about(operation.description);
         if operation.logical_id != operation.name {
             generated = generated.alias(operation.logical_id);
@@ -157,18 +201,28 @@ pub(crate) fn command() -> Command {
             generated = generated.arg(
                 Arg::new("representation")
                     .long("representation")
+                    .value_name("REPRESENTATION")
+                    .help("Select the structured response representation")
                     .required(true)
                     .num_args(1)
                     .value_parser(["json", "xml"]),
             );
         }
         if is_binary {
-            generated = generated.arg(Arg::new("output").long("output").required(true).num_args(1));
+            generated = generated.arg(
+                Arg::new("output")
+                    .long("output")
+                    .value_name("PATH")
+                    .help("Write the binary response to a new file without overwriting")
+                    .required(true)
+                    .num_args(1),
+            );
         }
         generated = execution_arguments(generated, is_binary);
         call = call.subcommand(generated);
     }
     Command::new("opendart")
+        .display_name("opendart")
         .about("Call OpenDART through the typed Rust SDK")
         .version(env!("CARGO_PKG_VERSION"))
         .propagate_version(true)

@@ -9,8 +9,20 @@ by the repository's current workflows. From a reviewed source checkout, install
 the locked package reproducibly with:
 
 ```sh
-cargo install --locked --path sdk/rust/crates/opendart-cli
+cargo +1.97.1 install --locked --path sdk/rust/crates/opendart-cli
 ```
+
+Confirm the installed binary and inspect the operation-specific help:
+
+```sh
+opendart --version
+opendart --help
+opendart call company --help
+```
+
+Use the top-level `--version` for the CLI package identity. Use
+`opendart call <operation> --help` for concise call syntax; the machine-readable
+operation description remains the complete source of truth.
 
 ## Keyless discovery
 
@@ -33,6 +45,24 @@ Structured JSON and XML responses both write one compact JSON envelope to
 standard output.
 Binary operations require an explicit destination and publish the complete
 artifact without overwriting an existing path.
+
+With `OPENDART_API_KEY` present in the inherited environment, an installed CLI
+can make a structured call directly:
+
+```sh
+opendart call company \
+  --corp-code 00126380 \
+  --representation json
+```
+
+Download the corporate-code archive to a new path with:
+
+```sh
+opendart call corp-code --output /tmp/corp-code.zip
+```
+
+Choose a different path or remove the prior artifact before repeating the
+example; the CLI deliberately refuses to overwrite it.
 
 The CLI preserves OpenDART source-status evidence and uses stable exit classes;
 it does not reinterpret source statuses as retry, empty-success, or pagination

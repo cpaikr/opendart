@@ -75,6 +75,10 @@ without duplicating endpoint contracts or adding a second output notation.
   source-install behavior natively on all three while leaving prebuilt targets,
   libc, minimum OS versions, signing, and archive policy to the separate
   hardening task.
+- Apply confirmed repository dogfood feedback before publication: keep compact
+  JSON as the only output notation, deepen sanitized errors and discovery,
+  promote trustworthy input constraints through the canonical model, and keep
+  Varlock-specific runner behavior in repository development guidance.
 
 ## Ordered work
 
@@ -289,7 +293,30 @@ Completion evidence: release dry runs reproduce reviewed package contents,
 component outputs are isolated, interrupted-release recovery is specified, and
 no workflow can publish without the dedicated authority change.
 
-### 8. Publish and adopt the source distribution
+### 8. Harden the dogfood contract
+
+- Preserve sanitized parse and request-preparation reasons in machine-readable
+  errors without exposing arbitrary values or dependency diagnostics.
+- Include prepared operation context in credential and configuration failures,
+  and make artifact destination failures identify the caller-owned path plus a
+  safe reason and recovery action.
+- Promote trustworthy operation formats, allowed values, and bounds into the
+  canonical model. Generate matching SDK preparation, CLI parsing, and
+  discovery behavior instead of adding CLI-only validation.
+- Keep discovery compact JSON while adding concise descriptions and local
+  query, group, and representation filters. Keep human table and pretty output
+  out of the public contract.
+- Reject empty, whitespace-only, and control-character API credentials without
+  freezing the SDK to the currently documented credential length.
+- Improve source-install and real-call guidance, command help, nested version
+  identity, and binary-envelope examples. Document Varlock's nonzero-child
+  stdout diagnostics only beside repository development recipes that use it.
+
+Completion evidence: generated artifacts are fresh, public SDK and CLI tests
+cover the new constraints and diagnostics, discovery remains deterministic and
+keyless, and the relevant stable, MSRV, package, and compatibility gates pass.
+
+### 9. Publish and adopt the source distribution
 
 - After the SDK task verifies a registry version containing the JSON
   serialization contract, confirm that the already-aligned CLI exact pin
@@ -393,14 +420,18 @@ provenance points to the immutable reviewed revision.
   publication, or publish crates; ordinary locked dependency downloads remain
   permitted. Both unpublished Rust components remain absent from the release
   manifest.
+- Work 8 is complete. Canonical request constraints now flow through OpenAPI,
+  SDK preparation, CLI discovery, and sanitized error details; discovery
+  filters, credential and artifact hardening, help/version behavior, and
+  developer guidance incorporate the confirmed dogfood feedback. Generated
+  freshness, repository verification, stable and MSRV checks, Clippy, SDK/CLI
+  process suites, and structured/binary compatibility loopbacks pass.
 
 ## Next action
 
-Reviewed work 1 through 7, including the gated local live evidence, is complete.
-This plan is paused before Work 8. The separate public Rust SDK release plan's
-Work 6 ("crates.io publication") remains
-unimplemented and is not authorized by this delivery. Resume that work only
-through a separately authorized delivery, publish and verify `opendart`, then
-return here for CLI roadmap Work 8 through another explicit authorization. Do
-not check registry ownership, publish a crate, finalize a CLI release, or add
-prebuilt artifacts in the CLI roadmap Work 7 slice.
+Pause before Work 9. The separate public Rust SDK release plan's Work 6 ("crates.io
+publication") remains unimplemented and is not authorized by this delivery.
+Resume that work only through a separately authorized delivery, publish and
+verify `opendart`, then return here for CLI roadmap Work 9 through another
+explicit authorization. Do not check registry ownership, publish a crate,
+finalize a CLI release, or add prebuilt artifacts in this hardening slice.

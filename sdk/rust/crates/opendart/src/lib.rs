@@ -6,6 +6,7 @@ mod error;
 mod generated;
 mod provenance;
 mod request;
+mod validation;
 mod wire;
 
 #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]

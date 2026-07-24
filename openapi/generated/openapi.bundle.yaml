@@ -33981,6 +33981,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -33992,6 +33995,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -34014,6 +34020,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -34119,6 +34130,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -34130,6 +34144,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -34152,6 +34169,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -34257,6 +34279,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -34268,6 +34293,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -34290,6 +34318,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -34395,6 +34428,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -34406,6 +34442,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -34428,6 +34467,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -34533,6 +34577,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -34544,6 +34591,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -34566,6 +34616,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -34671,6 +34726,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -34682,6 +34740,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -34704,6 +34765,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -34809,6 +34875,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -34820,6 +34889,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -34833,6 +34905,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -34938,6 +35015,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -34949,6 +35029,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -34962,6 +35045,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -35067,6 +35155,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35078,6 +35169,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35089,6 +35183,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35192,6 +35289,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35203,6 +35303,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35214,6 +35317,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35317,6 +35423,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35328,6 +35437,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35339,6 +35451,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35442,6 +35557,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35453,6 +35571,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35464,6 +35585,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35567,6 +35691,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35578,6 +35705,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35589,6 +35719,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35692,6 +35825,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35703,6 +35839,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35714,6 +35853,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35817,6 +35959,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35828,6 +35973,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35839,6 +35987,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35942,6 +36093,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35953,6 +36107,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -35964,6 +36121,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36067,6 +36227,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36078,6 +36241,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36089,6 +36255,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36192,6 +36361,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36203,6 +36375,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36214,6 +36389,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36317,6 +36495,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36328,6 +36509,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36339,6 +36523,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36442,6 +36629,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36453,6 +36643,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36464,6 +36657,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36567,6 +36763,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36578,6 +36777,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36589,6 +36791,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36692,6 +36897,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36703,6 +36911,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36714,6 +36925,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36817,6 +37031,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36828,6 +37045,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36839,6 +37059,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36942,6 +37165,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36953,6 +37179,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -36964,6 +37193,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37067,6 +37299,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37078,6 +37313,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37089,6 +37327,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37192,6 +37433,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37203,6 +37447,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37214,6 +37461,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37317,6 +37567,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37328,6 +37581,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37339,6 +37595,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37442,6 +37701,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37453,6 +37715,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37464,6 +37729,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37567,6 +37835,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37578,6 +37849,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37589,6 +37863,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37692,6 +37969,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37703,6 +37983,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37714,6 +37997,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37817,6 +38103,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37828,6 +38117,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -37850,6 +38142,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -37955,6 +38252,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -37966,6 +38266,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -37988,6 +38291,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -38093,6 +38401,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38182,6 +38493,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38355,6 +38669,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38366,6 +38683,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -38388,6 +38708,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -38493,6 +38818,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38504,6 +38832,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -38526,6 +38857,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -38631,6 +38967,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38642,6 +38981,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38653,6 +38995,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38756,6 +39101,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38767,6 +39115,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38778,6 +39129,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38881,6 +39235,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38892,6 +39249,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -38903,6 +39263,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39006,6 +39369,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39017,6 +39383,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39028,6 +39397,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39131,6 +39503,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39142,6 +39517,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39153,6 +39531,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39256,6 +39637,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39267,6 +39651,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39278,6 +39665,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39381,6 +39771,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39392,6 +39785,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -39414,6 +39810,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -39519,6 +39920,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39530,6 +39934,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -39552,6 +39959,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -39657,6 +40069,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39668,6 +40083,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39679,6 +40097,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39782,6 +40203,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39793,6 +40217,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -39804,6 +40231,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40006,6 +40436,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40017,6 +40450,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -40039,6 +40475,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -40144,6 +40585,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40155,6 +40599,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -40177,6 +40624,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -40282,6 +40734,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40293,6 +40748,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -40315,6 +40773,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -40420,6 +40883,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40431,6 +40897,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -40453,6 +40922,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -40558,6 +41032,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40569,6 +41046,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40580,6 +41060,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40683,6 +41166,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40694,6 +41180,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40705,6 +41194,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40808,6 +41300,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40819,6 +41314,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40830,6 +41328,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40933,6 +41434,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40944,6 +41448,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -40955,6 +41462,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41060,6 +41570,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41151,6 +41664,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41240,6 +41756,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41251,6 +41770,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -41264,6 +41786,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -41369,6 +41896,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41380,6 +41910,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -41393,6 +41926,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -41498,6 +42036,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41509,6 +42050,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -41531,6 +42075,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -41636,6 +42185,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41647,6 +42199,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -41669,6 +42224,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -41774,6 +42334,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41785,6 +42348,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41796,6 +42362,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41899,6 +42468,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41910,6 +42482,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -41921,6 +42496,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42024,6 +42602,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42035,6 +42616,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42046,6 +42630,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42149,6 +42736,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42160,6 +42750,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42171,6 +42764,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42274,6 +42870,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42285,6 +42884,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -42298,6 +42900,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -42403,6 +43010,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42414,6 +43024,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -42427,6 +43040,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -42532,6 +43150,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42543,6 +43164,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42554,6 +43178,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42657,6 +43284,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42668,6 +43298,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42679,6 +43312,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -42788,6 +43424,9 @@ components:
               maxItems: 100
               items:
                 type: string
+                format: opendart-corp-code
+                minLength: 8
+                maxLength: 8
             examples:
               officialGuide:
                 summary: 공식 개발가이드 테스트 예시
@@ -42831,6 +43470,9 @@ components:
               ※ 2023년 3분기 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -42844,6 +43486,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -42857,6 +43504,11 @@ components:
               활동성지표 : M240000
             schema:
               type: string
+              enum:
+                - M210000
+                - M220000
+                - M230000
+                - M240000
             x-opendart-korean-name: 지표분류코드
             x-opendart-documented-type: STRING(7)
             x-opendart-documented-required: Y
@@ -42977,6 +43629,9 @@ components:
               maxItems: 100
               items:
                 type: string
+                format: opendart-corp-code
+                minLength: 8
+                maxLength: 8
             examples:
               officialGuide:
                 summary: 공식 개발가이드 테스트 예시
@@ -43020,6 +43675,9 @@ components:
               ※ 2023년 3분기 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -43033,6 +43691,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -43046,6 +43709,11 @@ components:
               활동성지표 : M240000
             schema:
               type: string
+              enum:
+                - M210000
+                - M220000
+                - M230000
+                - M240000
             x-opendart-korean-name: 지표분류코드
             x-opendart-documented-type: STRING(7)
             x-opendart-documented-required: Y
@@ -43168,6 +43836,9 @@ components:
               maxItems: 100
               items:
                 type: string
+                format: opendart-corp-code
+                minLength: 8
+                maxLength: 8
             examples:
               officialGuide:
                 summary: 공식 개발가이드 테스트 예시
@@ -43213,6 +43884,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -43226,6 +43900,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -43339,6 +44018,9 @@ components:
               maxItems: 100
               items:
                 type: string
+                format: opendart-corp-code
+                minLength: 8
+                maxLength: 8
             examples:
               officialGuide:
                 summary: 공식 개발가이드 테스트 예시
@@ -43384,6 +44066,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -43397,6 +44082,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -43502,6 +44192,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -43513,6 +44206,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -43526,6 +44222,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -43631,6 +44332,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -43642,6 +44346,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -43655,6 +44362,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -43760,6 +44472,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -43771,6 +44486,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -43784,6 +44502,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -43793,6 +44516,9 @@ components:
             description: OFS:재무제표, CFS:연결재무제표
             schema:
               type: string
+              enum:
+                - OFS
+                - CFS
             x-opendart-korean-name: 개별/연결구분
             x-opendart-documented-type: STRING(3)
             x-opendart-documented-required: Y
@@ -43903,6 +44629,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -43914,6 +44643,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -43927,6 +44659,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -43936,6 +44673,9 @@ components:
             description: OFS:재무제표, CFS:연결재무제표
             schema:
               type: string
+              enum:
+                - OFS
+                - CFS
             x-opendart-korean-name: 개별/연결구분
             x-opendart-documented-type: STRING(3)
             x-opendart-documented-required: Y
@@ -44046,6 +44786,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44057,6 +44800,9 @@ components:
               ※ 2023년 3분기 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -44070,6 +44816,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -44083,6 +44834,11 @@ components:
               활동성지표 : M240000
             schema:
               type: string
+              enum:
+                - M210000
+                - M220000
+                - M230000
+                - M240000
             x-opendart-korean-name: 지표분류코드
             x-opendart-documented-type: STRING(7)
             x-opendart-documented-required: Y
@@ -44197,6 +44953,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44208,6 +44967,9 @@ components:
               ※ 2023년 3분기 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -44221,6 +44983,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -44234,6 +45001,11 @@ components:
               활동성지표 : M240000
             schema:
               type: string
+              enum:
+                - M210000
+                - M220000
+                - M230000
+                - M240000
             x-opendart-korean-name: 지표분류코드
             x-opendart-documented-type: STRING(7)
             x-opendart-documented-required: Y
@@ -44370,6 +45142,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -44482,6 +45259,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44493,6 +45273,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44504,6 +45287,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44607,6 +45393,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44618,6 +45407,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44629,6 +45421,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44732,6 +45527,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44743,6 +45541,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -44756,6 +45557,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -44861,6 +45667,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -44872,6 +45681,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -44885,6 +45697,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -44992,6 +45809,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -45003,6 +45823,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -45016,6 +45839,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -45123,6 +45951,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -45134,6 +45965,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -45147,6 +45981,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -45254,6 +46093,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -45265,6 +46107,9 @@ components:
               ※ 2026년 5월 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -45278,6 +46123,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -45385,6 +46235,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -45396,6 +46249,9 @@ components:
               ※ 2026년 5월 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -45409,6 +46265,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -45514,6 +46375,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -45525,6 +46389,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -45538,6 +46405,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -45643,6 +46515,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -45654,6 +46529,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -45667,6 +46545,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -45772,6 +46655,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -45783,6 +46669,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -45796,6 +46685,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -45901,6 +46795,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -45912,6 +46809,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -45925,6 +46825,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -46032,6 +46937,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -46043,6 +46951,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -46056,6 +46967,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -46163,6 +47079,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -46174,6 +47093,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -46187,6 +47109,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -46294,6 +47221,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -46305,6 +47235,9 @@ components:
               ※ 2026년 5월 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -46318,6 +47251,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -46425,6 +47363,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -46436,6 +47377,9 @@ components:
               ※ 2026년 5월 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -46449,6 +47393,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -46554,6 +47503,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -46565,6 +47517,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -46578,6 +47533,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -46683,6 +47643,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -46694,6 +47657,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -46707,6 +47673,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -46812,6 +47783,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: N
@@ -46824,6 +47798,9 @@ components:
               2) 고유번호(corp_code)가 없는 경우 검색기간은 3개월로 제한
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: N
@@ -46835,6 +47812,9 @@ components:
               ※ 일자를 지정하지 않을 경우 당일 기준으로 조회
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: N
@@ -46846,6 +47826,9 @@ components:
               1) 기본값: N (N지정시 정정보고서를 포함한 제출 보고서 전체를 검색함)
             schema:
               type: string
+              enum:
+                - Y
+                - N
             x-opendart-korean-name: 최종보고서 검색여부
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: N
@@ -46865,6 +47848,17 @@ components:
               J : 공정위공시
             schema:
               type: string
+              enum:
+                - A
+                - B
+                - C
+                - D
+                - E
+                - F
+                - G
+                - H
+                - I
+                - J
             x-opendart-korean-name: 공시유형
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: N
@@ -46885,6 +47879,11 @@ components:
               ※ 없으면 전체조회, 복수조건 불가
             schema:
               type: string
+              enum:
+                - Y
+                - K
+                - N
+                - E
             x-opendart-korean-name: 법인구분
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: N
@@ -46899,6 +47898,10 @@ components:
               ※ 기본값 : date
             schema:
               type: string
+              enum:
+                - date
+                - crp
+                - rpt
             x-opendart-korean-name: 정렬
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: N
@@ -46910,6 +47913,9 @@ components:
               ※ 기본값 : desc
             schema:
               type: string
+              enum:
+                - asc
+                - desc
             x-opendart-korean-name: 정렬방법
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: N
@@ -46919,6 +47925,8 @@ components:
             description: "페이지 번호(1~n) 기본값 : 1"
             schema:
               type: string
+              x-opendart-decimal-range:
+                minimum: 1
             x-opendart-korean-name: 페이지 번호
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: N
@@ -46928,6 +47936,9 @@ components:
             description: "페이지당 건수(1~100) 기본값 : 10, 최대값 : 100"
             schema:
               type: string
+              x-opendart-decimal-range:
+                minimum: 1
+                maximum: 100
             x-opendart-korean-name: 페이지 별 건수
             x-opendart-documented-type: STRING(3)
             x-opendart-documented-required: N
@@ -47283,6 +48294,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: N
@@ -47295,6 +48309,9 @@ components:
               2) 고유번호(corp_code)가 없는 경우 검색기간은 3개월로 제한
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: N
@@ -47306,6 +48323,9 @@ components:
               ※ 일자를 지정하지 않을 경우 당일 기준으로 조회
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: N
@@ -47317,6 +48337,9 @@ components:
               1) 기본값: N (N지정시 정정보고서를 포함한 제출 보고서 전체를 검색함)
             schema:
               type: string
+              enum:
+                - Y
+                - N
             x-opendart-korean-name: 최종보고서 검색여부
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: N
@@ -47336,6 +48359,17 @@ components:
               J : 공정위공시
             schema:
               type: string
+              enum:
+                - A
+                - B
+                - C
+                - D
+                - E
+                - F
+                - G
+                - H
+                - I
+                - J
             x-opendart-korean-name: 공시유형
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: N
@@ -47356,6 +48390,11 @@ components:
               ※ 없으면 전체조회, 복수조건 불가
             schema:
               type: string
+              enum:
+                - Y
+                - K
+                - N
+                - E
             x-opendart-korean-name: 법인구분
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: N
@@ -47370,6 +48409,10 @@ components:
               ※ 기본값 : date
             schema:
               type: string
+              enum:
+                - date
+                - crp
+                - rpt
             x-opendart-korean-name: 정렬
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: N
@@ -47381,6 +48424,9 @@ components:
               ※ 기본값 : desc
             schema:
               type: string
+              enum:
+                - asc
+                - desc
             x-opendart-korean-name: 정렬방법
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: N
@@ -47390,6 +48436,8 @@ components:
             description: "페이지 번호(1~n) 기본값 : 1"
             schema:
               type: string
+              x-opendart-decimal-range:
+                minimum: 1
             x-opendart-korean-name: 페이지 번호
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: N
@@ -47399,6 +48447,9 @@ components:
             description: "페이지당 건수(1~100) 기본값 : 10, 최대값 : 100"
             schema:
               type: string
+              x-opendart-decimal-range:
+                minimum: 1
+                maximum: 100
             x-opendart-korean-name: 페이지 별 건수
             x-opendart-documented-type: STRING(3)
             x-opendart-documented-required: N
@@ -47754,6 +48805,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -47765,6 +48819,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -47776,6 +48833,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -47879,6 +48939,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -47890,6 +48953,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -47901,6 +48967,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48004,6 +49073,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48093,6 +49165,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48182,6 +49257,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48193,6 +49271,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48204,6 +49285,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48307,6 +49391,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48318,6 +49405,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48329,6 +49419,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48432,6 +49525,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48443,6 +49539,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -48456,6 +49555,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -48561,6 +49665,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48572,6 +49679,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -48585,6 +49695,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -48690,6 +49805,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48701,6 +49819,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -48723,6 +49844,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -48828,6 +49954,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48839,6 +49968,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -48861,6 +49993,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -48966,6 +50103,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48977,6 +50117,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -48988,6 +50131,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49091,6 +50237,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49102,6 +50251,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49113,6 +50265,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49216,6 +50371,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49227,6 +50385,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49238,6 +50399,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49341,6 +50505,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49352,6 +50519,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49363,6 +50533,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49466,6 +50639,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49477,6 +50653,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -49490,6 +50669,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -49595,6 +50779,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49606,6 +50793,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -49619,6 +50809,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -49724,6 +50919,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49735,6 +50933,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -49757,6 +50958,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -49862,6 +51068,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -49873,6 +51082,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -49895,6 +51107,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -50000,6 +51217,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50011,6 +51231,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50022,6 +51245,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50125,6 +51351,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50136,6 +51365,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50147,6 +51379,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50250,6 +51485,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50261,6 +51499,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50272,6 +51513,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50375,6 +51619,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50386,6 +51633,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50397,6 +51647,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50500,6 +51753,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50511,6 +51767,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50522,6 +51781,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50625,6 +51887,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50636,6 +51901,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50647,6 +51915,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50750,6 +52021,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50761,6 +52035,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50772,6 +52049,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50875,6 +52155,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50886,6 +52169,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -50897,6 +52183,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51000,6 +52289,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51011,6 +52303,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51022,6 +52317,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51125,6 +52423,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51136,6 +52437,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51147,6 +52451,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51250,6 +52557,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51261,6 +52571,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51272,6 +52585,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51375,6 +52691,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51386,6 +52705,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51397,6 +52719,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51500,6 +52825,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51511,6 +52839,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -51533,6 +52864,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -51638,6 +52974,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51649,6 +52988,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -51671,6 +53013,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -51776,6 +53123,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51787,6 +53137,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -51809,6 +53162,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -51914,6 +53272,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -51925,6 +53286,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -51947,6 +53311,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -52052,6 +53421,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52063,6 +53435,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -52085,6 +53460,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -52190,6 +53570,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52201,6 +53584,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -52223,6 +53609,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -52328,6 +53719,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52339,6 +53733,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52350,6 +53747,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52453,6 +53853,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52464,6 +53867,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52475,6 +53881,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52578,6 +53987,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52589,6 +54001,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52600,6 +54015,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52703,6 +54121,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52714,6 +54135,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52725,6 +54149,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52828,6 +54255,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52839,6 +54269,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52850,6 +54283,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52953,6 +54389,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52964,6 +54403,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -52975,6 +54417,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53078,6 +54523,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53089,6 +54537,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53100,6 +54551,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53203,6 +54657,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53214,6 +54671,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53225,6 +54685,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53328,6 +54791,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53339,6 +54805,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -53361,6 +54830,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -53466,6 +54940,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53477,6 +54954,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -53499,6 +54979,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -53604,6 +55089,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53615,6 +55103,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -53628,6 +55119,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -53733,6 +55229,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53744,6 +55243,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(4)
             x-opendart-documented-required: Y
@@ -53757,6 +55259,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -53862,6 +55369,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53873,6 +55383,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53884,6 +55397,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53987,6 +55503,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -53998,6 +55517,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54009,6 +55531,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54112,6 +55637,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54123,6 +55651,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54134,6 +55665,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54237,6 +55771,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54248,6 +55785,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54259,6 +55799,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54362,6 +55905,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54373,6 +55919,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54384,6 +55933,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54487,6 +56039,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54498,6 +56053,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54509,6 +56067,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54612,6 +56173,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54623,6 +56187,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54634,6 +56201,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54737,6 +56307,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54748,6 +56321,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54759,6 +56335,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54862,6 +56441,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54873,6 +56455,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54884,6 +56469,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54987,6 +56575,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -54998,6 +56589,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55009,6 +56603,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55112,6 +56709,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55123,6 +56723,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55134,6 +56737,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55237,6 +56843,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55248,6 +56857,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55259,6 +56871,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55362,6 +56977,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55373,6 +56991,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -55395,6 +57016,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -55500,6 +57126,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55511,6 +57140,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-year
+              minLength: 4
+              maxLength: 4
             x-opendart-korean-name: 사업연도
             x-opendart-documented-type: STRING(1)
             x-opendart-documented-required: Y
@@ -55533,6 +57165,11 @@ components:
               사업보고서 : 11011
             schema:
               type: string
+              enum:
+                - "11013"
+                - "11012"
+                - "11014"
+                - "11011"
             x-opendart-korean-name: 보고서 코드
             x-opendart-documented-type: STRING(5)
             x-opendart-documented-required: Y
@@ -55638,6 +57275,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55649,6 +57289,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55660,6 +57303,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55763,6 +57409,9 @@ components:
               ※ 개발가이드 > 공시정보 > 고유번호 참고
             schema:
               type: string
+              format: opendart-corp-code
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 고유번호
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55774,6 +57423,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 시작일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y
@@ -55785,6 +57437,9 @@ components:
               ※ 2015년 이후 부터 정보제공
             schema:
               type: string
+              format: opendart-date
+              minLength: 8
+              maxLength: 8
             x-opendart-korean-name: 종료일(최초접수일)
             x-opendart-documented-type: STRING(8)
             x-opendart-documented-required: Y

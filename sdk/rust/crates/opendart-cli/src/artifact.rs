@@ -12,7 +12,7 @@ use opendart::{
 };
 use serde::Serialize;
 
-use crate::error::ErrorEnvelope;
+use crate::error::{ArtifactIoReason, ErrorEnvelope};
 use crate::execution::{BufferedOutput, OperationContext};
 
 pub(crate) enum TargetError {
@@ -41,30 +41,48 @@ impl ArtifactTarget {
             .expect("clap requires binary output")
             .clone();
         if spelling.is_empty() || spelling == "-" {
-            return Err(TargetError::Usage(ErrorEnvelope::usage(vec![
-                "Use --output with a non-empty file path other than -".to_owned(),
-            ])));
+            return Err(TargetError::Usage(ErrorEnvelope::invalid_artifact_output(
+                operation,
+            )));
         }
         let path = PathBuf::from(&spelling);
         match fs::symlink_metadata(&path) {
             Ok(_) => {
                 return Err(TargetError::Execution(ErrorEnvelope::destination_exists(
-                    operation, None,
+                    operation, None, spelling,
                 )));
             }
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    io::ErrorKind::NotFound | io::ErrorKind::NotADirectory
+                ) => {}
             Err(_) => {
                 return Err(TargetError::Execution(ErrorEnvelope::artifact_io(
-                    operation, None,
+                    operation,
+                    None,
+                    spelling,
+                    ArtifactIoReason::DestinationMetadataUnavailable,
                 )));
             }
         }
         let parent = artifact_parent(&path);
         match fs::metadata(parent) {
             Ok(metadata) if metadata.is_dir() => {}
-            Ok(_) | Err(_) => {
+            Ok(_) => {
                 return Err(TargetError::Execution(ErrorEnvelope::artifact_io(
-                    operation, None,
+                    operation,
+                    None,
+                    spelling,
+                    ArtifactIoReason::ParentNotDirectory,
+                )));
+            }
+            Err(_) => {
+                return Err(TargetError::Execution(ErrorEnvelope::artifact_io(
+                    operation,
+                    None,
+                    spelling,
+                    ArtifactIoReason::ParentUnavailable,
                 )));
             }
         }
@@ -84,8 +102,14 @@ impl ArtifactTarget {
         operation: OperationContext,
     ) -> Result<StagedArtifact, ErrorEnvelope> {
         let parent = artifact_parent(&self.path);
-        let file = tempfile::NamedTempFile::new_in(parent)
-            .map_err(|_| ErrorEnvelope::artifact_io(operation, None))?;
+        let file = tempfile::NamedTempFile::new_in(parent).map_err(|_| {
+            ErrorEnvelope::artifact_io(
+                operation,
+                None,
+                self.spelling.clone(),
+                ArtifactIoReason::TemporaryFileCreation,
+            )
+        })?;
         Ok(StagedArtifact {
             file,
             path: self.path,
@@ -119,7 +143,13 @@ pub(crate) async fn execute(
         Err(error) => {
             let metadata = error.metadata().cloned();
             let fallback = ErrorEnvelope::client(operation, error);
-            return Err(discard_error(staged.file, operation, metadata, fallback));
+            return Err(discard_error(
+                staged.file,
+                operation,
+                metadata,
+                &staged.spelling,
+                fallback,
+            ));
         }
     };
     let SourceResponse {
@@ -130,10 +160,15 @@ pub(crate) async fn execute(
             stream_to_artifact(operation, metadata, stream, staged, ArtifactKind::Archive).await
         }
         BinaryReply::Status(status) => {
-            staged
-                .file
-                .close()
-                .map_err(|_| ErrorEnvelope::artifact_io(operation, Some(metadata.clone())))?;
+            let spelling = staged.spelling;
+            staged.file.close().map_err(|_| {
+                ErrorEnvelope::artifact_io(
+                    operation,
+                    Some(metadata.clone()),
+                    spelling,
+                    ArtifactIoReason::CleanupFailed,
+                )
+            })?;
             encode_report(operation, &metadata, ArtifactReply::Status(&status), 1)
         }
         BinaryReply::Unrecognized(stream) => {
@@ -152,6 +187,7 @@ pub(crate) async fn execute(
                 staged.file,
                 operation,
                 Some(metadata),
+                &staged.spelling,
                 fallback,
             ))
         }
@@ -184,24 +220,58 @@ async fn stream_to_artifact(
             Err(error) => {
                 let fallback =
                     ErrorEnvelope::body_stream(operation, metadata.clone(), error.kind());
-                return Err(discard_error(file, operation, Some(metadata), fallback));
+                return Err(discard_error(
+                    file,
+                    operation,
+                    Some(metadata),
+                    &spelling,
+                    fallback,
+                ));
             }
         };
         bytes = match write_bounded(&mut file, bytes, chunk.as_bytes(), limit) {
             Ok(next) => next,
             Err(ArtifactWriteError::Limit) => {
                 let fallback = ErrorEnvelope::artifact_limit(operation, metadata.clone());
-                return Err(discard_error(file, operation, Some(metadata), fallback));
+                return Err(discard_error(
+                    file,
+                    operation,
+                    Some(metadata),
+                    &spelling,
+                    fallback,
+                ));
             }
             Err(ArtifactWriteError::Io) => {
-                let fallback = ErrorEnvelope::artifact_io(operation, Some(metadata.clone()));
-                return Err(discard_error(file, operation, Some(metadata), fallback));
+                let fallback = ErrorEnvelope::artifact_io(
+                    operation,
+                    Some(metadata.clone()),
+                    spelling.clone(),
+                    ArtifactIoReason::WriteFailed,
+                );
+                return Err(discard_error(
+                    file,
+                    operation,
+                    Some(metadata),
+                    &spelling,
+                    fallback,
+                ));
             }
         };
     }
     if file.flush().is_err() {
-        let fallback = ErrorEnvelope::artifact_io(operation, Some(metadata.clone()));
-        return Err(discard_error(file, operation, Some(metadata), fallback));
+        let fallback = ErrorEnvelope::artifact_io(
+            operation,
+            Some(metadata.clone()),
+            spelling.clone(),
+            ArtifactIoReason::FlushFailed,
+        );
+        return Err(discard_error(
+            file,
+            operation,
+            Some(metadata),
+            &spelling,
+            fallback,
+        ));
     }
 
     let reference = ArtifactReference {
@@ -215,7 +285,13 @@ async fn stream_to_artifact(
     let output = match encode_report(operation, &metadata, reply, exit) {
         Ok(output) => output,
         Err(error) => {
-            return Err(discard_error(file, operation, Some(metadata), error));
+            return Err(discard_error(
+                file,
+                operation,
+                Some(metadata),
+                &spelling,
+                error,
+            ));
         }
     };
 
@@ -223,14 +299,24 @@ async fn stream_to_artifact(
         Ok(_) => Ok(output),
         Err(error) => {
             let fallback = if error.error.kind() == io::ErrorKind::AlreadyExists {
-                ErrorEnvelope::destination_exists(operation, Some(metadata.clone()))
+                ErrorEnvelope::destination_exists(
+                    operation,
+                    Some(metadata.clone()),
+                    spelling.clone(),
+                )
             } else {
-                ErrorEnvelope::artifact_io(operation, Some(metadata.clone()))
+                ErrorEnvelope::artifact_io(
+                    operation,
+                    Some(metadata.clone()),
+                    spelling.clone(),
+                    ArtifactIoReason::PublishFailed,
+                )
             };
             Err(discard_error(
                 error.file,
                 operation,
                 Some(metadata),
+                &spelling,
                 fallback,
             ))
         }
@@ -241,11 +327,17 @@ fn discard_error(
     file: tempfile::NamedTempFile,
     operation: OperationContext,
     metadata: Option<ResponseMetadata>,
+    spelling: &str,
     fallback: ErrorEnvelope,
 ) -> ErrorEnvelope {
     match file.close() {
         Ok(()) => fallback,
-        Err(_) => ErrorEnvelope::artifact_io(operation, metadata),
+        Err(_) => ErrorEnvelope::artifact_io(
+            operation,
+            metadata,
+            spelling.to_owned(),
+            ArtifactIoReason::CleanupFailed,
+        ),
     }
 }
 

@@ -12,7 +12,7 @@ use crate::error::ErrorEnvelope;
 
 const USER_AGENT_SUFFIX: &str = concat!("opendart-cli/", env!("CARGO_PKG_VERSION"));
 
-#[derive(Clone, Copy, Serialize)]
+#[derive(Clone, Copy, Eq, PartialEq, Serialize)]
 pub(crate) struct OperationContext {
     name: &'static str,
     logical_id: &'static str,
