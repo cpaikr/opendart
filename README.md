@@ -94,18 +94,13 @@ opendart call company --help
 
 After configuring `OPENDART_API_KEY` as described under
 [Credentialed probe](#credentialed-probe), make a read-only call through the
-repository's Varlock setup:
+repository's local environment wrapper:
 
 ```sh
-varlock run -- opendart call company \
+./scripts/with-opendart-env -- opendart call company \
   --corp-code 00126380 \
   --representation json
 ```
-
-On a nonzero exit, Varlock 1.12.0 can append its own diagnostic to stdout, so
-do not parse this wrapper's failure output as a single JSON document. For
-machine-readable failure checks, use the
-[harness pattern](docs/rust-cli/verification-and-release.md#credentialed-developer-checks).
 
 ## Refresh and verify
 
@@ -146,17 +141,28 @@ Refresh, verification, and live-conformance preflight require no OpenDART API
 key. Credentialed commands use reviewed, bounded request matrices:
 
 ```sh
-varlock run -- go run ./cmd/opendart-tool probe-multi-company
-varlock run -- go run ./cmd/opendart-tool probe-auditor-evidence
-varlock run -- go run ./cmd/opendart-tool live-conformance --repository-root .
+./scripts/with-opendart-env -- go run ./cmd/opendart-tool probe-multi-company
+./scripts/with-opendart-env -- go run ./cmd/opendart-tool probe-auditor-evidence
+./scripts/with-opendart-env -- \
+  go run ./cmd/opendart-tool live-conformance --repository-root .
 ```
 
-Install the standalone Varlock CLI with `brew install dmno-dev/tap/varlock`.
-The committed `.env.schema` marks `OPENDART_API_KEY` as required and sensitive;
-put the local value in the ignored `.env.local`, then run
-`varlock encrypt --file .env.local` if it is plaintext. Varlock validates and
-injects the key into the child process without putting it in command arguments.
-The Go command still reads only `OPENDART_API_KEY` from its process environment.
+Copy `.env.example` to the ignored `.env.local`, add the 40-character
+`OPENDART_API_KEY`, and set its permissions to `600`. The dependency-free
+wrapper rejects symbolic links, unsafe ownership or permissions, unexpected
+entries, and invalid key syntax before injecting the key only into its child
+process:
+
+```sh
+cp .env.example .env.local
+chmod 600 .env.local
+```
+
+The Go and Rust commands still read only `OPENDART_API_KEY` from their inherited
+process environment. They do not load dotenv files themselves.
+
+`.env.local` is plaintext. Its file mode and ignore rule reduce accidental
+exposure, but any process running as the same user can read it.
 
 Do not commit the local override or capture authenticated URLs or raw response
 bodies. The probes run sequentially without automatic retries and emit

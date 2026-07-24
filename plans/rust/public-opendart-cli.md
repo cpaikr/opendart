@@ -78,7 +78,7 @@ without duplicating endpoint contracts or adding a second output notation.
 - Apply confirmed repository dogfood feedback before publication: keep compact
   JSON as the only output notation, deepen sanitized errors and discovery,
   promote trustworthy input constraints through the canonical model, and keep
-  Varlock-specific runner behavior in repository development guidance.
+  local credential-wrapper behavior in repository development guidance.
 
 ## Ordered work
 
@@ -309,8 +309,8 @@ no workflow can publish without the dedicated authority change.
 - Reject empty, whitespace-only, and control-character API credentials without
   freezing the SDK to the currently documented credential length.
 - Improve source-install and real-call guidance, command help, nested version
-  identity, and binary-envelope examples. Document Varlock's nonzero-child
-  stdout diagnostics only beside repository development recipes that use it.
+  identity, and binary-envelope examples. Keep repository credential loading
+  outside the public CLI contract.
 
 Completion evidence: generated artifacts are fresh, public SDK and CLI tests
 cover the new constraints and diagnostics, discovery remains deterministic and

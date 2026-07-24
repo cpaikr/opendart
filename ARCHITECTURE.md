@@ -104,9 +104,11 @@ SDK work 6, after which CLI work 8 may publish the dependent source package.
 
 ### Focused live probes
 
-`probe-multi-company` and `probe-auditor-evidence` use a Varlock-injected local
-`OPENDART_API_KEY`, fixed request matrices, bounded bodies, sequential attempts,
-and sanitized output. They do not change the specification or SDK.
+`probe-multi-company` and `probe-auditor-evidence` use a local
+`OPENDART_API_KEY` injected by `scripts/with-opendart-env`, fixed request
+matrices, bounded bodies, sequential attempts, and sanitized output. The
+ignored plaintext source remains developer-owned and is never loaded by the
+applications themselves. The probes do not change the specification or SDK.
 
 ### General live conformance
 
