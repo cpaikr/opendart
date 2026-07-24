@@ -127,6 +127,9 @@ func renderOperationGroup(source model.Model, operations []model.LogicalOperatio
 	}
 	requestImports = append(requestImports, "Representation")
 	fmt.Fprintf(&output, "use crate::{%s};\n", strings.Join(requestImports, ", "))
+	if validationImports := operationValidationImports(operations); len(validationImports) > 0 {
+		fmt.Fprintf(&output, "use crate::validation::{%s};\n", strings.Join(validationImports, ", "))
+	}
 	fmt.Fprintf(&output, "use super::super::responses::%s as response;\n", operations[0].Group)
 	output.WriteString("use super::super::{GENERATOR_SCHEMA, PROJECTION_CHECKSUM};\n\n")
 	needed := make(map[string]bool)
@@ -190,9 +193,9 @@ func constructorArguments(parameters []model.Parameter) string {
 			continue
 		}
 		if parameter.Shape == model.StringArray {
-			arguments = append(arguments, "[\"first,value\", \"회사 /+\"]")
+			arguments = append(arguments, rustArraySample(parameter))
 		} else {
-			arguments = append(arguments, "\"value /+\"")
+			arguments = append(arguments, quote(stringSample(parameter)))
 		}
 	}
 	return strings.Join(arguments, ", ")
@@ -207,9 +210,9 @@ func inputExpression(operation model.LogicalOperation, includeOptional bool) str
 		if parameter.Required {
 			continue
 		}
-		value := "\"value /+\""
+		value := quote(stringSample(parameter))
 		if parameter.Shape == model.StringArray {
-			value = "[\"first,value\", \"회사 /+\"]"
+			value = rustArraySample(parameter)
 		}
 		result += ".with_" + parameter.RustName + "(" + value + ")"
 	}
@@ -222,13 +225,45 @@ func vectorQuery(parameters []model.Parameter, includeOptional bool) string {
 		if !parameter.Required && !includeOptional {
 			continue
 		}
-		value := url.QueryEscape("value /+")
+		value := url.QueryEscape(stringSample(parameter))
 		if parameter.Shape == model.StringArray {
-			value = url.QueryEscape("first,value") + "," + url.QueryEscape("회사 /+")
+			values := arraySamples(parameter)
+			value = url.QueryEscape(values[0]) + "," + url.QueryEscape(values[1])
 		}
 		pairs = append(pairs, parameter.WireName+"="+value)
 	}
 	return strings.Join(pairs, "&")
+}
+
+func stringSample(parameter model.Parameter) string {
+	constraints := parameter.Constraints
+	if len(constraints.AllowedValues) > 0 {
+		return constraints.AllowedValues[0]
+	}
+	switch constraints.Format {
+	case "opendart-corp-code":
+		return "00126380"
+	case "opendart-date":
+		return "20240229"
+	case "opendart-year":
+		return "2024"
+	}
+	if constraints.DecimalMinimum != nil {
+		return fmt.Sprint(*constraints.DecimalMinimum)
+	}
+	return "value /+"
+}
+
+func arraySamples(parameter model.Parameter) [2]string {
+	if parameter.Constraints.Format == "opendart-corp-code" {
+		return [2]string{"00126380", "00164779"}
+	}
+	return [2]string{stringSample(parameter), stringSample(parameter)}
+}
+
+func rustArraySample(parameter model.Parameter) string {
+	values := arraySamples(parameter)
+	return "[" + quote(values[0]) + ", " + quote(values[1]) + "]"
 }
 
 func renderLogicalOperation(output *strings.Builder, operation model.LogicalOperation, physical map[string]model.PhysicalOperation) {
@@ -275,9 +310,12 @@ func renderLogicalOperation(output *strings.Builder, operation model.LogicalOper
 	for _, parameter := range operation.Parameters {
 		if parameter.Required && parameter.Shape == model.ScalarString {
 			fmt.Fprintf(output, "        require_nonempty(identity, %s, &self.%s)?;\n", quote(parameter.WireName), parameter.RustName)
+			renderStringConstraintChecks(output, parameter, "&self."+parameter.RustName, "        ")
 		}
 		if !parameter.Required && parameter.Shape == model.ScalarString {
-			fmt.Fprintf(output, "        if let Some(value) = &self.%s { require_nonempty(identity, %s, value)?; }\n", parameter.RustName, quote(parameter.WireName))
+			fmt.Fprintf(output, "        if let Some(value) = &self.%s {\n            require_nonempty(identity, %s, value)?;\n", parameter.RustName, quote(parameter.WireName))
+			renderStringConstraintChecks(output, parameter, "value", "            ")
+			output.WriteString("        }\n")
 		}
 		if parameter.Shape == model.StringArray {
 			renderCardinalityCheck(output, parameter)
@@ -365,10 +403,65 @@ func renderCardinalityCheck(output *strings.Builder, parameter model.Parameter) 
 
 func renderArrayElementCheck(output *strings.Builder, parameter model.Parameter) {
 	if parameter.Required {
-		fmt.Fprintf(output, "        for value in &self.%s { require_nonempty(identity, %s, value)?; }\n", parameter.RustName, quote(parameter.WireName))
+		fmt.Fprintf(output, "        for value in &self.%s {\n            require_nonempty(identity, %s, value)?;\n", parameter.RustName, quote(parameter.WireName))
+		renderStringConstraintChecks(output, parameter, "value", "            ")
+		output.WriteString("        }\n")
 		return
 	}
-	fmt.Fprintf(output, "        if let Some(values) = &self.%s { for value in values { require_nonempty(identity, %s, value)?; } }\n", parameter.RustName, quote(parameter.WireName))
+	fmt.Fprintf(output, "        if let Some(values) = &self.%s {\n            for value in values {\n                require_nonempty(identity, %s, value)?;\n", parameter.RustName, quote(parameter.WireName))
+	renderStringConstraintChecks(output, parameter, "value", "                ")
+	output.WriteString("            }\n        }\n")
+}
+
+func renderStringConstraintChecks(output *strings.Builder, parameter model.Parameter, value, indent string) {
+	constraints := parameter.Constraints
+	if constraints.MinLength != nil || constraints.MaxLength != nil {
+		minimum, maximum := int64(0), "usize::MAX"
+		if constraints.MinLength != nil {
+			minimum = *constraints.MinLength
+		}
+		if constraints.MaxLength != nil {
+			maximum = fmt.Sprint(*constraints.MaxLength)
+		}
+		fmt.Fprintf(output, "%srequire_length(identity, %s, %s, %d, %s)?;\n", indent, quote(parameter.WireName), value, minimum, maximum)
+	}
+	if constraints.Format != "" {
+		fmt.Fprintf(output, "%srequire_format(identity, %s, %s, %s)?;\n", indent, quote(parameter.WireName), value, quote(constraints.Format))
+	}
+	if len(constraints.AllowedValues) > 0 {
+		allowed := make([]string, 0, len(constraints.AllowedValues))
+		for _, item := range constraints.AllowedValues {
+			allowed = append(allowed, quote(item))
+		}
+		fmt.Fprintf(output, "%srequire_allowed(identity, %s, %s, &[%s])?;\n", indent, quote(parameter.WireName), value, strings.Join(allowed, ", "))
+	}
+	if constraints.DecimalMinimum != nil {
+		maximum := "None"
+		if constraints.DecimalMaximum != nil {
+			maximum = fmt.Sprintf("Some(%d)", *constraints.DecimalMaximum)
+		}
+		fmt.Fprintf(output, "%srequire_decimal_range(identity, %s, %s, %d, %s)?;\n", indent, quote(parameter.WireName), value, *constraints.DecimalMinimum, maximum)
+	}
+}
+
+func operationValidationImports(operations []model.LogicalOperation) []string {
+	needed := map[string]bool{}
+	for _, operation := range operations {
+		for _, parameter := range operation.Parameters {
+			constraints := parameter.Constraints
+			needed["require_length"] = needed["require_length"] || constraints.MinLength != nil || constraints.MaxLength != nil
+			needed["require_format"] = needed["require_format"] || constraints.Format != ""
+			needed["require_allowed"] = needed["require_allowed"] || len(constraints.AllowedValues) > 0
+			needed["require_decimal_range"] = needed["require_decimal_range"] || constraints.DecimalMinimum != nil
+		}
+	}
+	var imports []string
+	for _, name := range []string{"require_allowed", "require_decimal_range", "require_format", "require_length"} {
+		if needed[name] {
+			imports = append(imports, name)
+		}
+	}
+	return imports
 }
 
 func renderQueryParameter(output *strings.Builder, parameter model.Parameter) {
@@ -466,15 +559,18 @@ func primaryResponseShape(operation model.PhysicalOperation) (model.ResponseShap
 
 func renderResponseObject(output *strings.Builder, name, decoder string, shape model.ResponseShape, arrayDecoder, objectConstructor string) {
 	renderRustDoc(output, "", shape.Description, "Generated OpenDART response object.")
-	fmt.Fprintf(output, "#[derive(Clone, Debug, PartialEq)]\n#[non_exhaustive]\npub struct %s {\n", name)
+	fmt.Fprintf(output, "#[derive(Clone, Debug, PartialEq)]\n#[cfg_attr(feature = \"serde-json\", derive(serde::Serialize))]\n#[non_exhaustive]\npub struct %s {\n", name)
 	for _, property := range shape.Properties {
 		renderRustDoc(output, "    ", property.Shape.Description, "Documented source field `"+property.Name+"`.")
+		fmt.Fprintf(output, "    #[cfg_attr(feature = \"serde-json\", serde(rename = %s))]\n", quote(property.Name))
 		fieldType := responseFieldType(name, property.RustName, property.Shape)
 		if !responsePropertyRequired(shape, property.Name) {
+			output.WriteString("    #[cfg_attr(feature = \"serde-json\", serde(skip_serializing_if = \"Option::is_none\"))]\n")
 			fieldType = "Option<" + fieldType + ">"
 		}
 		fmt.Fprintf(output, "    pub %s: %s,\n", property.RustName, fieldType)
 	}
+	output.WriteString("    #[cfg_attr(feature = \"serde-json\", serde(flatten))]\n")
 	output.WriteString("    additional_fields: BTreeMap<String, SourceValue>,\n")
 	output.WriteString("}\n\n")
 	fmt.Fprintf(output, "impl %s {\n", name)

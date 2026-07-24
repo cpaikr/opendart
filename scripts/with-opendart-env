@@ -1,0 +1,68 @@
+#!/bin/sh
+
+set +x
+set -eu
+
+fail() {
+	printf 'with-opendart-env: %s\n' "$*" >&2
+	exit 1
+}
+
+if [ "${1-}" != "--" ]; then
+	fail "usage: scripts/with-opendart-env -- command [args...]"
+fi
+shift
+[ "$#" -gt 0 ] || fail "a command is required after --"
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repository_root=$(dirname -- "$script_dir")
+env_file=$repository_root/.env.local
+
+[ ! -L "$env_file" ] || fail ".env.local must not be a symbolic link"
+[ -f "$env_file" ] || fail ".env.local is missing; copy .env.example and add the API key"
+
+case $(uname -s) in
+	Darwin)
+		file_mode=$(stat -f '%Lp' "$env_file")
+		file_owner=$(stat -f '%u' "$env_file")
+		;;
+	*)
+		file_mode=$(stat -c '%a' "$env_file")
+		file_owner=$(stat -c '%u' "$env_file")
+		;;
+esac
+
+[ "$file_mode" = "600" ] || fail ".env.local permissions must be 600"
+[ "$file_owner" = "$(id -u)" ] || fail ".env.local must be owned by the current user"
+
+opendart_api_key=
+key_seen=false
+while IFS= read -r line || [ -n "$line" ]; do
+	case "$line" in
+		''|'#'*)
+			;;
+		OPENDART_API_KEY=*)
+			[ "$key_seen" = false ] || fail ".env.local contains OPENDART_API_KEY more than once"
+			opendart_api_key=${line#OPENDART_API_KEY=}
+			key_seen=true
+			;;
+		*)
+			fail ".env.local may contain only comments and OPENDART_API_KEY"
+			;;
+	esac
+done < "$env_file"
+
+[ "$key_seen" = true ] || fail ".env.local does not define OPENDART_API_KEY"
+
+case "$opendart_api_key" in
+	*[!A-Za-z0-9]*)
+		fail "OPENDART_API_KEY must contain only ASCII letters and digits"
+		;;
+esac
+[ "${#opendart_api_key}" -eq 40 ] || fail "OPENDART_API_KEY must contain exactly 40 characters"
+
+OPENDART_API_KEY=$opendart_api_key
+export OPENDART_API_KEY
+unset opendart_api_key
+
+exec "$@"

@@ -1,0 +1,601 @@
+use opendart::{
+    ClientBuildError, ClientError, PrepareError, ResponseMetadata, TransportFailureKind,
+};
+use serde::Serialize;
+
+use crate::command::InvocationError;
+use crate::discovery::OperationSpec;
+use crate::execution::OperationContext;
+
+#[derive(Serialize)]
+pub(crate) struct ErrorEnvelope {
+    kind: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    operation: Option<OperationContext>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    metadata: Option<Box<ResponseMetadata>>,
+    error: Box<ErrorBody>,
+}
+
+#[derive(Serialize)]
+struct ErrorBody {
+    code: &'static str,
+    message: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    argument: Option<&'static str>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    allowed: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    minimum: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    maximum: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    format: Option<&'static str>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    help: Vec<String>,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum ArtifactIoReason {
+    DestinationMetadataUnavailable,
+    ParentNotDirectory,
+    ParentUnavailable,
+    TemporaryFileCreation,
+    WriteFailed,
+    FlushFailed,
+    PublishFailed,
+    CleanupFailed,
+}
+
+impl ArtifactIoReason {
+    const fn reason(self) -> &'static str {
+        match self {
+            Self::DestinationMetadataUnavailable => "destination_metadata_unavailable",
+            Self::ParentNotDirectory => "parent_not_directory",
+            Self::ParentUnavailable => "parent_unavailable",
+            Self::TemporaryFileCreation => "temporary_file_creation",
+            Self::WriteFailed => "write_failed",
+            Self::FlushFailed => "flush_failed",
+            Self::PublishFailed => "publish_failed",
+            Self::CleanupFailed => "cleanup_failed",
+        }
+    }
+
+    const fn help(self) -> &'static str {
+        match self {
+            Self::DestinationMetadataUnavailable => "Check access to the --output path and retry",
+            Self::ParentNotDirectory => "Choose an --output path whose parent is a directory",
+            Self::ParentUnavailable => {
+                "Create or grant access to the --output parent directory and retry"
+            }
+            Self::TemporaryFileCreation => {
+                "Grant write access to the --output parent directory and retry"
+            }
+            Self::WriteFailed | Self::FlushFailed => {
+                "Check destination storage and permissions, then retry"
+            }
+            Self::PublishFailed => "Check the --output parent directory permissions and retry",
+            Self::CleanupFailed => {
+                "Inspect the --output parent directory for a temporary file before retrying"
+            }
+        }
+    }
+}
+
+impl ErrorEnvelope {
+    pub(crate) fn invocation(error: InvocationError) -> Self {
+        Self {
+            kind: "error",
+            operation: None,
+            metadata: None,
+            error: Box::new(ErrorBody {
+                code: "invalid_invocation",
+                message: "the command invocation is invalid",
+                path: None,
+                reason: Some(error.reason),
+                argument: error.argument,
+                allowed: error.allowed,
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: error.help,
+            }),
+        }
+    }
+
+    pub(crate) fn usage(help: Vec<String>) -> Self {
+        Self {
+            kind: "error",
+            operation: None,
+            metadata: None,
+            error: Box::new(ErrorBody {
+                code: "invalid_invocation",
+                message: "the command invocation is invalid",
+                path: None,
+                reason: None,
+                argument: None,
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help,
+            }),
+        }
+    }
+
+    pub(crate) fn invalid_request(
+        operation: OperationContext,
+        spec: &'static OperationSpec,
+        error: PrepareError,
+    ) -> Self {
+        let (reason, argument, allowed, minimum, maximum, format) = match error {
+            PrepareError::MissingInput { parameter, .. } => (
+                Some("missing_input"),
+                canonical_flag(spec, parameter),
+                Vec::new(),
+                None,
+                None,
+                None,
+            ),
+            PrepareError::InvalidCardinality {
+                parameter,
+                minimum,
+                maximum,
+                ..
+            } => (
+                Some("invalid_cardinality"),
+                canonical_flag(spec, parameter),
+                Vec::new(),
+                Some(u64::try_from(minimum).expect("supported targets use at most 64-bit usize")),
+                Some(u64::try_from(maximum).expect("supported targets use at most 64-bit usize")),
+                None,
+            ),
+            PrepareError::InvalidLength {
+                parameter,
+                minimum,
+                maximum,
+                ..
+            } => (
+                Some("invalid_length"),
+                canonical_flag(spec, parameter),
+                Vec::new(),
+                Some(u64::try_from(minimum).expect("supported targets use at most 64-bit usize")),
+                Some(u64::try_from(maximum).expect("supported targets use at most 64-bit usize")),
+                None,
+            ),
+            PrepareError::InvalidFormat {
+                parameter, format, ..
+            } => (
+                Some("invalid_format"),
+                canonical_flag(spec, parameter),
+                Vec::new(),
+                None,
+                None,
+                Some(format),
+            ),
+            PrepareError::InvalidAllowedValue { parameter, .. } => {
+                let flag = canonical_flag_spec(spec, parameter);
+                (
+                    Some("invalid_allowed_value"),
+                    flag.map(|flag| flag.name),
+                    flag.and_then(|flag| flag.constraints)
+                        .map(|constraints| {
+                            constraints
+                                .allowed_values
+                                .iter()
+                                .map(|value| (*value).to_owned())
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                    None,
+                    None,
+                    None,
+                )
+            }
+            PrepareError::InvalidDecimalRange {
+                parameter,
+                minimum,
+                maximum,
+                ..
+            } => (
+                Some("invalid_decimal_range"),
+                canonical_flag(spec, parameter),
+                Vec::new(),
+                Some(minimum),
+                maximum,
+                None,
+            ),
+            _ => (None, None, Vec::new(), None, None, None),
+        };
+        Self {
+            kind: "error",
+            operation: Some(operation),
+            metadata: None,
+            error: Box::new(ErrorBody {
+                code: "invalid_request",
+                message: "the operation inputs cannot prepare a valid SDK request",
+                path: None,
+                reason,
+                argument,
+                allowed,
+                minimum,
+                maximum,
+                format,
+                help: vec![
+                    "Inspect operations describe and retry with valid input values".to_owned(),
+                ],
+            }),
+        }
+    }
+
+    pub(crate) fn missing_api_key(operation: OperationContext) -> Self {
+        Self {
+            kind: "error",
+            operation: Some(operation),
+            metadata: None,
+            error: Box::new(ErrorBody {
+                code: "missing_api_key",
+                message: "OPENDART_API_KEY is required",
+                path: None,
+                reason: Some("missing_environment_value"),
+                argument: None,
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: vec!["Set OPENDART_API_KEY and retry the same command".to_owned()],
+            }),
+        }
+    }
+
+    pub(crate) fn invalid_artifact_output(operation: OperationContext) -> Self {
+        Self {
+            kind: "error",
+            operation: Some(operation),
+            metadata: None,
+            error: Box::new(ErrorBody {
+                code: "invalid_invocation",
+                message: "the command invocation is invalid",
+                path: None,
+                reason: Some("invalid_output_path"),
+                argument: Some("--output"),
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: vec!["Use --output with a non-empty file path other than -".to_owned()],
+            }),
+        }
+    }
+
+    pub(crate) fn invalid_client_configuration(
+        operation: OperationContext,
+        reason: &'static str,
+    ) -> Self {
+        Self {
+            kind: "error",
+            operation: Some(operation),
+            metadata: None,
+            error: Box::new(ErrorBody {
+                code: "invalid_client_configuration",
+                message: "OPENDART_API_KEY is not a valid environment value",
+                path: None,
+                reason: Some(reason),
+                argument: None,
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: vec!["Set OPENDART_API_KEY to a valid non-empty text value".to_owned()],
+            }),
+        }
+    }
+
+    pub(crate) fn executable_resolution() -> Self {
+        Self {
+            kind: "error",
+            operation: None,
+            metadata: None,
+            error: Box::new(ErrorBody {
+                code: "executable_resolution",
+                message: "the current executable path could not be resolved",
+                path: None,
+                reason: None,
+                argument: None,
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: Vec::new(),
+            }),
+        }
+    }
+
+    pub(crate) fn invalid_client_setting(operation: OperationContext) -> Self {
+        Self::execution(
+            operation,
+            None,
+            "invalid_client_configuration",
+            "a client setting cannot be represented safely",
+        )
+    }
+
+    pub(crate) fn client_initialization_for(operation: OperationContext) -> Self {
+        Self::execution(
+            operation,
+            None,
+            "client_initialization",
+            "the OpenDART client could not be initialized",
+        )
+    }
+
+    pub(crate) fn client_build(operation: OperationContext, error: ClientBuildError) -> Self {
+        match error {
+            ClientBuildError::InvalidConfiguration { .. } => {
+                Self::invalid_client_setting(operation)
+            }
+            ClientBuildError::TransportSetup => Self::client_initialization_for(operation),
+            _ => Self::client_initialization_for(operation),
+        }
+    }
+
+    pub(crate) fn client(operation: OperationContext, error: ClientError) -> Self {
+        let metadata = error.metadata().cloned().map(Box::new);
+        let (code, message) = match error {
+            ClientError::Transport(error) => transport_fields(error.kind()),
+            ClientError::BodyLimit { .. } => (
+                "body_limit",
+                "the OpenDART response exceeded the configured envelope limit",
+            ),
+            ClientError::Envelope { .. } => (
+                "malformed_envelope",
+                "the OpenDART response is not a valid supported envelope",
+            ),
+            ClientError::ResponseDecode { .. } => (
+                "response_decode",
+                "the OpenDART success response does not match the generated SDK contract",
+            ),
+            ClientError::Representation { .. } => (
+                "sdk_contract_mismatch",
+                "the prepared SDK request does not match generated CLI discovery",
+            ),
+            _ => (
+                "sdk_contract_mismatch",
+                "the prepared SDK request does not match generated CLI discovery",
+            ),
+        };
+        Self::execution(operation, metadata, code, message)
+    }
+
+    pub(crate) fn body_stream(
+        operation: OperationContext,
+        metadata: ResponseMetadata,
+        kind: TransportFailureKind,
+    ) -> Self {
+        let (code, message) = transport_fields(kind);
+        Self::execution(operation, Some(Box::new(metadata)), code, message)
+    }
+
+    pub(crate) fn destination_exists(
+        operation: OperationContext,
+        metadata: Option<ResponseMetadata>,
+        path: String,
+    ) -> Self {
+        Self::artifact_execution(
+            operation,
+            metadata.map(Box::new),
+            "destination_exists",
+            "the artifact destination already exists",
+            path,
+            "destination_exists",
+            "Choose a different --output path and retry",
+        )
+    }
+
+    pub(crate) fn artifact_limit(operation: OperationContext, metadata: ResponseMetadata) -> Self {
+        Self::execution(
+            operation,
+            Some(Box::new(metadata)),
+            "artifact_limit",
+            "the binary response exceeded the configured artifact limit",
+        )
+    }
+
+    pub(crate) fn artifact_io(
+        operation: OperationContext,
+        metadata: Option<ResponseMetadata>,
+        path: String,
+        reason: ArtifactIoReason,
+    ) -> Self {
+        Self::artifact_execution(
+            operation,
+            metadata.map(Box::new),
+            "artifact_io",
+            "the artifact could not be written or published safely",
+            path,
+            reason.reason(),
+            reason.help(),
+        )
+    }
+
+    pub(crate) fn output_encode(operation: OperationContext) -> Self {
+        Self::execution(
+            operation,
+            None,
+            "output_encode",
+            "the structured result could not be encoded safely",
+        )
+    }
+
+    pub(crate) fn output_encode_with_metadata(
+        operation: OperationContext,
+        metadata: ResponseMetadata,
+    ) -> Self {
+        Self::execution(
+            operation,
+            Some(Box::new(metadata)),
+            "output_encode",
+            "the structured result could not be encoded safely",
+        )
+    }
+
+    pub(crate) fn sdk_contract_mismatch(operation: Option<OperationContext>) -> Self {
+        Self {
+            kind: "error",
+            operation,
+            metadata: None,
+            error: Box::new(ErrorBody {
+                code: "sdk_contract_mismatch",
+                message: "the prepared SDK request does not match generated CLI discovery",
+                path: None,
+                reason: None,
+                argument: None,
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: Vec::new(),
+            }),
+        }
+    }
+
+    fn execution(
+        operation: OperationContext,
+        metadata: Option<Box<ResponseMetadata>>,
+        code: &'static str,
+        message: &'static str,
+    ) -> Self {
+        Self {
+            kind: "error",
+            operation: Some(operation),
+            metadata,
+            error: Box::new(ErrorBody {
+                code,
+                message,
+                path: None,
+                reason: None,
+                argument: None,
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: Vec::new(),
+            }),
+        }
+    }
+
+    fn artifact_execution(
+        operation: OperationContext,
+        metadata: Option<Box<ResponseMetadata>>,
+        code: &'static str,
+        message: &'static str,
+        path: String,
+        reason: &'static str,
+        help: &'static str,
+    ) -> Self {
+        Self {
+            kind: "error",
+            operation: Some(operation),
+            metadata,
+            error: Box::new(ErrorBody {
+                code,
+                message,
+                path: Some(path),
+                reason: Some(reason),
+                argument: Some("--output"),
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: vec![help.to_owned()],
+            }),
+        }
+    }
+}
+
+fn canonical_flag(spec: &'static OperationSpec, parameter: &'static str) -> Option<&'static str> {
+    canonical_flag_spec(spec, parameter).map(|flag| flag.name)
+}
+
+fn canonical_flag_spec(
+    spec: &'static OperationSpec,
+    parameter: &'static str,
+) -> Option<&'static crate::discovery::FlagSpec> {
+    spec.flags
+        .iter()
+        .find(|flag| flag.id == parameter || flag.sdk_field == parameter)
+}
+
+fn transport_fields(kind: TransportFailureKind) -> (&'static str, &'static str) {
+    match kind {
+        TransportFailureKind::Timeout => (
+            "transport_timeout",
+            "the OpenDART request exceeded a configured deadline",
+        ),
+        TransportFailureKind::Connection => (
+            "transport_connection",
+            "the OpenDART connection could not be established or retained",
+        ),
+        TransportFailureKind::Body => (
+            "transport_body",
+            "the OpenDART response body could not be received",
+        ),
+        TransportFailureKind::Protocol => (
+            "transport_protocol",
+            "the OpenDART HTTP exchange violated the transport contract",
+        ),
+        TransportFailureKind::Other => ("transport_other", "the OpenDART HTTP exchange failed"),
+        _ => ("transport_other", "the OpenDART HTTP exchange failed"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ErrorBody, ErrorEnvelope};
+    use crate::execution::OperationContext;
+
+    #[test]
+    fn executable_resolution_has_a_dedicated_stable_code() {
+        let encoded = serde_json::to_string(&ErrorEnvelope::executable_resolution()).unwrap();
+        assert_eq!(
+            encoded,
+            r#"{"kind":"error","error":{"code":"executable_resolution","message":"the current executable path could not be resolved"}}"#
+        );
+    }
+
+    #[test]
+    fn invalid_sdk_builder_configuration_has_the_stable_cli_code() {
+        let operation =
+            OperationContext::new("company", "DS001-2019002", "get_company_json", "json");
+        let error = ErrorEnvelope::client_build(
+            operation,
+            opendart::ClientBuildError::InvalidConfiguration { setting: "fixture" },
+        );
+        let encoded = serde_json::to_string(&error).unwrap();
+        assert!(encoded.contains(r#""code":"invalid_client_configuration""#));
+        assert!(!encoded.contains("fixture"));
+    }
+
+    #[test]
+    fn decimal_bounds_remain_target_independent_json_numbers() {
+        let body = ErrorBody {
+            code: "invalid_request",
+            message: "fixture",
+            path: None,
+            reason: Some("invalid_decimal_range"),
+            argument: Some("--page-count"),
+            allowed: Vec::new(),
+            minimum: Some(u64::MAX),
+            maximum: Some(u64::MAX),
+            format: None,
+            help: Vec::new(),
+        };
+        let encoded = serde_json::to_value(body).unwrap();
+        assert_eq!(encoded["minimum"], serde_json::json!(u64::MAX));
+        assert_eq!(encoded["maximum"], serde_json::json!(u64::MAX));
+    }
+}
