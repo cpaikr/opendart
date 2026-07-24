@@ -92,6 +92,10 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 	if !slices.Equal(report.StringConstraints.AllowedValues, []string{"Y", "N"}) {
 		t.Fatalf("allowed-value evidence = %#v", report.StringConstraints)
 	}
+	pageNumber := findSDKParameter(t, list, "page_no")
+	if pageNumber.StringConstraints.DecimalMinimum == nil || *pageNumber.StringConstraints.DecimalMinimum != 1 {
+		t.Fatalf("page-number decimal-range evidence = %#v", pageNumber.StringConstraints)
+	}
 	pageCount := findSDKParameter(t, list, "page_count")
 	if pageCount.StringConstraints.DecimalMinimum == nil || *pageCount.StringConstraints.DecimalMinimum != 1 || pageCount.StringConstraints.DecimalMaximum == nil || *pageCount.StringConstraints.DecimalMaximum != 100 {
 		t.Fatalf("decimal-range evidence = %#v", pageCount.StringConstraints)
