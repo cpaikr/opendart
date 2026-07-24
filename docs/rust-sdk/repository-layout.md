@@ -5,8 +5,8 @@ Planning source: [Public Rust SDK](../../tasks/rust/public-rust-sdk.md).
 ## Purpose
 
 Place the public Rust SDK beside the canonical specification while preserving
-clear boundaries between private repository tooling, generated SDK artifacts,
-future language packages, and a possible user-facing CLI.
+clear boundaries between private repository tooling, generated Rust artifacts,
+future language packages, and the public CLI.
 
 ## Current structure
 
@@ -22,35 +22,38 @@ opendart/
 │   ├── openapi/                     private OpenAPI 3.2 boundary
 │   └── sdkgen/
 │       ├── model/                   language-neutral, repository-owned model
-│       └── rust/                    deterministic Rust renderer
+│       └── rust/                    deterministic SDK and CLI renderers
 ├── sdk/
 │   └── rust/
 │       ├── Cargo.toml               isolated Cargo workspace
 │       ├── Cargo.lock               committed repository verification lock
 │       ├── rust-toolchain.toml       repository toolchain pin
 │       └── crates/
-│           └── opendart/
-│               ├── Cargo.toml
-│               ├── README.md
+│           ├── opendart/
+│           │   ├── Cargo.toml
+│           │   ├── README.md
+│           │   ├── src/
+│           │   │   ├── lib.rs
+│           │   │   ├── request/     handwritten request kernel
+│           │   │   ├── wire/        handwritten envelope and opaque values
+│           │   │   ├── client.rs    optional reqwest convenience client
+│           │   │   ├── provenance.rs reviewed source snapshot identity
+│           │   │   └── generated/   reviewed generated Rust
+│           │   └── tests/           public API and HTTP integration tests
+│           └── opendart-cli/
+│               ├── Cargo.toml        binary-only package with exact SDK pin
 │               ├── src/
-│               │   ├── lib.rs
-│               │   ├── request/     handwritten request kernel
-│               │   ├── wire/        handwritten envelope and opaque values
-│               │   ├── client.rs    optional reqwest convenience client
-│               │   ├── provenance.rs reviewed source snapshot identity
-│               │   └── generated/   reviewed generated Rust
-│               └── tests/           public API and HTTP integration tests
+│               │   ├── main.rs       thin process entry point
+│               │   ├── generated/    catalog, clap breadth, typed dispatch
+│               │   └── *.rs          handwritten orchestration and output
+│               └── tests/            process-level discovery contracts
 └── docs/
     └── rust-sdk/                     stable design and maintainer contracts
 ```
 
-Possible later additions:
-
-```text
-sdk/python/                           Python SDK package
-sdk/typescript/                       TypeScript SDK targeting Node
-sdk/rust/crates/opendart-cli/         Rust user CLI, if selected
-```
+The CLI's approved design lives in the [CLI architecture](../rust-cli/architecture.md)
+and [public contract](../rust-cli/public-contract.md). Possible later language
+additions remain `sdk/python/` and `sdk/typescript/`.
 
 The user-facing CLI must not be added to `cmd/opendart-tool`. The Go command is
 trusted repository infrastructure with maintainer-oriented commands and a
@@ -68,7 +71,8 @@ Installed-crate usage lives in the crate README.
 
 ## Package boundary
 
-The workspace contains one package named `opendart`. Do not split it into
+The workspace contains the `opendart` SDK package and binary-only
+`opendart-cli` package. Do not split the SDK into
 `opendart-core`, `opendart-types`, and transport crates:
 the transport-independent modules can remain deep internal/public module
 boundaries until independent consumers or release policies require separate
@@ -80,6 +84,7 @@ The feature model is:
 [features]
 default = ["client-reqwest"]
 client-reqwest = ["dep:bytes", "dep:futures-core", "dep:reqwest", "dep:tokio"]
+serde-json = ["dep:serde", "serde_json/raw_value"]
 ```
 
 The feature boundary has these invariants:
@@ -99,9 +104,9 @@ The foundation change also extends the repository `.gitignore` for the
 isolated workspace's `target/` output without ignoring `Cargo.lock` or generated
 Rust source.
 
-If the CLI is later implemented in Rust, it joins the same isolated Cargo
-workspace as a second crate and depends on `opendart`. Python and TypeScript
-packages retain their native build systems and do not become Cargo members.
+The CLI depends on an exact-version, local-path `opendart` build with the client
+and JSON serialization features. Python and TypeScript packages retain their
+native build systems and do not become Cargo members.
 
 ## Ownership
 
@@ -109,7 +114,7 @@ packages retain their native build systems and do not become Cargo members.
 
 `openapi/openapi.yaml` and its referenced files own source-backed API facts.
 `openapi/generated/openapi.bundle.yaml` remains the portable specification
-artifact. No SDK file becomes an alternate endpoint inventory.
+artifact. No generated SDK or CLI file becomes an alternate endpoint inventory.
 
 ### Private generator
 
@@ -136,16 +141,23 @@ It does not own collection coordinates, request footprints, acquisition
 identity, persistence, artifact publication, retries, quotas, closure, or
 domain interpretation.
 
+### Public Rust CLI
+
+The CLI owns command grammar, keyless discovery, process output, credential
+access, client controls, and artifact policy. Generated code supplies operation
+breadth and typed SDK preparation; it does not mirror endpoint URLs or response
+types outside the SDK.
+
 ## Generated and handwritten source
 
-Keep generated files in one owned subtree with a marker header. Handwritten
-modules expose the supported public interface and hide generated layout where
-possible. Public documentation links to meaningful operation types rather than
-generated file paths.
+Keep each crate's generated files in its independently marked owned subtree.
+Handwritten modules expose the supported interface and hide generated layout
+where possible. Public documentation links to meaningful operation types rather
+than generated file paths.
 
-The generator may replace only its validated owned subtree. It must stage,
-validate, format, and compare output before publication, following the same
-guarded-publication principles as canonical specification generation.
+The generator may replace only validated owned subtrees. It stages and validates
+both Rust projections before publishing either, and rolls back the set on a
+partial publication failure.
 
 Do not put handwritten patches in `src/generated`. If generation is wrong,
 change the canonical contract, SDK model, emitter, or handwritten runtime seam
@@ -177,13 +189,14 @@ may consume the model in memory.
 
 ## Acceptance criteria
 
-- Private Go tooling, the public Rust SDK, and a possible public CLI have
+- Private Go tooling, the public Rust SDK, and the public CLI have
   distinct directories, commands, and compatibility policies.
 - The Rust core builds without `reqwest`, Tokio, TLS, or a network runtime.
 - The default client is optional without duplicating operation definitions.
 - Native-client and transport-independent target support is explicit rather
   than inferred from transitive dependencies.
-- Generated output has one owned subtree and no handwritten modifications.
-- No empty future-language or CLI packages are committed.
+- Each generated Rust product has one owned subtree and no handwritten
+  modifications.
+- No empty future-language packages are committed.
 - Adding another language requires a new emitter and native package, not a
   translation of generated Rust.

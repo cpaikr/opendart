@@ -34,7 +34,7 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 	physical := make(map[string]bool, len(surface.Operations))
 	logical := make(map[string]bool)
 	for _, operation := range surface.Operations {
-		if operation.OperationID == "" || operation.LogicalOperationID == "" || operation.Path == "" || operation.Method == "" {
+		if operation.OperationID == "" || operation.LogicalOperationID == "" || operation.Path == "" || operation.Method == "" || operation.Description == "" {
 			t.Fatalf("incomplete operation identity: %#v", operation)
 		}
 		if operation.GuideURL == "" || operation.SourceCheckedAt == "" {
@@ -49,7 +49,7 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 			t.Fatalf("missing security or response routing for %s", operation.OperationID)
 		}
 		for _, parameter := range operation.Parameters {
-			if parameter.Name == "" || parameter.Location == "" || !parameter.HasSchema {
+			if parameter.Name == "" || parameter.Location == "" || parameter.Description == "" || !parameter.HasSchema {
 				t.Fatalf("incomplete parameter evidence for %s: %#v", operation.OperationID, parameter)
 			}
 		}
@@ -75,6 +75,9 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 	if corpCode.MinItems == nil || *corpCode.MinItems != 1 || corpCode.MaxItems == nil || *corpCode.MaxItems != 100 {
 		t.Fatalf("multi-company cardinality evidence = %#v", corpCode)
 	}
+	if corpCode.StringConstraints.Format != "opendart-corp-code" || corpCode.StringConstraints.MinLength == nil || *corpCode.StringConstraints.MinLength != 8 || corpCode.StringConstraints.MaxLength == nil || *corpCode.StringConstraints.MaxLength != 8 {
+		t.Fatalf("multi-company item constraints = %#v", corpCode.StringConstraints)
+	}
 	*corpCode.MinItems = 99
 	fresh, err := document.InspectSDKSurface()
 	if err != nil {
@@ -83,6 +86,15 @@ func TestSDKSurfaceCoversCanonicalPhysicalAndLogicalOperations(t *testing.T) {
 	freshCorpCode := findSDKParameter(t, findSDKOperation(t, fresh, "get_fnlttMultiAcnt_json"), "corp_code")
 	if freshCorpCode.MinItems == nil || *freshCorpCode.MinItems != 1 {
 		t.Fatal("mutating repository-owned SDK evidence changed the hidden OpenAPI model")
+	}
+	list := findSDKOperation(t, surface, "get_list_json")
+	report := findSDKParameter(t, list, "last_reprt_at")
+	if !slices.Equal(report.StringConstraints.AllowedValues, []string{"Y", "N"}) {
+		t.Fatalf("allowed-value evidence = %#v", report.StringConstraints)
+	}
+	pageCount := findSDKParameter(t, list, "page_count")
+	if pageCount.StringConstraints.DecimalMinimum == nil || *pageCount.StringConstraints.DecimalMinimum != 1 || pageCount.StringConstraints.DecimalMaximum == nil || *pageCount.StringConstraints.DecimalMaximum != 100 {
+		t.Fatalf("decimal-range evidence = %#v", pageCount.StringConstraints)
 	}
 	if len(multiCompany.Security) != 1 || len(multiCompany.Security[0].Schemes) != 1 {
 		t.Fatalf("authentication requirements = %#v", multiCompany.Security)
