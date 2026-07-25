@@ -227,5 +227,5 @@ lists in prose and YAML.
 
 ## Next action
 
-Complete the independent review, commit the validated canonical-fixture
-refactor, and open its sequential PR against the goal integration branch.
+Push the bounded CodeRabbit follow-up, wait for PR #48's final checks, resolve
+its review thread, and merge before changing the test portfolio.
