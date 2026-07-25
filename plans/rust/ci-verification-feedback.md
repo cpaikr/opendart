@@ -9,6 +9,9 @@ and expensive tests should pay only for the behavior they actually exercise.
 
 ## Current state
 
+- PR #46 is merged. The goal now runs from the dedicated
+  `goal/rust-ci-verification-feedback` integration branch based on the updated
+  `rust` branch, with the local planning patch preserved.
 - The `Verify` workflow serializes Go and Rust work in one Linux `verify` job.
   The macOS and Windows artifact jobs already run independently.
 - PR #46 run `30153472800` took 19 minutes 17 seconds. The Go race suite used
@@ -205,8 +208,8 @@ lists in prose and YAML.
 
 ## Next action
 
-After the SDK wire-trust PR is merged, implement only the workflow topology
-slice: parallel `go` and `rust` jobs, a failure-aware aggregate `verify` job,
-matching `internal/releaseguard` coverage, and documentation updates. Retain
-the full Go race command so the new timing establishes a comparable baseline
-before changing the test portfolio.
+Implement only the first workflow topology slice: parallel `go` and `rust`
+jobs, a failure-aware aggregate `verify` job, matching `internal/releaseguard`
+coverage, and documentation updates. Retain the full Go race command so the
+new timing establishes a comparable baseline before changing the test
+portfolio.
