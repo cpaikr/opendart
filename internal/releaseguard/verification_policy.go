@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -22,10 +23,12 @@ var targetedRacePackages = []string{
 	"./internal/sdkgen/model",
 }
 
-// These packages use cancellation only to bound sequential work. Introducing
+// These packages invoke cancellation APIs. Guide also owns direct concurrency;
+// the others use cancellation only to bound sequential work. Introducing
 // cancellation in another package requires an explicit ownership review.
-var reviewedSequentialCancellationPackages = []string{
+var reviewedCancellationPackages = []string{
 	"./internal/auditorprobe",
+	"./internal/guide",
 	"./internal/liveconformance",
 	"./internal/multicompanyprobe",
 	"./internal/releaseguard",
@@ -207,8 +210,8 @@ verification_tmp=
     '  pre-push,Required Linux Go and Rust contracts' \
     '  full-race,Full Go race-detector sweep' \
     '  exhaustive,Pre-push contract plus full Go race sweep'`},
-		{name: "usage_error", body: `  printf 'error: %s\n' "$1"
-  usage
+		{name: "usage_error", body: `  printf 'error: %s\n' "$1" >&2
+  usage >&2
   exit 2`},
 		{name: "require_no_arguments", body: `  mode=$1
   shift
@@ -399,7 +402,7 @@ func checkRaceOwnership(repositoryRoot string) error {
 			Detail:    "discovered: " + strings.Join(actual, ", "),
 		}
 	}
-	expectedCancellation := append([]string{"./internal/guide"}, reviewedSequentialCancellationPackages...)
+	expectedCancellation := append([]string(nil), reviewedCancellationPackages...)
 	sort.Strings(expectedCancellation)
 	if actual := sortedKeys(cancellationOwners); !reflect.DeepEqual(actual, expectedCancellation) {
 		return &Error{
@@ -414,7 +417,8 @@ func checkRaceOwnership(repositoryRoot string) error {
 		return &Error{
 			Artifact:  verificationScriptArtifact,
 			Invariant: "package-level state ownership matches the reviewed package classification",
-			Detail:    "discovered: " + strings.Join(actual, ", "),
+			Detail: "discovered: " + strings.Join(actual, ", ") +
+				"; after review, classify read-only owners in reviewedReadOnlyGlobalPackages",
 		}
 	}
 	return nil
@@ -426,8 +430,8 @@ type goOwnership struct {
 	global       bool
 }
 
-func inspectGoOwnership(path string) (goOwnership, error) {
-	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+func inspectGoOwnership(sourcePath string) (goOwnership, error) {
+	file, err := parser.ParseFile(token.NewFileSet(), sourcePath, nil, 0)
 	if err != nil {
 		return goOwnership{}, err
 	}
@@ -438,7 +442,7 @@ func inspectGoOwnership(path string) (goOwnership, error) {
 		if err != nil {
 			return goOwnership{}, err
 		}
-		name := filepath.Base(importPath)
+		name := path.Base(importPath)
 		if spec.Name != nil {
 			name = spec.Name.Name
 		}
@@ -463,7 +467,7 @@ func inspectGoOwnership(path string) (goOwnership, error) {
 			if !ok {
 				return true
 			}
-			if selector.Sel.Name == "Parallel" && strings.HasSuffix(path, "_test.go") {
+			if selector.Sel.Name == "Parallel" && strings.HasSuffix(sourcePath, "_test.go") {
 				ownership.direct = true
 			}
 			identifier, ok := selector.X.(*ast.Ident)

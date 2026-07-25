@@ -65,6 +65,12 @@ and expensive tests should pay only for the behavior they actually exercise.
 - The final focused review found no remaining actionable findings. The required
   Go mode passed after its fixes in 1 minute 23 seconds with warm local caches,
   and the policy package also passed independently under the race detector.
+- PR #49 run `30160777043` passed in 8 minutes 33 seconds. Go fell from PR
+  #48's 8 minutes to 6 minutes 11 seconds with normal tests and the audited race
+  set intact; Rust now sets the critical path at 8 minutes 22 seconds.
+- CodeRabbit's seven inline findings are addressed. A final focused review found
+  no remaining action, including after reproducing and fixing source discovery
+  under `go test -trimpath`.
 - The workflow still runs the repository verifier explicitly, and
   `TestVerifyAcceptedRepository` remains because it is the only package test
   exercising all real verification dependencies. CLI tests use an injected
@@ -246,5 +252,6 @@ lists in prose and YAML.
 
 ## Next action
 
-Review and deliver the audited verification-portfolio slice, then use its CI
-timings for the bounded Rust-cache and conditional-execution decision.
+Address PR #49 review feedback and merge the audited verification-portfolio
+slice, then use its CI timings for the bounded Rust-cache and
+conditional-execution decision.

@@ -27,8 +27,8 @@ usage() {
 }
 
 usage_error() {
-  printf 'error: %s\n' "$1"
-  usage
+  printf 'error: %s\n' "$1" >&2
+  usage >&2
   exit 2
 }
 

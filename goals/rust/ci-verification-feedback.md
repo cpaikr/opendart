@@ -42,8 +42,8 @@ fast, pre-push, and exhaustive local entrypoints.
 
 ### Next in-scope action
 
-Review and deliver the verification-portfolio slice, then measure its CI run
-and make the evidence-backed Rust-cache and conditional-execution decision.
+Address PR #49 review feedback and merge the verification-portfolio slice,
+then make the evidence-backed Rust-cache and conditional-execution decision.
 
 ### Evidence and blockers
 
@@ -119,3 +119,12 @@ and make the evidence-backed Rust-cache and conditional-execution decision.
 - The required Go mode passed after the review fixes in 1 minute 23 seconds
   with warm local caches, and `internal/releaseguard` also passed independently
   under the race detector.
+- PR #49's initial run `30160777043` passed in 8 minutes 33 seconds. Its Go job
+  finished in 6 minutes 11 seconds—about 23% shorter than PR #48's 8-minute Go
+  job—while Rust set the critical path at 8 minutes 22 seconds. The result
+  confirms that targeted race coverage materially shortens Go feedback and
+  makes Rust compilation the remaining optimization decision.
+- All seven CodeRabbit inline findings are addressed. The final follow-up review
+  found no remaining actionable issue; shell syntax, targeted mutation suites,
+  diff hygiene, and the source-path portability repro under `go test
+  -trimpath` pass.

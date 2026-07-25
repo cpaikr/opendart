@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -83,6 +85,7 @@ func TestVerifyAggregateScriptFailsClosed(t *testing.T) {
 }
 
 func TestCheckRejectsVerificationPortfolioMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name        string
 		artifact    string
@@ -133,7 +136,7 @@ func TestCheckRejectsVerificationPortfolioMutations(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, filepath.FromSlash(test.artifact))
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -143,7 +146,7 @@ func TestCheckRejectsVerificationPortfolioMutations(t *testing.T) {
 			if updated == string(source) {
 				t.Fatalf("mutation source %q not found in %s", test.old, test.artifact)
 			}
-			if err := os.WriteFile(path, []byte(updated), 0o700); err != nil {
+			if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
 				t.Fatal(err)
 			}
 			err = Check(root)
@@ -156,7 +159,8 @@ func TestCheckRejectsVerificationPortfolioMutations(t *testing.T) {
 }
 
 func TestCheckRejectsNonExecutableVerificationScript(t *testing.T) {
-	root := copyReleaseArtifacts(t)
+	fixture := newReleaseArtifactFixture(t)
+	root := fixture.copy(t)
 	path := filepath.Join(root, filepath.FromSlash(verificationScriptArtifact))
 	if err := os.Chmod(path, 0o600); err != nil {
 		t.Fatal(err)
@@ -169,6 +173,7 @@ func TestCheckRejectsNonExecutableVerificationScript(t *testing.T) {
 }
 
 func TestCheckRejectsUnauditedGoOwnership(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name      string
 		source    string
@@ -197,7 +202,7 @@ func TestCheckRejectsUnauditedGoOwnership(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, "internal", "newownership", "worker.go")
 			if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 				t.Fatal(err)
@@ -217,6 +222,7 @@ func TestCheckRejectsUnauditedGoOwnership(t *testing.T) {
 }
 
 func TestCheckRejectsFullRaceWorkflowMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name        string
 		old         string
@@ -236,7 +242,7 @@ func TestCheckRejectsFullRaceWorkflowMutations(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, filepath.FromSlash(fullRaceWorkflowArtifact))
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -274,9 +280,10 @@ func TestSemanticVersionPolicy(t *testing.T) {
 }
 
 func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	for _, packagePath := range []string{rustPackagePath, rustCLIPackagePath} {
 		t.Run(packagePath, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, manifestArtifact)
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -301,6 +308,7 @@ func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
 }
 
 func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name        string
 		artifact    string
@@ -336,7 +344,7 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, filepath.FromSlash(test.artifact))
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -359,6 +367,7 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 }
 
 func TestCheckRejectsRustPackageMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name        string
 		artifact    string
@@ -445,7 +454,7 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, filepath.FromSlash(test.artifact))
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -468,7 +477,8 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 }
 
 func TestCheckRejectsRustPackageBundleProvenanceMismatch(t *testing.T) {
-	root := copyReleaseArtifacts(t)
+	fixture := newReleaseArtifactFixture(t)
+	root := fixture.copy(t)
 	path := filepath.Join(root, rustProvenanceArtifact)
 	source, err := os.ReadFile(path)
 	if err != nil {
@@ -498,7 +508,8 @@ func TestCheckRejectsRustPackageBundleProvenanceMismatch(t *testing.T) {
 }
 
 func TestCheckAllowsSpecificationSourcesToAdvanceAfterSelectedRelease(t *testing.T) {
-	root := copyReleaseArtifacts(t)
+	fixture := newReleaseArtifactFixture(t)
+	root := fixture.copy(t)
 	path := filepath.Join(root, "openapi", "components", "schemas.yaml")
 	source, err := os.ReadFile(path)
 	if err != nil {
@@ -514,7 +525,8 @@ func TestCheckAllowsSpecificationSourcesToAdvanceAfterSelectedRelease(t *testing
 }
 
 func TestCheckRejectsUnavailableSpecificationSourceRelease(t *testing.T) {
-	root := copyReleaseArtifacts(t)
+	fixture := newReleaseArtifactFixture(t)
+	root := fixture.copy(t)
 	path := filepath.Join(root, rustProvenanceArtifact)
 	source, err := os.ReadFile(path)
 	if err != nil {
@@ -536,6 +548,7 @@ func TestCheckRejectsUnavailableSpecificationSourceRelease(t *testing.T) {
 }
 
 func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name        string
 		artifact    string
@@ -1416,7 +1429,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, filepath.FromSlash(test.artifact))
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -1501,9 +1514,23 @@ func TestReleaseWorkflowOrderingFailsClosed(t *testing.T) {
 	}
 }
 
-func copyReleaseArtifacts(t *testing.T) string {
+type releaseArtifactFixture struct {
+	sourceRoot   string
+	packageNames map[string]string
+}
+
+func newReleaseArtifactFixture(t *testing.T) releaseArtifactFixture {
 	t.Helper()
 	sourceRoot := repositoryRoot(t)
+	packageNames, err := loadAuditedOwnershipPackageNames(sourceRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return releaseArtifactFixture{sourceRoot: sourceRoot, packageNames: packageNames}
+}
+
+func (fixture releaseArtifactFixture) copy(t *testing.T) string {
+	t.Helper()
 	targetRoot := t.TempDir()
 	for _, artifact := range []string{
 		configArtifact,
@@ -1525,7 +1552,7 @@ func copyReleaseArtifacts(t *testing.T) string {
 		driftWorkflowArtifact,
 		driftNotifyArtifact,
 	} {
-		source, err := os.ReadFile(filepath.Join(sourceRoot, filepath.FromSlash(artifact)))
+		source, err := os.ReadFile(filepath.Join(fixture.sourceRoot, filepath.FromSlash(artifact)))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1541,11 +1568,11 @@ func copyReleaseArtifacts(t *testing.T) string {
 			t.Fatal(err)
 		}
 	}
-	writeOwnershipFixture(t, targetRoot)
+	writeOwnershipFixture(t, targetRoot, fixture.packageNames)
 	for _, sourcePath := range canonicalSpecificationSources {
-		copyPath(t, sourceRoot, targetRoot, sourcePath)
+		copyPath(t, fixture.sourceRoot, targetRoot, sourcePath)
 	}
-	gitDirectory, err := exec.Command("git", "-C", sourceRoot, "rev-parse", "--absolute-git-dir").Output()
+	gitDirectory, err := exec.Command("git", "-C", fixture.sourceRoot, "rev-parse", "--absolute-git-dir").Output()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1556,7 +1583,7 @@ func copyReleaseArtifacts(t *testing.T) string {
 	return targetRoot
 }
 
-func writeOwnershipFixture(t *testing.T, targetRoot string) {
+func writeOwnershipFixture(t *testing.T, targetRoot string, packageNames map[string]string) {
 	t.Helper()
 	direct := make(map[string]bool)
 	cancellation := make(map[string]bool)
@@ -1565,8 +1592,7 @@ func writeOwnershipFixture(t *testing.T, targetRoot string) {
 		direct[packagePath] = true
 		global[packagePath] = true
 	}
-	cancellation["./internal/guide"] = true
-	for _, packagePath := range reviewedSequentialCancellationPackages {
+	for _, packagePath := range reviewedCancellationPackages {
 		cancellation[packagePath] = true
 	}
 	for _, packagePath := range reviewedReadOnlyGlobalPackages {
@@ -1583,7 +1609,10 @@ func writeOwnershipFixture(t *testing.T, targetRoot string) {
 		packages[packagePath] = true
 	}
 	for packagePath := range packages {
-		name := filepath.Base(packagePath)
+		name, ok := packageNames[packagePath]
+		if !ok {
+			t.Fatalf("audited package %s has no source-derived package name", packagePath)
+		}
 		var source strings.Builder
 		source.WriteString("package " + name + "\n")
 		if cancellation[packagePath] {
@@ -1605,6 +1634,48 @@ func writeOwnershipFixture(t *testing.T, targetRoot string) {
 			t.Fatal(err)
 		}
 	}
+}
+
+func loadAuditedOwnershipPackageNames(sourceRoot string) (map[string]string, error) {
+	packages := make(map[string]bool)
+	for _, packagePath := range targetedRacePackages {
+		packages[packagePath] = true
+	}
+	for _, packagePath := range reviewedCancellationPackages {
+		packages[packagePath] = true
+	}
+	for _, packagePath := range reviewedReadOnlyGlobalPackages {
+		packages[packagePath] = true
+	}
+	names := make(map[string]string, len(packages))
+	for packagePath := range packages {
+		name, err := sourcePackageName(sourceRoot, packagePath)
+		if err != nil {
+			return nil, err
+		}
+		names[packagePath] = name
+	}
+	return names, nil
+}
+
+func sourcePackageName(sourceRoot, packagePath string) (string, error) {
+	directory := filepath.Join(sourceRoot, filepath.FromSlash(strings.TrimPrefix(packagePath, "./")))
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return "", err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".go" || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		path := filepath.Join(directory, entry.Name())
+		file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.PackageClauseOnly)
+		if err != nil {
+			return "", err
+		}
+		return file.Name.Name, nil
+	}
+	return "", fmt.Errorf("audited package %s has no production Go source", packagePath)
 }
 
 func copyPath(t *testing.T, sourceRoot, targetRoot, relativePath string) {

@@ -85,6 +85,8 @@ run for the candidate branch:
 
 ```sh
 gh workflow run full-race.yml --ref <release-please-branch>
+gh run list --workflow full-race.yml --branch <release-please-branch> \
+  --event workflow_dispatch --limit 1
 gh run watch <run-id> --exit-status
 ```
 
