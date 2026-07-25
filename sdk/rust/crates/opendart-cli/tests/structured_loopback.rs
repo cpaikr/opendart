@@ -110,7 +110,13 @@ fn json_success_preserves_typed_additive_values_and_exact_numbers() {
     let response = http_response(
         "application/json",
         body,
-        &[("Content-Language", SYNTHETIC_KEY)],
+        &[
+            ("Content-Language", SYNTHETIC_KEY),
+            (
+                "Content-Language",
+                "%63%72%74%66%63%5f%6b%65%79=work5-synthetic-sentinel",
+            ),
+        ],
     );
     let output = with_response(response, &company_arguments("json"));
     assert_eq!(output.stdout, JSON_SUCCESS_FIXTURE);
