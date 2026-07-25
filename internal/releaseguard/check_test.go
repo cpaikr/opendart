@@ -1,6 +1,7 @@
 package releaseguard
 
 import (
+	"context"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"go.yaml.in/yaml/v4"
 )
@@ -61,12 +63,18 @@ func TestVerifyAggregateScriptFailsClosed(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			command := exec.Command("sh", "-c", verifyAggregateScript)
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+
+			command := exec.CommandContext(ctx, "sh", "-c", verifyAggregateScript)
 			command.Env = os.Environ()
 			for name, value := range test.results {
 				command.Env = append(command.Env, name+"="+value)
 			}
 			err := command.Run()
+			if ctx.Err() != nil {
+				t.Fatalf("aggregate script did not complete within timeout: %v", ctx.Err())
+			}
 			if (err == nil) != test.wantOK {
 				t.Fatalf("aggregate result error = %v, want success %t", err, test.wantOK)
 			}
