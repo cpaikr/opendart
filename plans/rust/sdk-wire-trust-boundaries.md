@@ -10,13 +10,14 @@ follow XML 1.0 line-ending normalization without changing character references.
 
 ## Current state
 
-- `response_metadata` in `sdk/rust/crates/opendart/src/client.rs` drops
-  non-allowlisted headers and searches allowlisted values for the raw API key,
-  two encodings of the key, and the literal `crtfc_key` marker.
-- The sanitizer does not normalize the observed header value before searching
-  it. A mixed or lowercase percent-encoded marker and value can therefore pass
-  the allowlist and reach `ResponseMetadata`, contrary to the constructor
-  invariant documented in `sdk/rust/crates/opendart/src/wire/mod.rs`.
+- Commit `010e47d` makes response-metadata retention fail closed across three
+  bounded percent-decoding passes. Each stage is searched for the secret and
+  credential marker; malformed escapes, decoded control or non-text bytes, and
+  unresolved escapes at the limit cause omission. Unit, transport, and CLI
+  coverage includes mixed, fully encoded, nested, lowercase, and malformed
+  values. The CodeRabbit follow-up also treats post-decoding `+` bytes as
+  ambiguous literal-plus or form-space bytes, closing the partially decoded
+  form-encoding case without rewriting retained metadata.
 - `WireInspector` uses the event stream from `quick-xml` as if successful
   tokenization proved XML 1.0 well-formedness. Focused review probes found
   accepted illegal names, `<` inside attribute values, invalid comments,
@@ -28,9 +29,32 @@ follow XML 1.0 line-ending normalization without changing character references.
 - `Event::Text` and `Event::CData` retain literal CR and CRLF input. XML 1.0
   requires literal line endings to normalize to LF, while a numeric character
   reference such as `&#13;` must remain a carriage return.
-- Existing stable, MSRV, all-feature, no-default-feature, rustdoc, package, and
-  repository gates passed before this review. The gaps require new adversarial
-  tests; they are not represented by a currently failing ordinary gate.
+- The authority spike found no maintained parser that satisfies the complete
+  contract. `rxml 0.14.0` is streaming and security-oriented but rejects
+  processing instructions, `standalone="no"`, and some otherwise accepted XML;
+  it has no declared MSRV and includes unsafe implementation code.
+  `roxmltree 0.21.1` is safe and conformant for most of the corpus but builds a
+  DOM and deliberately does not validate declaration values. `xml 1.3.0` is
+  safe, streaming, dependency-free, and MSRV-compatible, but accepts a
+  targetless processing instruction, processes internal DTD content before it
+  can be rejected, and does not normalize XML values.
+- The current `quick-xml` dependency uses its empty default feature set, so the
+  implemented conversion path is already UTF-8-only. Making that boundary
+  explicit would clarify rather than narrow working behavior. The client
+  requires a nonzero envelope bound and permits a caller-selected value; a DOM
+  authority therefore adds input-bounded transient memory to a path that
+  already materializes the complete `SourceValue`.
+- The accepted design uses `roxmltree 0.21.1` with default features disabled as
+  the maintained safe-Rust full-document authority and retains `quick-xml` as
+  the source-faithful converter. A narrow preflight validates declaration
+  values, rejects reserved processing-instruction targets and DTDs, and
+  enforces depth and per-element attributes before the tree parser runs. Both
+  passes consume the same unchanged bounded bytes.
+- Public and internal corpora now cover the reproduced malformed classes,
+  supported declarations and document miscellany, namespaces, long tokens,
+  literal line endings, and character references. SDK and CLI binary paths
+  replay malformed status-like bodies byte-for-byte as unrecognized evidence;
+  structured CLI execution reports a malformed envelope.
 
 ## Design constraints
 
@@ -161,6 +185,6 @@ follow XML 1.0 line-ending normalization without changing character references.
 
 ## Next action
 
-Add the failing public-boundary regression corpus for encoded response headers,
-malformed status-like XML, binary byte replay, and XML line endings before
-selecting or changing the parser.
+Push the reviewed CodeRabbit follow-up to
+[PR #46](https://github.com/cpaikr/opendart/pull/46), resolve its thread after
+required Linux, macOS, and Windows verification passes, and merge.

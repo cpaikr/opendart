@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, fmt};
 
 pub(crate) mod decode;
-mod inspect;
+pub(crate) mod inspect;
 #[cfg(feature = "serde-json")]
 mod serialize;
 

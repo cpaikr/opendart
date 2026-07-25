@@ -300,7 +300,9 @@ ZIP and XML content types, a truncated classification prefix, malformed XML,
 and an XML candidate beyond the inspection bound. Assert that only a supported
 positive ZIP signature becomes archive, only the recognized bounded envelope
 becomes source status, and every other case returns a replay stream containing
-all bytes consumed by the classifier.
+all bytes consumed by the classifier. Malformed XML coverage includes document
+grammar, declaration, processing-instruction, comment, DTD/entity, root, and
+character-data failures rather than only truncated markup.
 
 ## Acceptance criteria
 

@@ -176,9 +176,19 @@ response and cannot define collection-specific successful-empty or retry policy.
 constants or predicates, not a closed enum. Status `013` remains source status
 evidence; the SDK does not label it a successful empty collection.
 
-JSON/XML envelope parsing and ZIP/XML error recognition are handwritten shared
-runtime behavior. Parsers operate only on bounded inputs, do not resolve XML
-external entities, and enforce practical nesting and expansion limits.
+JSON envelope parsing and ZIP/XML error recognition are repository-owned shared
+runtime behavior. XML inspection accepts bounded UTF-8 XML 1.0 only. A lexical
+preflight enforces declaration values, processing-instruction targets, DTD
+rejection, nesting depth, and a per-element attribute bound before a maintained
+safe-Rust parser validates the complete document. The existing event converter
+then constructs source-faithful values from the same unchanged bytes. Custom
+entities and external resolution are unavailable.
+
+An XML declaration, when present, must declare version `1.0`; an encoding must
+be `UTF-8`, and a standalone value must be `yes` or `no`. Valid comments,
+processing instructions, namespaces, mixed content, and character references
+remain supported. Literal CRLF and CR in text and CDATA normalize to LF before
+entering `SourceValue`; a character reference such as `&#13;` remains CR.
 Generated success shapes preserve unknown fields and use an opaque
 `SourceValue` where scalar type is not established. They are wire types, not
 domain types.

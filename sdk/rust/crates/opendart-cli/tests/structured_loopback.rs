@@ -110,7 +110,13 @@ fn json_success_preserves_typed_additive_values_and_exact_numbers() {
     let response = http_response(
         "application/json",
         body,
-        &[("Content-Language", SYNTHETIC_KEY)],
+        &[
+            ("Content-Language", SYNTHETIC_KEY),
+            (
+                "Content-Language",
+                "%63%72%74%66%63%5f%6b%65%79=work5-synthetic-sentinel",
+            ),
+        ],
     );
     let output = with_response(response, &company_arguments("json"));
     assert_eq!(output.stdout, JSON_SUCCESS_FIXTURE);
@@ -209,6 +215,13 @@ fn envelope_limits_malformed_bodies_and_decode_failures_are_sanitized() {
     let output = with_response(
         http_response("application/json", b"{\"unterminated\":", &[]),
         &company_arguments("json"),
+    );
+    assert_eq!(json(&output, 1)["error"]["code"], "malformed_envelope");
+
+    let malformed_xml = b"<result value=\"<\"><status>013</status></result>";
+    let output = with_response(
+        http_response("application/xml", malformed_xml, &[]),
+        &company_arguments("xml"),
     );
     assert_eq!(json(&output, 1)["error"]["code"], "malformed_envelope");
 }
