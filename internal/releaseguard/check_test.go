@@ -20,6 +20,60 @@ func TestCheckAcceptsRepositoryReleasePolicy(t *testing.T) {
 	}
 }
 
+func TestVerifyAggregateScriptFailsClosed(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the GitHub aggregate runs with a POSIX shell on ubuntu-latest")
+	}
+	tests := []struct {
+		name    string
+		results map[string]string
+		wantOK  bool
+	}{
+		{
+			name: "success",
+			results: map[string]string{
+				"GO_RESULT": "success", "RUST_RESULT": "success",
+				"MACOS_RESULT": "success", "WINDOWS_RESULT": "success",
+			},
+			wantOK: true,
+		},
+		{
+			name: "failure",
+			results: map[string]string{
+				"GO_RESULT": "failure", "RUST_RESULT": "success",
+				"MACOS_RESULT": "success", "WINDOWS_RESULT": "success",
+			},
+		},
+		{
+			name: "cancelled",
+			results: map[string]string{
+				"GO_RESULT": "success", "RUST_RESULT": "cancelled",
+				"MACOS_RESULT": "success", "WINDOWS_RESULT": "success",
+			},
+		},
+		{
+			name: "unexpected skip",
+			results: map[string]string{
+				"GO_RESULT": "success", "RUST_RESULT": "success",
+				"MACOS_RESULT": "skipped", "WINDOWS_RESULT": "success",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			command := exec.Command("sh", "-c", verifyAggregateScript)
+			command.Env = os.Environ()
+			for name, value := range test.results {
+				command.Env = append(command.Env, name+"="+value)
+			}
+			err := command.Run()
+			if (err == nil) != test.wantOK {
+				t.Fatalf("aggregate result error = %v, want success %t", err, test.wantOK)
+			}
+		})
+	}
+}
+
 func TestSemanticVersionPolicy(t *testing.T) {
 	for _, version := range []string{"0.1.0", "1.2.3-rc.1", "1.2.3+build.01", "1.2.3-1a"} {
 		if !semanticVersion.MatchString(version) {
@@ -651,7 +705,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "verify extra job", artifact: verifyWorkflowArtifact,
-			old: "jobs:\n  verify:", replacement: "jobs:\n  extra:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - name: Unexpected\n        run: echo unexpected\n\n  verify:",
+			old: "jobs:\n  go:", replacement: "jobs:\n  extra:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - name: Unexpected\n        run: echo unexpected\n\n  go:",
 			invariant: "contains only approved verification jobs",
 		},
 		{
@@ -763,34 +817,74 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "native artifact jobs use approved runners and timeouts",
 		},
 		{
-			name: "verify job condition bypass", artifact: verifyWorkflowArtifact,
-			old: "  verify:\n    runs-on:", replacement: "  verify:\n    if: always()\n    runs-on:",
-			invariant: "verify job uses default execution controls",
+			name: "native artifact protected environment", artifact: verifyWorkflowArtifact,
+			old: "  artifact-macos:\n    runs-on:", replacement: "  artifact-macos:\n    environment: protected\n    runs-on:",
+			invariant: "native artifact jobs use default execution controls",
 		},
 		{
-			name: "verify job environment", artifact: verifyWorkflowArtifact,
-			old: "  verify:\n    runs-on:", replacement: "  verify:\n    env:\n      SAFE: value\n    runs-on:",
+			name: "Go job condition bypass", artifact: verifyWorkflowArtifact,
+			old: "  go:\n    runs-on:", replacement: "  go:\n    if: always()\n    runs-on:",
+			invariant: "verification work jobs use default execution controls",
+		},
+		{
+			name: "Go job unsupported env", artifact: verifyWorkflowArtifact,
+			old: "  go:\n    runs-on:", replacement: "  go:\n    env:\n      SAFE: value\n    runs-on:",
 			invariant: "uses only supported YAML fields",
 		},
 		{
-			name: "verify runner", artifact: verifyWorkflowArtifact,
+			name: "Go protected environment", artifact: verifyWorkflowArtifact,
+			old: "  go:\n    runs-on:", replacement: "  go:\n    environment: protected\n    runs-on:",
+			invariant: "verification work jobs use default execution controls",
+		},
+		{
+			name: "Go runner", artifact: verifyWorkflowArtifact,
 			old: "runs-on: ubuntu-latest", replacement: "runs-on: macos-latest",
-			invariant: "verify job uses the approved runner and timeout",
+			invariant: "verification work jobs use the approved runner and timeout",
 		},
 		{
-			name: "verify timeout", artifact: verifyWorkflowArtifact,
+			name: "Go timeout", artifact: verifyWorkflowArtifact,
 			old: "timeout-minutes: 30", replacement: "timeout-minutes: 60",
-			invariant: "verify job uses the approved runner and timeout",
+			invariant: "verification work jobs use the approved runner and timeout",
 		},
 		{
-			name: "verify job shell bypass", artifact: verifyWorkflowArtifact,
-			old: "  verify:\n    runs-on:", replacement: "  verify:\n    defaults:\n      run:\n        shell: bash {0} || true\n    runs-on:",
-			invariant: "verify job uses default run settings",
+			name: "Go job shell bypass", artifact: verifyWorkflowArtifact,
+			old: "  go:\n    runs-on:", replacement: "  go:\n    defaults:\n      run:\n        shell: bash {0} || true\n    runs-on:",
+			invariant: "verification work jobs use default run settings",
 		},
 		{
-			name: "verify job working-directory bypass", artifact: verifyWorkflowArtifact,
-			old: "  verify:\n    runs-on:", replacement: "  verify:\n    defaults:\n      run:\n        working-directory: nested\n    runs-on:",
-			invariant: "verify job uses default run settings",
+			name: "Go job working-directory bypass", artifact: verifyWorkflowArtifact,
+			old: "  go:\n    runs-on:", replacement: "  go:\n    defaults:\n      run:\n        working-directory: nested\n    runs-on:",
+			invariant: "verification work jobs use default run settings",
+		},
+		{
+			name: "aggregate condition", artifact: verifyWorkflowArtifact,
+			old: "    if: ${{ always() }}", replacement: "    if: ${{ success() }}",
+			invariant: "aggregate verify job always evaluates dependency results",
+		},
+		{
+			name: "aggregate missing dependency", artifact: verifyWorkflowArtifact,
+			old: "      - artifact-windows\n    runs-on:", replacement: "    runs-on:",
+			invariant: "aggregate verify job depends on every required job",
+		},
+		{
+			name: "aggregate accepts skipped dependency", artifact: verifyWorkflowArtifact,
+			old: "*=success) ;;", replacement: "*=success|*=skipped) ;;",
+			invariant: "aggregate verify job rejects every non-success result",
+		},
+		{
+			name: "aggregate result expression", artifact: verifyWorkflowArtifact,
+			old: "GO_RESULT: ${{ needs.go.result }}", replacement: "GO_RESULT: success",
+			invariant: "aggregate verify job rejects every non-success result",
+		},
+		{
+			name: "aggregate continue-on-error", artifact: verifyWorkflowArtifact,
+			old: "  verify:\n    if:", replacement: "  verify:\n    continue-on-error: true\n    if:",
+			invariant: "aggregate verify job always evaluates dependency results",
+		},
+		{
+			name: "aggregate protected environment", artifact: verifyWorkflowArtifact,
+			old: "  verify:\n    if:", replacement: "  verify:\n    environment: protected\n    if:",
+			invariant: "aggregate verify job always evaluates dependency results",
 		},
 		{
 			name: "canonical verify step condition bypass", artifact: verifyWorkflowArtifact,

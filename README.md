@@ -119,11 +119,17 @@ go run ./cmd/opendart-tool live-conformance --preflight-only --repository-root .
 
 `sync` refreshes the canonical files from the public guide through in-process
 validated staging and owned-output publication, then invalidates the old
-bundle. `bundle` deterministically rebuilds the portable artifact. CI owns Go
-vetting and race-enabled tests separately; `verify` checks catalog and confined
-references, strict linting, the sanitized auditor-evidence manifest,
-the live-matrix coverage, budget, and sanitization preflight, release/workflow
-guards, and byte-for-byte bundle freshness.
+bundle. `bundle` deterministically rebuilds the portable artifact. The
+repository verifier checks catalog and confined references, strict linting, the
+sanitized auditor-evidence manifest, the live-matrix coverage, budget, and
+sanitization preflight, release/workflow guards, and byte-for-byte bundle
+freshness.
+
+CI runs the Go and Rust gates independently while native artifact behavior runs
+on macOS and Windows. The stable aggregate `verify` job depends on all four and
+succeeds only when every required job succeeds. The Go job retains vetting,
+race-enabled tests, and the repository verifier; the Rust job retains the
+pinned stable, compatibility, MSRV, package-content, and clean-install gates.
 
 Generated OpenAPI files are reviewed artifacts. Do not edit them by hand; change
 the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is

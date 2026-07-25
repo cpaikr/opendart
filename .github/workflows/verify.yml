@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  go:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -25,6 +25,25 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Vet Go
+        run: go vet ./...
+
+      - name: Test Go
+        run: go test -race ./...
+
+      - name: Verify repository
+        run: go run ./cmd/opendart-tool verify --repository-root .
+
+  rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
       - name: Install pinned Rust toolchains
         run: |
           rustup toolchain install 1.97.1 --profile minimal --component clippy --component rustfmt
@@ -34,15 +53,6 @@ jobs:
         run: |
           cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml
           cargo +1.97.1 fetch --locked --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml
-
-      - name: Vet Go
-        run: go vet ./...
-
-      - name: Test Go
-        run: go test -race ./...
-
-      - name: Verify repository
-        run: go run ./cmd/opendart-tool verify --repository-root .
 
       - name: Verify Rust stable contracts offline
         run: |
@@ -155,3 +165,37 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $binary operations list | Out-Null
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  verify:
+    if: ${{ always() }}
+    needs:
+      - go
+      - rust
+      - artifact-macos
+      - artifact-windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require successful verification jobs
+        env:
+          GO_RESULT: ${{ needs.go.result }}
+          RUST_RESULT: ${{ needs.rust.result }}
+          MACOS_RESULT: ${{ needs.artifact-macos.result }}
+          WINDOWS_RESULT: ${{ needs.artifact-windows.result }}
+        run: |
+          failed=0
+          for result in \
+            "go=${GO_RESULT}" \
+            "rust=${RUST_RESULT}" \
+            "artifact-macos=${MACOS_RESULT}" \
+            "artifact-windows=${WINDOWS_RESULT}"
+          do
+            case "${result}" in
+              *=success) ;;
+              *)
+                echo "${result}" >&2
+                failed=1
+                ;;
+            esac
+          done
+          exit "${failed}"

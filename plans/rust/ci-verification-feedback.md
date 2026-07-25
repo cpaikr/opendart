@@ -12,8 +12,17 @@ and expensive tests should pay only for the behavior they actually exercise.
 - PR #46 is merged. The goal now runs from the dedicated
   `goal/rust-ci-verification-feedback` integration branch based on the updated
   `rust` branch, with the local planning patch preserved.
-- The `Verify` workflow serializes Go and Rust work in one Linux `verify` job.
-  The macOS and Windows artifact jobs already run independently.
+- The first topology slice is implemented on `ci/parallel-verify-topology`.
+  It gives Go and Rust independent Linux jobs, retains every existing command
+  including `go test -race ./...`, and adds a final `verify` fan-in over those
+  jobs plus the existing macOS and Windows artifact jobs.
+- `internal/releaseguard` now owns the split responsibilities, exact aggregate
+  dependencies, unconditional evaluation, and all-success result policy.
+  Executed tests cover successful, failed, cancelled, and unexpectedly skipped
+  dependency results.
+- Local validation passed normal Go tests, vet, repository verification, and
+  the full race suite. The 2026-07-25 race run completed in 5 minutes 13
+  seconds with the workstation's current build cache.
 - PR #46 run `30153472800` took 19 minutes 17 seconds. The Go race suite used
   10 minutes, and the Rust work after repository verification used about
   7 minutes 41 seconds. Parallel Go and Rust jobs should therefore reduce the
@@ -208,8 +217,6 @@ lists in prose and YAML.
 
 ## Next action
 
-Implement only the first workflow topology slice: parallel `go` and `rust`
-jobs, a failure-aware aggregate `verify` job, matching `internal/releaseguard`
-coverage, and documentation updates. Retain the full Go race command so the
-new timing establishes a comparable baseline before changing the test
-portfolio.
+Open the first workflow-only PR against the goal integration branch, complete
+review and merge, and record its per-job and critical-path timings. Do not
+change the test portfolio until that comparable measurement is captured.

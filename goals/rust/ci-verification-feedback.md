@@ -37,8 +37,9 @@ documentation.
 
 ### Next in-scope action
 
-Implement the first workflow-only PR while retaining `go test -race ./...`,
-then measure its critical path before changing test coverage.
+Commit and open the first workflow-only PR against the integration branch,
+complete review and merge, then record its critical path before changing test
+coverage.
 
 ### Evidence and blockers
 
@@ -49,3 +50,14 @@ then measure its critical path before changing test coverage.
 - Candidate: first workflow topology PR. Classification: included. Contract
   basis: the first included result and explicit first-PR delivery constraint.
   Action: proceed without changing test coverage.
+- The work branch splits Go and Rust verification without changing any
+  verification command and adds a `verify` fan-in over all four required work
+  jobs. Releaseguard tests execute successful, failed, cancelled, and skipped
+  dependency results.
+- Local validation passed `go vet ./...`, `go test ./...`,
+  `go test -race ./...`, targeted releaseguard and verification tests, and the
+  repository verifier. The full race run completed in 5 minutes 13 seconds
+  with the current local build cache.
+- The required review found one protected-environment policy gap; the guard and
+  mutation tests now reject environment-gated Go, Rust, native, and aggregate
+  verification jobs. No decision-required findings remain.
