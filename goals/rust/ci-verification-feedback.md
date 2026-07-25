@@ -33,17 +33,19 @@ _None._
 - Repeated canonical model and artifact construction no longer dominates the
   affected Go tests. PR #48 merged as `181aa20` with isolated model clones,
   immutable rendered fixtures, and the public command/E2E path retained.
+- The audited verification portfolio is complete. PR #49 merged as `204a0f1`
+  with normal Go tests and the audited race set on every pull request, a
+  weekly/manual full-race sweep, and repository-owned local tiers.
 
 ### Current in-scope result
 
-An audited verification portfolio with normal Go and targeted race coverage on
-every pull request, a scheduled/manual full-race sweep, and repository-owned
-fast, pre-push, and exhaustive local entrypoints.
+Record and deliver the measured Rust-cache and conditional-execution decision,
+then deliver the completed integration branch to `rust`.
 
 ### Next in-scope action
 
-Address PR #49 review feedback and merge the verification-portfolio slice,
-then make the evidence-backed Rust-cache and conditional-execution decision.
+Merge the decision record into the integration branch, then open and finish the
+goal delivery pull request to `rust`.
 
 ### Evidence and blockers
 
@@ -128,3 +130,21 @@ then make the evidence-backed Rust-cache and conditional-execution decision.
   found no remaining actionable issue; shell syntax, targeted mutation suites,
   diff hygiene, and the source-path portability repro under `go test
   -trimpath` pass.
+- PR #49's final run `30161504458` passed in 7 minutes 45 seconds. Rust remained
+  the critical path at 7 minutes 45 seconds; Go finished in 6 minutes 16
+  seconds, Windows in 4 minutes 25 seconds, and macOS in 2 minutes 5 seconds.
+- The Rust job spent about 16 seconds installing pinned toolchains, 3 seconds
+  fetching locked dependencies, 3 minutes 32 seconds on stable contracts, 58
+  seconds on compatibility, 1 minute 6 seconds on MSRV, 30 seconds on package
+  contents, and 1 minute 14 seconds on the deliberately clean CLI install.
+- Do not add a Cargo cache in this goal. A registry-only cache can save at most
+  the measured 3-second fetch. The local workspace and compatibility `target`
+  trees total roughly 18 GB, so uploading them would violate the bounded-cache
+  constraint. GitHub scopes pull-request-created caches to that pull request's
+  merge ref, limiting their value for ordinary later pull requests; a compiler
+  cache would add an unmeasured dependency and is therefore speculative.
+- Do not add conditional execution. Go tooling owns generated Rust artifacts
+  and verification policy, while the Rust gates cover distinct stable,
+  compatibility, MSRV, packaging, and clean-install contracts. Cross-language
+  dependency ownership is not machine-checkable, so path-based exemptions
+  remain explicitly excluded.

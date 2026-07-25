@@ -71,6 +71,14 @@ and expensive tests should pay only for the behavior they actually exercise.
 - CodeRabbit's seven inline findings are addressed. A final focused review found
   no remaining action, including after reproducing and fixing source discovery
   under `go test -trimpath`.
+- PR #49's final run `30161504458` passed in 7 minutes 45 seconds. Rust remained
+  the critical path at 7 minutes 45 seconds; Go completed in 6 minutes 16
+  seconds, Windows in 4 minutes 25 seconds, and macOS in 2 minutes 5 seconds.
+- Rust's 7-minute-40-second verification step spent about 16 seconds installing
+  pinned toolchains, 3 seconds fetching locked dependencies, 3 minutes 32
+  seconds on stable contracts, 58 seconds on compatibility, 1 minute 6 seconds
+  on MSRV, 30 seconds on package contents, and 1 minute 14 seconds on the clean
+  CLI install.
 - The workflow still runs the repository verifier explicitly, and
   `TestVerifyAcceptedRepository` remains because it is the only package test
   exercising all real verification dependencies. CLI tests use an injected
@@ -84,6 +92,21 @@ and expensive tests should pay only for the behavior they actually exercise.
   release contract and avoids churn if branch protection adopts it later.
 - Go setup already enables the supported Go cache. Rust dependency fetching is
   locked and offline after fetch, but compiled Rust outputs are not cached.
+- The Rust-cache decision is to keep the job uncached. A registry cache cannot
+  materially shorten a measured 3-second fetch. The workstation's workspace and
+  compatibility `target` trees totaled roughly 18 GB on 2026-07-25, which is
+  not a bounded artifact suitable for blind upload. GitHub's
+  [cache access restrictions](https://docs.github.com/en/actions/reference/dependency-caching-reference#restrictions-for-accessing-a-cache)
+  also scope caches created by a pull-request run to that pull request's merge
+  ref, so such a cache primarily accelerates reruns rather than later pull
+  requests. Adding and operating a compiler cache without representative
+  evidence would be speculative.
+- The conditional-execution decision is to run all required jobs on every pull
+  request. Go tooling owns generated Rust artifacts and verification policy,
+  while Rust's stable, compatibility, MSRV, package, and clean-install checks
+  protect separate contracts. Cross-language dependency ownership is not yet
+  machine-checkable, so the contract's exclusion of path-based exemptions
+  applies.
 
 Timing measurements are comparative evidence, not permanent budgets. Recheck
 them on representative Rust-only, Go/tooling, and mixed changes after each
@@ -219,6 +242,13 @@ lists in prose and YAML.
   run for Rust changes because Go tooling owns generated Rust artifacts and
   workflow policy.
 
+Decision: do not add Rust caching or conditional execution in this goal. The
+measured dependency-fetch opportunity is immaterial, the available workspace
+target tree is unbounded and poorly reusable across pull requests, and the
+ownership prerequisite for safe path selection is not satisfied. Revisit a
+compiler cache only as a separately measured change with explicit storage,
+eviction, trust, and cross-pull-request population bounds.
+
 ## Validation
 
 - Exercise success, failure, cancellation, and unexpected-skip cases for the
@@ -252,6 +282,5 @@ lists in prose and YAML.
 
 ## Next action
 
-Address PR #49 review feedback and merge the audited verification-portfolio
-slice, then use its CI timings for the bounded Rust-cache and
-conditional-execution decision.
+Deliver this final decision record to the integration branch, then finish the
+goal pull request to `rust` with truthful completion state.
