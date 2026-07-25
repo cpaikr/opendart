@@ -61,6 +61,18 @@ func TestCanonicalSurfaceFixtureClonesNestedState(t *testing.T) {
 	}
 
 	operation := firstOperationWithParameters(t, &first)
+	matchingOperation := findSurfaceOperation(t, &second, operation.OperationID)
+	if len(operation.Security) == 0 || len(operation.Security[0].Schemes) == 0 ||
+		len(matchingOperation.Security) == 0 || len(matchingOperation.Security[0].Schemes) == 0 {
+		t.Fatal("canonical operation has no matching security scheme")
+	}
+	if len(operation.Responses) == 0 || len(operation.Responses[0].MediaTypes) == 0 ||
+		len(matchingOperation.Responses) == 0 || len(matchingOperation.Responses[0].MediaTypes) == 0 {
+		t.Fatal("canonical operation has no matching response media type")
+	}
+	securityScopes := slices.Clone(matchingOperation.Security[0].Schemes[0].Scopes)
+	requiredProperties := slices.Clone(matchingOperation.Responses[0].MediaTypes[0].Schema.Required)
+
 	operation.Parameters[0].Name = "mutated"
 	if len(operation.Parameters[0].Types) == 0 {
 		t.Fatal("canonical parameter has no type")
@@ -83,15 +95,11 @@ func TestCanonicalSurfaceFixtureClonesNestedState(t *testing.T) {
 	if !pointerMutated {
 		t.Fatal("canonical surface has no pointer-backed parameter constraint")
 	}
-	if len(operation.Security) != 0 && len(operation.Security[0].Schemes) != 0 {
-		operation.Security[0].Schemes[0].Scopes = append(operation.Security[0].Schemes[0].Scopes, "mutated")
-	}
-	if len(operation.Responses) != 0 && len(operation.Responses[0].MediaTypes) != 0 {
-		operation.Responses[0].MediaTypes[0].Schema.Required = append(
-			operation.Responses[0].MediaTypes[0].Schema.Required,
-			"mutated",
-		)
-	}
+	operation.Security[0].Schemes[0].Scopes = append(operation.Security[0].Schemes[0].Scopes, "mutated")
+	operation.Responses[0].MediaTypes[0].Schema.Required = append(
+		operation.Responses[0].MediaTypes[0].Schema.Required,
+		"mutated",
+	)
 
 	after, err := json.Marshal(second)
 	if err != nil {
@@ -99,6 +107,12 @@ func TestCanonicalSurfaceFixtureClonesNestedState(t *testing.T) {
 	}
 	if !bytes.Equal(before, after) {
 		t.Fatal("mutating one canonical surface clone changed another")
+	}
+	if !slices.Equal(matchingOperation.Security[0].Schemes[0].Scopes, securityScopes) {
+		t.Fatal("mutating security scopes changed the matching canonical operation")
+	}
+	if !slices.Equal(matchingOperation.Responses[0].MediaTypes[0].Schema.Required, requiredProperties) {
+		t.Fatal("mutating response schema requirements changed the matching canonical operation")
 	}
 }
 
@@ -333,6 +347,17 @@ func firstOperationWithParameters(t *testing.T, surface *openapispec.SDKSurface)
 		}
 	}
 	t.Fatal("canonical surface has no parameterized operation")
+	return nil
+}
+
+func findSurfaceOperation(t *testing.T, surface *openapispec.SDKSurface, id string) *openapispec.SDKSurfaceOperation {
+	t.Helper()
+	for index := range surface.Operations {
+		if surface.Operations[index].OperationID == id {
+			return &surface.Operations[index]
+		}
+	}
+	t.Fatalf("SDK surface operation %q not found", id)
 	return nil
 }
 
