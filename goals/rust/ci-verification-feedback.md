@@ -30,16 +30,20 @@ _None._
 - Parallel Go and Rust verification now runs behind one failure-aware, stable
   aggregate `verify` result. PR #47 merged as `fdabb18` with workflow-policy
   guards, truthful documentation, and unchanged verification commands.
+- Repeated canonical model and artifact construction no longer dominates the
+  affected Go tests. PR #48 merged as `181aa20` with isolated model clones,
+  immutable rendered fixtures, and the public command/E2E path retained.
 
 ### Current in-scope result
 
-Structurally faster Go tests by removing repeated canonical model and artifact
-construction while preserving command-level and end-to-end coverage.
+An audited verification portfolio with normal Go and targeted race coverage on
+every pull request, a scheduled/manual full-race sweep, and repository-owned
+fast, pre-push, and exhaustive local entrypoints.
 
 ### Next in-scope action
 
-Push the bounded review follow-up, wait for PR #48's final checks, resolve its
-review thread, and merge before changing the test portfolio.
+Address PR #49 review feedback and merge the verification-portfolio slice,
+then make the evidence-backed Rust-cache and conditional-execution decision.
 
 ### Evidence and blockers
 
@@ -91,3 +95,36 @@ review thread, and merge before changing the test portfolio.
 - Independent review found no delivery or correctness gaps. CodeRabbit's one
   valid test-strength finding is addressed by requiring matching security and
   response-schema fields and asserting both remain isolated across clones.
+- PR #48's final run `30159127643` completed in about 8 minutes 6 seconds. Its
+  8-minute Go job was about 23% shorter than PR #47's 10-minute-25-second Go
+  job while all required jobs remained green.
+- The race audit selected `internal/guide`, `internal/sdkgen`,
+  `internal/sdkgen/model`, `internal/driftnotifier`, and
+  `internal/livenotifier`. The targeted command executes the worker pool,
+  immutable shared fixture boundaries, and test-server goroutine boundaries.
+- Releaseguard now derives concurrency-bearing packages from the Go AST and
+  rejects any mismatch with the targeted list. Cancellation-only packages and
+  packages with reviewed read-only globals have separate explicit
+  classifications, so new ownership in either category also fails closed. It
+  also guards the exact local tier composition, CI entrypoints, weekly/manual
+  full-race workflow, action pins, read-only authority, and credential-free
+  boundary.
+- The documented fast Go and Rust examples pass. A single credential-free
+  `./scripts/verify exhaustive` run exercised the complete pre-push contract
+  and full Go race sweep in 4 minutes 54 seconds with warm local caches.
+- The final focused review found no remaining actionable findings. Its
+  releaseguard and verification tests, both POSIX shell syntax checks, and
+  diff hygiene passed; the reviewed mutation fixtures synthesize only the
+  audited ownership packages rather than copying the repository source tree.
+- The required Go mode passed after the review fixes in 1 minute 23 seconds
+  with warm local caches, and `internal/releaseguard` also passed independently
+  under the race detector.
+- PR #49's initial run `30160777043` passed in 8 minutes 33 seconds. Its Go job
+  finished in 6 minutes 11 seconds—about 23% shorter than PR #48's 8-minute Go
+  job—while Rust set the critical path at 8 minutes 22 seconds. The result
+  confirms that targeted race coverage materially shortens Go feedback and
+  makes Rust compilation the remaining optimization decision.
+- All seven CodeRabbit inline findings are addressed. The final follow-up review
+  found no remaining actionable issue; shell syntax, targeted mutation suites,
+  diff hygiene, and the source-path portability repro under `go test
+  -trimpath` pass.

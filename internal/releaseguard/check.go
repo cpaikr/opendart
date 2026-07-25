@@ -20,6 +20,8 @@ import (
 const (
 	releaseWorkflowArtifact    = ".github/workflows/release-please.yml"
 	verifyWorkflowArtifact     = ".github/workflows/verify.yml"
+	fullRaceWorkflowArtifact   = ".github/workflows/full-race.yml"
+	verificationScriptArtifact = "scripts/verify"
 	liveWorkflowArtifact       = ".github/workflows/live-conformance.yml"
 	notifyWorkflowArtifact     = ".github/workflows/live-conformance-notify.yml"
 	driftWorkflowArtifact      = ".github/workflows/guide-drift.yml"
@@ -118,8 +120,7 @@ RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path 
 	nativeArtifactFetchScript       = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
 	nativeArtifactTestScript        = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
 	compatibilityVerificationScript = `RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
-	transportIndependentGraphScript = `no_default_tree="$(mktemp)"
-trap 'rm -f "${no_default_tree}"' EXIT
+	transportIndependentGraphScript = `no_default_tree="${verification_tmp}/no-default-tree.txt"
 cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features -e normal --prefix none > "${no_default_tree}"
 if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"; then
   grep -E '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"
@@ -129,9 +130,8 @@ fi`
 cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
 cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features
 cargo +1.85.0 metadata --locked --offline --manifest-path sdk/rust/Cargo.toml --no-deps > /dev/null`
-	packageVerificationScript = `sdk_package_files="$(mktemp)"
-cli_package_files="$(mktemp)"
-trap 'rm -f "${sdk_package_files}" "${cli_package_files}"' EXIT
+	packageVerificationScript = `sdk_package_files="${verification_tmp}/sdk-package-files.txt"
+cli_package_files="${verification_tmp}/cli-package-files.txt"
 cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${sdk_package_files}"
 diff -u sdk/rust/package-files.txt "${sdk_package_files}"
 cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
@@ -279,6 +279,20 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
+	fullRaceSource, err := readArtifact(absoluteRoot, fullRaceWorkflowArtifact)
+	if err != nil {
+		return err
+	}
+	verificationScriptSource, err := readArtifact(absoluteRoot, verificationScriptArtifact)
+	if err != nil {
+		return err
+	}
+	if err := checkVerificationScript(absoluteRoot, verificationScriptSource); err != nil {
+		return err
+	}
+	if err := checkRaceOwnership(absoluteRoot); err != nil {
+		return err
+	}
 	liveSource, err := readArtifact(absoluteRoot, liveWorkflowArtifact)
 	if err != nil {
 		return err
@@ -295,7 +309,7 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
-	return checkWorkflows(releaseSource, verifySource, liveSource, notifySource, driftSource, driftNotifySource)
+	return checkWorkflows(releaseSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource)
 }
 
 func checkSpecificationSourceRelease(repositoryRoot string, provenanceSource []byte) error {
@@ -820,12 +834,16 @@ func quotedTOMLValue(line string) (string, error) {
 	return value[1 : len(value)-1], nil
 }
 
-func checkWorkflows(releaseSource, verifySource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
+func checkWorkflows(releaseSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
 	release, err := decodeWorkflow(releaseWorkflowArtifact, releaseSource)
 	if err != nil {
 		return err
 	}
 	verify, err := decodeWorkflow(verifyWorkflowArtifact, verifySource)
+	if err != nil {
+		return err
+	}
+	fullRace, err := decodeWorkflow(fullRaceWorkflowArtifact, fullRaceSource)
 	if err != nil {
 		return err
 	}
@@ -850,6 +868,9 @@ func checkWorkflows(releaseSource, verifySource, liveSource, notifySource, drift
 		return err
 	}
 	if err := checkVerifyWorkflow(verify, string(verifySource)); err != nil {
+		return err
+	}
+	if err := checkFullRaceWorkflow(fullRace, string(fullRaceSource)); err != nil {
 		return err
 	}
 	if err := checkLiveWorkflow(live, string(liveSource)); err != nil {
@@ -1080,22 +1101,8 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return err
 		}
 	}
-	for _, forbidden := range []struct {
-		name    string
-		pattern *regexp.Regexp
-	}{
-		{name: "GitHub secrets", pattern: regexp.MustCompile(`(?i)\bsecrets\s*(?:\.|\[)`)},
-		{name: "GitHub token", pattern: regexp.MustCompile(`(?i)\bgithub\s*(?:\.\s*token\b|\[\s*['"]token['"]\s*\])`)},
-		{name: "OpenDART API key", pattern: regexp.MustCompile(`OPENDART_API_KEY`)},
-		{name: "guide synchronization", pattern: regexp.MustCompile(`sync:opendart|opendart-tool\s+sync|scripts/sync-opendart`)},
-		{name: "JavaScript or Node package tooling", pattern: regexp.MustCompile(`(?i)(?:actions/setup-node@|\b(?:node|nodejs|npm|npx|corepack|yarn|pnpm|bun|deno)\b)`)},
-		{name: "package publication", pattern: regexp.MustCompile(`(?:npm|cargo)\s+publish`)},
-		{name: "registry credentials", pattern: regexp.MustCompile(`CARGO_REGISTRY_TOKEN|id-token:\s*write`)},
-		{name: "release asset replacement", pattern: regexp.MustCompile(`--clobber`)},
-	} {
-		if forbidden.pattern.MatchString(source) {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "credential-free verification excludes " + forbidden.name}
-		}
+	if err := checkCredentialFreeSource(verifyWorkflowArtifact, source); err != nil {
+		return err
 	}
 	checkout := workflowStepExpectation{
 		name: "Check out repository",
@@ -1105,20 +1112,11 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	goSteps := []workflowStepExpectation{
 		checkout,
 		{name: "Set up Go", uses: "actions/setup-go", with: map[string]any{"go-version-file": "go.mod", "cache": true}},
-		{name: "Vet Go", run: "go vet ./..."},
-		{name: "Test Go", run: "go test -race ./..."},
-		{name: "Verify repository", run: "go run ./cmd/opendart-tool verify --repository-root ."},
+		{name: "Run required Go verification", run: "./scripts/verify go"},
 	}
 	rustSteps := []workflowStepExpectation{
 		checkout,
-		{name: "Install pinned Rust toolchains", run: installRustToolchainsScript},
-		{name: "Fetch locked Rust dependencies", run: fetchRustDependenciesScript},
-		{name: "Verify Rust stable contracts offline", run: stableRustVerificationScript},
-		{name: "Verify transport-independent dependency graph offline", run: transportIndependentGraphScript},
-		{name: "Verify reqwest feature compatibility offline", run: compatibilityVerificationScript},
-		{name: "Verify Rust MSRV offline", run: msrvVerificationScript},
-		{name: "Verify workspace package contents offline", run: packageVerificationScript},
-		{name: "Install CLI from reviewed source offline", run: sourceInstallScript},
+		{name: "Run required Rust verification", run: "./scripts/verify rust"},
 	}
 	if err := checkVerificationJob("go", verify.Jobs["go"], goSteps); err != nil {
 		return err

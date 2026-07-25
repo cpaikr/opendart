@@ -111,9 +111,10 @@ go run ./cmd/opendart-tool sync --checked-at YYYY-MM-DD
 go run ./cmd/opendart-tool bundle \
   --root openapi/openapi.yaml \
   --output openapi/generated/openapi.bundle.yaml
-go vet ./...
-go test -race ./...
-go run ./cmd/opendart-tool verify --repository-root .
+./scripts/verify fast go ./internal/sdkgen/...
+./scripts/verify fast rust -p opendart
+./scripts/verify pre-push
+./scripts/verify exhaustive
 go run ./cmd/opendart-tool live-conformance --preflight-only --repository-root .
 ```
 
@@ -125,11 +126,45 @@ sanitized auditor-evidence manifest, the live-matrix coverage, budget, and
 sanitization preflight, release/workflow guards, and byte-for-byte bundle
 freshness.
 
+The fast tier requires an explicit Go package or Cargo test selection and is
+the normal edit loop. `pre-push` runs the complete Linux pull-request contract:
+Go vet, all normal Go tests, the repository verifier, the audited targeted-race
+set, and every pinned stable, compatibility, MSRV, package-content, and clean
+Rust install gate. `exhaustive` adds `go test -race ./...`. Credentialed live
+conformance is deliberately outside all three tiers and still runs only
+through `scripts/with-opendart-env`.
+
 CI runs the Go and Rust gates independently while native artifact behavior runs
 on macOS and Windows. The stable aggregate `verify` job depends on all four and
-succeeds only when every required job succeeds. The Go job retains vetting,
-race-enabled tests, and the repository verifier; the Rust job retains the
-pinned stable, compatibility, MSRV, package-content, and clean-install gates.
+succeeds only when every required job succeeds. The Go job runs normal tests
+plus targeted race coverage; the Rust job consumes the Rust portion of the same
+repository-owned `pre-push` contract. Native macOS and Windows artifact checks
+remain CI-owned because they require their respective runners.
+
+The every-PR race set covers `internal/guide` for its acquisition worker pool
+and shared request budget, `internal/sdkgen` and `internal/sdkgen/model` for
+their package-level immutable fixture caches, and `internal/driftnotifier` and
+`internal/livenotifier` for their server-goroutine fixture boundaries.
+Representative regressions are
+[`TestAcquireUsesCompleteInventoryAndBoundedConcurrency`](internal/guide/acquire_test.go),
+[`TestGenerateRustIsDeterministicAndFresh`](internal/sdkgen/generate_test.go),
+[`TestCanonicalSurfaceFixtureClonesNestedState`](internal/sdkgen/model/model_test.go),
+and `TestGitHubClientDoesNotFollowRedirectsWithJobToken` plus
+`TestNotifyNeverChangesIssueState` in
+[`internal/driftnotifier/notifier_test.go`](internal/driftnotifier/notifier_test.go)
+and [`internal/livenotifier/notifier_test.go`](internal/livenotifier/notifier_test.go).
+Releaseguard derives direct concurrency-bearing packages from Go
+syntax—goroutines, channels, synchronization imports, parallel tests, and test
+servers—and rejects an unaudited change to that set. Separate explicit
+classifications keep cancellation-only packages and packages with reviewed
+read-only globals visible to the same audit.
+
+`.github/workflows/full-race.yml` runs the exhaustive Go race sweep weekly on
+the default branch and supports manual candidate-branch runs. A scheduled
+failure is a maintainer-owned regression: reproduce with
+`./scripts/verify exhaustive`, land the repair, manually rerun the workflow on
+the candidate branch, and link the successful run. Do not dismiss it as
+best-effort telemetry.
 
 Generated OpenAPI files are reviewed artifacts. Do not edit them by hand; change
 the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is

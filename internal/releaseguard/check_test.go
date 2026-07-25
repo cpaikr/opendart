@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -82,6 +84,188 @@ func TestVerifyAggregateScriptFailsClosed(t *testing.T) {
 	}
 }
 
+func TestCheckRejectsVerificationPortfolioMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
+	tests := []struct {
+		name        string
+		artifact    string
+		old         string
+		replacement string
+		invariant   string
+	}{
+		{
+			name: "normal Go tests", artifact: verificationScriptArtifact,
+			old: "  go test ./...\n  phase \"targeted Go race tests\"", replacement: "  phase \"targeted Go race tests\"",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "targeted race package", artifact: verificationScriptArtifact,
+			old: "    ./internal/guide \\\n", replacement: "",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "Rust compatibility", artifact: verificationScriptArtifact,
+			old: "  verify_reqwest_compatibility\n", replacement: "",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "pre-push composition", artifact: verificationScriptArtifact,
+			old: "verify_pre_push() {\n  verify_go\n  verify_rust\n}", replacement: "verify_pre_push() {\n  verify_go\n}",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "full race command", artifact: verificationScriptArtifact,
+			old: "  go test -race ./...\n}", replacement: "  go test ./...\n}",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "exhaustive composition", artifact: verificationScriptArtifact,
+			old: "verify_exhaustive() {\n  verify_pre_push\n  verify_full_race\n}", replacement: "verify_exhaustive() {\n  verify_pre_push\n}",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "Go workflow entrypoint", artifact: verifyWorkflowArtifact,
+			old: "run: ./scripts/verify go", replacement: "run: go test ./...",
+			invariant: "uses only the approved verification steps",
+		},
+		{
+			name: "Rust workflow entrypoint", artifact: verifyWorkflowArtifact,
+			old: "run: ./scripts/verify rust", replacement: "run: cargo test",
+			invariant: "uses only the approved verification steps",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := fixture.copy(t)
+			path := filepath.Join(root, filepath.FromSlash(test.artifact))
+			source, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			updated := strings.Replace(string(source), test.old, test.replacement, 1)
+			if updated == string(source) {
+				t.Fatalf("mutation source %q not found in %s", test.old, test.artifact)
+			}
+			if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			err = Check(root)
+			var guardError *Error
+			if !errors.As(err, &guardError) || guardError.Artifact != test.artifact || !strings.Contains(guardError.Invariant, test.invariant) {
+				t.Fatalf("Check() error = %#v, want %s invariant containing %q", err, test.artifact, test.invariant)
+			}
+		})
+	}
+}
+
+func TestCheckRejectsNonExecutableVerificationScript(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
+	root := fixture.copy(t)
+	path := filepath.Join(root, filepath.FromSlash(verificationScriptArtifact))
+	if err := os.Chmod(path, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	err := Check(root)
+	var guardError *Error
+	if !errors.As(err, &guardError) || guardError.Artifact != verificationScriptArtifact || guardError.Invariant != "is executable" {
+		t.Fatalf("Check() error = %#v", err)
+	}
+}
+
+func TestCheckRejectsUnauditedGoOwnership(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
+	tests := []struct {
+		name      string
+		source    string
+		invariant string
+	}{
+		{
+			name:      "goroutine",
+			source:    "package newownership\n\nfunc start(work func()) { go work() }\n",
+			invariant: "AST-discovered direct concurrency ownership",
+		},
+		{
+			name:      "test server lifecycle",
+			source:    "package newownership\n\nimport \"net/http/httptest\"\n\nfunc start() { _ = httptest.NewUnstartedServer(nil) }\n",
+			invariant: "AST-discovered direct concurrency ownership",
+		},
+		{
+			name:      "cancellation",
+			source:    "package newownership\n\nimport \"context\"\n\nfunc start() { _, _ = context.WithCancel(context.Background()) }\n",
+			invariant: "cancellation ownership",
+		},
+		{
+			name:      "package state",
+			source:    "package newownership\n\nvar state = 1\n",
+			invariant: "package-level state ownership",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := fixture.copy(t)
+			path := filepath.Join(root, "internal", "newownership", "worker.go")
+			if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(test.source), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			err := Check(root)
+			var guardError *Error
+			if !errors.As(err, &guardError) ||
+				guardError.Artifact != verificationScriptArtifact ||
+				!strings.Contains(guardError.Invariant, test.invariant) {
+				t.Fatalf("Check() error = %#v", err)
+			}
+		})
+	}
+}
+
+func TestCheckRejectsFullRaceWorkflowMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
+	tests := []struct {
+		name        string
+		old         string
+		replacement string
+		invariant   string
+	}{
+		{name: "schedule", old: `cron: "17 3 * * 1"`, replacement: `cron: "17 3 * * 2"`, invariant: "weekly schedule and manual dispatch only"},
+		{name: "manual trigger", old: "  workflow_dispatch:", replacement: "  pull_request:", invariant: "weekly schedule and manual dispatch only"},
+		{name: "permissions", old: "contents: read", replacement: "contents: write", invariant: "permissions are read-only"},
+		{name: "cancellation", old: "cancel-in-progress: false", replacement: "cancel-in-progress: true", invariant: "non-cancelling"},
+		{name: "runner", old: "runs-on: ubuntu-latest", replacement: "runs-on: macos-latest", invariant: "approved runner and timeout"},
+		{name: "condition bypass", old: "  full-race:\n    runs-on:", replacement: "  full-race:\n    if: always()\n    runs-on:", invariant: "default execution controls"},
+		{name: "script entrypoint", old: "run: ./scripts/verify full-race", replacement: "run: go test ./...", invariant: "approved full-race steps"},
+		{name: "unpinned setup", old: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e", replacement: "actions/setup-go@v7", invariant: "third-party step action is pinned"},
+		{name: "checkout credentials", old: "persist-credentials: false", replacement: "persist-credentials: true", invariant: "approved full-race actions"},
+		{name: "credential access", old: "run: ./scripts/verify full-race", replacement: "run: echo ${{ secrets.GITHUB_TOKEN }}", invariant: "excludes GitHub secrets"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := fixture.copy(t)
+			path := filepath.Join(root, filepath.FromSlash(fullRaceWorkflowArtifact))
+			source, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			updated := strings.Replace(string(source), test.old, test.replacement, 1)
+			if updated == string(source) {
+				t.Fatalf("mutation source %q not found", test.old)
+			}
+			if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			err = Check(root)
+			var guardError *Error
+			if !errors.As(err, &guardError) ||
+				guardError.Artifact != fullRaceWorkflowArtifact ||
+				!strings.Contains(guardError.Invariant, test.invariant) {
+				t.Fatalf("Check() error = %#v, want invariant containing %q", err, test.invariant)
+			}
+		})
+	}
+}
+
 func TestSemanticVersionPolicy(t *testing.T) {
 	for _, version := range []string{"0.1.0", "1.2.3-rc.1", "1.2.3+build.01", "1.2.3-1a"} {
 		if !semanticVersion.MatchString(version) {
@@ -96,9 +280,10 @@ func TestSemanticVersionPolicy(t *testing.T) {
 }
 
 func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	for _, packagePath := range []string{rustPackagePath, rustCLIPackagePath} {
 		t.Run(packagePath, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, manifestArtifact)
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -123,6 +308,7 @@ func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
 }
 
 func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name        string
 		artifact    string
@@ -153,12 +339,12 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 		{name: "CLI Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "name = \"opendart-cli\"\nversion = \"0.1.1\"", invariant: "matches the CLI crate package version"},
 		{name: "duplicate CLI Cargo lock package", artifact: rustLockArtifact, old: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"\n\n[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", invariant: "contains one opendart-cli package version"},
 		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "does not publish packages"},
-		{name: "registry publish in verify", artifact: verifyWorkflowArtifact, old: "go vet ./...", replacement: "cargo publish", invariant: "excludes package publication"},
+		{name: "registry publish in verify", artifact: verificationScriptArtifact, old: "go vet ./...", replacement: "cargo publish", invariant: "excludes package publication"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, filepath.FromSlash(test.artifact))
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -181,6 +367,7 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 }
 
 func TestCheckRejectsRustPackageMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name        string
 		artifact    string
@@ -267,7 +454,7 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, filepath.FromSlash(test.artifact))
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -290,7 +477,8 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 }
 
 func TestCheckRejectsRustPackageBundleProvenanceMismatch(t *testing.T) {
-	root := copyReleaseArtifacts(t)
+	fixture := newReleaseArtifactFixture(t)
+	root := fixture.copy(t)
 	path := filepath.Join(root, rustProvenanceArtifact)
 	source, err := os.ReadFile(path)
 	if err != nil {
@@ -320,7 +508,8 @@ func TestCheckRejectsRustPackageBundleProvenanceMismatch(t *testing.T) {
 }
 
 func TestCheckAllowsSpecificationSourcesToAdvanceAfterSelectedRelease(t *testing.T) {
-	root := copyReleaseArtifacts(t)
+	fixture := newReleaseArtifactFixture(t)
+	root := fixture.copy(t)
 	path := filepath.Join(root, "openapi", "components", "schemas.yaml")
 	source, err := os.ReadFile(path)
 	if err != nil {
@@ -336,7 +525,8 @@ func TestCheckAllowsSpecificationSourcesToAdvanceAfterSelectedRelease(t *testing
 }
 
 func TestCheckRejectsUnavailableSpecificationSourceRelease(t *testing.T) {
-	root := copyReleaseArtifacts(t)
+	fixture := newReleaseArtifactFixture(t)
+	root := fixture.copy(t)
 	path := filepath.Join(root, rustProvenanceArtifact)
 	source, err := os.ReadFile(path)
 	if err != nil {
@@ -358,6 +548,7 @@ func TestCheckRejectsUnavailableSpecificationSourceRelease(t *testing.T) {
 }
 
 func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
 	tests := []struct {
 		name        string
 		artifact    string
@@ -732,54 +923,54 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "supports workflow_dispatch",
 		},
 		{
-			name: "canonical verify command", artifact: verifyWorkflowArtifact,
+			name: "canonical verify command", artifact: verificationScriptArtifact,
 			old: "go run ./cmd/opendart-tool verify --repository-root .", replacement: "go run ./cmd/opendart-tool lint --root openapi/openapi.yaml",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "Go vet command", artifact: verifyWorkflowArtifact,
+			name: "Go vet command", artifact: verificationScriptArtifact,
 			old: "go vet ./...", replacement: "go vet ./cmd/...",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "race-enabled Go tests", artifact: verifyWorkflowArtifact,
+			name: "race-enabled Go tests", artifact: verificationScriptArtifact,
 			old: "go test -race ./...", replacement: "go test ./...",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "structured CLI loopback tests", artifact: verifyWorkflowArtifact,
+			name: "structured CLI loopback tests", artifact: verificationScriptArtifact,
 			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "binary CLI loopback tests", artifact: verifyWorkflowArtifact,
+			name: "binary CLI loopback tests", artifact: verificationScriptArtifact,
 			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "CLI no-default-features tests", artifact: verifyWorkflowArtifact,
+			name: "CLI no-default-features tests", artifact: verificationScriptArtifact,
 			old: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "CLI MSRV no-default-features check", artifact: verifyWorkflowArtifact,
+			name: "CLI MSRV no-default-features check", artifact: verificationScriptArtifact,
 			old: "cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features", replacement: "cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "CLI package inventory diff", artifact: verifyWorkflowArtifact,
+			name: "CLI package inventory diff", artifact: verificationScriptArtifact,
 			old: "diff -u sdk/rust/opendart-cli-package-files.txt \"${cli_package_files}\"", replacement: "test -s \"${cli_package_files}\"",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "workspace package dry run", artifact: verifyWorkflowArtifact,
+			name: "workspace package dry run", artifact: verificationScriptArtifact,
 			old: "cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml", replacement: "cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml",
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "Linux locked source install", artifact: verifyWorkflowArtifact,
+			name: "Linux locked source install", artifact: verificationScriptArtifact,
 			old: `CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"`, replacement: `CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"`,
-			invariant: "uses only the approved verification steps",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
 			name: "Windows locked source install", artifact: verifyWorkflowArtifact,
@@ -896,22 +1087,22 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "canonical verify step condition bypass", artifact: verifyWorkflowArtifact,
-			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        if: always()\n        run:",
+			old: "      - name: Run required Go verification\n        run:", replacement: "      - name: Run required Go verification\n        if: always()\n        run:",
 			invariant: "verification steps use default execution controls",
 		},
 		{
 			name: "verify step continue-on-error bypass", artifact: verifyWorkflowArtifact,
-			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        continue-on-error: true\n        run:",
+			old: "      - name: Run required Go verification\n        run:", replacement: "      - name: Run required Go verification\n        continue-on-error: true\n        run:",
 			invariant: "verification steps use default execution controls",
 		},
 		{
 			name: "verify step shell bypass", artifact: verifyWorkflowArtifact,
-			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        shell: bash {0} || true\n        run:",
+			old: "      - name: Run required Go verification\n        run:", replacement: "      - name: Run required Go verification\n        shell: bash {0} || true\n        run:",
 			invariant: "verification steps use default run settings",
 		},
 		{
 			name: "verify step working-directory bypass", artifact: verifyWorkflowArtifact,
-			old: "      - name: Verify repository\n        run:", replacement: "      - name: Verify repository\n        working-directory: nested\n        run:",
+			old: "      - name: Run required Go verification\n        run:", replacement: "      - name: Run required Go verification\n        working-directory: nested\n        run:",
 			invariant: "verification steps use default run settings",
 		},
 		{
@@ -941,37 +1132,37 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "verify step environment", artifact: verifyWorkflowArtifact,
-			old: "      - name: Vet Go\n        run:", replacement: "      - name: Vet Go\n        env:\n          SAFE: value\n        run:",
+			old: "      - name: Run required Go verification\n        run:", replacement: "      - name: Run required Go verification\n        env:\n          SAFE: value\n        run:",
 			invariant: "verification steps do not override the environment",
 		},
 		{
 			name: "verify secrets", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          TOKEN: ${{ secrets.GITHUB_TOKEN }}\n        run: go run ./cmd/opendart-tool verify --repository-root .",
+			old: "run: ./scripts/verify go", replacement: "env:\n          TOKEN: ${{ secrets.GITHUB_TOKEN }}\n        run: ./scripts/verify go",
 			invariant: "excludes GitHub secrets",
 		},
 		{
 			name: "verify secrets bracket access", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          TOKEN: ${{ secrets['GITHUB_TOKEN'] }}\n        run: go run ./cmd/opendart-tool verify --repository-root .",
+			old: "run: ./scripts/verify go", replacement: "env:\n          TOKEN: ${{ secrets['GITHUB_TOKEN'] }}\n        run: ./scripts/verify go",
 			invariant: "excludes GitHub secrets",
 		},
 		{
 			name: "verify github token property access", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          TOKEN: ${{ github.token }}\n        run: go run ./cmd/opendart-tool verify --repository-root .",
+			old: "run: ./scripts/verify go", replacement: "env:\n          TOKEN: ${{ github.token }}\n        run: ./scripts/verify go",
 			invariant: "excludes GitHub token",
 		},
 		{
 			name: "verify github token index access", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          TOKEN: ${{ github[\"token\"] }}\n        run: go run ./cmd/opendart-tool verify --repository-root .",
+			old: "run: ./scripts/verify go", replacement: "env:\n          TOKEN: ${{ github[\"token\"] }}\n        run: ./scripts/verify go",
 			invariant: "excludes GitHub token",
 		},
 		{
 			name: "verify API key", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "env:\n          OPENDART_API_KEY: unsafe\n        run: go run ./cmd/opendart-tool verify --repository-root .",
+			old: "run: ./scripts/verify go", replacement: "env:\n          OPENDART_API_KEY: unsafe\n        run: ./scripts/verify go",
 			invariant: "excludes OpenDART API key",
 		},
 		{
 			name: "verify sync", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: go run ./cmd/opendart-tool verify --repository-root . && go run ./cmd/opendart-tool sync",
+			old: "run: ./scripts/verify go", replacement: "run: ./scripts/verify go && go run ./cmd/opendart-tool sync",
 			invariant: "excludes guide synchronization",
 		},
 		{
@@ -981,17 +1172,17 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "verify npm command", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: npm run verify:opendart",
+			old: "run: ./scripts/verify go", replacement: "run: npm run verify:opendart",
 			invariant: "excludes JavaScript or Node package tooling",
 		},
 		{
 			name: "verify nodejs command", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: nodejs scripts/verify.js",
+			old: "run: ./scripts/verify go", replacement: "run: nodejs scripts/verify.js",
 			invariant: "excludes JavaScript or Node package tooling",
 		},
 		{
 			name: "verify alternate package manager", artifact: verifyWorkflowArtifact,
-			old: "run: go run ./cmd/opendart-tool verify --repository-root .", replacement: "run: yarn verify",
+			old: "run: ./scripts/verify go", replacement: "run: yarn verify",
 			invariant: "excludes JavaScript or Node package tooling",
 		},
 		{
@@ -1238,7 +1429,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := copyReleaseArtifacts(t)
+			root := fixture.copy(t)
 			path := filepath.Join(root, filepath.FromSlash(test.artifact))
 			source, err := os.ReadFile(path)
 			if err != nil {
@@ -1323,9 +1514,23 @@ func TestReleaseWorkflowOrderingFailsClosed(t *testing.T) {
 	}
 }
 
-func copyReleaseArtifacts(t *testing.T) string {
+type releaseArtifactFixture struct {
+	sourceRoot   string
+	packageNames map[string]string
+}
+
+func newReleaseArtifactFixture(t *testing.T) releaseArtifactFixture {
 	t.Helper()
 	sourceRoot := repositoryRoot(t)
+	packageNames, err := loadAuditedOwnershipPackageNames(sourceRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return releaseArtifactFixture{sourceRoot: sourceRoot, packageNames: packageNames}
+}
+
+func (fixture releaseArtifactFixture) copy(t *testing.T) string {
+	t.Helper()
 	targetRoot := t.TempDir()
 	for _, artifact := range []string{
 		configArtifact,
@@ -1340,12 +1545,14 @@ func copyReleaseArtifacts(t *testing.T) string {
 		canonicalBundleArtifact,
 		releaseWorkflowArtifact,
 		verifyWorkflowArtifact,
+		fullRaceWorkflowArtifact,
+		verificationScriptArtifact,
 		liveWorkflowArtifact,
 		notifyWorkflowArtifact,
 		driftWorkflowArtifact,
 		driftNotifyArtifact,
 	} {
-		source, err := os.ReadFile(filepath.Join(sourceRoot, filepath.FromSlash(artifact)))
+		source, err := os.ReadFile(filepath.Join(fixture.sourceRoot, filepath.FromSlash(artifact)))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1353,14 +1560,19 @@ func copyReleaseArtifacts(t *testing.T) string {
 		if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(target, source, 0o600); err != nil {
+		mode := os.FileMode(0o600)
+		if artifact == verificationScriptArtifact {
+			mode = 0o700
+		}
+		if err := os.WriteFile(target, source, mode); err != nil {
 			t.Fatal(err)
 		}
 	}
+	writeOwnershipFixture(t, targetRoot, fixture.packageNames)
 	for _, sourcePath := range canonicalSpecificationSources {
-		copyPath(t, sourceRoot, targetRoot, sourcePath)
+		copyPath(t, fixture.sourceRoot, targetRoot, sourcePath)
 	}
-	gitDirectory, err := exec.Command("git", "-C", sourceRoot, "rev-parse", "--absolute-git-dir").Output()
+	gitDirectory, err := exec.Command("git", "-C", fixture.sourceRoot, "rev-parse", "--absolute-git-dir").Output()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1369,6 +1581,101 @@ func copyReleaseArtifacts(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return targetRoot
+}
+
+func writeOwnershipFixture(t *testing.T, targetRoot string, packageNames map[string]string) {
+	t.Helper()
+	direct := make(map[string]bool)
+	cancellation := make(map[string]bool)
+	global := make(map[string]bool)
+	for _, packagePath := range targetedRacePackages {
+		direct[packagePath] = true
+		global[packagePath] = true
+	}
+	for _, packagePath := range reviewedCancellationPackages {
+		cancellation[packagePath] = true
+	}
+	for _, packagePath := range reviewedReadOnlyGlobalPackages {
+		global[packagePath] = true
+	}
+	packages := make(map[string]bool)
+	for packagePath := range direct {
+		packages[packagePath] = true
+	}
+	for packagePath := range cancellation {
+		packages[packagePath] = true
+	}
+	for packagePath := range global {
+		packages[packagePath] = true
+	}
+	for packagePath := range packages {
+		name, ok := packageNames[packagePath]
+		if !ok {
+			t.Fatalf("audited package %s has no source-derived package name", packagePath)
+		}
+		var source strings.Builder
+		source.WriteString("package " + name + "\n")
+		if cancellation[packagePath] {
+			source.WriteString("\nimport \"context\"\n")
+		}
+		if direct[packagePath] {
+			source.WriteString("\nvar raceOwned chan struct{}\n")
+		} else if global[packagePath] {
+			source.WriteString("\nvar reviewedState = 1\n")
+		}
+		if cancellation[packagePath] {
+			source.WriteString("\nfunc cancelOwned() { _, _ = context.WithCancel(context.Background()) }\n")
+		}
+		path := filepath.Join(targetRoot, filepath.FromSlash(strings.TrimPrefix(packagePath, "./")), "ownership.go")
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(source.String()), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func loadAuditedOwnershipPackageNames(sourceRoot string) (map[string]string, error) {
+	packages := make(map[string]bool)
+	for _, packagePath := range targetedRacePackages {
+		packages[packagePath] = true
+	}
+	for _, packagePath := range reviewedCancellationPackages {
+		packages[packagePath] = true
+	}
+	for _, packagePath := range reviewedReadOnlyGlobalPackages {
+		packages[packagePath] = true
+	}
+	names := make(map[string]string, len(packages))
+	for packagePath := range packages {
+		name, err := sourcePackageName(sourceRoot, packagePath)
+		if err != nil {
+			return nil, err
+		}
+		names[packagePath] = name
+	}
+	return names, nil
+}
+
+func sourcePackageName(sourceRoot, packagePath string) (string, error) {
+	directory := filepath.Join(sourceRoot, filepath.FromSlash(strings.TrimPrefix(packagePath, "./")))
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return "", err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".go" || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		path := filepath.Join(directory, entry.Name())
+		file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.PackageClauseOnly)
+		if err != nil {
+			return "", err
+		}
+		return file.Name.Name, nil
+	}
+	return "", fmt.Errorf("audited package %s has no production Go source", packagePath)
 }
 
 func copyPath(t *testing.T, sourceRoot, targetRoot, relativePath string) {
