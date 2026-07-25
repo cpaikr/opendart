@@ -9,9 +9,8 @@ and expensive tests should pay only for the behavior they actually exercise.
 
 ## Current state
 
-- PR #46 is merged. The goal now runs from the dedicated
-  `goal/rust-ci-verification-feedback` integration branch based on the updated
-  `rust` branch, with the local planning patch preserved.
+- PR #51 merged the completed, reviewed integration branch into `rust` as
+  `0d64219`.
 - PR #47 merged as `fdabb18`. Go and Rust now run as independent Linux jobs,
   every prior command remains, and a final `verify` fan-in requires those jobs
   plus the macOS and Windows artifact jobs.
@@ -107,6 +106,13 @@ and expensive tests should pay only for the behavior they actually exercise.
   protect separate contracts. Cross-language dependency ownership is not yet
   machine-checkable, so the contract's exclusion of path-based exemptions
   applies.
+- PR #50 merged the decision record as `5745c1c`. Its independent run
+  `30161911923` passed with Rust at 7 minutes 55 seconds and Go at 6 minutes 16
+  seconds.
+- Final delivery PR #51 passed without new review findings. Run `30162218385`
+  kept the Rust critical path at 7 minutes 41 seconds; Go completed in 6 minutes
+  10 seconds, Windows in 4 minutes 39 seconds, macOS in 2 minutes 33 seconds,
+  and the aggregate in 4 seconds.
 
 Timing measurements are comparative evidence, not permanent budgets. Recheck
 them on representative Rust-only, Go/tooling, and mixed changes after each
@@ -282,5 +288,4 @@ eviction, trust, and cross-pull-request population bounds.
 
 ## Next action
 
-Deliver this final decision record to the integration branch, then finish the
-goal pull request to `rust` with truthful completion state.
+_None. The goal is complete._

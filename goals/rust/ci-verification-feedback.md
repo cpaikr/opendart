@@ -1,6 +1,6 @@
 # Goal: Shorten CI and local verification feedback
 
-Status: active
+Status: complete
 Planning scope: rust
 
 ## Original contract
@@ -36,16 +36,18 @@ _None._
 - The audited verification portfolio is complete. PR #49 merged as `204a0f1`
   with normal Go tests and the audited race set on every pull request, a
   weekly/manual full-race sweep, and repository-owned local tiers.
+- The measured optimization decision is complete. PR #50 merged as `5745c1c`;
+  bounded dependency caching cannot materially improve the critical path, an
+  unbounded target cache is unsuitable, and path-based skipping remains unsafe.
+- PR #51 merged the reviewed integration branch into `rust` as `0d64219`.
 
 ### Current in-scope result
 
-Record and deliver the measured Rust-cache and conditional-execution decision,
-then deliver the completed integration branch to `rust`.
+_None. The goal contract is complete._
 
 ### Next in-scope action
 
-Merge the decision record into the integration branch, then open and finish the
-goal delivery pull request to `rust`.
+_None._
 
 ### Evidence and blockers
 
@@ -148,3 +150,10 @@ goal delivery pull request to `rust`.
   compatibility, MSRV, packaging, and clean-install contracts. Cross-language
   dependency ownership is not machine-checkable, so path-based exemptions
   remain explicitly excluded.
+- PR #50's independent decision run `30161911923` passed with Rust at 7 minutes
+  55 seconds, Go at 6 minutes 16 seconds, Windows at 4 minutes 25 seconds,
+  macOS at 2 minutes 20 seconds, and the aggregate at 3 seconds.
+- Final delivery PR #51 passed without new review findings. Run `30162218385`
+  completed with Rust at 7 minutes 41 seconds, Go at 6 minutes 10 seconds,
+  Windows at 4 minutes 39 seconds, macOS at 2 minutes 33 seconds, and the
+  aggregate at 4 seconds before the merge to `rust`.

@@ -5,7 +5,7 @@ its linked work items from this worktree.
 
 ## Current
 
-- [Shorten CI and local verification feedback](plans/rust/ci-verification-feedback.md)
+_None._
 
 ## Plans
 
