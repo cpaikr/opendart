@@ -46,6 +46,25 @@ and expensive tests should pay only for the behavior they actually exercise.
   `internal/sdkgen/model` and from 36.3 to 4.6 seconds for `internal/sdkgen`.
   The unchanged full race suite fell from 5 minutes 13 seconds to 2 minutes 2
   seconds with the workstation's current build cache.
+- PR #48 merged as `181aa20`. Its final run `30159127643` completed in about
+  8 minutes 6 seconds; Go finished in 8 minutes and set the critical path,
+  about 23% shorter than PR #47's 10-minute-25-second Go job.
+- The race audit assigns every-PR instrumentation to `internal/guide`, both
+  canonical-fixture packages, and both notifier packages. An AST-backed
+  Releaseguard check derives direct concurrency ownership from goroutines,
+  channels, synchronization imports, parallel tests, and test servers, then
+  requires the derived set to match the repository runner exactly. Separate
+  explicit classifications cover cancellation-only packages and packages with
+  reviewed read-only globals.
+- `scripts/verify` now owns focused Go/Rust, required Linux Go/Rust,
+  pre-push, full-race, and exhaustive modes. The pull-request workflow consumes
+  its Go and Rust modes; a separate weekly/manual workflow consumes full-race.
+- The documented fast Go and Rust examples pass. One credential-free
+  exhaustive run exercised pre-push and the full race sweep in 4 minutes 54
+  seconds with the workstation's warm build caches.
+- The final focused review found no remaining actionable findings. The required
+  Go mode passed after its fixes in 1 minute 23 seconds with warm local caches,
+  and the policy package also passed independently under the race detector.
 - The workflow still runs the repository verifier explicitly, and
   `TestVerifyAcceptedRepository` remains because it is the only package test
   exercising all real verification dependencies. CLI tests use an injected
@@ -227,5 +246,5 @@ lists in prose and YAML.
 
 ## Next action
 
-Push the bounded CodeRabbit follow-up, wait for PR #48's final checks, resolve
-its review thread, and merge before changing the test portfolio.
+Review and deliver the audited verification-portfolio slice, then use its CI
+timings for the bounded Rust-cache and conditional-execution decision.
