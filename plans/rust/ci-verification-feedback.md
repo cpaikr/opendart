@@ -23,10 +23,11 @@ and expensive tests should pay only for the behavior they actually exercise.
 - Local validation passed normal Go tests, vet, repository verification, and
   the full race suite. The 2026-07-25 race run completed in 5 minutes 13
   seconds with the workstation's current build cache.
-- PR #46 run `30153472800` took 19 minutes 17 seconds. The Go race suite used
-  10 minutes, and the Rust work after repository verification used about
-  7 minutes 41 seconds. Parallel Go and Rust jobs should therefore reduce the
-  critical path to roughly 11–12 minutes before any tests are changed.
+- PR #47 run `30156608755` passed in 10 minutes 37 seconds. Its Go job set the
+  10-minute-25-second critical path while Rust finished in 8 minutes 3
+  seconds. PR #46 run `30153472800` took 19 minutes 17 seconds, so the topology
+  change shortened representative verification by about 46% while preserving
+  every command, including the full race suite.
 - On an 8-core Apple Silicon workstation on 2026-07-25, a forced fresh
   `go test -count=1 ./...` execution took 42 seconds while the same suite under
   the race detector took 14 minutes 27 seconds. Repository verification took
@@ -217,6 +218,6 @@ lists in prose and YAML.
 
 ## Next action
 
-Open the first workflow-only PR against the goal integration branch, complete
-review and merge, and record its per-job and critical-path timings. Do not
-change the test portfolio until that comparable measurement is captured.
+Push the bounded CodeRabbit follow-up, wait for PR #47's final checks and
+review, resolve its review thread, and merge. Do not change the test portfolio
+until that delivery lifecycle is complete.
