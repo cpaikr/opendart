@@ -183,6 +183,6 @@ follow XML 1.0 line-ending normalization without changing character references.
 
 ## Next action
 
-Run fresh-context security and implementation review, resolve every finding,
-then complete the stable, MSRV, package, compatibility, repository, and PR
-delivery gates.
+Monitor [PR #46](https://github.com/cpaikr/opendart/pull/46), resolve any
+actionable feedback, and merge only after required Linux, macOS, and Windows
+verification passes.

@@ -7,9 +7,9 @@ normalization fail closed at the Rust SDK's public wire boundaries.
 
 ## Status
 
-In progress. The XML authority contract is resolved and implementation is
-passing focused SDK and CLI coverage; full review, validation, and PR delivery
-remain.
+Implementation and local release validation are complete. Delivery is active
+in [PR #46](https://github.com/cpaikr/opendart/pull/46); remote verification,
+review resolution, and merge remain.
 
 ## Completed
 
@@ -26,14 +26,16 @@ remain.
   authority pass.
 - The adversarial and valid XML corpora, exact EOL assertions, malformed binary
   replay, and structured/binary CLI cases pass.
+- Fresh security and design review findings are resolved, and the complete
+  local stable, MSRV, package, compatibility, repository, and install gates
+  pass.
 
 ## Remaining
 
-- Complete SDK, CLI, package, repository, MSRV, and CI validation.
-- Resolve the required fresh-context code review.
-- Deliver, review, and merge the feature PR.
+- Complete remote Linux, macOS, and Windows verification.
+- Resolve any PR feedback and merge PR #46.
 
 ## Next action
 
-Run the required review, resolve findings, and execute the complete release
-gate before PR delivery.
+Monitor PR #46 checks, address any actionable feedback, and merge only after
+required verification and review state permit it.
