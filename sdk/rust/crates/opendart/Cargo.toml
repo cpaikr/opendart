@@ -23,6 +23,7 @@ bytes = { workspace = true, optional = true }
 form_urlencoded.workspace = true
 futures-core = { workspace = true, optional = true }
 quick-xml.workspace = true
+roxmltree.workspace = true
 secrecy.workspace = true
 serde = { workspace = true, optional = true }
 serde_json.workspace = true

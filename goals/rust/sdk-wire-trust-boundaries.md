@@ -7,9 +7,9 @@ normalization fail closed at the Rust SDK's public wire boundaries.
 
 ## Status
 
-Blocked on the accepted XML grammar or authority contract. The maintained
-parser spike found no candidate satisfying all current requirements without a
-broader surface or a documented restriction.
+In progress. The XML authority contract is resolved and implementation is
+passing focused SDK and CLI coverage; full review, validation, and PR delivery
+remain.
 
 ## Completed
 
@@ -20,16 +20,20 @@ broader surface or a documented restriction.
   metadata slice in commit `010e47d`.
 - Candidate behavior, compatibility gaps, and the stop decision are recorded
   in `plans/rust/sdk-wire-trust-boundaries.md`.
+- `roxmltree` validates complete bounded UTF-8 XML 1.0 documents before the
+  existing converter can construct values or classify status.
+- Preflight bounds nesting and per-element attributes before the recursive
+  authority pass.
+- The adversarial and valid XML corpora, exact EOL assertions, malformed binary
+  replay, and structured/binary CLI cases pass.
 
 ## Remaining
 
-- Decide the supported XML grammar and authoritative parser.
-- Add public malformed and valid XML corpora plus exact EOL assertions.
-- Preserve malformed binary bodies byte-for-byte as unrecognized evidence.
 - Complete SDK, CLI, package, repository, MSRV, and CI validation.
+- Resolve the required fresh-context code review.
 - Deliver, review, and merge the feature PR.
 
 ## Next action
 
-Obtain the XML contract decision described in the plan, then resume from the
-public-boundary regression corpus.
+Run the required review, resolve findings, and execute the complete release
+gate before PR delivery.

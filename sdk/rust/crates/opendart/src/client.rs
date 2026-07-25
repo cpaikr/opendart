@@ -1189,6 +1189,51 @@ mod tests {
             b"PK\x03".as_slice(),
             b"<result><status>013".as_slice(),
             b"<result><payload>x</payload></result>".as_slice(),
+            b"<1result><status>013</status></1result>".as_slice(),
+            b"<result 1value=\"x\"><status>013</status></result>".as_slice(),
+            b"<result value=\"<\"><status>013</status></result>".as_slice(),
+            b"<result value=\"a\" value=\"b\"><status>013</status></result>".as_slice(),
+            b"<result><x:status>013</x:status></result>".as_slice(),
+            b"<result><!--bad--comment--><status>013</status></result>".as_slice(),
+            b"<result><!--bad---><status>013</status></result>".as_slice(),
+            b"<result><status>013]]></status></result>".as_slice(),
+            b"<result><?xml version=\"1.0\"?><status>013</status></result>".as_slice(),
+            b"<?xml version=\"1.0\"?><?xml version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<!--before--><?xml version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<?xml encoding=\"UTF-8\"?><result><status>013</status></result>".as_slice(),
+            b"<?xml standalone=\"no\" version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<?xml version=\"1.1\"?><result><status>013</status></result>".as_slice(),
+            b"<?xml version=\"1.0\" encoding=\"EUC-JP\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<?xml version=\"1.0\" standalone=\"maybe\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<?xml version=\"1.0\" bogus=\"value\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<result><?xml\tversion=\"1.0\"?><status>013</status></result>".as_slice(),
+            b"<?xml version=\"1.0\"?><?xml\nversion=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<? ?><result><status>013</status></result>".as_slice(),
+            b"<?1bad?><result><status>013</status></result>".as_slice(),
+            b"<?pi?x?><result><status>013</status></result>".as_slice(),
+            b"<?pi/data?><result><status>013</status></result>".as_slice(),
+            b"<?xml?x?><result><status>013</status></result>".as_slice(),
+            b"<?xml/data?><result><status>013</status></result>".as_slice(),
+            b"<?XmL note?><result><status>013</status></result>".as_slice(),
+            b"<!DOCTYPE result><result><status>013</status></result>".as_slice(),
+            b"<!DOCTYPE result [<!ENTITY code \"013\">]><result><status>&code;</status></result>"
+                .as_slice(),
+            b"<!DOCTYPE result SYSTEM \"https://example.invalid/source.dtd\"><result><status>013</status></result>"
+                .as_slice(),
+            b"<result><status>&unknown;</status></result>".as_slice(),
+            b"<![CDATA[before]]><result><status>013</status></result>".as_slice(),
+            b"<result><status>013</status></result>after".as_slice(),
+            b"<result><status>013\0</status></result>".as_slice(),
+            b"<result><status>013&#0;</status></result>".as_slice(),
+            b"<result><status>013</result></status>".as_slice(),
+            b"<result><status>013</status></result><result/>".as_slice(),
         ] {
             let BinaryReply::Unrecognized(stream) = classify_binary(
                 chunks(&[&body[..1], &body[1..]]),
@@ -1213,6 +1258,23 @@ mod tests {
             panic!("oversized XML candidate was over-classified");
         };
         assert_eq!(collect(stream).await.0, oversized);
+
+        let mut attribute_limited = String::from("<result");
+        for index in 0..=crate::wire::inspect::MAX_XML_ATTRIBUTES_PER_ELEMENT {
+            attribute_limited.push_str(&format!(" a{index}=\"\""));
+        }
+        attribute_limited.push_str("><status>013</status></result>");
+        let body = attribute_limited.as_bytes();
+        let BinaryReply::Unrecognized(stream) = classify_binary(
+            chunks(&[&body[..1], &body[1..]]),
+            WireInspector::new(body.len()).unwrap(),
+            Some("result"),
+        )
+        .await
+        else {
+            panic!("attribute-limited XML was over-classified");
+        };
+        assert_eq!(collect(stream).await.0, body);
     }
 
     #[tokio::test]

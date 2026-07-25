@@ -39,11 +39,20 @@ follow XML 1.0 line-ending normalization without changing character references.
 - The current `quick-xml` dependency uses its empty default feature set, so the
   implemented conversion path is already UTF-8-only. Making that boundary
   explicit would clarify rather than narrow working behavior. The client
-  defaults to a 1 MiB envelope bound and permits another nonzero caller-selected
-  bound; a DOM authority would therefore add input-bounded transient memory to
-  a path that already materializes the complete `SourceValue`.
-- Per the dependency-selection stop condition below, XML production changes
-  are paused pending an explicit accepted-grammar or authority decision.
+  requires a nonzero envelope bound and permits a caller-selected value; a DOM
+  authority therefore adds input-bounded transient memory to a path that
+  already materializes the complete `SourceValue`.
+- The accepted design uses `roxmltree 0.21.1` with default features disabled as
+  the maintained safe-Rust full-document authority and retains `quick-xml` as
+  the source-faithful converter. A narrow preflight validates declaration
+  values, rejects reserved processing-instruction targets and DTDs, and
+  enforces depth and per-element attributes before the tree parser runs. Both
+  passes consume the same unchanged bounded bytes.
+- Public and internal corpora now cover the reproduced malformed classes,
+  supported declarations and document miscellany, namespaces, long tokens,
+  literal line endings, and character references. SDK and CLI binary paths
+  replay malformed status-like bodies byte-for-byte as unrecognized evidence;
+  structured CLI execution reports a malformed envelope.
 
 ## Design constraints
 
@@ -174,7 +183,6 @@ follow XML 1.0 line-ending normalization without changing character references.
 
 ## Next action
 
-Choose whether to narrow the documented accepted XML grammar to a candidate's
-strict subset, relax an authority constraint, or pursue upstream/new parser
-work. Then add the malformed-envelope, binary replay, valid compatibility, and
-line-ending corpora before changing production XML inspection.
+Run fresh-context security and implementation review, resolve every finding,
+then complete the stable, MSRV, package, compatibility, repository, and PR
+delivery gates.

@@ -217,6 +217,13 @@ fn envelope_limits_malformed_bodies_and_decode_failures_are_sanitized() {
         &company_arguments("json"),
     );
     assert_eq!(json(&output, 1)["error"]["code"], "malformed_envelope");
+
+    let malformed_xml = b"<result value=\"<\"><status>013</status></result>";
+    let output = with_response(
+        http_response("application/xml", malformed_xml, &[]),
+        &company_arguments("xml"),
+    );
+    assert_eq!(json(&output, 1)["error"]["code"], "malformed_envelope");
 }
 
 #[test]

@@ -62,9 +62,12 @@ The initial dependency and repository policy is:
   byte-replaying binary response interface. Native TLS is required because the
   fixed OpenDART origin currently requires the TLS 1.2 static-RSA suite
   `TLS_RSA_WITH_AES_128_GCM_SHA256`, which Rustls intentionally does not offer.
-- Wire parsing: `serde_json` 1.0 and `quick-xml` 0.41 behind repository-owned
-  bounded inspectors. XML document types are rejected and depth is limited by
-  the SDK; the parser is never asked to resolve external entities.
+- Wire parsing: `serde_json` 1.0 for JSON; `roxmltree` 0.21 as the strict,
+  safe-Rust XML 1.0 document authority; and `quick-xml` 0.41 for source-faithful
+  XML event conversion. Both XML passes consume the same bounded UTF-8 bytes.
+  A preflight enforces the SDK's declaration, processing-instruction, and depth
+  policy plus a per-element attribute bound before the tree parser runs. DTDs
+  and custom entities are rejected, and no parser receives a resolver.
 - Secrets: `secrecy` 0.10 behind `ApiKey`, with explicit exposure only at the
   authorization boundary, redacted diagnostics, no serialization or display,
   and zeroization on drop.
