@@ -8,7 +8,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sync"
 	"testing"
+
+	"github.com/cpaikr/opendart/internal/sdkgen/model"
+	rustemitter "github.com/cpaikr/opendart/internal/sdkgen/rust"
 )
 
 func TestGenerateRustIsDeterministicAndFresh(t *testing.T) {
@@ -43,7 +47,6 @@ func TestGenerateRustIsDeterministicAndFresh(t *testing.T) {
 }
 
 func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
-	root := canonicalRoot(t)
 	tests := []struct {
 		name string
 		edit func(*testing.T, RustOutputs)
@@ -51,37 +54,37 @@ func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
 	}{
 		{name: "missing tree", edit: func(*testing.T, RustOutputs) {}, want: ErrGeneratedMissing},
 		{name: "half-published tree", edit: func(t *testing.T, output RustOutputs) {
-			generateTestTree(t, root, output)
+			generateTestTree(t, output)
 			if err := os.RemoveAll(output.CLI); err != nil {
 				t.Fatal(err)
 			}
 		}, want: ErrGeneratedMissing},
 		{name: "stale sdk file", edit: func(t *testing.T, output RustOutputs) {
-			generateTestTree(t, root, output)
+			generateTestTree(t, output)
 			if err := os.WriteFile(filepath.Join(output.SDK, "mapping.rs"), []byte("stale"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}, want: ErrGeneratedStale},
 		{name: "stale cli file", edit: func(t *testing.T, output RustOutputs) {
-			generateTestTree(t, root, output)
+			generateTestTree(t, output)
 			if err := os.WriteFile(filepath.Join(output.CLI, "catalog.rs"), []byte("stale"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}, want: ErrGeneratedStale},
 		{name: "unexpected file", edit: func(t *testing.T, output RustOutputs) {
-			generateTestTree(t, root, output)
+			generateTestTree(t, output)
 			if err := os.WriteFile(filepath.Join(output.SDK, "unexpected.rs"), []byte("unexpected"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}, want: ErrGeneratedUnexpected},
 		{name: "unexpected cli file", edit: func(t *testing.T, output RustOutputs) {
-			generateTestTree(t, root, output)
+			generateTestTree(t, output)
 			if err := os.WriteFile(filepath.Join(output.CLI, "unexpected.rs"), []byte("unexpected"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}, want: ErrGeneratedUnexpected},
 		{name: "invalid marker", edit: func(t *testing.T, output RustOutputs) {
-			generateTestTree(t, root, output)
+			generateTestTree(t, output)
 			if err := os.WriteFile(filepath.Join(output.CLI, ".opendart-cli-generated"), []byte("changed"), 0o644); err != nil {
 				t.Fatal(err)
 			}
@@ -91,7 +94,7 @@ func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			output := testOutputs(t.TempDir())
 			test.edit(t, output)
-			if err := CheckRustFresh(root, output); !errors.Is(err, test.want) {
+			if err := checkTestTreeFresh(t, output); !errors.Is(err, test.want) {
 				t.Fatalf("error = %v, want %v", err, test.want)
 			}
 		})
@@ -101,7 +104,7 @@ func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
 func TestCheckRustFreshRejectsOverlappingOutputs(t *testing.T) {
 	root := t.TempDir()
 	outputs := RustOutputs{SDK: root, CLI: filepath.Join(root, "cli")}
-	if err := CheckRustFresh(canonicalRoot(t), outputs); err == nil || err.Error() != "generated Rust outputs must be distinct non-nested directories" {
+	if err := checkTestTreeFresh(t, outputs); err == nil || err.Error() != "generated Rust outputs must be distinct non-nested directories" {
 		t.Fatalf("error = %v", err)
 	}
 }
@@ -114,7 +117,7 @@ func TestGenerateRustRefusesToReplaceUnownedOutput(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(output.SDK, "maintainer.rs"), []byte("keep"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := GenerateRust(canonicalRoot(t), output); !errors.Is(err, ErrGeneratedUnowned) {
+	if _, err := generateTestArtifacts(t, output); !errors.Is(err, ErrGeneratedUnowned) {
 		t.Fatalf("error = %v", err)
 	}
 	content, err := os.ReadFile(filepath.Join(output.SDK, "maintainer.rs"))
@@ -124,9 +127,8 @@ func TestGenerateRustRefusesToReplaceUnownedOutput(t *testing.T) {
 }
 
 func TestGenerateRustPreflightsBothTreesBeforeReplacingEither(t *testing.T) {
-	root := canonicalRoot(t)
 	outputs := testOutputs(t.TempDir())
-	generateTestTree(t, root, outputs)
+	generateTestTree(t, outputs)
 	staleSDK := []byte("accepted stale bytes")
 	if err := os.WriteFile(filepath.Join(outputs.SDK, "mapping.rs"), staleSDK, 0o644); err != nil {
 		t.Fatal(err)
@@ -134,7 +136,7 @@ func TestGenerateRustPreflightsBothTreesBeforeReplacingEither(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(outputs.CLI, ".opendart-cli-generated"), []byte("unowned"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := GenerateRust(root, outputs); !errors.Is(err, ErrGeneratedUnowned) {
+	if _, err := generateTestArtifacts(t, outputs); !errors.Is(err, ErrGeneratedUnowned) {
 		t.Fatalf("error = %v, want %v", err, ErrGeneratedUnowned)
 	}
 	content, err := os.ReadFile(filepath.Join(outputs.SDK, "mapping.rs"))
@@ -178,16 +180,14 @@ func TestFailedRestoreKeepsRollbackCopyForManualRecovery(t *testing.T) {
 }
 
 func TestGenerateRustReplacesOnlyOlderOwnedSchemas(t *testing.T) {
-	root := canonicalRoot(t)
-
 	t.Run("previous schema", func(t *testing.T) {
 		output := testOutputs(t.TempDir())
-		generateTestTree(t, root, output)
+		generateTestTree(t, output)
 		marker := filepath.Join(output.SDK, ".opendart-sdk-generated")
 		if err := os.WriteFile(marker, []byte("opendart-sdk-generator-schema=1\n"), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := GenerateRust(root, output); err != nil {
+		if _, err := generateTestArtifacts(t, output); err != nil {
 			t.Fatalf("replace previous owned schema: %v", err)
 		}
 		content, err := os.ReadFile(marker)
@@ -204,22 +204,57 @@ func TestGenerateRustReplacesOnlyOlderOwnedSchemas(t *testing.T) {
 	} {
 		t.Run("reject "+marker, func(t *testing.T) {
 			output := testOutputs(t.TempDir())
-			generateTestTree(t, root, output)
+			generateTestTree(t, output)
 			if err := os.WriteFile(filepath.Join(output.SDK, ".opendart-sdk-generated"), []byte(marker), 0o644); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := GenerateRust(root, output); !errors.Is(err, ErrGeneratedUnowned) {
+			if _, err := generateTestArtifacts(t, output); !errors.Is(err, ErrGeneratedUnowned) {
 				t.Fatalf("error = %v, want %v", err, ErrGeneratedUnowned)
 			}
 		})
 	}
 }
 
-func generateTestTree(t *testing.T, root string, output RustOutputs) {
+type canonicalRustArtifacts struct {
+	generated model.ArtifactSet
+	files     rustemitter.Artifacts
+}
+
+var loadCanonicalRustArtifactsOnce = sync.OnceValues(func() (canonicalRustArtifacts, error) {
+	root, err := canonicalRootPath()
+	if err != nil {
+		return canonicalRustArtifacts{}, err
+	}
+	generated, files, err := renderRust(root)
+	return canonicalRustArtifacts{generated: generated, files: files}, err
+})
+
+func canonicalTestArtifacts(t *testing.T) canonicalRustArtifacts {
 	t.Helper()
-	if _, err := GenerateRust(root, output); err != nil {
+	artifacts, err := loadCanonicalRustArtifactsOnce()
+	if err != nil {
 		t.Fatal(err)
 	}
+	return artifacts
+}
+
+func generateTestArtifacts(t *testing.T, output RustOutputs) (Report, error) {
+	t.Helper()
+	artifacts := canonicalTestArtifacts(t)
+	return generateRustArtifacts(artifacts.generated, artifacts.files, output)
+}
+
+func generateTestTree(t *testing.T, output RustOutputs) {
+	t.Helper()
+	if _, err := generateTestArtifacts(t, output); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func checkTestTreeFresh(t *testing.T, output RustOutputs) error {
+	t.Helper()
+	artifacts := canonicalTestArtifacts(t)
+	return checkRustArtifactsFresh(artifacts.generated, artifacts.files, output)
 }
 
 func testOutputs(root string) RustOutputs {
@@ -252,9 +287,17 @@ func readTestTree(t *testing.T, root string) map[string]string {
 
 func canonicalRoot(t *testing.T) string {
 	t.Helper()
+	root, err := canonicalRootPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
+func canonicalRootPath() (string, error) {
 	_, current, _, ok := runtime.Caller(0)
 	if !ok {
-		t.Fatal("cannot locate test source")
+		return "", errors.New("cannot locate test source")
 	}
-	return filepath.Join(filepath.Dir(current), "..", "..", "openapi", "openapi.yaml")
+	return filepath.Join(filepath.Dir(current), "..", "..", "openapi", "openapi.yaml"), nil
 }
