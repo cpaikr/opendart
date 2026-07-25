@@ -20,6 +20,8 @@ import (
 const (
 	releaseWorkflowArtifact    = ".github/workflows/release-please.yml"
 	verifyWorkflowArtifact     = ".github/workflows/verify.yml"
+	fullRaceWorkflowArtifact   = ".github/workflows/full-race.yml"
+	verificationScriptArtifact = "scripts/verify"
 	liveWorkflowArtifact       = ".github/workflows/live-conformance.yml"
 	notifyWorkflowArtifact     = ".github/workflows/live-conformance-notify.yml"
 	driftWorkflowArtifact      = ".github/workflows/guide-drift.yml"
@@ -118,8 +120,7 @@ RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path 
 	nativeArtifactFetchScript       = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
 	nativeArtifactTestScript        = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
 	compatibilityVerificationScript = `RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
-	transportIndependentGraphScript = `no_default_tree="$(mktemp)"
-trap 'rm -f "${no_default_tree}"' EXIT
+	transportIndependentGraphScript = `no_default_tree="${verification_tmp}/no-default-tree.txt"
 cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features -e normal --prefix none > "${no_default_tree}"
 if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"; then
   grep -E '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"
@@ -129,9 +130,8 @@ fi`
 cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
 cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features
 cargo +1.85.0 metadata --locked --offline --manifest-path sdk/rust/Cargo.toml --no-deps > /dev/null`
-	packageVerificationScript = `sdk_package_files="$(mktemp)"
-cli_package_files="$(mktemp)"
-trap 'rm -f "${sdk_package_files}" "${cli_package_files}"' EXIT
+	packageVerificationScript = `sdk_package_files="${verification_tmp}/sdk-package-files.txt"
+cli_package_files="${verification_tmp}/cli-package-files.txt"
 cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${sdk_package_files}"
 diff -u sdk/rust/package-files.txt "${sdk_package_files}"
 cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
@@ -141,6 +141,22 @@ cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Ca
 CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"
 "${install_workspace}/root/bin/opendart" --version
 "${install_workspace}/root/bin/opendart" operations list > /dev/null`
+	verifyAggregateScript = `failed=0
+for result in \
+  "go=${GO_RESULT}" \
+  "rust=${RUST_RESULT}" \
+  "artifact-macos=${MACOS_RESULT}" \
+  "artifact-windows=${WINDOWS_RESULT}"
+do
+  case "${result}" in
+    *=success) ;;
+    *)
+      echo "${result}" >&2
+      failed=1
+      ;;
+  esac
+done
+exit "${failed}"`
 	windowsSourceInstallScript = `$installWorkspace = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid().ToString())
 $installRoot = Join-Path $installWorkspace "root"
 $env:CARGO_TARGET_DIR = Join-Path $installWorkspace "target"
@@ -263,6 +279,20 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
+	fullRaceSource, err := readArtifact(absoluteRoot, fullRaceWorkflowArtifact)
+	if err != nil {
+		return err
+	}
+	verificationScriptSource, err := readArtifact(absoluteRoot, verificationScriptArtifact)
+	if err != nil {
+		return err
+	}
+	if err := checkVerificationScript(absoluteRoot, verificationScriptSource); err != nil {
+		return err
+	}
+	if err := checkRaceOwnership(absoluteRoot); err != nil {
+		return err
+	}
 	liveSource, err := readArtifact(absoluteRoot, liveWorkflowArtifact)
 	if err != nil {
 		return err
@@ -279,7 +309,7 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
-	return checkWorkflows(releaseSource, verifySource, liveSource, notifySource, driftSource, driftNotifySource)
+	return checkWorkflows(releaseSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource)
 }
 
 func checkSpecificationSourceRelease(repositoryRoot string, provenanceSource []byte) error {
@@ -492,7 +522,7 @@ type workflowRunDefaults struct {
 }
 
 type workflowJob struct {
-	Needs           string            `yaml:"needs"`
+	Needs           workflowNeeds     `yaml:"needs"`
 	If              string            `yaml:"if"`
 	ContinueOnError bool              `yaml:"continue-on-error"`
 	Defaults        workflowDefaults  `yaml:"defaults"`
@@ -502,6 +532,33 @@ type workflowJob struct {
 	Environment     string            `yaml:"environment"`
 	Uses            string            `yaml:"uses"`
 	Steps           []workflowStep    `yaml:"steps"`
+}
+
+type workflowNeeds []string
+
+func (needs *workflowNeeds) UnmarshalYAML(node *yaml.Node) error {
+	var values []string
+	switch node.Kind {
+	case yaml.ScalarNode:
+		var value string
+		if err := node.Decode(&value); err != nil {
+			return err
+		}
+		values = []string{value}
+	case yaml.SequenceNode:
+		if err := node.Decode(&values); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("needs must be a job name or sequence of job names")
+	}
+	for _, value := range values {
+		if strings.TrimSpace(value) == "" {
+			return fmt.Errorf("needs contains an empty job name")
+		}
+	}
+	*needs = values
+	return nil
 }
 
 type workflowStep struct {
@@ -515,6 +572,13 @@ type workflowStep struct {
 	Run              string            `yaml:"run"`
 	With             map[string]any    `yaml:"with"`
 	Env              map[string]string `yaml:"env"`
+}
+
+type workflowStepExpectation struct {
+	name string
+	run  string
+	uses string
+	with map[string]any
 }
 
 func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCargoSource, lockSource []byte) error {
@@ -770,12 +834,16 @@ func quotedTOMLValue(line string) (string, error) {
 	return value[1 : len(value)-1], nil
 }
 
-func checkWorkflows(releaseSource, verifySource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
+func checkWorkflows(releaseSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
 	release, err := decodeWorkflow(releaseWorkflowArtifact, releaseSource)
 	if err != nil {
 		return err
 	}
 	verify, err := decodeWorkflow(verifyWorkflowArtifact, verifySource)
+	if err != nil {
+		return err
+	}
+	fullRace, err := decodeWorkflow(fullRaceWorkflowArtifact, fullRaceSource)
 	if err != nil {
 		return err
 	}
@@ -800,6 +868,9 @@ func checkWorkflows(releaseSource, verifySource, liveSource, notifySource, drift
 		return err
 	}
 	if err := checkVerifyWorkflow(verify, string(verifySource)); err != nil {
+		return err
+	}
+	if err := checkFullRaceWorkflow(fullRace, string(fullRaceSource)); err != nil {
 		return err
 	}
 	if err := checkLiveWorkflow(live, string(liveSource)); err != nil {
@@ -907,7 +978,7 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release steps use only approved environment variables", Detail: "step " + step.Name}
 		}
 	}
-	if err := require(releaseWorkflowArtifact, "release waits for verification", releaseJob.Needs == "verify", ""); err != nil {
+	if err := require(releaseWorkflowArtifact, "release waits for verification", workflowNeedsExactly(releaseJob.Needs, "verify"), ""); err != nil {
 		return err
 	}
 	expectedPermissions := map[string]string{"contents": "write", "issues": "write", "pull-requests": "write"}
@@ -1016,7 +1087,7 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "supports " + trigger}
 		}
 	}
-	if err := require(verifyWorkflowArtifact, "contains only approved verification jobs", reflect.DeepEqual(sortedKeys(verify.Jobs), []string{"artifact-macos", "artifact-windows", "verify"}), ""); err != nil {
+	if err := require(verifyWorkflowArtifact, "contains only approved verification jobs", reflect.DeepEqual(sortedKeys(verify.Jobs), []string{"artifact-macos", "artifact-windows", "go", "rust", "verify"}), ""); err != nil {
 		return err
 	}
 	for _, native := range []struct {
@@ -1030,83 +1101,31 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return err
 		}
 	}
-	job, exists := verify.Jobs["verify"]
-	if err := require(verifyWorkflowArtifact, "has the verify job", exists, ""); err != nil {
+	if err := checkCredentialFreeSource(verifyWorkflowArtifact, source); err != nil {
 		return err
 	}
-	if err := require(verifyWorkflowArtifact, "verify job uses default execution controls", defaultJobExecution(job), ""); err != nil {
-		return err
+	checkout := workflowStepExpectation{
+		name: "Check out repository",
+		uses: "actions/checkout",
+		with: map[string]any{"fetch-depth": 0, "persist-credentials": false},
 	}
-	if err := require(verifyWorkflowArtifact, "verify job uses default run settings", defaultRunSettings(job.Defaults), ""); err != nil {
-		return err
-	}
-	if err := require(verifyWorkflowArtifact, "verify job uses the approved runner and timeout", job.RunsOn == "ubuntu-latest" && job.TimeoutMinutes == 30, ""); err != nil {
-		return err
-	}
-	for _, forbidden := range []struct {
-		name    string
-		pattern *regexp.Regexp
-	}{
-		{name: "GitHub secrets", pattern: regexp.MustCompile(`(?i)\bsecrets\s*(?:\.|\[)`)},
-		{name: "GitHub token", pattern: regexp.MustCompile(`(?i)\bgithub\s*(?:\.\s*token\b|\[\s*['"]token['"]\s*\])`)},
-		{name: "OpenDART API key", pattern: regexp.MustCompile(`OPENDART_API_KEY`)},
-		{name: "guide synchronization", pattern: regexp.MustCompile(`sync:opendart|opendart-tool\s+sync|scripts/sync-opendart`)},
-		{name: "JavaScript or Node package tooling", pattern: regexp.MustCompile(`(?i)(?:actions/setup-node@|\b(?:node|nodejs|npm|npx|corepack|yarn|pnpm|bun|deno)\b)`)},
-		{name: "package publication", pattern: regexp.MustCompile(`(?:npm|cargo)\s+publish`)},
-		{name: "registry credentials", pattern: regexp.MustCompile(`CARGO_REGISTRY_TOKEN|id-token:\s*write`)},
-		{name: "release asset replacement", pattern: regexp.MustCompile(`--clobber`)},
-	} {
-		if forbidden.pattern.MatchString(source) {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "credential-free verification excludes " + forbidden.name}
-		}
-	}
-	expectedSteps := []struct {
-		name string
-		run  string
-		uses string
-		with map[string]any
-	}{
-		{name: "Check out repository", uses: "actions/checkout", with: map[string]any{"fetch-depth": 0, "persist-credentials": false}},
+	goSteps := []workflowStepExpectation{
+		checkout,
 		{name: "Set up Go", uses: "actions/setup-go", with: map[string]any{"go-version-file": "go.mod", "cache": true}},
-		{name: "Install pinned Rust toolchains", run: installRustToolchainsScript},
-		{name: "Fetch locked Rust dependencies", run: fetchRustDependenciesScript},
-		{name: "Vet Go", run: "go vet ./..."},
-		{name: "Test Go", run: "go test -race ./..."},
-		{name: "Verify repository", run: "go run ./cmd/opendart-tool verify --repository-root ."},
-		{name: "Verify Rust stable contracts offline", run: stableRustVerificationScript},
-		{name: "Verify transport-independent dependency graph offline", run: transportIndependentGraphScript},
-		{name: "Verify reqwest feature compatibility offline", run: compatibilityVerificationScript},
-		{name: "Verify Rust MSRV offline", run: msrvVerificationScript},
-		{name: "Verify workspace package contents offline", run: packageVerificationScript},
-		{name: "Install CLI from reviewed source offline", run: sourceInstallScript},
+		{name: "Run required Go verification", run: "./scripts/verify go"},
 	}
-	if len(job.Steps) != len(expectedSteps) {
-		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification steps"}
+	rustSteps := []workflowStepExpectation{
+		checkout,
+		{name: "Run required Rust verification", run: "./scripts/verify rust"},
 	}
-	for index, expected := range expectedSteps {
-		step := job.Steps[index]
-		if step.Name != expected.name || !exactScript(step.Run, expected.run) {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification steps", Detail: "step " + step.Name}
-		}
-		if expected.uses == "" {
-			if step.Uses != "" || len(step.With) != 0 {
-				return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification steps", Detail: "step " + step.Name}
-			}
-		} else if !strings.HasPrefix(step.Uses, expected.uses+"@") || !reflect.DeepEqual(step.With, expected.with) {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification actions", Detail: "step " + step.Name}
-		}
-		if !defaultStepExecution(step) {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default execution controls", Detail: "step " + step.Name}
-		}
-		if step.ContinueOnError {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification step failures stop the job", Detail: "step " + step.Name}
-		}
-		if !defaultStepRunSettings(step) {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default run settings", Detail: "step " + step.Name}
-		}
-		if len(step.Env) != 0 {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps do not override the environment", Detail: "step " + step.Name}
-		}
+	if err := checkVerificationJob("go", verify.Jobs["go"], goSteps); err != nil {
+		return err
+	}
+	if err := checkVerificationJob("rust", verify.Jobs["rust"], rustSteps); err != nil {
+		return err
+	}
+	if err := checkVerifyAggregateJob(verify.Jobs["verify"]); err != nil {
+		return err
 	}
 	if err := checkActionPins(verifyWorkflowArtifact, verify); err != nil {
 		return err
@@ -1117,8 +1136,79 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	return nil
 }
 
+func checkVerificationJob(name string, job workflowJob, expected []workflowStepExpectation) error {
+	if !workflowNeedsExactly(job.Needs) || !defaultJobExecution(job) || job.Environment != "" || job.Uses != "" || len(job.Permissions) != 0 {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification work jobs use default execution controls", Detail: name}
+	}
+	if !defaultRunSettings(job.Defaults) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification work jobs use default run settings", Detail: name}
+	}
+	if job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 30 {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification work jobs use the approved runner and timeout", Detail: name}
+	}
+	if len(job.Steps) != len(expected) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification steps", Detail: name}
+	}
+	for index, want := range expected {
+		step := job.Steps[index]
+		if step.Name != want.name || !exactScript(step.Run, want.run) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification steps", Detail: name + ": " + step.Name}
+		}
+		if want.uses == "" {
+			if step.Uses != "" || len(step.With) != 0 {
+				return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification steps", Detail: name + ": " + step.Name}
+			}
+		} else if !strings.HasPrefix(step.Uses, want.uses+"@") || !reflect.DeepEqual(step.With, want.with) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification actions", Detail: name + ": " + step.Name}
+		}
+		if !defaultStepExecution(step) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default execution controls", Detail: name + ": " + step.Name}
+		}
+		if !defaultStepRunSettings(step) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default run settings", Detail: name + ": " + step.Name}
+		}
+		if len(step.Env) != 0 {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps do not override the environment", Detail: name + ": " + step.Name}
+		}
+	}
+	return nil
+}
+
+func checkVerifyAggregateJob(job workflowJob) error {
+	requiredJobs := []string{"go", "rust", "artifact-macos", "artifact-windows"}
+	if !exactWorkflowExpression(job.If, "always()") || job.ContinueOnError || job.Environment != "" || job.Uses != "" || len(job.Permissions) != 0 {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "aggregate verify job always evaluates dependency results"}
+	}
+	if !workflowNeedsExactly(job.Needs, requiredJobs...) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "aggregate verify job depends on every required job"}
+	}
+	if !defaultRunSettings(job.Defaults) || job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 5 {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "aggregate verify job uses only approved runtime settings"}
+	}
+	if len(job.Steps) != 1 {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "aggregate verify job has only the result check"}
+	}
+	step := job.Steps[0]
+	expectedEnvironment := map[string]string{
+		"GO_RESULT":      "${{ needs.go.result }}",
+		"RUST_RESULT":    "${{ needs.rust.result }}",
+		"MACOS_RESULT":   "${{ needs.artifact-macos.result }}",
+		"WINDOWS_RESULT": "${{ needs.artifact-windows.result }}",
+	}
+	if step.Name != "Require successful verification jobs" ||
+		!exactScript(step.Run, verifyAggregateScript) ||
+		!reflect.DeepEqual(step.Env, expectedEnvironment) ||
+		step.Uses != "" ||
+		len(step.With) != 0 ||
+		!defaultStepExecution(step) ||
+		!defaultStepRunSettings(step) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "aggregate verify job rejects every non-success result"}
+	}
+	return nil
+}
+
 func checkNativeArtifactJob(name, runner string, job workflowJob) error {
-	if !defaultJobExecution(job) || job.Needs != "" || job.Uses != "" || len(job.Permissions) != 0 || !defaultRunSettings(job.Defaults) {
+	if !defaultJobExecution(job) || !workflowNeedsExactly(job.Needs) || job.Environment != "" || job.Uses != "" || len(job.Permissions) != 0 || !defaultRunSettings(job.Defaults) {
 		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use default execution controls", Detail: name}
 	}
 	if job.RunsOn != runner || job.TimeoutMinutes != 20 {
@@ -1523,12 +1613,24 @@ func exactWorkflowExpression(condition, expected string) bool {
 	return strings.Join(strings.Fields(condition), " ") == expected
 }
 
+func workflowNeedsExactly(actual workflowNeeds, expected ...string) bool {
+	if len(actual) != len(expected) {
+		return false
+	}
+	for index := range expected {
+		if actual[index] != expected[index] {
+			return false
+		}
+	}
+	return true
+}
+
 func defaultJobExecution(job workflowJob) bool {
 	return strings.TrimSpace(job.If) == "" && !job.ContinueOnError
 }
 
 func standardJobControls(job workflowJob, runsOn string, timeoutMinutes int) bool {
-	return job.Needs == "" && !job.ContinueOnError && job.Uses == "" &&
+	return workflowNeedsExactly(job.Needs) && !job.ContinueOnError && job.Uses == "" &&
 		defaultRunSettings(job.Defaults) && job.RunsOn == runsOn && job.TimeoutMinutes == timeoutMinutes
 }
 

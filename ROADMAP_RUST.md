@@ -5,7 +5,7 @@ its linked work items from this worktree.
 
 ## Current
 
-- [Harden SDK wire trust boundaries](plans/rust/sdk-wire-trust-boundaries.md)
+- [Shorten CI and local verification feedback](plans/rust/ci-verification-feedback.md)
 
 ## Plans
 

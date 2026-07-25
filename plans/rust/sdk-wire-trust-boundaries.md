@@ -185,6 +185,5 @@ follow XML 1.0 line-ending normalization without changing character references.
 
 ## Next action
 
-Push the reviewed CodeRabbit follow-up to
-[PR #46](https://github.com/cpaikr/opendart/pull/46), resolve its thread after
-required Linux, macOS, and Windows verification passes, and merge.
+Complete. PR #46 merged into `rust` after its required Linux, macOS, and
+Windows verification passed.

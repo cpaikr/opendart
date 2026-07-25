@@ -89,6 +89,10 @@ func GenerateRust(root string, outputs RustOutputs) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
+	return generateRustArtifacts(generated, files, outputs)
+}
+
+func generateRustArtifacts(generated model.ArtifactSet, files rustemitter.Artifacts, outputs RustOutputs) (Report, error) {
 	products := rustProducts(generated, files, outputs)
 	staged, err := stageProducts(products)
 	if err != nil {
@@ -121,6 +125,10 @@ func CheckRustFresh(root string, outputs RustOutputs) error {
 	if err != nil {
 		return err
 	}
+	return checkRustArtifactsFresh(generated, files, outputs)
+}
+
+func checkRustArtifactsFresh(generated model.ArtifactSet, files rustemitter.Artifacts, outputs RustOutputs) error {
 	products := rustProducts(generated, files, outputs)
 	if err := validateProductOutputs(products); err != nil {
 		return err
