@@ -29,13 +29,35 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Recheck offline gates
-        run: go run ./cmd/opendart-tool live-conformance --preflight-only --repository-root .
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal
 
-      - name: Run live conformance
+      - name: Fetch locked Rust dependencies
+        run: cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml
+
+      - name: Build live runners without credentials
+        run: |-
+          mkdir -p .live-bin
+          go build -o .live-bin/opendart-tool ./cmd/opendart-tool
+          live_smoke_executable="$(
+            cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test live_smoke --no-run --message-format=json |
+              jq -r 'select(.reason == "compiler-artifact" and .target.name == "live_smoke" and .executable != null) | .executable' |
+              tail -n 1
+          )"
+          test -n "${live_smoke_executable}"
+          test -x "${live_smoke_executable}"
+          cp "${live_smoke_executable}" .live-bin/live-smoke
+
+      - name: Recheck offline gates
+        run: .live-bin/opendart-tool live-conformance --preflight-only --repository-root .
+
+      - name: Run live conformance and Rust CLI smoke
         env:
           OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
-        run: go run ./cmd/opendart-tool live-conformance --repository-root . > live-conformance-report.json
+          OPENDART_LIVE_TESTS: "1"
+        run: |-
+          .live-bin/opendart-tool live-conformance --repository-root . > live-conformance-report.json
+          .live-bin/live-smoke --exact structured_and_binary_live_paths_are_read_only_and_sanitized
 
       - name: Upload sanitized report
         if: ${{ always() }}

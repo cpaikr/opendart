@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
+	"github.com/cpaikr/opendart/internal/crateverification"
 	"github.com/cpaikr/opendart/internal/driftnotifier"
 	guidesync "github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/liveconformance"
@@ -53,7 +54,7 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-sdk", "verify", "guide-drift", "guide-drift-notify", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-sdk", "verify", "guide-drift", "guide-drift-notify", "verify-crate-artifact", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
@@ -394,24 +395,25 @@ func TestRunBundleRequiresOutputAndForwardsPaths(t *testing.T) {
 }
 
 func TestRunGenerateSDKRequiresRustAndForwardsPaths(t *testing.T) {
-	var root, output string
+	var root string
+	var output sdkgen.RustOutputs
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := runGenerateSDKWith([]string{"--language", "rust", "--root", "spec.yaml", "--output", "generated"}, &stdout, &stderr, func(receivedRoot, receivedOutput string) (sdkgen.Report, error) {
+	code := runGenerateSDKWith([]string{"--language", "rust", "--root", "spec.yaml", "--output", "generated", "--cli-output", "cli-generated"}, &stdout, &stderr, func(receivedRoot string, receivedOutput sdkgen.RustOutputs) (sdkgen.Report, error) {
 		root, output = receivedRoot, receivedOutput
-		return sdkgen.Report{Language: "rust", SchemaVersion: 1, Checksum: "checksum", Output: receivedOutput}, nil
+		return sdkgen.Report{Language: "rust", SemanticSchemaVersion: 1, SemanticChecksum: "checksum"}, nil
 	})
-	if code != 0 || stderr.Len() != 0 || root != "spec.yaml" || output != "generated" {
+	if code != 0 || stderr.Len() != 0 || root != "spec.yaml" || output.SDK != "generated" || output.CLI != "cli-generated" {
 		t.Fatalf("code = %d, root = %q, output = %q, stderr = %q", code, root, output, stderr.String())
 	}
 	var report sdkgen.Report
-	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil || report.Checksum != "checksum" {
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil || report.SemanticChecksum != "checksum" {
 		t.Fatalf("report = %#v, error = %v", report, err)
 	}
 
-	for _, args := range [][]string{{"--language", "python", "--output", "generated"}, {"--language", "rust"}} {
+	for _, args := range [][]string{{"--language", "python", "--output", "generated", "--cli-output", "cli-generated"}, {"--language", "rust"}, {"--language", "rust", "--output", "generated"}} {
 		stderr.Reset()
-		if code := runGenerateSDKWith(args, &bytes.Buffer{}, &stderr, func(string, string) (sdkgen.Report, error) {
+		if code := runGenerateSDKWith(args, &bytes.Buffer{}, &stderr, func(string, sdkgen.RustOutputs) (sdkgen.Report, error) {
 			t.Fatal("runner should not be called for invalid options")
 			return sdkgen.Report{}, nil
 		}); code != 2 {
@@ -467,6 +469,67 @@ func TestRunVerifyEmitsReportAndForwardsRepositoryRoot(t *testing.T) {
 		diagnostic.Rule != "operation-summary" || diagnostic.Operation != "getCompany" ||
 		diagnostic.Location != "#/paths/~1company/get" {
 		t.Fatalf("diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestRunVerifyCrateArtifactPassesExplicitLocalEvidence(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	arguments := crateVerificationArguments()
+	code := runVerifyCrateArtifactWith(arguments, &stdout, &stderr, func(options crateverification.Options) (crateverification.Report, error) {
+		if options.CandidatePath != "candidate.crate" || options.AcceptedPath != "accepted.crate" || options.InventoryPath != "inventory.txt" ||
+			options.Package != "opendart-cli" || options.Version != "0.1.0" || options.Revision != strings.Repeat("a", 40) ||
+			options.VCSPath != "sdk/rust/crates/opendart-cli" || options.RegistryChecksum != strings.Repeat("b", 64) {
+			t.Fatalf("options = %#v", options)
+		}
+		return crateverification.Report{Kind: "crate-artifact-verification", SchemaVersion: 1, Package: options.Package}, nil
+	})
+	if code != 0 || stderr.Len() != 0 || !strings.Contains(stdout.String(), `"kind": "crate-artifact-verification"`) {
+		t.Fatalf("code = %d, stdout = %q, stderr = %q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestRunVerifyCrateArtifactEmitsBoundedInvariant(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runVerifyCrateArtifactWith(crateVerificationArguments(), &stdout, &stderr, func(crateverification.Options) (crateverification.Report, error) {
+		return crateverification.Report{}, &crateverification.Error{Artifact: "accepted", Invariant: "matches the registry checksum"}
+	})
+	if code != 1 || stdout.Len() != 0 {
+		t.Fatalf("code = %d, stdout = %q", code, stdout.String())
+	}
+	var diagnostic struct {
+		Artifact  string `json:"artifact"`
+		Invariant string `json:"invariant"`
+	}
+	if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+		t.Fatalf("decode diagnostic: %v; stderr = %q", err, stderr.String())
+	}
+	if diagnostic.Artifact != "accepted" || diagnostic.Invariant != "matches the registry checksum" {
+		t.Fatalf("diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestRunVerifyCrateArtifactRejectsMissingEvidence(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	called := false
+	code := runVerifyCrateArtifactWith(nil, &stdout, &stderr, func(crateverification.Options) (crateverification.Report, error) {
+		called = true
+		return crateverification.Report{}, nil
+	})
+	if code != 2 || called || stdout.Len() != 0 || !strings.Contains(stderr.String(), "--candidate is required") {
+		t.Fatalf("code = %d, called = %t, stdout = %q, stderr = %q", code, called, stdout.String(), stderr.String())
+	}
+}
+
+func crateVerificationArguments() []string {
+	return []string{
+		"--candidate", "candidate.crate", "--accepted", "accepted.crate",
+		"--inventory", "inventory.txt", "--package", "opendart-cli",
+		"--version", "0.1.0", "--revision", strings.Repeat("a", 40),
+		"--vcs-path", "sdk/rust/crates/opendart-cli",
+		"--registry-checksum", strings.Repeat("b", 64),
 	}
 }
 

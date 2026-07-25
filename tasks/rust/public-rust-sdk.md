@@ -34,6 +34,9 @@ generator model without depending on Rust source.
 - The architecture and release policy now recognize an independent Rust-aware
   Release Please component. No workflow yet has crates.io publication authority;
   registry publication and consumer adoption remain work 6.
+- ADR 0003 selects the planned `opendart-cli` as the first real SDK consumer.
+  Its current plan owns the optional `serde-json` interface and local consumer
+  review that must finish before this task resumes registry publication.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -242,6 +245,10 @@ target constraints and acceptance details for their workstreams.
   release checks to make room for Cargo.
 - A specification-only release and a Rust-crate release are independently
   classified and versioned even when one commit changes both products.
+- The CLI plan may add the selected optional `serde-json` interface before
+  publication. This task resumes work 6 only after its exact source-number
+  contract and typed CLI consumer pass compatibility review; the SDK must then
+  publish and verify before the dependent CLI package.
 
 ## Overall acceptance criteria
 
@@ -270,8 +277,10 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Begin work 6 with a separate publication-authority change. Do not publish or
-adopt the crate from work 5.
+After the CLI plan proves the SDK `serde-json` interface against its real typed
+consumer, resume work 6 with a separate publication-authority change.
+Publish and verify `opendart` before authorizing `opendart-cli`; do not publish
+or adopt either package from the implementation worktree.
 
 ## Progress log
 

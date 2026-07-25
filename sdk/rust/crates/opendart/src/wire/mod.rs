@@ -2,6 +2,8 @@ use std::{collections::BTreeMap, fmt};
 
 pub(crate) mod decode;
 mod inspect;
+#[cfg(feature = "serde-json")]
+mod serialize;
 
 pub use inspect::{BodyLimitError, EnvelopeError, EnvelopeFormat, WireInspectError, WireInspector};
 
@@ -27,6 +29,7 @@ pub enum HttpVersion {
 ///
 /// Values are constructed only by crate-owned sanitization and never by callers.
 #[derive(Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 pub struct ResponseHeader {
     name: String,
     value: Vec<u8>,
@@ -67,6 +70,7 @@ impl fmt::Debug for ResponseHeader {
 ///
 /// The SDK constructs this value only after removing credential-bearing metadata.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct ResponseMetadata {
     status: u16,
@@ -222,10 +226,19 @@ impl SourceValue {
 
     /// Creates a number from its exact source spelling.
     ///
-    /// Bounded wire inspectors validate parser syntax before using this constructor.
-    #[must_use]
-    pub fn number(value: impl Into<String>) -> Self {
-        Self(SourceValueRepr::Number(value.into()))
+    /// The accepted grammar is JSON's decimal number grammar with no surrounding
+    /// whitespace, fixed magnitude bound, or conversion through a Rust numeric type.
+    pub fn number(value: impl Into<String>) -> Result<Self, crate::InvalidSourceNumberError> {
+        let value = value.into();
+        if !is_valid_json_number(&value) {
+            return Err(crate::InvalidSourceNumberError);
+        }
+        Ok(Self::number_from_valid_json(value))
+    }
+
+    pub(crate) fn number_from_valid_json(value: String) -> Self {
+        debug_assert!(is_valid_json_number(&value));
+        Self(SourceValueRepr::Number(value))
     }
 
     /// Creates a string source value, primarily for caller-owned fixtures.
@@ -326,13 +339,67 @@ impl SourceValue {
     }
 }
 
+fn is_valid_json_number(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    let mut index = 0;
+
+    if bytes.get(index) == Some(&b'-') {
+        index += 1;
+    }
+
+    match bytes.get(index) {
+        Some(b'0') => {
+            index += 1;
+            if bytes.get(index).is_some_and(u8::is_ascii_digit) {
+                return false;
+            }
+        }
+        Some(b'1'..=b'9') => {
+            index += 1;
+            while bytes.get(index).is_some_and(u8::is_ascii_digit) {
+                index += 1;
+            }
+        }
+        _ => return false,
+    }
+
+    if bytes.get(index) == Some(&b'.') {
+        index += 1;
+        let fraction_start = index;
+        while bytes.get(index).is_some_and(u8::is_ascii_digit) {
+            index += 1;
+        }
+        if index == fraction_start {
+            return false;
+        }
+    }
+
+    if matches!(bytes.get(index), Some(b'e' | b'E')) {
+        index += 1;
+        if matches!(bytes.get(index), Some(b'+' | b'-')) {
+            index += 1;
+        }
+        let exponent_start = index;
+        while bytes.get(index).is_some_and(u8::is_ascii_digit) {
+            index += 1;
+        }
+        if index == exponent_start {
+            return false;
+        }
+    }
+
+    index == bytes.len()
+}
+
 /// A source status envelope retained without application interpretation.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct StatusEnvelope {
     /// The exact known or unknown source status.
     pub code: SourceStatus,
     /// The optional opaque source message.
+    #[cfg_attr(feature = "serde-json", serde(skip_serializing_if = "Option::is_none"))]
     pub message: Option<SourceValue>,
     /// The complete normalized envelope, including additive source evidence.
     pub evidence: SourceValue,
@@ -340,6 +407,11 @@ pub struct StatusEnvelope {
 
 /// A recognized source reply that separates success payload from status evidence.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
+#[cfg_attr(
+    feature = "serde-json",
+    serde(tag = "kind", content = "value", rename_all = "snake_case")
+)]
 #[non_exhaustive]
 pub enum SourceReply<T> {
     /// A representation-specific success payload.
@@ -350,6 +422,7 @@ pub enum SourceReply<T> {
 
 /// A source reply paired with sanitized HTTP metadata.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
 #[non_exhaustive]
 pub struct SourceResponse<T> {
     /// Sanitized source response metadata.
@@ -368,7 +441,7 @@ mod tests {
             ("future".to_owned(), SourceValue::boolean(true)),
             (
                 "number".to_owned(),
-                SourceValue::number("1.20e3".to_owned()),
+                SourceValue::number("1.20e3").expect("valid source number"),
             ),
             ("nothing".to_owned(), SourceValue::null()),
             (
@@ -409,5 +482,30 @@ mod tests {
         let status = SourceStatus::new("future-status".to_owned());
         assert_eq!(status.as_str(), "future-status");
         assert!(!status.is_success());
+    }
+
+    #[test]
+    fn caller_numbers_enforce_the_sdk_owned_json_grammar() {
+        for valid in [
+            "0",
+            "-0",
+            "10",
+            "-10.2300",
+            "1e9",
+            "1E+9",
+            "1e-999999999999999999999999999999999999999999999999999999",
+        ] {
+            assert!(SourceValue::number(valid).is_ok(), "rejected {valid}");
+        }
+
+        for invalid in [
+            "", " ", "+1", "-", "00", "01", "-01", ".1", "1.", "1e", "1e+", "NaN", "inf", "1 2",
+            "1\n",
+        ] {
+            assert!(
+                SourceValue::number(invalid).is_err(),
+                "accepted {invalid:?}"
+            );
+        }
     }
 }

@@ -8,7 +8,8 @@ authenticated URLs, raw response bodies, or unrestricted headers.
 Regenerate the auditor manifest from the repository root with:
 
 ```sh
-varlock run -- go run ./cmd/opendart-tool probe-auditor-evidence
+./scripts/with-opendart-env -- \
+  go run ./cmd/opendart-tool probe-auditor-evidence
 ```
 
 Review the JSON before replacing the dated manifest. Offline repository

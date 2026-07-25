@@ -57,8 +57,10 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseReleaseGuard+":"+filepath.Base(root))
 			return nil
 		},
-		checkRustSDK: func(source, output string) error {
-			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(source)+":"+filepath.Base(output))
+		checkRustSDK: func(source string, output sdkgen.RustOutputs) error {
+			sdkCrate := filepath.Base(filepath.Dir(filepath.Dir(output.SDK)))
+			cliCrate := filepath.Base(filepath.Dir(filepath.Dir(output.CLI)))
+			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(source)+":"+sdkCrate+":"+cliCrate)
 			return nil
 		},
 	}
@@ -72,7 +74,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"lint:openapi.yaml",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
-		"rust-sdk-freshness:openapi.yaml:generated",
+		"rust-sdk-freshness:openapi.yaml:opendart:opendart-cli",
 		"live-conformance-preflight:repository",
 		"auditor-evidence:auditor-2026-07-18.json",
 		"release-guard:repository",
@@ -123,21 +125,24 @@ func TestLiveConformanceFailurePreservesSanitizedContext(t *testing.T) {
 func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 	cause := errors.New("unbounded body https://example.invalid/?token=secret")
 	tests := []struct {
-		name          string
-		fail          string
-		wantPhase     string
-		wantArtifact  string
-		wantRule      string
-		wantOperation string
-		wantLocation  string
-		rustError     error
-		wantCallCount int
+		name               string
+		fail               string
+		wantPhase          string
+		wantArtifact       string
+		wantArtifactParent string
+		wantRule           string
+		wantOperation      string
+		wantLocation       string
+		rustError          error
+		rustCLIArtifact    bool
+		wantCallCount      int
 	}{
 		{name: "catalog", fail: phaseCatalog, wantPhase: "catalog/references", wantArtifact: "fragment.yaml", wantRule: "reference-escape", wantCallCount: 1},
 		{name: "source lint diagnostic", fail: phaseSourceLint, wantPhase: phaseSourceLint, wantArtifact: "source.yaml", wantRule: "operation-summary", wantOperation: "getCompany", wantLocation: "#/paths/~1company/get", wantCallCount: 2},
 		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 4},
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 3},
 		{name: "Rust SDK freshness", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 5},
+		{name: "Rust CLI freshness artifact", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantArtifactParent: "opendart-cli", wantRule: "generated-missing", rustCLIArtifact: true, wantCallCount: 5},
 		{name: "Rust SDK model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 5},
 		{name: "Rust SDK normalized model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "rust-name-collision", wantOperation: "get_company_json", wantLocation: "/logicalOperations/0", rustError: &model.Error{Rule: "rust-name-collision", Operation: "get_company_json", Location: "/logicalOperations/0", Detail: "collision"}, wantCallCount: 5},
 		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 6},
@@ -196,9 +201,19 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					}
 					return nil
 				},
-				checkRustSDK: func(string, string) error {
+				checkRustSDK: func(string, sdkgen.RustOutputs) error {
 					calls++
 					if test.fail == phaseRustSDKFreshness {
+						if test.rustCLIArtifact {
+							root := repositoryRoot(t)
+							return sdkgen.CheckRustFresh(
+								filepath.Join(root, "openapi", "openapi.yaml"),
+								sdkgen.RustOutputs{
+									SDK: filepath.Join(root, "sdk", "rust", "crates", "opendart", "src", "generated"),
+									CLI: filepath.Join(t.TempDir(), "opendart-cli", "src", "generated"),
+								},
+							)
+						}
 						if test.rustError != nil {
 							return test.rustError
 						}
@@ -215,6 +230,9 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 			}
 			if verifyError.Phase != test.wantPhase || filepath.Base(verifyError.Artifact) != test.wantArtifact || verifyError.Rule != test.wantRule {
 				t.Fatalf("error = %#v", verifyError)
+			}
+			if test.wantArtifactParent != "" && filepath.Base(filepath.Dir(filepath.Dir(verifyError.Artifact))) != test.wantArtifactParent {
+				t.Fatalf("artifact = %q, want crate %q", verifyError.Artifact, test.wantArtifactParent)
 			}
 			if verifyError.Operation != test.wantOperation || verifyError.Location != test.wantLocation {
 				t.Fatalf("structured context = %#v", verifyError)
@@ -262,7 +280,7 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 		checkLive:     func(string) error { return nil },
 		checkEvidence: func(string) error { return nil },
 		checkRelease:  func(string) error { return nil },
-		checkRustSDK:  func(string, string) error { return nil },
+		checkRustSDK:  func(string, sdkgen.RustOutputs) error { return nil },
 	}
 
 	_, err := verifyWith(t.TempDir(), deps)

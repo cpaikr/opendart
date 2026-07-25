@@ -18,28 +18,43 @@ import (
 )
 
 const (
-	releaseWorkflowArtifact  = ".github/workflows/release-please.yml"
-	verifyWorkflowArtifact   = ".github/workflows/verify.yml"
-	liveWorkflowArtifact     = ".github/workflows/live-conformance.yml"
-	notifyWorkflowArtifact   = ".github/workflows/live-conformance-notify.yml"
-	driftWorkflowArtifact    = ".github/workflows/guide-drift.yml"
-	driftNotifyArtifact      = ".github/workflows/guide-drift-notify.yml"
-	configArtifact           = "release-please-config.json"
-	manifestArtifact         = ".release-please-manifest.json"
-	specificationPackagePath = "openapi/generated"
-	rustPackagePath          = "sdk/rust/crates/opendart"
-	rustCargoArtifact        = "sdk/rust/crates/opendart/Cargo.toml"
-	rustLockArtifact         = "sdk/rust/Cargo.lock"
-	rustProvenanceArtifact   = "sdk/rust/crates/opendart/src/provenance.rs"
-	rustPackageListArtifact  = "sdk/rust/package-files.txt"
-	canonicalBundleArtifact  = "openapi/generated/openapi.bundle.yaml"
-	releasePleaseAction      = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
-	checkoutAction           = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
-	setupGoAction            = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
-	uploadArtifactAction     = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
-	downloadArtifactAction   = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
+	releaseWorkflowArtifact    = ".github/workflows/release-please.yml"
+	verifyWorkflowArtifact     = ".github/workflows/verify.yml"
+	liveWorkflowArtifact       = ".github/workflows/live-conformance.yml"
+	notifyWorkflowArtifact     = ".github/workflows/live-conformance-notify.yml"
+	driftWorkflowArtifact      = ".github/workflows/guide-drift.yml"
+	driftNotifyArtifact        = ".github/workflows/guide-drift-notify.yml"
+	configArtifact             = "release-please-config.json"
+	manifestArtifact           = ".release-please-manifest.json"
+	specificationPackagePath   = "openapi/generated"
+	rustPackagePath            = "sdk/rust/crates/opendart"
+	rustCLIPackagePath         = "sdk/rust/crates/opendart-cli"
+	rustWorkspaceArtifact      = "sdk/rust/Cargo.toml"
+	rustCargoArtifact          = "sdk/rust/crates/opendart/Cargo.toml"
+	rustCLICargoArtifact       = "sdk/rust/crates/opendart-cli/Cargo.toml"
+	rustLockArtifact           = "sdk/rust/Cargo.lock"
+	rustProvenanceArtifact     = "sdk/rust/crates/opendart/src/provenance.rs"
+	rustPackageListArtifact    = "sdk/rust/package-files.txt"
+	rustCLIPackageListArtifact = "sdk/rust/opendart-cli-package-files.txt"
+	canonicalBundleArtifact    = "openapi/generated/openapi.bundle.yaml"
+	releasePleaseAction        = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
+	checkoutAction             = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+	setupGoAction              = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
+	uploadArtifactAction       = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+	downloadArtifactAction     = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
 
-	liveRunScript   = "go run ./cmd/opendart-tool live-conformance --repository-root . > live-conformance-report.json"
+	liveBuildScript = `mkdir -p .live-bin
+go build -o .live-bin/opendart-tool ./cmd/opendart-tool
+live_smoke_executable="$(
+  cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test live_smoke --no-run --message-format=json |
+    jq -r 'select(.reason == "compiler-artifact" and .target.name == "live_smoke" and .executable != null) | .executable' |
+    tail -n 1
+)"
+test -n "${live_smoke_executable}"
+test -x "${live_smoke_executable}"
+cp "${live_smoke_executable}" .live-bin/live-smoke`
+	liveRunScript = `.live-bin/opendart-tool live-conformance --repository-root . > live-conformance-report.json
+.live-bin/live-smoke --exact structured_and_binary_live_paths_are_read_only_and_sanitized`
 	notifyRunScript = `go run ./cmd/opendart-tool live-conformance-notify \
   --report live-conformance-report.json \
   --repository "${NOTIFY_REPOSITORY}" \
@@ -95,8 +110,13 @@ cargo +1.97.1 fetch --locked --manifest-path sdk/rust/compat/reqwest-feature-uni
 cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features -- -D warnings
 cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --all-targets --no-default-features -- -D warnings
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features
+RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback
+RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
+cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features
 RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features --no-deps`
+	nativeArtifactFetchScript       = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
+	nativeArtifactTestScript        = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
 	compatibilityVerificationScript = `RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
 	transportIndependentGraphScript = `no_default_tree="$(mktemp)"
 trap 'rm -f "${no_default_tree}"' EXIT
@@ -107,12 +127,30 @@ if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body
 fi`
 	msrvVerificationScript = `cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features
 cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
+cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --all-targets --no-default-features
 cargo +1.85.0 metadata --locked --offline --manifest-path sdk/rust/Cargo.toml --no-deps > /dev/null`
-	packageVerificationScript = `package_files="$(mktemp)"
-trap 'rm -f "${package_files}"' EXIT
-cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${package_files}"
-diff -u sdk/rust/package-files.txt "${package_files}"
-cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml`
+	packageVerificationScript = `sdk_package_files="$(mktemp)"
+cli_package_files="$(mktemp)"
+trap 'rm -f "${sdk_package_files}" "${cli_package_files}"' EXIT
+cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml --list > "${sdk_package_files}"
+diff -u sdk/rust/package-files.txt "${sdk_package_files}"
+cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
+diff -u sdk/rust/opendart-cli-package-files.txt "${cli_package_files}"
+cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml`
+	sourceInstallScript = `install_workspace="$(mktemp -d)"
+CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"
+"${install_workspace}/root/bin/opendart" --version
+"${install_workspace}/root/bin/opendart" operations list > /dev/null`
+	windowsSourceInstallScript = `$installWorkspace = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid().ToString())
+$installRoot = Join-Path $installWorkspace "root"
+$env:CARGO_TARGET_DIR = Join-Path $installWorkspace "target"
+cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root $installRoot
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$binary = Join-Path $installRoot "bin/opendart.exe"
+& $binary --version
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $binary operations list | Out-Null
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }`
 )
 
 var canonicalSpecificationSources = []string{
@@ -180,7 +218,15 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
-	if err := checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSource); err != nil {
+	cliCargoSource, err := readArtifact(absoluteRoot, rustCLICargoArtifact)
+	if err != nil {
+		return err
+	}
+	workspaceSource, err := readArtifact(absoluteRoot, rustWorkspaceArtifact)
+	if err != nil {
+		return err
+	}
+	if err := checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCargoSource, lockSource); err != nil {
 		return err
 	}
 	provenanceSource, err := readArtifact(absoluteRoot, rustProvenanceArtifact)
@@ -199,6 +245,13 @@ func Check(repositoryRoot string) error {
 		return err
 	}
 	if err := checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSource); err != nil {
+		return err
+	}
+	cliPackageListSource, err := readArtifact(absoluteRoot, rustCLIPackageListArtifact)
+	if err != nil {
+		return err
+	}
+	if err := checkRustCLIPackage(cliCargoSource, workspaceSource, lockSource, cliPackageListSource); err != nil {
 		return err
 	}
 
@@ -303,10 +356,107 @@ func checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSo
 			return &Error{Artifact: rustPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
 		}
 	}
+	return checkPackageInventoryPrivateInputs(rustPackageListArtifact, lines)
+}
+
+func checkRustCLIPackage(cliCargoSource, workspaceSource, lockSource, packageListSource []byte) error {
+	publish, err := cargoPackageStringArray(cliCargoSource, "publish")
+	if err != nil || !reflect.DeepEqual(publish, []string{"crates-io"}) {
+		return &Error{Artifact: rustCLICargoArtifact, Invariant: "authorizes only the crates.io registry", Cause: err}
+	}
+	include, err := cargoPackageStringArray(cliCargoSource, "include")
+	if err != nil {
+		return &Error{Artifact: rustCLICargoArtifact, Invariant: "packages the reviewed source distribution", Cause: err}
+	}
+	approvedIncludes := map[string]bool{
+		"src/**": true, "tests/**": true, "Cargo.toml": true, "Cargo.lock": true,
+		"README.md": true, "CHANGELOG.md": true, "LICENSE": true,
+	}
+	if len(include) != len(approvedIncludes) {
+		return &Error{Artifact: rustCLICargoArtifact, Invariant: "packages the reviewed source distribution", Detail: "exact include allowlist is required"}
+	}
+	seenIncludes := make(map[string]bool, len(include))
+	for _, name := range include {
+		if !approvedIncludes[name] || seenIncludes[name] {
+			return &Error{Artifact: rustCLICargoArtifact, Invariant: "packages the reviewed source distribution", Detail: name}
+		}
+		seenIncludes[name] = true
+	}
+	sdkVersion, err := cargoLockPackageVersion(lockSource, "opendart")
+	if err != nil {
+		return &Error{Artifact: rustLockArtifact, Invariant: "contains one opendart package version", Cause: err}
+	}
+	pin, err := cargoInlineDependencyVersion(cliCargoSource, "opendart")
+	if err != nil || pin != "="+sdkVersion {
+		return &Error{Artifact: rustCLICargoArtifact, Invariant: "exact-pins the workspace SDK version", Cause: err}
+	}
+	if !bytes.Contains(cliCargoSource, []byte(`opendart = { path = "../opendart", version = "=`+sdkVersion+`", default-features = false, features = ["client-reqwest", "serde-json"] } # x-release-please-version`)) {
+		return &Error{Artifact: rustCLICargoArtifact, Invariant: "marks the exact SDK pin for SDK-owned release updates"}
+	}
+	if !bytes.Contains(cliCargoSource, []byte("serde_json.workspace = true")) {
+		return &Error{Artifact: rustCLICargoArtifact, Invariant: "inherits the reviewed JSON encoder behavior"}
+	}
+	if !bytes.Contains(workspaceSource, []byte(`serde_json = { version = "=1.0.150", features = ["arbitrary_precision", "preserve_order"] }`)) {
+		return &Error{Artifact: rustWorkspaceArtifact, Invariant: "exact-pins the reviewed JSON encoder behavior"}
+	}
+
+	lines := strings.Fields(string(packageListSource))
+	if !sort.StringsAreSorted(lines) {
+		return &Error{Artifact: rustCLIPackageListArtifact, Invariant: "is sorted for deterministic comparison"}
+	}
+	for _, name := range []string{
+		".cargo_vcs_info.json",
+		"CHANGELOG.md",
+		"Cargo.lock",
+		"Cargo.toml",
+		"LICENSE",
+		"README.md",
+		"src/generated/.opendart-cli-generated",
+		"src/generated/catalog.rs",
+		"src/generated/command.rs",
+		"src/generated/dispatch.rs",
+		"src/main.rs",
+		"tests/binary_loopback.rs",
+		"tests/common/mod.rs",
+		"tests/discovery.rs",
+		"tests/fixtures/invalid-invocation.json",
+		"tests/fixtures/missing-api-key.json",
+		"tests/live_smoke.rs",
+		"tests/structured_loopback.rs",
+	} {
+		if !sortedContains(lines, name) {
+			return &Error{Artifact: rustCLIPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
+		}
+	}
+	return checkPackageInventoryPrivateInputs(rustCLIPackageListArtifact, lines)
+}
+
+func cargoInlineDependencyVersion(source []byte, dependency string) (string, error) {
+	inDependencies := false
+	prefix := dependency + " = "
+	versionPattern := regexp.MustCompile(`\bversion\s*=\s*"([^"]+)"`)
+	for _, line := range strings.Split(string(source), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "[") {
+			inDependencies = trimmed == "[dependencies]"
+			continue
+		}
+		if inDependencies && strings.HasPrefix(trimmed, prefix) {
+			matches := versionPattern.FindStringSubmatch(trimmed)
+			if len(matches) == 2 {
+				return matches[1], nil
+			}
+			return "", errors.New("dependency version is missing")
+		}
+	}
+	return "", fmt.Errorf("dependency %q is missing", dependency)
+}
+
+func checkPackageInventoryPrivateInputs(artifact string, lines []string) error {
 	for _, name := range lines {
 		for _, prefix := range []string{".github/", "compat/", "internal/", "openapi/", "target/"} {
 			if strings.HasPrefix(name, prefix) {
-				return &Error{Artifact: rustPackageListArtifact, Invariant: "excludes repository-private inputs", Detail: name}
+				return &Error{Artifact: artifact, Invariant: "excludes repository-private inputs", Detail: name}
 			}
 		}
 	}
@@ -367,7 +517,7 @@ type workflowStep struct {
 	Env              map[string]string `yaml:"env"`
 }
 
-func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSource []byte) error {
+func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCargoSource, lockSource []byte) error {
 	var configFields map[string]json.RawMessage
 	if err := json.Unmarshal(configSource, &configFields); err != nil {
 		return &Error{Artifact: configArtifact, Invariant: "valid JSON", Cause: err}
@@ -385,20 +535,13 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 
 	manifestKeys := sortedKeys(manifest)
 	bootstrapManifest := reflect.DeepEqual(manifestKeys, []string{specificationPackagePath})
-	releasedManifest := reflect.DeepEqual(manifestKeys, []string{specificationPackagePath, rustPackagePath})
-	if err := require(manifestArtifact, "contains the specification and optional bootstrapped Rust component", bootstrapManifest || releasedManifest, ""); err != nil {
+	if err := require(manifestArtifact, "contains only the published specification component", bootstrapManifest, "unpublished Rust components must remain absent"); err != nil {
 		return err
-	}
-	if releasedManifest {
-		return &Error{
-			Artifact:  manifestArtifact,
-			Invariant: "omits the Rust component until work 6 validates path-qualified outputs and existing-draft recovery",
-		}
 	}
 	if err := require(manifestArtifact, "specification version is SemVer", semanticVersion.MatchString(manifest[specificationPackagePath]), ""); err != nil {
 		return err
 	}
-	if err := require(configArtifact, "contains only the specification and Rust packages", reflect.DeepEqual(sortedKeys(config.Packages), []string{specificationPackagePath, rustPackagePath}), ""); err != nil {
+	if err := require(configArtifact, "contains only the specification, SDK, and CLI packages", reflect.DeepEqual(sortedKeys(config.Packages), []string{specificationPackagePath, rustPackagePath, rustCLIPackagePath}), ""); err != nil {
 		return err
 	}
 	if err := require(
@@ -488,12 +631,41 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 			return &Error{Artifact: configArtifact, Invariant: "Rust package " + key, Detail: fmt.Sprintf("want %v", value)}
 		}
 	}
-	expectedExtraFiles := []any{map[string]any{
+	expectedExtraFiles := []any{
+		map[string]any{
+			"type":     "toml",
+			"path":     "/sdk/rust/Cargo.lock",
+			"jsonpath": `$.package[?(@.name == "opendart")].version`,
+		},
+		map[string]any{
+			"type": "generic",
+			"path": "/sdk/rust/crates/opendart-cli/Cargo.toml",
+		},
+	}
+	if err := require(configArtifact, "Rust package updates the workspace lock and CLI SDK pin", reflect.DeepEqual(rustPackage["extra-files"], expectedExtraFiles), "exact root-relative updaters are required"); err != nil {
+		return err
+	}
+
+	cliPackage := config.Packages[rustCLIPackagePath]
+	if err := require(configArtifact, "CLI package contains only supported options", reflect.DeepEqual(sortedKeys(cliPackage), expectedRustKeys), "exact option allowlist is required"); err != nil {
+		return err
+	}
+	expectedCLIValues := make(map[string]any, len(expectedRustValues))
+	for key, value := range expectedRustValues {
+		expectedCLIValues[key] = value
+	}
+	expectedCLIValues["component"] = "opendart-cli"
+	for key, value := range expectedCLIValues {
+		if !reflect.DeepEqual(cliPackage[key], value) {
+			return &Error{Artifact: configArtifact, Invariant: "CLI package " + key, Detail: fmt.Sprintf("want %v", value)}
+		}
+	}
+	expectedCLIExtraFiles := []any{map[string]any{
 		"type":     "toml",
 		"path":     "/sdk/rust/Cargo.lock",
-		"jsonpath": `$.package[?(@.name == "opendart")].version`,
+		"jsonpath": `$.package[?(@.name == "opendart-cli")].version`,
 	}}
-	if err := require(configArtifact, "Rust package updates the workspace lock version", reflect.DeepEqual(rustPackage["extra-files"], expectedExtraFiles), "exact root-relative TOML updater is required"); err != nil {
+	if err := require(configArtifact, "CLI package updates its workspace lock version", reflect.DeepEqual(cliPackage["extra-files"], expectedCLIExtraFiles), "exact root-relative TOML updater is required"); err != nil {
 		return err
 	}
 
@@ -508,13 +680,16 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, lockSo
 	if err := require(rustLockArtifact, "matches the crate package version", cargoVersion == lockVersion, ""); err != nil {
 		return err
 	}
-	if releasedManifest {
-		if err := require(manifestArtifact, "Rust version is SemVer", semanticVersion.MatchString(manifest[rustPackagePath]), ""); err != nil {
-			return err
-		}
-		if err := require(manifestArtifact, "Rust version matches Cargo metadata", manifest[rustPackagePath] == cargoVersion, ""); err != nil {
-			return err
-		}
+	cliCargoVersion, err := cargoPackageVersion(cliCargoSource)
+	if err != nil {
+		return &Error{Artifact: rustCLICargoArtifact, Invariant: "declares one package version", Cause: err}
+	}
+	cliLockVersion, err := cargoLockPackageVersion(lockSource, "opendart-cli")
+	if err != nil {
+		return &Error{Artifact: rustLockArtifact, Invariant: "contains one opendart-cli package version", Cause: err}
+	}
+	if err := require(rustLockArtifact, "matches the CLI crate package version", cliCargoVersion == cliLockVersion, ""); err != nil {
+		return err
 	}
 	return nil
 }
@@ -556,15 +731,16 @@ func cargoPackageStringArray(source []byte, key string) ([]string, error) {
 
 func cargoLockPackageVersion(source []byte, packageName string) (string, error) {
 	var name, version string
-	flush := func() (string, bool) {
-		return version, name == packageName && version != ""
+	var matches []string
+	flush := func() {
+		if name == packageName {
+			matches = append(matches, version)
+		}
 	}
 	for _, line := range strings.Split(string(source), "\n") {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "[[package]]" {
-			if value, ok := flush(); ok {
-				return value, nil
-			}
+			flush()
 			name, version = "", ""
 			continue
 		}
@@ -575,10 +751,11 @@ func cargoLockPackageVersion(source []byte, packageName string) (string, error) 
 			version, _ = quotedTOMLValue(trimmed)
 		}
 	}
-	if value, ok := flush(); ok {
-		return value, nil
+	flush()
+	if len(matches) != 1 || matches[0] == "" {
+		return "", fmt.Errorf("package %q must appear exactly once with a version", packageName)
 	}
-	return "", fmt.Errorf("package %q is missing", packageName)
+	return matches[0], nil
 }
 
 func quotedTOMLValue(line string) (string, error) {
@@ -839,8 +1016,19 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "supports " + trigger}
 		}
 	}
-	if err := require(verifyWorkflowArtifact, "contains only the verify job", reflect.DeepEqual(sortedKeys(verify.Jobs), []string{"verify"}), ""); err != nil {
+	if err := require(verifyWorkflowArtifact, "contains only approved verification jobs", reflect.DeepEqual(sortedKeys(verify.Jobs), []string{"artifact-macos", "artifact-windows", "verify"}), ""); err != nil {
 		return err
+	}
+	for _, native := range []struct {
+		name   string
+		runner string
+	}{
+		{name: "artifact-macos", runner: "macos-latest"},
+		{name: "artifact-windows", runner: "windows-latest"},
+	} {
+		if err := checkNativeArtifactJob(native.name, native.runner, verify.Jobs[native.name]); err != nil {
+			return err
+		}
 	}
 	job, exists := verify.Jobs["verify"]
 	if err := require(verifyWorkflowArtifact, "has the verify job", exists, ""); err != nil {
@@ -889,7 +1077,8 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		{name: "Verify transport-independent dependency graph offline", run: transportIndependentGraphScript},
 		{name: "Verify reqwest feature compatibility offline", run: compatibilityVerificationScript},
 		{name: "Verify Rust MSRV offline", run: msrvVerificationScript},
-		{name: "Verify crate package contents offline", run: packageVerificationScript},
+		{name: "Verify workspace package contents offline", run: packageVerificationScript},
+		{name: "Install CLI from reviewed source offline", run: sourceInstallScript},
 	}
 	if len(job.Steps) != len(expectedSteps) {
 		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "uses only the approved verification steps"}
@@ -928,6 +1117,49 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	return nil
 }
 
+func checkNativeArtifactJob(name, runner string, job workflowJob) error {
+	if !defaultJobExecution(job) || job.Needs != "" || job.Uses != "" || len(job.Permissions) != 0 || !defaultRunSettings(job.Defaults) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use default execution controls", Detail: name}
+	}
+	if job.RunsOn != runner || job.TimeoutMinutes != 20 {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use approved runners and timeouts", Detail: name}
+	}
+	installScript := sourceInstallScript
+	if runner == "windows-latest" {
+		installScript = windowsSourceInstallScript
+	}
+	expected := []struct {
+		name string
+		run  string
+		uses string
+		with map[string]any
+		env  map[string]string
+	}{
+		{name: "Check out repository", uses: "actions/checkout", with: map[string]any{"fetch-depth": 0, "persist-credentials": false}},
+		{name: "Install pinned Rust toolchain", run: "rustup toolchain install 1.97.1 --profile minimal"},
+		{name: "Fetch locked Rust dependencies", run: nativeArtifactFetchScript},
+		{name: "Verify native binary artifact behavior", run: nativeArtifactTestScript, env: map[string]string{"RUSTFLAGS": "--cfg opendart_compat"}},
+		{name: "Install CLI from reviewed source offline", run: installScript},
+	}
+	if len(job.Steps) != len(expected) {
+		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved steps", Detail: name}
+	}
+	for index, want := range expected {
+		step := job.Steps[index]
+		if step.Name != want.name || !exactScript(step.Run, want.run) || !reflect.DeepEqual(step.Env, want.env) || !defaultStepExecution(step) || !defaultStepRunSettings(step) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved steps", Detail: name + ": " + step.Name}
+		}
+		if want.uses == "" {
+			if step.Uses != "" || len(step.With) != 0 {
+				return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved steps", Detail: name + ": " + step.Name}
+			}
+		} else if !strings.HasPrefix(step.Uses, want.uses+"@") || !reflect.DeepEqual(step.With, want.with) {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved actions", Detail: name + ": " + step.Name}
+		}
+	}
+	return nil
+}
+
 func checkLiveWorkflow(live workflow, source string) error {
 	if err := require(liveWorkflowArtifact, "has the expected workflow name", live.Name == "Live Conformance", ""); err != nil {
 		return err
@@ -960,27 +1192,48 @@ func checkLiveWorkflow(live workflow, source string) error {
 	if !standardJobControls(job, "ubuntu-latest", 30) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "producer uses only approved execution controls"}
 	}
-	expectedNames := []string{"Check out trusted revision", "Set up Go", "Recheck offline gates", "Run live conformance", "Upload sanitized report"}
+	expectedNames := []string{"Check out trusted revision", "Set up Go", "Install pinned Rust toolchain", "Fetch locked Rust dependencies", "Build live runners without credentials", "Recheck offline gates", "Run live conformance and Rust CLI smoke", "Upload sanitized report"}
 	if !reflect.DeepEqual(stepNames(job.Steps), expectedNames) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "uses only approved producer steps in order"}
 	}
 	checkout := job.Steps[0]
 	setup := job.Steps[1]
-	preflight := job.Steps[2]
-	run := job.Steps[3]
-	upload := job.Steps[4]
+	installRust := job.Steps[2]
+	fetchRust := job.Steps[3]
+	build := job.Steps[4]
+	preflight := job.Steps[5]
+	run := job.Steps[6]
+	upload := job.Steps[7]
 	if checkout.Uses != checkoutAction || checkout.Run != "" || !reflect.DeepEqual(checkout.With, map[string]any{"persist-credentials": false}) || !defaultStepExecution(checkout) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "checks out the trusted dispatched revision without credentials"}
 	}
 	if setup.Uses != setupGoAction || setup.Run != "" || !reflect.DeepEqual(setup.With, map[string]any{"cache": true, "go-version-file": "go.mod"}) || !defaultStepExecution(setup) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "uses the approved Go setup"}
 	}
-	if preflight.Run != "go run ./cmd/opendart-tool live-conformance --preflight-only --repository-root ." || preflight.Uses != "" || !defaultStepExecution(preflight) {
+	if installRust.Run != "rustup toolchain install 1.97.1 --profile minimal" || installRust.Uses != "" || !defaultStepExecution(installRust) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "installs the approved Rust toolchain before credential exposure"}
+	}
+	if fetchRust.Run != nativeArtifactFetchScript || fetchRust.Uses != "" || !defaultStepExecution(fetchRust) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "fetches locked Rust dependencies before credential exposure"}
+	}
+	if build.Run != liveBuildScript || build.Uses != "" || !defaultStepExecution(build) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "builds only the approved live runners before credential exposure"}
+	}
+	if preflight.Run != ".live-bin/opendart-tool live-conformance --preflight-only --repository-root ." || preflight.Uses != "" || !defaultStepExecution(preflight) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "rechecks credential-free live gates before secret exposure"}
 	}
-	expectedCredential := map[string]string{"OPENDART_API_KEY": "${{ secrets.OPENDART_API_KEY }}"}
-	if run.Run != liveRunScript || run.Uses != "" || !defaultStepExecution(run) || !reflect.DeepEqual(run.Env, expectedCredential) {
-		return &Error{Artifact: liveWorkflowArtifact, Invariant: "exposes the API key only to the canonical request boundary"}
+	expectedCredential := map[string]string{
+		"OPENDART_API_KEY":    "${{ secrets.OPENDART_API_KEY }}",
+		"OPENDART_LIVE_TESTS": "1",
+	}
+	if run.Run != liveRunScript {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "runs only the approved live conformance commands"}
+	}
+	if run.Uses != "" || !defaultStepExecution(run) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "exposes credentials only through a direct fail-closed request step"}
+	}
+	if !reflect.DeepEqual(run.Env, expectedCredential) {
+		return &Error{Artifact: liveWorkflowArtifact, Invariant: "sets only the approved live request gates"}
 	}
 	expectedUpload := map[string]any{
 		"name": "live-conformance-report-${{ github.run_attempt }}", "path": "live-conformance-report.json",
@@ -990,10 +1243,10 @@ func checkLiveWorkflow(live workflow, source string) error {
 	if upload.Uses != uploadArtifactAction || upload.Run != "" || !exactWorkflowExpression(upload.If, "always()") || upload.ContinueOnError || !reflect.DeepEqual(upload.With, expectedUpload) {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "uploads only the bounded sanitized report"}
 	}
-	if err := checkStepPolicies(liveWorkflowArtifact, job.Steps, "Run live conformance", "producer steps use default run settings", "API key is absent outside the request boundary"); err != nil {
+	if err := checkStepPolicies(liveWorkflowArtifact, job.Steps, "Run live conformance and Rust CLI smoke", "producer steps use default run settings", "API key is absent outside the request boundary"); err != nil {
 		return err
 	}
-	if strings.Count(source, "${{ secrets.OPENDART_API_KEY }}") != 1 || strings.Count(source, "OPENDART_API_KEY") != 2 || strings.Contains(source, "issues: write") || strings.Contains(source, "github.token") || strings.Contains(source, "GITHUB_TOKEN") {
+	if strings.Count(source, "${{ secrets.OPENDART_API_KEY }}") != 1 || strings.Count(source, "OPENDART_API_KEY") != 2 || strings.Count(source, "OPENDART_LIVE_TESTS") != 1 || strings.Contains(source, "issues: write") || strings.Contains(source, "github.token") || strings.Contains(source, "GITHUB_TOKEN") {
 		return &Error{Artifact: liveWorkflowArtifact, Invariant: "contains only the single protected credential reference and no issue authority"}
 	}
 	if err := checkActionPins(liveWorkflowArtifact, live); err != nil {

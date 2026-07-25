@@ -15,7 +15,7 @@ import (
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 )
 
-const SchemaVersion = 2
+const SchemaVersion = 3
 
 type Representation string
 
@@ -67,13 +67,25 @@ type PhysicalOperation struct {
 }
 
 type Parameter struct {
-	WireName string         `json:"wireName"`
-	RustName string         `json:"rustName"`
-	Required bool           `json:"required"`
-	Shape    ParameterShape `json:"shape"`
-	Explode  bool           `json:"explode"`
-	MinItems *int64         `json:"minItems,omitempty"`
-	MaxItems *int64         `json:"maxItems,omitempty"`
+	WireName    string            `json:"wireName"`
+	RustName    string            `json:"rustName"`
+	Required    bool              `json:"required"`
+	Shape       ParameterShape    `json:"shape"`
+	Explode     bool              `json:"explode"`
+	MinItems    *int64            `json:"minItems,omitempty"`
+	MaxItems    *int64            `json:"maxItems,omitempty"`
+	Constraints StringConstraints `json:"constraints,omitzero"`
+}
+
+// StringConstraints is the closed set of generated validations for scalar
+// strings and string-array elements.
+type StringConstraints struct {
+	Format         string   `json:"format,omitempty"`
+	AllowedValues  []string `json:"allowedValues,omitempty"`
+	MinLength      *int64   `json:"minLength,omitempty"`
+	MaxLength      *int64   `json:"maxLength,omitempty"`
+	DecimalMinimum *int64   `json:"decimalMinimum,omitempty"`
+	DecimalMaximum *int64   `json:"decimalMaximum,omitempty"`
 }
 
 type Response struct {
@@ -330,6 +342,7 @@ func normalizeParameters(source openapispec.SDKSurfaceOperation) ([]Parameter, e
 		parameter := Parameter{
 			WireName: sourceParameter.Name, RustName: rustFieldName(sourceParameter.Name), Required: sourceParameter.Required,
 			Explode: sourceParameter.Explode, MinItems: cloneInt(sourceParameter.MinItems), MaxItems: cloneInt(sourceParameter.MaxItems),
+			Constraints: normalizeStringConstraints(sourceParameter.StringConstraints),
 		}
 		if sourceParameter.AllowEmptyValue || sourceParameter.AllowReserved {
 			return nil, reject("unsupported-parameter-serialization", source.OperationID, "parameters/"+sourceParameter.Name, "allowEmptyValue and allowReserved must be false")
@@ -356,6 +369,9 @@ func normalizeParameters(source openapispec.SDKSurfaceOperation) ([]Parameter, e
 			}
 		default:
 			return nil, reject("unsupported-parameter-schema", source.OperationID, "parameters/"+sourceParameter.Name, strings.Join(sourceParameter.Types, ","))
+		}
+		if err := validateStringConstraints(parameter.Constraints); err != nil {
+			return nil, reject("invalid-string-constraint", source.OperationID, "parameters/"+sourceParameter.Name, err.Error())
 		}
 		if previous := names[parameter.RustName]; previous != "" {
 			return nil, reject("rust-name-collision", source.OperationID, "parameters", previous+" and "+parameter.WireName)
@@ -693,6 +709,7 @@ func denormalizeParameter(parameter Parameter) openapispec.SDKSurfaceParameter {
 		Name: parameter.WireName, Location: "query", Required: parameter.Required,
 		Style: "form", Explode: parameter.Explode, HasSchema: true,
 		MinItems: cloneInt(parameter.MinItems), MaxItems: cloneInt(parameter.MaxItems),
+		StringConstraints: denormalizeStringConstraints(parameter.Constraints),
 	}
 	if parameter.Shape == StringArray {
 		result.Types = []string{"array"}
@@ -701,6 +718,44 @@ func denormalizeParameter(parameter Parameter) openapispec.SDKSurfaceParameter {
 		result.Types = []string{"string"}
 	}
 	return result
+}
+
+func normalizeStringConstraints(source openapispec.SDKSurfaceStringConstraints) StringConstraints {
+	return StringConstraints{
+		Format: source.Format, AllowedValues: append([]string(nil), source.AllowedValues...),
+		MinLength: cloneInt(source.MinLength), MaxLength: cloneInt(source.MaxLength),
+		DecimalMinimum: cloneInt(source.DecimalMinimum), DecimalMaximum: cloneInt(source.DecimalMaximum),
+	}
+}
+
+func denormalizeStringConstraints(source StringConstraints) openapispec.SDKSurfaceStringConstraints {
+	return openapispec.SDKSurfaceStringConstraints{
+		Format: source.Format, AllowedValues: append([]string(nil), source.AllowedValues...),
+		MinLength: cloneInt(source.MinLength), MaxLength: cloneInt(source.MaxLength),
+		DecimalMinimum: cloneInt(source.DecimalMinimum), DecimalMaximum: cloneInt(source.DecimalMaximum),
+	}
+}
+
+func validateStringConstraints(source StringConstraints) error {
+	switch source.Format {
+	case "", "opendart-corp-code", "opendart-date", "opendart-year":
+	default:
+		return fmt.Errorf("unsupported format %q", source.Format)
+	}
+	if source.MinLength != nil && *source.MinLength < 1 || source.MaxLength != nil && *source.MaxLength < 1 || source.MinLength != nil && source.MaxLength != nil && *source.MinLength > *source.MaxLength {
+		return fmt.Errorf("invalid length range")
+	}
+	seen := make(map[string]bool, len(source.AllowedValues))
+	for _, value := range source.AllowedValues {
+		if value == "" || seen[value] {
+			return fmt.Errorf("allowed values must be unique and non-empty")
+		}
+		seen[value] = true
+	}
+	if source.DecimalMaximum != nil && source.DecimalMinimum == nil || source.DecimalMinimum != nil && *source.DecimalMinimum < 0 || source.DecimalMinimum != nil && source.DecimalMaximum != nil && *source.DecimalMaximum < *source.DecimalMinimum {
+		return fmt.Errorf("invalid decimal range")
+	}
+	return nil
 }
 
 func cloneInt(value *int64) *int64 {

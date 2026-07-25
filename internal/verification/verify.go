@@ -93,7 +93,7 @@ type dependencies struct {
 	checkLive       func(string) error
 	checkEvidence   func(string) error
 	checkRelease    func(string) error
-	checkRustSDK    func(string, string) error
+	checkRustSDK    func(string, sdkgen.RustOutputs) error
 }
 
 // Verify runs the complete repository gate using only committed local files.
@@ -125,6 +125,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	bundle := filepath.Join(absoluteRoot, "openapi", "generated", "openapi.bundle.yaml")
 	auditorEvidence := filepath.Join(absoluteRoot, "docs", "api", "evidence", "auditor-2026-07-18.json")
 	rustSDKOutput := filepath.Join(absoluteRoot, "sdk", "rust", "crates", "opendart", "src", "generated")
+	rustCLIOutput := filepath.Join(absoluteRoot, "sdk", "rust", "crates", "opendart-cli", "src", "generated")
 
 	catalog, err := deps.validateCatalog(guide.CatalogOptions{Root: source})
 	if err != nil {
@@ -146,7 +147,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
 		return Report{}, err
 	}
-	if err := deps.checkRustSDK(source, rustSDKOutput); err != nil {
+	if err := deps.checkRustSDK(source, sdkgen.RustOutputs{SDK: rustSDKOutput, CLI: rustCLIOutput}); err != nil {
 		rule := "sdk-generation"
 		switch {
 		case errors.Is(err, sdkgen.ErrGeneratedMissing):
@@ -159,6 +160,11 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 			rule = "generated-ownership"
 		}
 		operation, location := "", ""
+		artifact := rustSDKOutput
+		var artifactError *sdkgen.ArtifactError
+		if errors.As(err, &artifactError) {
+			artifact = artifactError.Output
+		}
 		var modelError *model.Error
 		if errors.As(err, &modelError) {
 			rule, operation, location = modelError.Rule, modelError.Operation, modelError.Location
@@ -167,7 +173,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 		if errors.As(err, &surfaceError) {
 			rule, operation, location = surfaceError.Rule, surfaceError.Operation, surfaceError.Location
 		}
-		return Report{}, contextualFailure(phaseRustSDKFreshness, rustSDKOutput, rule, operation, location, err)
+		return Report{}, contextualFailure(phaseRustSDKFreshness, artifact, rule, operation, location, err)
 	}
 	if err := deps.checkLive(absoluteRoot); err != nil {
 		return Report{}, liveConformanceFailure(err)
