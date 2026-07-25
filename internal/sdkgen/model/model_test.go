@@ -1,10 +1,13 @@
 package model_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"path/filepath"
 	"runtime"
 	"slices"
+	"sync"
 	"testing"
 
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
@@ -38,13 +41,78 @@ func TestBuildCoversCanonicalPhysicalInventoryDeterministically(t *testing.T) {
 		t.Fatal("normalized physical inventory differs from the canonical projection")
 	}
 
-	surface.Operations[0].SourceCheckedAt = "future-date-that-must-not-affect-generated-code"
-	withoutVolatileProvenance, err := model.Build(surface)
+	changedSurface := canonicalSurface(t)
+	changedSurface.Operations[0].SourceCheckedAt = "future-date-that-must-not-affect-generated-code"
+	withoutVolatileProvenance, err := model.Build(changedSurface)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if withoutVolatileProvenance.Checksum != first.Checksum {
 		t.Fatal("source checked-at date changed the SDK projection checksum")
+	}
+}
+
+func TestCanonicalSurfaceFixtureClonesNestedState(t *testing.T) {
+	first := canonicalSurface(t)
+	second := canonicalSurface(t)
+	before, err := json.Marshal(second)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operation := firstOperationWithParameters(t, &first)
+	matchingOperation := findSurfaceOperation(t, &second, operation.OperationID)
+	if len(operation.Security) == 0 || len(operation.Security[0].Schemes) == 0 ||
+		len(matchingOperation.Security) == 0 || len(matchingOperation.Security[0].Schemes) == 0 {
+		t.Fatal("canonical operation has no matching security scheme")
+	}
+	if len(operation.Responses) == 0 || len(operation.Responses[0].MediaTypes) == 0 ||
+		len(matchingOperation.Responses) == 0 || len(matchingOperation.Responses[0].MediaTypes) == 0 {
+		t.Fatal("canonical operation has no matching response media type")
+	}
+	securityScopes := slices.Clone(matchingOperation.Security[0].Schemes[0].Scopes)
+	requiredProperties := slices.Clone(matchingOperation.Responses[0].MediaTypes[0].Schema.Required)
+
+	operation.Parameters[0].Name = "mutated"
+	if len(operation.Parameters[0].Types) == 0 {
+		t.Fatal("canonical parameter has no type")
+	}
+	operation.Parameters[0].Types[0] = "mutated"
+	pointerMutated := false
+	for operationIndex := range first.Operations {
+		for parameterIndex := range first.Operations[operationIndex].Parameters {
+			minItems := first.Operations[operationIndex].Parameters[parameterIndex].MinItems
+			if minItems != nil {
+				*minItems++
+				pointerMutated = true
+				break
+			}
+		}
+		if pointerMutated {
+			break
+		}
+	}
+	if !pointerMutated {
+		t.Fatal("canonical surface has no pointer-backed parameter constraint")
+	}
+	operation.Security[0].Schemes[0].Scopes = append(operation.Security[0].Schemes[0].Scopes, "mutated")
+	operation.Responses[0].MediaTypes[0].Schema.Required = append(
+		operation.Responses[0].MediaTypes[0].Schema.Required,
+		"mutated",
+	)
+
+	after, err := json.Marshal(second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(before, after) {
+		t.Fatal("mutating one canonical surface clone changed another")
+	}
+	if !slices.Equal(matchingOperation.Security[0].Schemes[0].Scopes, securityScopes) {
+		t.Fatal("mutating security scopes changed the matching canonical operation")
+	}
+	if !slices.Equal(matchingOperation.Responses[0].MediaTypes[0].Schema.Required, requiredProperties) {
+		t.Fatal("mutating response schema requirements changed the matching canonical operation")
 	}
 }
 
@@ -236,23 +304,39 @@ func assertModelRule(t *testing.T, err error, rule string) {
 	}
 }
 
-func canonicalSurface(t *testing.T) openapispec.SDKSurface {
-	t.Helper()
+var loadCanonicalSurfaceOnce = sync.OnceValues(func() ([]byte, error) {
+	surface, err := loadCanonicalSurface()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(surface)
+})
+
+func loadCanonicalSurface() (openapispec.SDKSurface, error) {
 	_, current, _, ok := runtime.Caller(0)
 	if !ok {
-		t.Fatal("cannot locate test source")
+		return openapispec.SDKSurface{}, errors.New("cannot locate test source")
 	}
 	root := filepath.Join(filepath.Dir(current), "..", "..", "..", "openapi", "openapi.yaml")
 	document, err := openapispec.Load(root)
 	if err != nil {
-		t.Fatal(err)
+		return openapispec.SDKSurface{}, err
 	}
 	defer document.Close()
-	surface, err := document.InspectSDKSurface()
+	return document.InspectSDKSurface()
+}
+
+func canonicalSurface(t *testing.T) openapispec.SDKSurface {
+	t.Helper()
+	encoded, err := loadCanonicalSurfaceOnce()
 	if err != nil {
 		t.Fatal(err)
 	}
-	return surface
+	var clone openapispec.SDKSurface
+	if err := json.Unmarshal(encoded, &clone); err != nil {
+		t.Fatal(err)
+	}
+	return clone
 }
 
 func firstOperationWithParameters(t *testing.T, surface *openapispec.SDKSurface) *openapispec.SDKSurfaceOperation {
@@ -263,6 +347,17 @@ func firstOperationWithParameters(t *testing.T, surface *openapispec.SDKSurface)
 		}
 	}
 	t.Fatal("canonical surface has no parameterized operation")
+	return nil
+}
+
+func findSurfaceOperation(t *testing.T, surface *openapispec.SDKSurface, id string) *openapispec.SDKSurfaceOperation {
+	t.Helper()
+	for index := range surface.Operations {
+		if surface.Operations[index].OperationID == id {
+			return &surface.Operations[index]
+		}
+	}
+	t.Fatalf("SDK surface operation %q not found", id)
 	return nil
 }
 

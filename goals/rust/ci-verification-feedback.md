@@ -27,18 +27,19 @@ _None._
 
 ### Completed included results
 
-_None._
+- Parallel Go and Rust verification now runs behind one failure-aware, stable
+  aggregate `verify` result. PR #47 merged as `fdabb18` with workflow-policy
+  guards, truthful documentation, and unchanged verification commands.
 
 ### Current in-scope result
 
-Parallel Go and Rust verification behind one failure-aware, stable aggregate
-`verify` result, with matching workflow-policy guards and truthful release
-documentation.
+Structurally faster Go tests by removing repeated canonical model and artifact
+construction while preserving command-level and end-to-end coverage.
 
 ### Next in-scope action
 
-Push the bounded review follow-up, wait for PR #47's final checks and review,
-then resolve the review thread and merge before changing test coverage.
+Push the bounded review follow-up, wait for PR #48's final checks, resolve its
+review thread, and merge before changing the test portfolio.
 
 ### Evidence and blockers
 
@@ -69,3 +70,24 @@ then resolve the review thread and merge before changing test coverage.
   now use a bounded command context and distinguish timeouts from expected
   fail-closed exits. Targeted releaseguard and verification tests and vet pass
   with the follow-up.
+- Candidate: canonical model and rendered-artifact fixture refactor.
+  Classification: included. Contract basis: the second included result.
+  Action: proceed without changing functional or race coverage.
+- Reconnaissance found 23 full canonical surface loads in
+  `internal/sdkgen/model` and about 32 full render pipelines in
+  `internal/sdkgen`. The refactor loads and serializes the canonical model once
+  for isolated clones and renders one immutable artifact fixture for mutation
+  and filesystem cases; one complete public generation/freshness path remains.
+- Forced-fresh package time fell from 14.2 to 1.7 seconds for
+  `internal/sdkgen/model` and from 36.3 to 4.6 seconds for `internal/sdkgen`.
+  The unchanged full race suite fell from 5 minutes 13 seconds to 2 minutes 2
+  seconds with the workstation's current build cache.
+- `TestVerifyAcceptedRepository` remains because it is the only package test
+  that exercises all real verification dependencies; the explicit command is
+  operational end-to-end coverage rather than a substitute for that regression
+  path.
+- Vet, all normal tests, the repository verifier, repeated shuffled fixture
+  tests, focused race tests, and the full race suite pass.
+- Independent review found no delivery or correctness gaps. CodeRabbit's one
+  valid test-strength finding is addressed by requiring matching security and
+  response-schema fields and asserting both remain isolated across clones.
