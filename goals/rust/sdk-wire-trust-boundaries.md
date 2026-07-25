@@ -7,9 +7,10 @@ normalization fail closed at the Rust SDK's public wire boundaries.
 
 ## Status
 
-Implementation and local release validation are complete. Delivery is active
-in [PR #46](https://github.com/cpaikr/opendart/pull/46); remote verification,
-review resolution, and merge remain.
+Implementation, local release validation, and the first remote verification
+run are complete. Delivery is active in
+[PR #46](https://github.com/cpaikr/opendart/pull/46); the reviewed follow-up,
+its remote verification, and merge remain.
 
 ## Completed
 
@@ -29,13 +30,17 @@ review resolution, and merge remain.
 - Fresh security and design review findings are resolved, and the complete
   local stable, MSRV, package, compatibility, repository, and install gates
   pass.
+- CodeRabbit's full review found a partially form-decoded credential case.
+  Post-decoding `+` bytes are now treated as ambiguous literal-plus or
+  form-space bytes, with focused unit and transport coverage.
 
 ## Remaining
 
-- Complete remote Linux, macOS, and Windows verification.
-- Resolve any PR feedback and merge PR #46.
+- Push the independently reviewed CodeRabbit follow-up and complete its remote
+  Linux, macOS, and Windows verification.
+- Resolve the review thread and merge PR #46.
 
 ## Next action
 
-Monitor PR #46 checks, address any actionable feedback, and merge only after
-required verification and review state permit it.
+Push the CodeRabbit follow-up, resolve its thread after remote verification,
+and merge only when every required check is green.

@@ -15,7 +15,9 @@ follow XML 1.0 line-ending normalization without changing character references.
   credential marker; malformed escapes, decoded control or non-text bytes, and
   unresolved escapes at the limit cause omission. Unit, transport, and CLI
   coverage includes mixed, fully encoded, nested, lowercase, and malformed
-  values.
+  values. The CodeRabbit follow-up also treats post-decoding `+` bytes as
+  ambiguous literal-plus or form-space bytes, closing the partially decoded
+  form-encoding case without rewriting retained metadata.
 - `WireInspector` uses the event stream from `quick-xml` as if successful
   tokenization proved XML 1.0 well-formedness. Focused review probes found
   accepted illegal names, `<` inside attribute values, invalid comments,
@@ -183,6 +185,6 @@ follow XML 1.0 line-ending normalization without changing character references.
 
 ## Next action
 
-Monitor [PR #46](https://github.com/cpaikr/opendart/pull/46), resolve any
-actionable feedback, and merge only after required Linux, macOS, and Windows
-verification passes.
+Push the reviewed CodeRabbit follow-up to
+[PR #46](https://github.com/cpaikr/opendart/pull/46), resolve its thread after
+required Linux, macOS, and Windows verification passes, and merge.

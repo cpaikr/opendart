@@ -654,9 +654,22 @@ fn header_stage_contains_sensitive_value(
     percent_encoded_secret: &[u8],
 ) -> bool {
     contains_bytes(value, secret)
+        || contains_secret_after_partial_form_decoding(value, secret)
         || contains_ascii_case_insensitive(value, form_encoded_secret)
         || contains_ascii_case_insensitive(value, percent_encoded_secret)
         || contains_ascii_case_insensitive(value, b"crtfc_key")
+}
+
+/// Matches form-space separators after percent decoding has made literal and
+/// separator `+` bytes indistinguishable.
+fn contains_secret_after_partial_form_decoding(value: &[u8], secret: &[u8]) -> bool {
+    !secret.is_empty()
+        && value.windows(secret.len()).any(|window| {
+            window
+                .iter()
+                .zip(secret)
+                .all(|(value, secret)| value == secret || (*value == b'+' && *secret == b' '))
+        })
 }
 
 fn percent_decode_header_value(value: &[u8]) -> Result<Option<Vec<u8>>, ()> {
@@ -1367,6 +1380,7 @@ mod tests {
                 ("content-language", fully_encoded_marker),
                 ("content-language", nested_marker),
                 ("content-language", "safe%2"),
+                ("content-language", "secret+/++credential"),
                 ("content-encoding", form_encoded),
                 ("retry-after", percent_encoded),
                 ("date", "crtfc_key"),
@@ -1447,6 +1461,7 @@ mod tests {
             b"%63%72%74%66%63%5F%6B%65%79=value".as_slice(),
             b"%2563%2572%2574%2566%2563%255f%256b%2565%2579".as_slice(),
             b"secret+%2f%2b+credential".as_slice(),
+            b"secret+/++credential".as_slice(),
             b"%73%65%63%72%65%74%20%2f%2b%20%63%72%65%64%65%6e%74%69%61%6c".as_slice(),
             b"trace=crtfc_key; value=secret /+ credential".as_slice(),
             b"safe%".as_slice(),
@@ -1463,6 +1478,13 @@ mod tests {
                 String::from_utf8_lossy(unsafe_value)
             );
         }
+
+        assert!(!header_value_is_safe(
+            b"secret+/+credential",
+            b"secret / credential",
+            b"secret+%2F+credential",
+            b"secret%20%2F%20credential",
+        ));
 
         for safe_value in [
             b"application/json".as_slice(),
