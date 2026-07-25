@@ -12,10 +12,9 @@ and expensive tests should pay only for the behavior they actually exercise.
 - PR #46 is merged. The goal now runs from the dedicated
   `goal/rust-ci-verification-feedback` integration branch based on the updated
   `rust` branch, with the local planning patch preserved.
-- The first topology slice is implemented on `ci/parallel-verify-topology`.
-  It gives Go and Rust independent Linux jobs, retains every existing command
-  including `go test -race ./...`, and adds a final `verify` fan-in over those
-  jobs plus the existing macOS and Windows artifact jobs.
+- PR #47 merged as `fdabb18`. Go and Rust now run as independent Linux jobs,
+  every prior command remains, and a final `verify` fan-in requires those jobs
+  plus the macOS and Windows artifact jobs.
 - `internal/releaseguard` now owns the split responsibilities, exact aggregate
   dependencies, unconditional evaluation, and all-success result policy.
   Executed tests cover successful, failed, cancelled, and unexpectedly skipped
@@ -36,12 +35,22 @@ and expensive tests should pay only for the behavior they actually exercise.
   CI problem.
 - The most expensive race-instrumented Go packages are `internal/sdkgen`,
   `internal/sdkgen/model`, `internal/openapi`, `internal/verification`,
-  `internal/guide`, and `internal/liveconformance`. Several generator and model
-  mutation tests repeatedly rebuild the same canonical OpenAPI-derived state.
-- The workflow also runs the repository verifier explicitly while
-  `TestVerifyAcceptedRepository` exercises a full accepted-repository path
-  inside the Go suite. Their assertions may overlap, but that overlap has not
-  yet been mapped well enough to remove either gate safely.
+  `internal/guide`, and `internal/liveconformance`.
+- The fixture audit found 23 full canonical surface loads in
+  `internal/sdkgen/model` and about 32 full render pipelines in
+  `internal/sdkgen`. The current slice caches a serialized canonical surface
+  for isolated clones and one immutable rendered artifact set for mutation and
+  filesystem cases. The public parse-to-publish-to-freshness path remains
+  covered end to end.
+- Forced-fresh package time fell from 14.2 to 1.7 seconds for
+  `internal/sdkgen/model` and from 36.3 to 4.6 seconds for `internal/sdkgen`.
+  The unchanged full race suite fell from 5 minutes 13 seconds to 2 minutes 2
+  seconds with the workstation's current build cache.
+- The workflow still runs the repository verifier explicitly, and
+  `TestVerifyAcceptedRepository` remains because it is the only package test
+  exercising all real verification dependencies. CLI tests use an injected
+  runner, so removing the accepted-repository test would discard a distinct
+  regression path.
 - `internal/releaseguard` intentionally fixes the workflow's job and step
   shape, including `go test -race ./...`; the guard and its tests must change
   with the workflow rather than be bypassed.
@@ -218,6 +227,5 @@ lists in prose and YAML.
 
 ## Next action
 
-Push the bounded CodeRabbit follow-up, wait for PR #47's final checks and
-review, resolve its review thread, and merge. Do not change the test portfolio
-until that delivery lifecycle is complete.
+Complete the independent review, commit the validated canonical-fixture
+refactor, and open its sequential PR against the goal integration branch.
