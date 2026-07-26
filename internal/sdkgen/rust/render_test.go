@@ -156,6 +156,12 @@ func TestRenderBoundsOptionalArrayInputs(t *testing.T) {
 	if !strings.Contains(operation, "self.corp_code = Some(value.into_iter().take(3).map(Into::into).collect())") {
 		t.Fatal("bounded optional array setter does not retain only the maximum plus one values")
 	}
+	if strings.Contains(operation, "This constructor consumes and retains") {
+		t.Fatal("bounded optional array consumption is incorrectly attributed to the constructor")
+	}
+	if !strings.Contains(operation, "This setter consumes and retains at most 3 items from the iterator so oversized or infinite inputs fail without being exhausted.") {
+		t.Fatal("bounded optional array setter does not document its consumption and retention contract")
+	}
 }
 
 func TestRenderRejectsUnrepresentableArraySentinel(t *testing.T) {

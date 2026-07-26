@@ -442,7 +442,7 @@ func renderConstructor(output *strings.Builder, operation model.LogicalOperation
 	}
 	output.WriteString("    /// Creates an operation input. Explicit contract validation occurs during preparation.\n")
 	for _, parameter := range operation.Parameters {
-		if parameter.Shape == model.StringArray && parameter.MaxItems != nil {
+		if parameter.Required && parameter.Shape == model.StringArray && parameter.MaxItems != nil {
 			fmt.Fprintf(output, "    ///\n    /// This constructor consumes and retains at most %d items from the `%s` iterator so oversized or infinite inputs fail without being exhausted.\n", *parameter.MaxItems+1, parameter.WireName)
 		}
 	}
@@ -478,8 +478,12 @@ func renderParameterMethods(output *strings.Builder, parameter model.Parameter) 
 			parameter.WireName, parameter.RustName, getterType(parameter), getterExpression(parameter))
 		return
 	}
-	fmt.Fprintf(output, "    /// Sets the optional `%s` input.\n    #[must_use]\n    pub fn with_%s(mut self, value: %s) -> Self { self.%s = Some(%s); self }\n\n",
-		parameter.WireName, parameter.RustName, constructorType(parameter), parameter.RustName, ownedConversion(parameter, "value"))
+	fmt.Fprintf(output, "    /// Sets the optional `%s` input.\n", parameter.WireName)
+	if parameter.Shape == model.StringArray && parameter.MaxItems != nil {
+		fmt.Fprintf(output, "    ///\n    /// This setter consumes and retains at most %d items from the iterator so oversized or infinite inputs fail without being exhausted.\n", *parameter.MaxItems+1)
+	}
+	fmt.Fprintf(output, "    #[must_use]\n    pub fn with_%s(mut self, value: %s) -> Self { self.%s = Some(%s); self }\n\n",
+		parameter.RustName, constructorType(parameter), parameter.RustName, ownedConversion(parameter, "value"))
 	fmt.Fprintf(output, "    /// Returns the optional `%s` input when supplied.\n    #[must_use]\n    pub fn %s(&self) -> %s { %s }\n\n",
 		parameter.WireName, parameter.RustName, getterType(parameter), getterExpression(parameter))
 }
