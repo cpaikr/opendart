@@ -52,10 +52,9 @@ filesystem work on the current-thread async runtime.
 - Full Go and Rust repository verification passes locally on macOS, including
   stable Clippy, the compatibility artifact process suite, package verification,
   clean installation, and the Rust 1.85 floor. The Rust 1.85 CLI cross-check
-  passes for Windows. The Linux CLI cross-check is blocked locally by the
-  native-TLS OpenSSL sysroot, while the isolated publication path still
-  compiles for Linux. Native Linux and Windows process behavior remains a
-  validation gate.
+  passes for Windows. PR verification also passes the native macOS and Windows
+  artifact jobs and the full Linux Rust suite, including the safe
+  pathname-replacement rejection when an unlinked inode cannot be published.
 - The deadline, staging-setup trust boundary, and commit handoff policies found
   by review are now resolved in implementation and public documentation.
 - Follow-up review also verified the SDK-default deadline path and pre-stream
@@ -204,4 +203,4 @@ filesystem work on the current-thread async runtime.
 ## Next action
 
 Complete the cleanup-failure matrix for transport/body, write, and publication
-failures, then run the artifact process suite natively on Linux and Windows.
+failures.
