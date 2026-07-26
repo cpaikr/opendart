@@ -105,8 +105,9 @@ match the CI workflow exactly.
 - Warnings-denied all-feature Clippy and rustdoc pass.
 - Both exact README compatibility loopback commands pass offline without
   credentials.
-- The complete pinned stable, MSRV, feature, package, and clean-install gate is
-  pending after independent review.
+- The complete credential-free pre-push gate passes, including pinned stable
+  and MSRV checks, WebAssembly and dependency graphs, package verification,
+  both compatibility suites, and clean CLI installation.
 
 ## Completion criteria
 
@@ -121,5 +122,5 @@ match the CI workflow exactly.
 
 ## Next action
 
-Run independent code review, address any actionable findings, then execute the
-complete credential-free pre-push gate and deliver the API-contract PR.
+Deliver the API-contract PR, resolve hosted review and CI, and merge it before
+the final goal audit.

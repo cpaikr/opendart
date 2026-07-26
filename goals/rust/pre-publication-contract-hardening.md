@@ -95,6 +95,16 @@ _None._
   credential-free compatibility commands. Focused generator, release-guard,
   public-contract, all-feature Clippy, strict rustdoc, and both compatibility
   suites pass; generated sources are fresh.
+- Independent review found array-element prose ambiguity, a future sentinel
+  that could exceed `usize` on supported `wasm32`, a test-only public fallible
+  API in the feature-unification crate, and two handwritten error-contract
+  omissions. Commits `b0197a2` and `fa624e6` resolve every finding and add the
+  portable boundary regression.
+- The complete credential-free pre-push gate passes on `fa624e6`: Go vet,
+  normal and race tests, repository policy and generated freshness, stable and
+  MSRV Rust contracts, structured and binary compatibility, strict rustdoc,
+  transport-independent and WebAssembly dependency checks, reqwest feature
+  unification, package verification, and clean CLI installation.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.
