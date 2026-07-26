@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"math"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -160,7 +159,7 @@ func TestBuildRejectsUnrepresentableArraySentinel(t *testing.T) {
 			if parameter.MaxItems == nil {
 				continue
 			}
-			*parameter.MaxItems = math.MaxInt64
+			*parameter.MaxItems = model.MaximumPortableArrayItems + 1
 			_, err := model.Build(surface)
 			assertModelRule(t, err, "invalid-cardinality")
 			return

@@ -369,8 +369,8 @@ impl ApiKey {
     /// # Errors
     ///
     /// Returns [`AuthorizationError::EmptyApiKey`] for an empty or whitespace-only
-    /// value and [`AuthorizationError::ControlCharacterApiKey`] when any control
-    /// character is present.
+    /// value. Returns [`AuthorizationError::ControlCharacterApiKey`] when a value
+    /// that is not whitespace-only contains any control character.
     pub fn new(value: impl Into<String>) -> Result<Self, AuthorizationError> {
         let value = value.into();
         if value.chars().all(char::is_whitespace) {

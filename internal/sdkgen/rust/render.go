@@ -3,7 +3,6 @@ package rust
 
 import (
 	"fmt"
-	"math"
 	"net/url"
 	"regexp"
 	"sort"
@@ -1011,7 +1010,7 @@ func ownedConversion(parameter model.Parameter, value string) string {
 func validateArraySentinels(source model.Model) error {
 	for _, operation := range source.Logical {
 		for _, parameter := range operation.Parameters {
-			if parameter.Shape == model.StringArray && parameter.MaxItems != nil && *parameter.MaxItems == math.MaxInt64 {
+			if parameter.Shape == model.StringArray && parameter.MaxItems != nil && *parameter.MaxItems > model.MaximumPortableArrayItems {
 				return fmt.Errorf("render Rust SDK: parameter %s.%s has no representable overflow sentinel", operation.ID, parameter.WireName)
 			}
 		}

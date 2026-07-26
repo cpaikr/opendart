@@ -47,9 +47,9 @@ impl Client {
     /// # Errors
     ///
     /// Returns [`ClientError`] when the prepared representation is not structured,
-    /// the HTTP exchange fails or times out, the body exceeds its configured limit,
-    /// the source envelope is malformed, or the success payload does not match the
-    /// generated response type.
+    /// the total deadline cannot be represented, the HTTP exchange fails or times
+    /// out, the body exceeds its configured limit, the source envelope is malformed,
+    /// or the success payload does not match the generated response type.
     pub async fn execute<T>(
         &self,
         prepared: &PreparedRequest<T>,
@@ -77,9 +77,9 @@ impl Client {
     /// # Errors
     ///
     /// Returns [`ClientError`] when the prepared representation is not structured,
-    /// the HTTP exchange fails or times out, the body exceeds its configured limit,
-    /// the source envelope is malformed, or an XML root differs from the generated
-    /// operation contract.
+    /// the total deadline cannot be represented, the HTTP exchange fails or times
+    /// out, the body exceeds its configured limit, the source envelope is malformed,
+    /// or an XML root differs from the generated operation contract.
     pub async fn execute_raw<T>(
         &self,
         prepared: &PreparedRequest<T>,

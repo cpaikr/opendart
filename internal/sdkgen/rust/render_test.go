@@ -1,7 +1,6 @@
 package rust
 
 import (
-	"math"
 	"strings"
 	"testing"
 
@@ -160,15 +159,20 @@ func TestRenderBoundsOptionalArrayInputs(t *testing.T) {
 }
 
 func TestRenderRejectsUnrepresentableArraySentinel(t *testing.T) {
+	maximum := model.MaximumPortableArrayItems
 	source := model.Model{
 		SchemaVersion: model.SchemaVersion,
 		Checksum:      strings.Repeat("a", 64),
 		Logical: []model.LogicalOperation{{
 			ID: "array", RustName: "ArrayInput", Group: "group",
-			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Required: true, Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: int64Pointer(math.MaxInt64)}},
+			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Required: true, Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: &maximum}},
 		}},
 	}
 
+	if _, err := Render(source); err != nil {
+		t.Fatalf("Render() rejected the largest portable sentinel: %v", err)
+	}
+	maximum++
 	if _, err := Render(source); err == nil || !strings.Contains(err.Error(), "overflow sentinel") {
 		t.Fatalf("Render() error = %v", err)
 	}
