@@ -8,27 +8,17 @@ match the CI workflow exactly.
 
 ## Current state
 
-- Generated multi-company inputs accept `IntoIterator<Item = String>` and
-  eagerly collect into `Vec<String>`. Cardinality is checked later during
-  request preparation, so a huge or infinite iterator may allocate without
-  bound or never return before `InvalidCardinality` can be reported.
-- The canonical maximum for the affected company-code lists is already known
-  to the generator. The renderer does not use it while collecting.
-- Bounding collection at maximum plus one changes what a getter can observe
-  for an already-invalid oversized input. The crate is unpublished, but this
-  behavior must be an explicit API decision rather than an accidental side
-  effect.
-- Public fallible manual APIs such as `ApiKey::new`, `Client::execute`,
-  `ClientBuilder::build`, and `SourceValue::number` lack `# Errors` sections.
-  Generated `prepare_*` methods also describe only the success action even
-  though they return `Result`.
-- Workspace `missing_docs` catches absent items but not missing error contracts.
-  Rustdoc currently passes, so the gap needs an explicit documentation test or
-  review rule.
-- `sdk/rust/README.md` says it lists every offline gate but omits the explicit
-  `opendart_compat` structured and binary loopback commands present in
-  `.github/workflows/verify.yml`. Without the cfg, those binaries can execute
-  no compatibility tests while still succeeding.
+- Generated bounded string-array inputs retain at most the canonical maximum
+  plus one sentinel. Valid inputs preserve serialization; oversized and
+  infinite iterators return control and fail preparation with exact existing
+  cardinality metadata.
+- Every generated `prepare_*` method has operation-specific `# Errors`
+  documentation derived from validation facts. The handwritten fallible API
+  inventory is documented, and `clippy::missing_errors_doc` is enforced by the
+  warnings-denied Clippy gate.
+- The Rust README contains the exact structured and binary
+  `opendart_compat` loopback commands, explains the repository-only cfg, and
+  states that both commands are offline and credential-free.
 
 ## Design decisions
 
@@ -108,15 +98,15 @@ match the CI workflow exactly.
 
 ## Validation
 
-- Regenerate both Rust artifact trees and run repository freshness verification.
-- Run focused generated-operation tests for maximum, overflow, and infinite
-  iterators.
-- Run rustdoc with `-D warnings` across all features and review representative
-  manual and generated public pages.
-- Execute every command advertised by the README, including both explicit
-  compatibility loopback binaries.
-- Run pinned stable and MSRV formatting, Clippy, all-feature,
-  no-default-feature, package, and clean-install gates.
+- Generator/model tests and generated-source freshness pass.
+- Public contract tests cover exact-maximum serialization, finite counting,
+  maximum-plus-one retained state, infinite iterators, both bounded generated
+  parameters, and every representation's exact cardinality error.
+- Warnings-denied all-feature Clippy and rustdoc pass.
+- Both exact README compatibility loopback commands pass offline without
+  credentials.
+- The complete pinned stable, MSRV, feature, package, and clean-install gate is
+  pending after independent review.
 
 ## Completion criteria
 
@@ -131,7 +121,5 @@ match the CI workflow exactly.
 
 ## Next action
 
-Implement the maximum-plus-one iterator sentinel and exact counting/infinite
-regression tests, then generate operation-specific `# Errors` sections and add
-the remaining manual fallible-API documentation before synchronizing README and
-CI verification commands.
+Run independent code review, address any actionable findings, then execute the
+complete credential-free pre-push gate and deliver the API-contract PR.
