@@ -95,7 +95,17 @@ func TestCheckRejectsVerificationPortfolioMutations(t *testing.T) {
 	}{
 		{
 			name: "normal Go tests", artifact: verificationScriptArtifact,
-			old: "  go test ./...\n  phase \"targeted Go race tests\"", replacement: "  phase \"targeted Go race tests\"",
+			old: "  go test -vet=off ./...\n  phase \"targeted Go race tests\"", replacement: "  phase \"targeted Go race tests\"",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "normal Go tests repeat vet", artifact: verificationScriptArtifact,
+			old: "go test -vet=off ./...", replacement: "go test ./...",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "targeted race tests repeat vet", artifact: verificationScriptArtifact,
+			old: "go test -race -vet=off \\", replacement: "go test -race \\",
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
@@ -921,6 +931,16 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			name: "verify triggers", artifact: verifyWorkflowArtifact,
 			old: "  workflow_dispatch:", replacement: "  schedule:",
 			invariant: "supports workflow_dispatch",
+		},
+		{
+			name: "verify concurrency group", artifact: verifyWorkflowArtifact,
+			old: "group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}", replacement: "group: ${{ github.workflow }}-${{ github.ref }}",
+			invariant: "cancels only superseded verification runs",
+		},
+		{
+			name: "verify concurrency cancellation", artifact: verifyWorkflowArtifact,
+			old: "cancel-in-progress: true", replacement: "cancel-in-progress: false",
+			invariant: "cancels only superseded verification runs",
 		},
 		{
 			name: "canonical verify command", artifact: verificationScriptArtifact,

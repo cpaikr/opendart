@@ -232,7 +232,7 @@ verification_tmp=
 		{name: "verify_go", body: `  phase "Go vet"
   go vet ./...
   phase "normal Go tests"
-  go test ./...
+  go test -vet=off ./...
   phase "targeted Go race tests"
   verify_targeted_race
   phase "repository policy and artifact verification"
@@ -334,7 +334,7 @@ func expectedTargetedRaceBody() string {
 	var body strings.Builder
 	body.WriteString(`  # Each package owns concurrency or a shared test fixture. Releaseguard's AST
   # audit keeps this explicit set aligned with concurrency-bearing Go packages.
-  go test -race \`)
+  go test -race -vet=off \`)
 	for index, packagePath := range targetedRacePackages {
 		body.WriteString("\n    ")
 		body.WriteString(packagePath)

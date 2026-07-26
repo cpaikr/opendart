@@ -44,6 +44,7 @@ const (
 	setupGoAction              = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
 	uploadArtifactAction       = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
 	downloadArtifactAction     = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
+	verifyConcurrencyGroup     = "${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}"
 
 	liveBuildScript = `mkdir -p .live-bin
 go build -o .live-bin/opendart-tool ./cmd/opendart-tool
@@ -1080,6 +1081,14 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 		return err
 	}
 	if err := require(verifyWorkflowArtifact, "workflow uses default run settings", defaultRunSettings(verify.Defaults), ""); err != nil {
+		return err
+	}
+	if err := require(
+		verifyWorkflowArtifact,
+		"cancels only superseded verification runs",
+		verify.Concurrency.Group == verifyConcurrencyGroup && verify.Concurrency.CancelInProgress,
+		"",
+	); err != nil {
 		return err
 	}
 	for _, trigger := range []string{"pull_request", "workflow_call", "workflow_dispatch"} {

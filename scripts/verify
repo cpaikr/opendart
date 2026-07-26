@@ -59,7 +59,7 @@ fast_rust() {
 verify_targeted_race() {
   # Each package owns concurrency or a shared test fixture. Releaseguard's AST
   # audit keeps this explicit set aligned with concurrency-bearing Go packages.
-  go test -race \
+  go test -race -vet=off \
     ./internal/driftnotifier \
     ./internal/guide \
     ./internal/livenotifier \
@@ -71,7 +71,7 @@ verify_go() {
   phase "Go vet"
   go vet ./...
   phase "normal Go tests"
-  go test ./...
+  go test -vet=off ./...
   phase "targeted Go race tests"
   verify_targeted_race
   phase "repository policy and artifact verification"
