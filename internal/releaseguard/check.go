@@ -127,16 +127,16 @@ cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p ope
 	compatibilityVerificationScript = `RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
 	transportIndependentGraphScript = `no_default_tree="${verification_tmp}/no-default-tree.txt"
 cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features -e normal --prefix none > "${no_default_tree}"
-if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"; then
-  grep -E '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"
+if grep -Eq '^(bytes|futures(-[^ ]+)?|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"; then
+  grep -E '^(bytes|futures(-[^ ]+)?|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"
   exit 1
 fi`
 	wasmVerificationScript = `cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --lib --target wasm32-unknown-unknown -- -D warnings
 cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --lib --target wasm32-unknown-unknown --no-default-features -- -D warnings
 wasm_tree="${verification_tmp}/wasm-tree.txt"
 cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --target wasm32-unknown-unknown -e normal --prefix none > "${wasm_tree}"
-if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${wasm_tree}"; then
-  grep -E '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${wasm_tree}"
+if grep -Eq '^(bytes|futures(-[^ ]+)?|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${wasm_tree}"; then
+  grep -E '^(bytes|futures(-[^ ]+)?|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${wasm_tree}"
   exit 1
 fi`
 	msrvVerificationScript = `cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features

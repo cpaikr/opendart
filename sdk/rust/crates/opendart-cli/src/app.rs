@@ -366,6 +366,15 @@ mod tests {
             }),
             Some(PathBuf::from(r"D:\Users\fallback"))
         );
+        assert_eq!(
+            super::home_path_with(|name| match name {
+                "USERPROFILE" => Some(OsString::from("relative")),
+                "HOMEDRIVE" => Some(OsString::from("D:")),
+                "HOMEPATH" => Some(OsString::from(r"\Users\fallback")),
+                _ => None,
+            }),
+            Some(PathBuf::from(r"D:\Users\fallback"))
+        );
 
         let non_utf8 =
             OsString::from_wide(&[u16::from(b'C'), u16::from(b':'), u16::from(b'\\'), 0xd800]);

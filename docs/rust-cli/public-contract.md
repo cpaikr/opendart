@@ -59,9 +59,9 @@ a shell command string or expand `~`.
 
 The display path collapses only a component-wise home prefix. On Unix, home is
 a nonempty absolute `HOME`; on Windows it is a nonempty absolute `USERPROFILE`,
-falling back to `HOMEDRIVE` plus `HOMEPATH`. Missing, empty, or relative home
-values leave the display path absolute. The exact executable path is never
-collapsed or inferred from the display value.
+falling back to `HOMEDRIVE` plus `HOMEPATH`. The display path remains absolute
+when neither platform candidate resolves to a nonempty absolute path. The exact
+executable path is never collapsed or inferred from the display value.
 
 ```json
 {

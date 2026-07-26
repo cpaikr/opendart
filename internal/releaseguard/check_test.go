@@ -124,6 +124,11 @@ func TestCheckRejectsVerificationPortfolioMutations(t *testing.T) {
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
+			name: "WebAssembly futures family", artifact: verificationScriptArtifact,
+			old: "futures(-[^ ]+)?", replacement: "futures-(core|io|sink|task|util)",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
 			name: "pre-push composition", artifact: verificationScriptArtifact,
 			old: "verify_pre_push() {\n  verify_go\n  verify_rust\n}", replacement: "verify_pre_push() {\n  verify_go\n}",
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
