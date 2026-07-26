@@ -31,19 +31,21 @@ _None._
   the body-delivery, staged-write, and publication matrix after native CI and
   review passed; each case preserves the full primary result while attaching
   only bounded cleanup evidence.
+- CLI command and dispatch contract hardening is complete. PR #56 merged the
+  exhaustive generated dispatch matrix, deepest-prefix help, and narrow
+  hyphen-value normalization after native CI and review passed.
 
 ### Current in-scope result
 
-- Close the CLI command and dispatch contract gaps: mechanically prove every
-  generated canonical operation, logical-ID alias, and representation; return
-  help for the deepest valid command prefix; and accept supported
-  hyphen-leading values without consuming real flags.
+- Make the native SDK client boundary warning-free and dependency-clean on
+  WebAssembly, and make CLI encoding and home-path output deterministic across
+  Unix and Windows.
 
 ### Next in-scope action
 
-- Finish independent review of the completed CLI command contract, deliver it
-  through PR CI, resolve all actionable feedback, and merge it before starting
-  portability work.
+- Finish independent review of the completed portability and output contract,
+  deliver it through PR CI, resolve all actionable feedback, and merge it
+  before starting API-contract work.
 
 ### Evidence and blockers
 
@@ -67,6 +69,14 @@ _None._
   The full credential-free pre-push gate passes with the new discovery matrix,
   compatibility suites, stable/MSRV checks, package verification, and clean
   installation.
+- PR #56 merged as `14eb163` after Go, Rust, macOS, Windows, aggregate CI, and
+  review passed. Its valid test-isolation finding was fixed, the rejected
+  source-group expansion was withdrawn, and no review thread remained open.
+- Commits `39638f5` and `8a12da8` make the native client boundary uniformly
+  target-gated, add maintained WebAssembly feature/graph verification, and make
+  CLI encoding and home discovery deterministic across native platforms. The
+  complete credential-free pre-push gate and Windows-target test compilation
+  pass locally.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.

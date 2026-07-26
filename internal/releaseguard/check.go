@@ -108,6 +108,7 @@ do
 done`
 	publishReleaseScript        = `gh release edit "${TAG_NAME}" --draft=false --latest`
 	installRustToolchainsScript = `rustup toolchain install 1.97.1 --profile minimal --component clippy --component rustfmt
+rustup target add --toolchain 1.97.1 wasm32-unknown-unknown
 rustup toolchain install 1.85.0 --profile minimal`
 	fetchRustDependenciesScript = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml
 cargo +1.97.1 fetch --locked --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
@@ -120,13 +121,22 @@ RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manife
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features
 RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features --no-deps`
-	nativeArtifactFetchScript       = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
-	nativeArtifactTestScript        = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
+	nativeArtifactFetchScript = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
+	nativeArtifactTestScript  = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --bin opendart
+cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
 	compatibilityVerificationScript = `RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
 	transportIndependentGraphScript = `no_default_tree="${verification_tmp}/no-default-tree.txt"
 cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features -e normal --prefix none > "${no_default_tree}"
-if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"; then
-  grep -E '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"
+if grep -Eq '^(bytes|futures(-[^ ]+)?|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"; then
+  grep -E '^(bytes|futures(-[^ ]+)?|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"
+  exit 1
+fi`
+	wasmVerificationScript = `cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --lib --target wasm32-unknown-unknown -- -D warnings
+cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --lib --target wasm32-unknown-unknown --no-default-features -- -D warnings
+wasm_tree="${verification_tmp}/wasm-tree.txt"
+cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --target wasm32-unknown-unknown -e normal --prefix none > "${wasm_tree}"
+if grep -Eq '^(bytes|futures(-[^ ]+)?|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${wasm_tree}"; then
+  grep -E '^(bytes|futures(-[^ ]+)?|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${wasm_tree}"
   exit 1
 fi`
 	msrvVerificationScript = `cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features
@@ -169,7 +179,12 @@ $binary = Join-Path $installRoot "bin/opendart.exe"
 & $binary --version
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $binary operations list | Out-Null
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }`
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Remove-Item Env:HOME -ErrorAction SilentlyContinue
+$env:USERPROFILE = $installRoot
+$homeDocument = & $binary | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if (-not $homeDocument.executable.display.StartsWith("~")) { exit 1 }`
 )
 
 var canonicalSpecificationSources = []string{

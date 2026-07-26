@@ -690,9 +690,9 @@ mod tests {
     use cap_std::ambient_authority;
     use cap_std::fs::Dir;
 
+    use super::{ArtifactTransaction, TestStall, WorkerHook, cleanup_unopened_stage};
     #[cfg(any(target_os = "linux", target_os = "macos"))]
-    use super::STAGED_FILE_NAME;
-    use super::{ArtifactTransaction, FailureKind, TestStall, WorkerHook, cleanup_unopened_stage};
+    use super::{FailureKind, STAGED_FILE_NAME};
     use crate::artifact::ArtifactTarget;
     use crate::artifact::before_deadline;
 

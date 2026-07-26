@@ -57,6 +57,12 @@ an authenticated endpoint or print the full operation inventory. Agents spawn
 `executable.path` directly and append an `argv` array; they never have to parse
 a shell command string or expand `~`.
 
+The display path collapses only a component-wise home prefix. On Unix, home is
+a nonempty absolute `HOME`; on Windows it is a nonempty absolute `USERPROFILE`,
+falling back to `HOMEDRIVE` plus `HOMEPATH`. The display path remains absolute
+when neither platform candidate resolves to a nonempty absolute path. The exact
+executable path is never collapsed or inferred from the display value.
+
 ```json
 {
   "kind": "home",
@@ -270,6 +276,12 @@ constructor rejects a spelling outside its documented JSON-number grammar, so
 an invalid number cannot reach CLI encoding. `output_encode` remains a
 fail-closed invariant error if a supported encoder cannot emit an SDK-valid
 lexeme.
+
+The CLI finishes encoding a document before borrowing stdout. If discovery or
+error serialization fails before any stdout bytes are written, it attempts one
+fixed global `output_encode` document without operation or response metadata
+and exits `1`. A stdout write failure never appends a replacement document; it
+remains silent and exits `1` so partial output cannot become two documents.
 
 The CLI does not truncate fields, select a default subset, calculate aggregates,
 or reinterpret source pagination. An agent that needs less data uses the

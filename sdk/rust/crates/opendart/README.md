@@ -17,6 +17,11 @@ Default features include the native `client-reqwest` adapter:
 opendart = "0.1"
 ```
 
+On WebAssembly, `client-reqwest` is accepted but inert: it does not export the
+native `Client` types or activate their transport/runtime dependencies. The
+transport-independent prepared-request API remains available so callers can
+authorize and execute requests through their own WebAssembly adapter.
+
 ```no_run
 use std::time::Duration;
 

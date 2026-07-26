@@ -8,26 +8,28 @@ and home-directory representations.
 
 ## Current state
 
-- The default `client-reqwest` feature activates bytes, futures, Tokio, and
-  reqwest-facing state, while only the reqwest dependency and some public
-  exports are target-gated away from `wasm32`.
-- A default-feature WebAssembly Clippy probe reached dead client state and
-  helpers and failed under `-D warnings`. The no-default-feature WebAssembly
-  build passed, confirming the transport-independent core is portable.
-- The review used the locally available stable WebAssembly target because the
-  pinned toolchain target was unavailable in that environment. A durable gate
-  must either install the pinned target or explicitly define the supported
-  substitute instead of relying on local state.
-- `app::emit` maps both JSON serialization and stdout write failure to a silent
-  exit. A Unix executable path containing non-UTF-8 bytes makes the home
-  document fail serialization, but the CLI does not emit the stable
-  `output_encode` envelope.
-- Once stdout writing has started, replacing a failed document would corrupt
-  the one-document contract. Encoding and writing therefore need different
-  error paths.
-- Home display collapsing consults `HOME` only. On Windows, an absent `HOME`
-  with a valid `USERPROFILE` leaves the display path absolute instead of using
-  `~`, contrary to the cross-platform discovery contract.
+- Every native client dependency and client-owned prepared-request field or
+  helper now uses the same native-target boundary. The default feature is inert
+  on WebAssembly while the prepared-request surface remains available.
+- The Rust verification tier installs Rust 1.97.1's
+  `wasm32-unknown-unknown` target, runs default and no-default warnings-denied
+  Clippy, and rejects native transport/runtime packages in the target graph.
+  Releaseguard owns the exact commands.
+- Global emission encodes before borrowing stdout. A serialization failure
+  becomes one static `output_encode` document; a write failure remains silent
+  and nonzero without appending a second document. Operation-scoped paths keep
+  their existing context.
+- Home display uses an injectable, race-free resolver. Unix accepts only an
+  absolute nonempty `HOME`; Windows prefers an absolute nonempty `USERPROFILE`
+  and falls back to `HOMEDRIVE` plus `HOMEPATH`. Prefix comparison remains
+  component-wise.
+- Unit coverage exercises missing, empty, relative, equal, child,
+  sibling-prefix, and non-UTF-8 paths. Linux process coverage exercises a
+  non-UTF-8 executable path, while Windows CI runs native resolver tests and an
+  installed discovery probe with `HOME` absent.
+- The complete credential-free pre-push gate passes locally. Windows-target
+  test compilation also passes; the Linux and Windows runtime assertions remain
+  required hosted evidence.
 
 ## Design decisions
 
@@ -135,6 +137,6 @@ and home-directory representations.
 
 ## Next action
 
-Add the failing default-feature WebAssembly gate, Unix non-UTF-8 home-output
-test, and Windows-native home resolver tests before changing cfg or emission
-code.
+Finish independent review, deliver the completed portability and output
+contract through PR CI, resolve all actionable feedback, and merge it before
+starting API-contract work.

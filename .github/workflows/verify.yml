@@ -62,7 +62,9 @@ jobs:
         run: cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml
 
       - name: Verify native binary artifact behavior
-        run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
+        run: |
+          cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --bin opendart
+          cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
         env:
           RUSTFLAGS: --cfg opendart_compat
 
@@ -90,7 +92,9 @@ jobs:
         run: cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml
 
       - name: Verify native binary artifact behavior
-        run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
+        run: |
+          cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --bin opendart
+          cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
         env:
           RUSTFLAGS: --cfg opendart_compat
 
@@ -106,6 +110,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $binary operations list | Out-Null
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item Env:HOME -ErrorAction SilentlyContinue
+          $env:USERPROFILE = $installRoot
+          $homeDocument = & $binary | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not $homeDocument.executable.display.StartsWith("~")) { exit 1 }
 
   verify:
     if: ${{ always() }}

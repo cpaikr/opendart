@@ -47,8 +47,11 @@ pause before publication are documented in the
 
 The no-default-features normal dependency graph must not contain `reqwest`,
 Tokio, Hyper, TLS, proxy, DNS, or streaming-runtime dependencies. The default
-`client-reqwest` feature is native-target-only; the transport-independent core
-remains the portable public surface.
+`client-reqwest` feature is inert on WebAssembly and activates only
+native-target dependencies; WebAssembly callers use prepared requests with
+their own executor. Both default and no-default SDK configurations are checked
+with Rust 1.97.1 for `wasm32-unknown-unknown`, including a dependency-tree
+assertion that native client/runtime packages remain absent.
 
 The package contains Cargo's `.cargo_vcs_info.json` for exact source revision
 and exposes `source_provenance()` for the crate version, semantic specification

@@ -19,23 +19,20 @@ client-reqwest = ["dep:bytes", "dep:futures-core", "dep:reqwest", "dep:tokio"]
 serde-json = ["dep:serde", "serde_json/raw_value"]
 
 [dependencies]
-bytes = { workspace = true, optional = true }
 form_urlencoded.workspace = true
-futures-core = { workspace = true, optional = true }
 quick-xml.workspace = true
 roxmltree.workspace = true
 secrecy.workspace = true
 serde = { workspace = true, optional = true }
 serde_json.workspace = true
 thiserror.workspace = true
-tokio = { workspace = true, optional = true, features = ["time"] }
 zeroize.workspace = true
 
-[target.'cfg(not(target_family = "wasm"))'.dependencies.reqwest]
-version = "0.13.4"
-optional = true
-default-features = false
-features = ["native-tls", "stream"]
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+bytes = { workspace = true, optional = true }
+futures-core = { workspace = true, optional = true }
+reqwest = { version = "0.13.4", optional = true, default-features = false, features = ["native-tls", "stream"] }
+tokio = { workspace = true, optional = true, features = ["time"] }
 
 [dev-dependencies]
 h2 = "0.4.15"
