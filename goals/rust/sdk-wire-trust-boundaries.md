@@ -7,10 +7,9 @@ normalization fail closed at the Rust SDK's public wire boundaries.
 
 ## Status
 
-Implementation, local release validation, and the first remote verification
-run are complete. Delivery is active in
-[PR #46](https://github.com/cpaikr/opendart/pull/46); the reviewed follow-up,
-its remote verification, and merge remain.
+Complete. [PR #46](https://github.com/cpaikr/opendart/pull/46) and its reviewed
+follow-up passed the required Linux, macOS, and Windows verification before
+merging into `rust`.
 
 ## Completed
 
@@ -36,11 +35,8 @@ its remote verification, and merge remain.
 
 ## Remaining
 
-- Push the independently reviewed CodeRabbit follow-up and complete its remote
-  Linux, macOS, and Windows verification.
-- Resolve the review thread and merge PR #46.
+- None.
 
 ## Next action
 
-Push the CodeRabbit follow-up, resolve its thread after remote verification,
-and merge only when every required check is green.
+No further action. This file remains as the completion record.

@@ -55,21 +55,21 @@ CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --
 
 var credentialFreeForbiddenPatterns = []struct {
 	name    string
-	pattern string
+	pattern *regexp.Regexp
 }{
-	{name: "GitHub secrets", pattern: `(?i)\bsecrets\s*(?:\.|\[)`},
-	{name: "GitHub token", pattern: `(?i)\bgithub\s*(?:\.\s*token\b|\[\s*['"]token['"]\s*\])`},
-	{name: "OpenDART API key", pattern: `OPENDART_API_KEY`},
-	{name: "guide synchronization", pattern: `sync:opendart|opendart-tool\s+sync|scripts/sync-opendart`},
-	{name: "JavaScript or Node package tooling", pattern: `(?i)(?:actions/setup-node@|\b(?:node|nodejs|npm|npx|corepack|yarn|pnpm|bun|deno)\b)`},
-	{name: "package publication", pattern: `(?:npm|cargo)\s+publish`},
-	{name: "registry credentials", pattern: `CARGO_REGISTRY_TOKEN|id-token:\s*write`},
-	{name: "release asset replacement", pattern: `--clobber`},
+	{name: "GitHub secrets", pattern: regexp.MustCompile(`(?i)\bsecrets\s*(?:\.|\[)`)},
+	{name: "GitHub token", pattern: regexp.MustCompile(`(?i)\bgithub\s*(?:\.\s*token\b|\[\s*['"]token['"]\s*\])`)},
+	{name: "OpenDART API key", pattern: regexp.MustCompile(`OPENDART_API_KEY`)},
+	{name: "guide synchronization", pattern: regexp.MustCompile(`sync:opendart|opendart-tool\s+sync|scripts/sync-opendart`)},
+	{name: "JavaScript or Node package tooling", pattern: regexp.MustCompile(`(?i)(?:actions/setup-node@|\b(?:node|nodejs|npm|npx|corepack|yarn|pnpm|bun|deno)\b)`)},
+	{name: "package publication", pattern: regexp.MustCompile(`(?:npm|cargo)\s+publish`)},
+	{name: "registry credentials", pattern: regexp.MustCompile(`CARGO_REGISTRY_TOKEN|id-token:\s*write`)},
+	{name: "release asset replacement", pattern: regexp.MustCompile(`--clobber`)},
 }
 
 func checkCredentialFreeSource(artifact, source string) error {
 	for _, forbidden := range credentialFreeForbiddenPatterns {
-		if regexp.MustCompile(forbidden.pattern).MatchString(source) {
+		if forbidden.pattern.MatchString(source) {
 			return &Error{Artifact: artifact, Invariant: "credential-free verification excludes " + forbidden.name}
 		}
 	}

@@ -1091,10 +1091,19 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	); err != nil {
 		return err
 	}
-	for _, trigger := range []string{"pull_request", "workflow_call", "workflow_dispatch"} {
+	expectedTriggers := []string{"pull_request", "workflow_call", "workflow_dispatch"}
+	for _, trigger := range expectedTriggers {
 		if _, exists := verify.On[trigger]; !exists {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "supports " + trigger}
 		}
+	}
+	if err := require(
+		verifyWorkflowArtifact,
+		"supports only approved triggers",
+		reflect.DeepEqual(sortedKeys(verify.On), expectedTriggers),
+		"",
+	); err != nil {
+		return err
 	}
 	if err := require(verifyWorkflowArtifact, "contains only approved verification jobs", reflect.DeepEqual(sortedKeys(verify.Jobs), []string{"artifact-macos", "artifact-windows", "go", "rust", "verify"}), ""); err != nil {
 		return err

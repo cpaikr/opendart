@@ -933,6 +933,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "supports workflow_dispatch",
 		},
 		{
+			name: "verify extra trigger", artifact: verifyWorkflowArtifact,
+			old: "  workflow_dispatch:\n\nconcurrency:", replacement: "  workflow_dispatch:\n  push:\n\nconcurrency:",
+			invariant: "supports only approved triggers",
+		},
+		{
 			name: "verify concurrency group", artifact: verifyWorkflowArtifact,
 			old: "group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}", replacement: "group: ${{ github.workflow }}-${{ github.ref }}",
 			invariant: "cancels only superseded verification runs",
