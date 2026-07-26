@@ -19,6 +19,8 @@ match the CI workflow exactly.
 - The Rust README contains the exact structured and binary
   `opendart_compat` loopback commands, explains the repository-only cfg, and
   states that both commands are offline and credential-free.
+- The complete credential-free pre-push gate, hosted Linux, macOS, and Windows
+  jobs, aggregate verification, and review all pass for the merged change.
 
 ## Design decisions
 
@@ -122,5 +124,6 @@ match the CI workflow exactly.
 
 ## Next action
 
-Deliver the API-contract PR, resolve hosted review and CI, and merge it before
-the final goal audit.
+Completed in PR #58 after Go, Rust, macOS, Windows, aggregate CI, and review
+passed with no unresolved actionable feedback. No in-scope action remains for
+this plan.

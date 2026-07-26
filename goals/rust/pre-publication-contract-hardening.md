@@ -1,6 +1,6 @@
 # Goal: Finish Rust pre-publication contract hardening
 
-Status: active
+Status: complete
 Planning scope: rust
 
 ## Original contract
@@ -37,19 +37,19 @@ _None._
 - Portability and output-boundary hardening is complete. PR #57 merged the
   WebAssembly-native client boundary, single-write output encoding, and native
   Unix/Windows home discovery after hosted platform CI and review passed.
+- API contract and verification hardening is complete. PR #58 merged bounded
+  generated iterators, operation-specific public error documentation, and the
+  exact offline compatibility commands after the complete credential-free
+  pre-push gate, hosted CI, and review passed.
 
-### Current in-scope result
+### Completion state
 
-- Bound canonically limited generated iterators, document meaningful errors for
-  every public fallible Rust API, and align the advertised offline verification
-  gate with CI. Implementation is complete pending independent review, the full
-  pre-push gate, and PR delivery.
-
-### Next in-scope action
-
-- Run independent review of the bounded generated behavior and public API
-  documentation, address actionable findings, then run the complete
-  credential-free pre-push gate and deliver the final included PR.
+- Every included result satisfies its plan's completion criteria. The final
+  audit found no failed required checks or unresolved review threads across
+  PRs #55 through #58, and generated artifacts, public documentation, and
+  planning state are current.
+- No in-scope action remains. Registry publication, collector adoption, and
+  the other explicitly excluded release work remain separately authorized.
 
 ### Evidence and blockers
 
@@ -105,6 +105,12 @@ _None._
   MSRV Rust contracts, structured and binary compatibility, strict rustdoc,
   transport-independent and WebAssembly dependency checks, reqwest feature
   unification, package verification, and clean CLI installation.
+- PR #58 merged as `405f5ab` after Go, Rust, macOS, Windows, aggregate CI, and
+  review passed. Review-driven fixes made the iterator sentinel portable to
+  `wasm32`, removed a test-only public fallible API, and completed the precise
+  handwritten error contracts.
+- The final audit confirmed that PRs #55 through #58 are merged, have no failed
+  required checks, and have no unresolved review threads.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.
