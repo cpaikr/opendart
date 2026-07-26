@@ -40,9 +40,8 @@ lifecycle is complete._
 
 ### Next in-scope action
 
-- Commit the reviewed matrix, rerun the clean package and install gates, then
-  open the follow-up PR and finish its review and merge before starting CLI
-  command-contract work.
+- Push the reviewed matrix, open its follow-up PR, and finish native CI, review,
+  and merge before starting CLI command-contract work.
 
 ### Evidence and blockers
 
@@ -53,9 +52,10 @@ lifecycle is complete._
 - The independent implementation review found no code, cross-platform,
   security, fidelity, scope, or complexity issue. Its sole finding was to
   refresh the artifact plan's stale next action.
-- The full pre-push gate passed through Go, repository freshness, stable Rust,
-  compatibility, dependency-graph, rustdoc, and MSRV checks; Cargo packaging
-  then correctly stopped because the reviewed files were not yet committed.
+- Commit `ba3fe36` passes the complete credential-free pre-push gate: Go and
+  repository verification, stable and MSRV Rust, structured and binary
+  compatibility suites, transport-independent and reqwest compatibility
+  graphs, rustdoc, package contents and verification, and clean CLI install.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.

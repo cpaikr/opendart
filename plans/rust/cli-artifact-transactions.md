@@ -68,6 +68,10 @@ filesystem work on the current-thread async runtime.
 - Deterministic write and publication failures use compatibility-only worker
   hooks. Ordinary CLI builds retain the same filesystem path and configuration
   surface.
+- The committed follow-up passes the complete credential-free pre-push gate on
+  macOS, including repository freshness, stable and MSRV Rust, compatibility
+  suites, dependency graphs, rustdoc, package verification, and clean install.
+  Native Linux and Windows process behavior remains a PR CI gate.
 
 ## Transaction contract
 
