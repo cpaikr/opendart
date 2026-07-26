@@ -161,7 +161,7 @@ pub(crate) async fn execute(
         }
         BinaryReply::Status(status) => {
             let spelling = staged.spelling;
-            staged.file.close().map_err(|_| {
+            close_staged(staged.file).map_err(|_| {
                 ErrorEnvelope::artifact_io(
                     operation,
                     Some(metadata.clone()),
@@ -330,7 +330,7 @@ fn discard_error(
     spelling: &str,
     fallback: ErrorEnvelope,
 ) -> ErrorEnvelope {
-    match file.close() {
+    match close_staged(file) {
         Ok(()) => fallback,
         Err(_) => ErrorEnvelope::artifact_io(
             operation,
@@ -339,6 +339,15 @@ fn discard_error(
             ArtifactIoReason::CleanupFailed,
         ),
     }
+}
+
+fn close_staged(file: tempfile::NamedTempFile) -> io::Result<()> {
+    #[cfg(opendart_compat)]
+    if std::env::var_os("OPENDART_COMPAT_ARTIFACT_CLEANUP_FAILURE").is_some() {
+        drop(file);
+        return Err(io::Error::other("compatibility fixture cleanup failure"));
+    }
+    file.close()
 }
 
 fn next_byte_count(current: u64, chunk: u64, limit: u64) -> Option<u64> {

@@ -7,7 +7,7 @@ mod common;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
@@ -32,14 +32,6 @@ fn command(origin: &str, arguments: &[String]) -> Command {
         .env("OPENDART_API_KEY", SYNTHETIC_KEY)
         .env("OPENDART_COMPAT_ORIGIN", origin);
     command
-}
-
-fn invoke(origin: &str, arguments: &[String]) -> Output {
-    let output = command(origin, arguments)
-        .output()
-        .expect("CLI process should start");
-    assert_clean_channels(&output);
-    output
 }
 
 fn invoke_keyless(arguments: &[String]) -> Output {
@@ -73,6 +65,14 @@ fn with_server(
     arguments: &[String],
     responder: impl FnOnce(&mut TcpStream) + Send + 'static,
 ) -> Output {
+    with_server_configured(arguments, |_| {}, responder)
+}
+
+fn with_server_configured(
+    arguments: &[String],
+    configure: impl FnOnce(&mut Command),
+    responder: impl FnOnce(&mut TcpStream) + Send + 'static,
+) -> Output {
     let listener = TcpListener::bind("127.0.0.1:0").expect("loopback listener");
     let origin = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {
@@ -80,7 +80,10 @@ fn with_server(
         assert_valid_request(&mut stream);
         responder(&mut stream);
     });
-    let output = invoke(&origin, arguments);
+    let mut process = command(&origin, arguments);
+    configure(&mut process);
+    let output = process.output().expect("CLI process should start");
+    assert_clean_channels(&output);
     server.join().expect("fixture server should finish");
     output
 }
@@ -205,6 +208,16 @@ fn assert_artifact_error(error: &Value, code: &str, destination: &Path, reason: 
 
 fn assert_directory_empty(directory: &Path) {
     assert_eq!(fs::read_dir(directory).unwrap().count(), 0);
+}
+
+fn staged_path(directory: &Path, destination: &Path) -> PathBuf {
+    let staged: Vec<_> = fs::read_dir(directory)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path != destination)
+        .collect();
+    assert_eq!(staged.len(), 1, "one same-directory tempfile is staged");
+    staged.into_iter().next().unwrap()
 }
 
 #[test]
@@ -456,6 +469,78 @@ fn publication_race_preserves_the_rival_destination_and_cleans_the_tempfile() {
     assert_eq!(error["metadata"]["status"], 200);
     assert_eq!(fs::read(&destination).unwrap(), b"rival");
     assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
+}
+
+#[cfg(unix)]
+#[test]
+fn staged_path_replacement_never_publishes_replacement_bytes() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("replaced-stage.zip");
+    let parent = directory.path().to_owned();
+    let published = destination.clone();
+    let body = b"PK\x03\x04downloaded";
+    let replacement = b"attacker-controlled replacement";
+    let output = with_server(&binary_arguments(&destination), move |stream| {
+        let staged = staged_path(&parent, &published);
+        fs::remove_file(&staged).unwrap();
+        fs::write(&staged, replacement).unwrap();
+        write_fixed(stream, "application/zip", body);
+    });
+
+    match output.status.code() {
+        Some(0) => assert_artifact_reply(&output, 0, "archive", &destination, body),
+        Some(1) => {
+            let error = json(&output, 1);
+            assert_eq!(error["kind"], "error");
+            assert_eq!(error["operation"]["name"], "corp-code");
+            assert_eq!(error["metadata"]["status"], 200);
+            assert!(
+                !destination.exists(),
+                "a rejected publication must not create the destination"
+            );
+        }
+        status => panic!("unexpected CLI exit status: {status:?}"),
+    }
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_rejects_staged_path_replacement_while_the_handle_is_open() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("replacement-rejected.zip");
+    let parent = directory.path().to_owned();
+    let published = destination.clone();
+    let body = b"PK\x03\x04downloaded";
+    let output = with_server(&binary_arguments(&destination), move |stream| {
+        let staged = staged_path(&parent, &published);
+        assert!(
+            fs::remove_file(&staged).is_err(),
+            "Windows must not allow replacement while the tempfile handle is open"
+        );
+        write_fixed(stream, "application/zip", body);
+    });
+    assert_artifact_reply(&output, 0, "archive", &destination, body);
+}
+
+#[test]
+fn cleanup_failure_does_not_replace_the_primary_artifact_limit_error() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("cleanup-failure.zip");
+    let mut arguments = binary_arguments(&destination);
+    arguments.extend(["--artifact-limit-bytes".to_owned(), "7".to_owned()]);
+
+    let output = with_server_configured(
+        &arguments,
+        |process| {
+            process.env("OPENDART_COMPAT_ARTIFACT_CLEANUP_FAILURE", "1");
+        },
+        |stream| write_fixed(stream, "application/zip", b"PK\x03\x04overflow"),
+    );
+    let error = json(&output, 1);
+    assert_eq!(error["error"]["code"], "artifact_limit");
+    assert_eq!(error["operation"]["name"], "corp-code");
+    assert_eq!(error["metadata"]["status"], 200);
+    assert!(!destination.exists());
 }
 
 #[cfg(target_os = "linux")]
