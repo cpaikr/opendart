@@ -32,6 +32,16 @@ filesystem work on the current-thread async runtime.
 - The runtime-stall acceptance test is still pending. It needs the private
   worker boundary described below so the test blocks the actual production
   write path rather than a test-only imitation.
+- The publication spike selected `cap-std` directory capabilities with a
+  no-clobber hard-link commit. The prototype runs on macOS under the declared
+  MSRV, survives staged-directory pathname replacement, preserves an existing
+  destination, and compiles for Linux and Windows. Native Linux and Windows
+  behavior remains an implementation-validation gate.
+- `cap-std` 4.0.2 has no default features, declares an upstream MSRV below the
+  workspace's Rust 1.85 floor, and keeps its dependency graph inside the CLI.
+  That cost is justified because `tempfile` and other path-based atomic-write
+  APIs retain the staged-name race, while direct `rustix` use does not provide
+  the required Windows abstraction.
 
 ## Transaction contract
 
@@ -75,27 +85,29 @@ filesystem work on the current-thread async runtime.
 
 ### Select an identity-stable publication primitive
 
-- Spike safe, maintained descriptor-relative or handle-relative filesystem
-  APIs on every supported source-install platform.
-- Evaluate retained parent-directory identity, private staging-directory
-  permissions, source-file identity, atomic no-clobber publication, symlink and
-  directory replacement behavior, cleanup, MSRV, and crate feature cost.
-- Prefer a safe library abstraction over repository-owned `unsafe`. The
-  workspace forbids unsafe Rust, and this plan must not weaken that lint.
-- If portable identity-stable publication cannot satisfy the existing
-  arbitrary-parent contract, stop for an explicit contract decision. The only
-  fallback is to restrict output to a caller-affirmed trusted directory and
-  document that limitation; silently accepting attacker-writable parents is
-  not acceptable.
-- Record the chosen primitive and threat boundary in
-  `docs/rust-cli/architecture.md` and `docs/rust-cli/public-contract.md`.
+- Use `cap-std` directory capabilities for the opened destination parent and a
+  private staging directory. Publish with `Dir::hard_link`, which creates the
+  destination without replacing an existing entry, then remove the staging
+  link and directory.
+- Create the private staging directory with owner-only access on Unix. On
+  Windows, keep directory handles open and deny write/delete sharing on the
+  staged file through publication. Validate those native guarantees in the
+  platform process suites.
+- Treat missing filesystem hard-link support as a safe publish failure with no
+  destination. Do not fall back to path-based persistence.
+- Preserve the retained parent identity if its pathname changes. Document that
+  callers must keep ancestors of the destination parent stable; no publication
+  primitive can keep a caller-visible path stable after an adversary replaces
+  its ancestor.
+- Keep all repository code safe. Platform-specific descriptor and handle work
+  remains encapsulated by the maintained dependency.
 
 ### Preserve primary errors and attach cleanup context
 
-- Add one optional top-level `cleanup` field to both CLI error documents and
-  binary source-status response documents. This location is the confirmed
-  public contract; consumers must not need to inspect different nested paths
-  based on the primary outcome.
+- Add one optional top-level `cleanup` field to every binary error or response
+  document, including successful archive publication. This location is the
+  confirmed public contract; consumers must not need to inspect different
+  nested paths based on the primary outcome.
 - Use a small enum for cleanup stage/reason. Do not store raw OS messages,
   paths other than the already-sanitized caller spelling, or dependency debug
   output.
@@ -168,7 +180,7 @@ filesystem work on the current-thread async runtime.
 
 ## Next action
 
-Run the cross-platform publication-primitive spike and record the selected safe
-API and threat boundary. Then introduce the private staged-transaction worker
-boundary, add the deterministic stalled-writer acceptance test against that
-production boundary, and move filesystem calls off the async runtime.
+Add `cap-std` to the CLI package and introduce the private staged-transaction
+worker boundary. Add the deterministic stalled-writer acceptance test against
+that production boundary before moving creation, writes, flush, publication,
+and cleanup off the async runtime.

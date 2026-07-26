@@ -316,6 +316,14 @@ parser errors never cross the interface. Every encodable usage or execution
 error uses JSON. Failure of stdout itself is the sole case in which the process
 cannot return this envelope on stdout.
 
+Binary error documents and binary response documents may contain an optional
+top-level `cleanup` object when disposal of owned staging state fails after the
+primary outcome is known. Its stable fields are `stage` and `reason`; the
+initial values are `discard_staging_link` and `cleanup_failed`. Cleanup evidence
+never replaces or reclassifies the primary error, source status, archive, or
+unrecognized reply, and it does not change that outcome's exit code. Raw
+filesystem errors and temporary paths are never included.
+
 The initial stable error-code inventory is:
 
 - usage: `invalid_invocation`, `invalid_request`;
@@ -336,8 +344,13 @@ breaking CLI change.
 ## Binary replies
 
 A ZIP operation requires a destination path that does not exist. The CLI writes
-into a temporary file in the destination directory, streams every SDK body
-chunk once, and publishes without overwriting another path.
+into a file beneath a private staging directory in the destination directory,
+streams every SDK body chunk once, and publishes without overwriting another
+path. Publication uses retained directory identities rather than resolving a
+previously exposed staging pathname. It atomically creates the destination as
+a hard link to the staged file and then removes the private staging state. A
+filesystem that cannot create the required hard link returns `artifact_io` and
+publishes no destination.
 
 The structured reply preserves the SDK classification:
 
@@ -384,9 +397,9 @@ complete SDK `StatusEnvelope` in `value` and publishes no destination.
 
 Every failure before publication—including transport or connection, timeout,
 stream, filesystem, and no-clobber publication failures—exits `1`, reports any
-already-safe response metadata, removes its owned temporary file, and never
-publishes a partial destination. The CLI does not open or validate archive
-entries.
+already-safe response metadata, attempts to remove its private staging state,
+and never publishes a partial destination. A cleanup failure is attached as
+secondary evidence. The CLI does not open or validate archive entries.
 
 Every binary call has a 512 MiB (`536870912` byte) default budget and accepts a
 positive `--artifact-limit-bytes` override. The inclusive limit applies to
@@ -401,7 +414,19 @@ the artifact report in memory, then publishes the complete no-clobber destinatio
 and writes the prepared report to stdout. If that later stdout write fails, the
 valid final artifact remains at the requested path and the process exits `1`;
 removing an already published artifact would create a worse race for the caller.
-A source `status` removes the temporary file and publishes no final destination.
+A source `status` attempts to remove private staging state and publishes no
+final destination.
+If staging cleanup fails after a binary primary outcome is known, the CLI keeps
+that primary reply and exit code and adds the top-level `cleanup` object. This
+also applies after a successful artifact publication: the final artifact
+remains valid while `cleanup` reports that a private staging link may remain.
+
+The retained destination-parent identity is the publication boundary. Changes
+to staging names or entries inside that opened parent cannot substitute bytes.
+If an ancestor of the destination parent is renamed or replaced concurrently,
+publication remains attached to the originally opened directory, so the
+caller's path spelling is not guaranteed to keep resolving to that directory.
+Callers must keep destination ancestors stable until the command exits.
 
 ## Channels and exit codes
 

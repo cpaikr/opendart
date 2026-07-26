@@ -131,17 +131,43 @@ second public model.
 
 1. Parse the invocation, construct the generated SDK input, prepare the binary
    request, and require a destination that does not exist.
-2. Read and validate `OPENDART_API_KEY`, build the SDK client, and create a
-   temporary file in the destination directory before network access.
+2. Read and validate `OPENDART_API_KEY`, build the SDK client, and create owned
+   staging state beneath a private same-directory staging directory before
+   network access.
 3. Execute once through `Client::execute_binary` and preserve response metadata;
-   remove the owned temporary file if execution fails.
+   attempt to remove the owned staging state if execution fails.
 4. For `Archive` or `Unrecognized`, count and stream every body chunk into the
-   temporary file within the selected finite artifact budget, then publish it
+   staging file within the selected finite artifact budget, then publish it
    without clobbering the destination.
 5. Emit an artifact reply with the SDK classification, path, and byte count.
-6. Remove the temporary file on a source `Status` or any failure before
-   publication, including transport, timeout, stream, filesystem, and
-   no-clobber publication failures; no such path publishes a destination.
+6. Attempt to remove private staging state on a source `Status` or any failure
+   before publication, including transport, timeout, stream, filesystem, and
+   no-clobber publication failures; no such path publishes a destination, and
+   any cleanup failure remains secondary evidence.
+
+Artifact publication uses a retained `cap-std` directory capability for the
+destination parent and a separately retained capability for a private staging
+directory beneath it. The staging file is created and written only through
+that private directory. Publication creates the destination as a hard link to
+the staged file through the two retained directory identities, then removes
+the staging link and directory. Creating the destination link is atomic and
+fails rather than replacing an existing entry. A filesystem that cannot create
+the required hard link fails publication without creating the destination.
+
+The private staging directory is created with owner-only access on Unix. On
+Windows, the staging file denies write and delete sharing while it is being
+written and published, and the retained directory handles prevent their
+directories from being renamed underneath capability-relative operations. The
+implementation remains safe Rust; platform-specific path and handle mechanics
+belong to `cap-std`.
+
+Directory capabilities intentionally preserve identity rather than spelling.
+Replacing a staging pathname or entries within the opened destination parent
+cannot substitute different bytes. If an adversary can rename or replace an
+ancestor of the destination parent itself, publication follows the originally
+opened directory identity and the caller's original spelling may no longer
+resolve to it. Callers are responsible for choosing a path whose ancestors
+remain stable for the duration of the command.
 
 ## Target code map
 
@@ -187,6 +213,9 @@ generator-owned and handwritten runtime code remains crate-owned.
 - Structured source responses remain complete. The CLI adds no silent filtering
   or successful-empty interpretation.
 - A binary destination is explicit, exact, atomic, and never overwritten.
+- Artifact publication is anchored to retained directory identities. A
+  successful commit contains only bytes written through the owned staging
+  handle; unsupported hard-link publication fails without a destination.
 - The packaged source distribution is verified natively on Linux, macOS, and
   Windows. Prebuilt target and platform-version policy is a separate boundary.
 - Generated SDK and CLI outputs are committed, deterministic, and verified
