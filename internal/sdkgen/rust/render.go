@@ -352,25 +352,46 @@ func renderPreparationErrors(output *strings.Builder, operation model.LogicalOpe
 		return
 	}
 
-	fmt.Fprintf(output, "    /// - [`PrepareError::MissingInput`] when a supplied value for %s is empty.\n", rustdocParameterList(operation.Parameters))
+	scalarParameters := parametersWithShape(operation.Parameters, model.ScalarString)
+	if len(scalarParameters) > 0 {
+		fmt.Fprintf(output, "    /// - [`PrepareError::MissingInput`] when a supplied value for %s is empty.\n", rustdocParameterList(scalarParameters))
+	}
+	arrayParameters := parametersWithShape(operation.Parameters, model.StringArray)
+	if len(arrayParameters) > 0 {
+		fmt.Fprintf(output, "    /// - [`PrepareError::MissingInput`] when any element of %s is empty.\n", rustdocParameterList(arrayParameters))
+	}
 	for _, parameter := range operation.Parameters {
 		if parameter.Shape == model.StringArray {
 			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidCardinality`] when `%s` contains a number of items outside %d..=%d.\n", parameter.WireName, *parameter.MinItems, *parameter.MaxItems)
 		}
 		constraints := parameter.Constraints
+		subject := "`" + parameter.WireName + "`"
+		if parameter.Shape == model.StringArray {
+			subject = "an element of `" + parameter.WireName + "`"
+		}
 		if constraints.MinLength != nil || constraints.MaxLength != nil {
-			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidLength`] when `%s` %s.\n", parameter.WireName, rustdocLengthFailure(constraints))
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidLength`] when %s %s.\n", subject, rustdocLengthFailure(constraints))
 		}
 		if constraints.Format != "" {
-			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidFormat`] when `%s` is not a valid `%s` value.\n", parameter.WireName, constraints.Format)
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidFormat`] when %s is not a valid `%s` value.\n", subject, constraints.Format)
 		}
 		if len(constraints.AllowedValues) > 0 {
-			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidAllowedValue`] when `%s` is outside its documented allowed set.\n", parameter.WireName)
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidAllowedValue`] when %s is outside its documented allowed set.\n", subject)
 		}
 		if constraints.DecimalMinimum != nil || constraints.DecimalMaximum != nil {
-			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidDecimalRange`] when `%s` %s.\n", parameter.WireName, rustdocDecimalFailure(constraints))
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidDecimalRange`] when %s %s.\n", subject, rustdocDecimalFailure(constraints))
 		}
 	}
+}
+
+func parametersWithShape(parameters []model.Parameter, shape model.ParameterShape) []model.Parameter {
+	selected := make([]model.Parameter, 0, len(parameters))
+	for _, parameter := range parameters {
+		if parameter.Shape == shape {
+			selected = append(selected, parameter)
+		}
+	}
+	return selected
 }
 
 func rustdocParameterList(parameters []model.Parameter) string {
@@ -423,7 +444,7 @@ func renderConstructor(output *strings.Builder, operation model.LogicalOperation
 	output.WriteString("    /// Creates an operation input. Explicit contract validation occurs during preparation.\n")
 	for _, parameter := range operation.Parameters {
 		if parameter.Shape == model.StringArray && parameter.MaxItems != nil {
-			fmt.Fprintf(output, "    ///\n    /// The `%s` iterator retains at most %d items so oversized or infinite inputs fail without being exhausted.\n", parameter.WireName, *parameter.MaxItems+1)
+			fmt.Fprintf(output, "    ///\n    /// This constructor consumes and retains at most %d items from the `%s` iterator so oversized or infinite inputs fail without being exhausted.\n", *parameter.MaxItems+1, parameter.WireName)
 		}
 	}
 	output.WriteString("    #[must_use]\n")

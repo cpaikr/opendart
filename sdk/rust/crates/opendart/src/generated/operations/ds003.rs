@@ -112,7 +112,7 @@ impl FnlttMultiAcnt {
 
     /// Creates an operation input. Explicit contract validation occurs during preparation.
     ///
-    /// The `corp_code` iterator retains at most 101 items so oversized or infinite inputs fail without being exhausted.
+    /// This constructor consumes and retains at most 101 items from the `corp_code` iterator so oversized or infinite inputs fail without being exhausted.
     #[must_use]
     pub fn new(corp_code: impl IntoIterator<Item = impl Into<String>>, bsns_year: impl Into<String>, reprt_code: impl Into<String>) -> Self {
         Self {
@@ -138,10 +138,11 @@ impl FnlttMultiAcnt {
     ///
     /// # Errors
     ///
-    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::MissingInput`] when a supplied value for `bsns_year` or `reprt_code` is empty.
+    /// - [`PrepareError::MissingInput`] when any element of `corp_code` is empty.
     /// - [`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.
-    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
-    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when an element of `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when an element of `corp_code` is not a valid `opendart-corp-code` value.
     /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
     /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
     /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
@@ -155,10 +156,11 @@ impl FnlttMultiAcnt {
     ///
     /// # Errors
     ///
-    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::MissingInput`] when a supplied value for `bsns_year` or `reprt_code` is empty.
+    /// - [`PrepareError::MissingInput`] when any element of `corp_code` is empty.
     /// - [`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.
-    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
-    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when an element of `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when an element of `corp_code` is not a valid `opendart-corp-code` value.
     /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
     /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
     /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
@@ -504,7 +506,7 @@ impl FnlttCmpnyIndx {
 
     /// Creates an operation input. Explicit contract validation occurs during preparation.
     ///
-    /// The `corp_code` iterator retains at most 101 items so oversized or infinite inputs fail without being exhausted.
+    /// This constructor consumes and retains at most 101 items from the `corp_code` iterator so oversized or infinite inputs fail without being exhausted.
     #[must_use]
     pub fn new(corp_code: impl IntoIterator<Item = impl Into<String>>, bsns_year: impl Into<String>, reprt_code: impl Into<String>, idx_cl_code: impl Into<String>) -> Self {
         Self {
@@ -535,10 +537,11 @@ impl FnlttCmpnyIndx {
     ///
     /// # Errors
     ///
-    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, `reprt_code`, or `idx_cl_code` is empty.
+    /// - [`PrepareError::MissingInput`] when a supplied value for `bsns_year`, `reprt_code`, or `idx_cl_code` is empty.
+    /// - [`PrepareError::MissingInput`] when any element of `corp_code` is empty.
     /// - [`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.
-    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
-    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when an element of `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when an element of `corp_code` is not a valid `opendart-corp-code` value.
     /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
     /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
     /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
@@ -553,10 +556,11 @@ impl FnlttCmpnyIndx {
     ///
     /// # Errors
     ///
-    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, `reprt_code`, or `idx_cl_code` is empty.
+    /// - [`PrepareError::MissingInput`] when a supplied value for `bsns_year`, `reprt_code`, or `idx_cl_code` is empty.
+    /// - [`PrepareError::MissingInput`] when any element of `corp_code` is empty.
     /// - [`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.
-    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
-    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when an element of `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when an element of `corp_code` is not a valid `opendart-corp-code` value.
     /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
     /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
     /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.

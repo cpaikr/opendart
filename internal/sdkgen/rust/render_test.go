@@ -95,7 +95,7 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 		Checksum:      strings.Repeat("a", 64),
 		Logical: []model.LogicalOperation{{
 			ID: "array", RustName: "ArrayInput", Group: "group",
-			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Required: true, Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: int64Pointer(100)}},
+			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Required: true, Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: int64Pointer(100), Constraints: model.StringConstraints{Format: "opendart-corp-code"}}},
 			Variants:   []model.PhysicalReference{{OperationID: "array.json", Representation: model.RepresentationJSON}},
 		}},
 		Physical: []model.PhysicalOperation{{
@@ -112,13 +112,14 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 	if !strings.Contains(operation, "corp_code: corp_code.into_iter().take(101).map(Into::into).collect(),") {
 		t.Fatal("bounded array constructor does not retain only the maximum plus one values")
 	}
-	if !strings.Contains(operation, "The `corp_code` iterator retains at most 101 items so oversized or infinite inputs fail without being exhausted.") {
+	if !strings.Contains(operation, "This constructor consumes and retains at most 101 items from the `corp_code` iterator so oversized or infinite inputs fail without being exhausted.") {
 		t.Fatal("bounded array constructor does not document its consumption and retention contract")
 	}
 	for _, want := range []string{
 		"# Errors",
-		"[`PrepareError::MissingInput`] when a supplied value for `corp_code` is empty.",
+		"[`PrepareError::MissingInput`] when any element of `corp_code` is empty.",
 		"[`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.",
+		"[`PrepareError::InvalidFormat`] when an element of `corp_code` is not a valid `opendart-corp-code` value.",
 	} {
 		if !strings.Contains(operation, want) {
 			t.Fatalf("generated preparation documentation does not contain %q", want)
