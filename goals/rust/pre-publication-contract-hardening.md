@@ -34,18 +34,21 @@ _None._
 - CLI command and dispatch contract hardening is complete. PR #56 merged the
   exhaustive generated dispatch matrix, deepest-prefix help, and narrow
   hyphen-value normalization after native CI and review passed.
+- Portability and output-boundary hardening is complete. PR #57 merged the
+  WebAssembly-native client boundary, single-write output encoding, and native
+  Unix/Windows home discovery after hosted platform CI and review passed.
 
 ### Current in-scope result
 
-- Make the native SDK client boundary warning-free and dependency-clean on
-  WebAssembly, and make CLI encoding and home-path output deterministic across
-  Unix and Windows.
+- Bound canonically limited generated iterators, document meaningful errors for
+  every public fallible Rust API, and align the advertised offline verification
+  gate with CI.
 
 ### Next in-scope action
 
-- Finish independent review of the completed portability and output contract,
-  deliver it through PR CI, resolve all actionable feedback, and merge it
-  before starting API-contract work.
+- Implement the bounded iterator sentinel and its exact behavioral tests, then
+  add generated and manual `# Errors` documentation plus README/CI command
+  synchronization before independent review and PR delivery.
 
 ### Evidence and blockers
 
@@ -77,6 +80,10 @@ _None._
   CLI encoding and home discovery deterministic across native platforms. The
   complete credential-free pre-push gate and Windows-target test compilation
   pass locally.
+- PR #57 merged as `7df7111` after Go, Rust, macOS, Windows, aggregate CI, and
+  review passed. The hosted Windows probe exposed a PowerShell automatic-
+  variable collision; commit `9881ea3` fixed it, rerun CI passed, and the sole
+  review thread was answered and resolved.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.

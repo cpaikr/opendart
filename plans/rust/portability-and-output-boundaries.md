@@ -27,9 +27,9 @@ and home-directory representations.
   sibling-prefix, and non-UTF-8 paths. Linux process coverage exercises a
   non-UTF-8 executable path, while Windows CI runs native resolver tests and an
   installed discovery probe with `HOME` absent.
-- The complete credential-free pre-push gate passes locally. Windows-target
-  test compilation also passes; the Linux and Windows runtime assertions remain
-  required hosted evidence.
+- The complete credential-free pre-push gate passes locally. Hosted Linux,
+  macOS, and Windows runtime assertions pass, including the installed Windows
+  discovery probe and Linux non-UTF-8 executable-path case.
 
 ## Design decisions
 
@@ -137,6 +137,6 @@ and home-directory representations.
 
 ## Next action
 
-Finish independent review, deliver the completed portability and output
-contract through PR CI, resolve all actionable feedback, and merge it before
-starting API-contract work.
+Completed in PR #57 after Go, Rust, macOS, Windows, aggregate CI, and review
+passed with no unresolved actionable feedback. The active Rust roadmap work is
+now the API-contract and verification plan.

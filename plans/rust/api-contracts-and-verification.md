@@ -131,6 +131,7 @@ match the CI workflow exactly.
 
 ## Next action
 
-Add counting and infinite iterator regression tests, inventory public
-`Result`-returning APIs, and diff the README gate against CI before changing the
-renderer.
+Implement the maximum-plus-one iterator sentinel and exact counting/infinite
+regression tests, then generate operation-specific `# Errors` sections and add
+the remaining manual fallible-API documentation before synchronizing README and
+CI verification commands.
