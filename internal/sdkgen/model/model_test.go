@@ -151,6 +151,23 @@ func TestBuildPreservesCommaSerializationAndZIPErrorRouting(t *testing.T) {
 	}
 }
 
+func TestBuildRejectsUnrepresentableArraySentinel(t *testing.T) {
+	surface := canonicalSurface(t)
+	for operationIndex := range surface.Operations {
+		for parameterIndex := range surface.Operations[operationIndex].Parameters {
+			parameter := &surface.Operations[operationIndex].Parameters[parameterIndex]
+			if parameter.MaxItems == nil {
+				continue
+			}
+			*parameter.MaxItems = model.MaximumPortableArrayItems + 1
+			_, err := model.Build(surface)
+			assertModelRule(t, err, "invalid-cardinality")
+			return
+		}
+	}
+	t.Fatal("canonical surface has no bounded array parameter")
+}
+
 func TestBuildFailsClosedOnUnsupportedOrContradictoryInputs(t *testing.T) {
 	tests := []struct {
 		name string

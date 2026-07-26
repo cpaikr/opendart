@@ -34,18 +34,22 @@ _None._
 - CLI command and dispatch contract hardening is complete. PR #56 merged the
   exhaustive generated dispatch matrix, deepest-prefix help, and narrow
   hyphen-value normalization after native CI and review passed.
+- Portability and output-boundary hardening is complete. PR #57 merged the
+  WebAssembly-native client boundary, single-write output encoding, and native
+  Unix/Windows home discovery after hosted platform CI and review passed.
 
 ### Current in-scope result
 
-- Make the native SDK client boundary warning-free and dependency-clean on
-  WebAssembly, and make CLI encoding and home-path output deterministic across
-  Unix and Windows.
+- Bound canonically limited generated iterators, document meaningful errors for
+  every public fallible Rust API, and align the advertised offline verification
+  gate with CI. Implementation is complete pending independent review, the full
+  pre-push gate, and PR delivery.
 
 ### Next in-scope action
 
-- Finish independent review of the completed portability and output contract,
-  deliver it through PR CI, resolve all actionable feedback, and merge it
-  before starting API-contract work.
+- Run independent review of the bounded generated behavior and public API
+  documentation, address actionable findings, then run the complete
+  credential-free pre-push gate and deliver the final included PR.
 
 ### Evidence and blockers
 
@@ -77,6 +81,30 @@ _None._
   CLI encoding and home discovery deterministic across native platforms. The
   complete credential-free pre-push gate and Windows-target test compilation
   pass locally.
+- PR #57 merged as `7df7111` after Go, Rust, macOS, Windows, aggregate CI, and
+  review passed. The hosted Windows probe exposed a PowerShell automatic-
+  variable collision; commit `9881ea3` fixed it, rerun CI passed, and the sole
+  review thread was answered and resolved.
+- Commit `8f73f52` bounds generated string-array collection at maximum plus one,
+  rejects an unrepresentable sentinel, documents retained invalid state, and
+  proves finite, oversized, infinite, exact-maximum, and representation-specific
+  behavior for every currently bounded generated parameter.
+- Commit `3e6c339` generates operation-specific error contracts for every
+  public preparation method, documents the handwritten fallible API inventory,
+  enforces `clippy::missing_errors_doc`, and synchronizes the README's two
+  credential-free compatibility commands. Focused generator, release-guard,
+  public-contract, all-feature Clippy, strict rustdoc, and both compatibility
+  suites pass; generated sources are fresh.
+- Independent review found array-element prose ambiguity, a future sentinel
+  that could exceed `usize` on supported `wasm32`, a test-only public fallible
+  API in the feature-unification crate, and two handwritten error-contract
+  omissions. Commits `b0197a2` and `fa624e6` resolve every finding and add the
+  portable boundary regression.
+- The complete credential-free pre-push gate passes on `fa624e6`: Go vet,
+  normal and race tests, repository policy and generated freshness, stable and
+  MSRV Rust contracts, structured and binary compatibility, strict rustdoc,
+  transport-independent and WebAssembly dependency checks, reqwest feature
+  unification, package verification, and clean CLI installation.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.

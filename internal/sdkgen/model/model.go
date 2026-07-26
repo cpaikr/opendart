@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/url"
 	"reflect"
 	"sort"
@@ -16,6 +17,10 @@ import (
 )
 
 const SchemaVersion = 3
+
+// MaximumPortableArrayItems leaves room for one overflow sentinel in usize on
+// every supported Rust target, including wasm32.
+const MaximumPortableArrayItems int64 = math.MaxUint32 - 1
 
 type Representation string
 
@@ -364,8 +369,8 @@ func normalizeParameters(source openapispec.SDKSurfaceOperation) ([]Parameter, e
 			if sourceParameter.Style != "form" || sourceParameter.Explode {
 				return nil, reject("unsupported-parameter-serialization", source.OperationID, "parameters/"+sourceParameter.Name, "arrays require form explode=false")
 			}
-			if sourceParameter.MinItems == nil || sourceParameter.MaxItems == nil || *sourceParameter.MinItems < 0 || *sourceParameter.MaxItems < *sourceParameter.MinItems {
-				return nil, reject("invalid-cardinality", source.OperationID, "parameters/"+sourceParameter.Name, "explicit minItems and maxItems required")
+			if sourceParameter.MinItems == nil || sourceParameter.MaxItems == nil || *sourceParameter.MinItems < 0 || *sourceParameter.MaxItems < *sourceParameter.MinItems || *sourceParameter.MaxItems > MaximumPortableArrayItems {
+				return nil, reject("invalid-cardinality", source.OperationID, "parameters/"+sourceParameter.Name, "valid minItems, maxItems, and overflow sentinel required")
 			}
 		default:
 			return nil, reject("unsupported-parameter-schema", source.OperationID, "parameters/"+sourceParameter.Name, strings.Join(sourceParameter.Types, ","))

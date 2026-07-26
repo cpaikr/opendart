@@ -47,6 +47,16 @@ impl EstkRs {
     pub fn end_de(&self) -> &str { &self.end_de }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::EstkRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_estkRs_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/estkRs.json", identity, JSON_ONLY, None)?;
@@ -54,6 +64,16 @@ impl EstkRs {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::EstkRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_estkRs_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/estkRs.xml", identity, XML_ONLY, Some("result"))?;
@@ -115,6 +135,16 @@ impl BdRs {
     pub fn end_de(&self) -> &str { &self.end_de }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::BdRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_bdRs_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/bdRs.json", identity, JSON_ONLY, None)?;
@@ -122,6 +152,16 @@ impl BdRs {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::BdRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_bdRs_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/bdRs.xml", identity, XML_ONLY, Some("result"))?;
@@ -183,6 +223,16 @@ impl StkdpRs {
     pub fn end_de(&self) -> &str { &self.end_de }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::StkdpRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_stkdpRs_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/stkdpRs.json", identity, JSON_ONLY, None)?;
@@ -190,6 +240,16 @@ impl StkdpRs {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::StkdpRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_stkdpRs_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/stkdpRs.xml", identity, XML_ONLY, Some("result"))?;
@@ -251,6 +311,16 @@ impl MgRs {
     pub fn end_de(&self) -> &str { &self.end_de }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::MgRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_mgRs_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/mgRs.json", identity, JSON_ONLY, None)?;
@@ -258,6 +328,16 @@ impl MgRs {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::MgRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_mgRs_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/mgRs.xml", identity, XML_ONLY, Some("result"))?;
@@ -319,6 +399,16 @@ impl ExtrRs {
     pub fn end_de(&self) -> &str { &self.end_de }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::ExtrRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_extrRs_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/extrRs.json", identity, JSON_ONLY, None)?;
@@ -326,6 +416,16 @@ impl ExtrRs {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::ExtrRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_extrRs_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/extrRs.xml", identity, XML_ONLY, Some("result"))?;
@@ -387,6 +487,16 @@ impl DvRs {
     pub fn end_de(&self) -> &str { &self.end_de }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::DvRsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_dvRs_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/dvRs.json", identity, JSON_ONLY, None)?;
@@ -394,6 +504,16 @@ impl DvRs {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, or `end_de` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::DvRsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_dvRs_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/dvRs.xml", identity, XML_ONLY, Some("result"))?;

@@ -94,6 +94,12 @@ impl WireInspector {
     }
 
     /// Inspects a bounded JSON body without imposing source-status policy.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`WireInspectError::BodyLimit`] when `body` exceeds the configured
+    /// limit, or [`WireInspectError::Envelope`] when JSON is malformed, contains
+    /// duplicate object members, or exceeds the supported envelope structure.
     pub fn inspect_json(&self, body: &[u8]) -> Result<SourceReply<SourceValue>, WireInspectError> {
         self.check_size(body)?;
         if !json_members_are_unique(body) {
@@ -120,6 +126,12 @@ impl WireInspector {
     /// `$content`. Whitespace-only text between children is treated as document
     /// formatting. Child values live only in one-field objects within `$content`
     /// so nested evidence is never duplicated.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`WireInspectError::BodyLimit`] when `body` exceeds the configured
+    /// limit, or [`WireInspectError::Envelope`] when XML is malformed or violates
+    /// the supported bounded envelope grammar.
     pub fn inspect_xml(&self, body: &[u8]) -> Result<SourceReply<SourceValue>, WireInspectError> {
         self.inspect_xml_with_root(body).map(|(_, reply)| reply)
     }

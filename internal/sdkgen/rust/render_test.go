@@ -55,6 +55,9 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 		t.Fatalf("Render() error = %v", err)
 	}
 	generated := string(files["operations/group.rs"])
+	if methods, sections := strings.Count(generated, "pub fn prepare_"), strings.Count(generated, "/// # Errors"); methods != sections {
+		t.Fatalf("generated preparation methods = %d, error sections = %d", methods, sections)
+	}
 	if !strings.Contains(generated, "#[derive(Clone, Debug, Default, Eq, PartialEq)]\npub struct OptionalInput") {
 		t.Fatal("optional-only operation input does not derive Default")
 	}
@@ -91,7 +94,7 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 		Checksum:      strings.Repeat("a", 64),
 		Logical: []model.LogicalOperation{{
 			ID: "array", RustName: "ArrayInput", Group: "group",
-			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Required: true, Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: int64Pointer(100)}},
+			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Required: true, Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: int64Pointer(100), Constraints: model.StringConstraints{Format: "opendart-corp-code"}}},
 			Variants:   []model.PhysicalReference{{OperationID: "array.json", Representation: model.RepresentationJSON}},
 		}},
 		Physical: []model.PhysicalOperation{{
@@ -105,12 +108,117 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 		t.Fatal(err)
 	}
 	operation := string(files["operations/group.rs"])
+	if !strings.Contains(operation, "corp_code: corp_code.into_iter().take(101).map(Into::into).collect(),") {
+		t.Fatal("bounded array constructor does not retain only the maximum plus one values")
+	}
+	if !strings.Contains(operation, "This constructor consumes and retains at most 101 items from the `corp_code` iterator so oversized or infinite inputs fail without being exhausted.") {
+		t.Fatal("bounded array constructor does not document its consumption and retention contract")
+	}
+	for _, want := range []string{
+		"# Errors",
+		"[`PrepareError::MissingInput`] when any element of `corp_code` is empty.",
+		"[`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.",
+		"[`PrepareError::InvalidFormat`] when an element of `corp_code` is not a valid `opendart-corp-code` value.",
+	} {
+		if !strings.Contains(operation, want) {
+			t.Fatalf("generated preparation documentation does not contain %q", want)
+		}
+	}
 	if !strings.Contains(operation, "for value in &self.corp_code {\n            require_nonempty(identity, \"corp_code\", value)?;") {
 		t.Fatal("array elements are not checked for empty strings")
 	}
 	responses := string(files["responses/group.rs"])
 	if !strings.Contains(responses, `back\u{8}separator\u{2028}`) {
 		t.Fatalf("response description was not retained safely:\n%s", responses)
+	}
+}
+
+func TestRenderBoundsOptionalArrayInputs(t *testing.T) {
+	source := model.Model{
+		SchemaVersion: model.SchemaVersion,
+		Checksum:      strings.Repeat("a", 64),
+		Logical: []model.LogicalOperation{{
+			ID: "array", RustName: "ArrayInput", Group: "group",
+			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: int64Pointer(2)}},
+			Variants:   []model.PhysicalReference{{OperationID: "array.json", Representation: model.RepresentationJSON}},
+		}},
+		Physical: []model.PhysicalOperation{{
+			OperationID: "array.json", LogicalID: "array", RustConstant: "ARRAY_JSON", Path: "/api/array.json", PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON},
+			Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "object", AdditionalPropertiesPolicy: "allowed"}}}}},
+		}},
+	}
+
+	files, err := Render(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	operation := string(files["operations/group.rs"])
+	if !strings.Contains(operation, "self.corp_code = Some(value.into_iter().take(3).map(Into::into).collect())") {
+		t.Fatal("bounded optional array setter does not retain only the maximum plus one values")
+	}
+}
+
+func TestRenderRejectsUnrepresentableArraySentinel(t *testing.T) {
+	maximum := model.MaximumPortableArrayItems
+	source := model.Model{
+		SchemaVersion: model.SchemaVersion,
+		Checksum:      strings.Repeat("a", 64),
+		Logical: []model.LogicalOperation{{
+			ID: "array", RustName: "ArrayInput", Group: "group",
+			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Required: true, Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: &maximum}},
+		}},
+	}
+
+	if _, err := Render(source); err != nil {
+		t.Fatalf("Render() rejected the largest portable sentinel: %v", err)
+	}
+	maximum++
+	if _, err := Render(source); err == nil || !strings.Contains(err.Error(), "overflow sentinel") {
+		t.Fatalf("Render() error = %v", err)
+	}
+}
+
+func TestOwnedConversionLeavesUnboundedArraysUnchanged(t *testing.T) {
+	parameter := model.Parameter{Shape: model.StringArray}
+	if conversion := ownedConversion(parameter, "values"); conversion != "values.into_iter().map(Into::into).collect()" {
+		t.Fatalf("ownedConversion() = %q", conversion)
+	}
+}
+
+func TestRenderPreparationErrorsUsesValidationFacts(t *testing.T) {
+	minimum, maximum := int64(2), int64(9)
+	var output strings.Builder
+	renderPreparationErrors(&output, model.LogicalOperation{Parameters: []model.Parameter{{
+		WireName: "value",
+		Shape:    model.ScalarString,
+		Constraints: model.StringConstraints{
+			MinLength:      &minimum,
+			MaxLength:      &maximum,
+			Format:         "source-format",
+			AllowedValues:  []string{"accepted"},
+			DecimalMinimum: &minimum,
+			DecimalMaximum: &maximum,
+		},
+	}}})
+	for _, want := range []string{
+		"PrepareError::MissingInput",
+		"PrepareError::InvalidLength",
+		"outside 2..=9",
+		"PrepareError::InvalidFormat",
+		"`source-format`",
+		"PrepareError::InvalidAllowedValue",
+		"PrepareError::InvalidDecimalRange",
+		"decimal integer in 2..=9",
+	} {
+		if !strings.Contains(output.String(), want) {
+			t.Fatalf("preparation error documentation does not contain %q:\n%s", want, output.String())
+		}
+	}
+
+	output.Reset()
+	renderPreparationErrors(&output, model.LogicalOperation{})
+	if !strings.Contains(output.String(), "no caller-input preparation failure") {
+		t.Fatalf("parameter-free documentation = %q", output.String())
 	}
 }
 

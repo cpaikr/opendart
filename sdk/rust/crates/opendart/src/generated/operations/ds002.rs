@@ -47,6 +47,15 @@ impl IrdsSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::IrdsSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_irdsSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/irdsSttus.json", identity, JSON_ONLY, None)?;
@@ -54,6 +63,15 @@ impl IrdsSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::IrdsSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_irdsSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/irdsSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -114,6 +132,15 @@ impl AlotMatter {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::AlotMatterJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_alotMatter_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/alotMatter.json", identity, JSON_ONLY, None)?;
@@ -121,6 +148,15 @@ impl AlotMatter {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::AlotMatterXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_alotMatter_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/alotMatter.xml", identity, XML_ONLY, Some("result"))?;
@@ -181,6 +217,15 @@ impl TesstkAcqsDspsSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::TesstkAcqsDspsSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_tesstkAcqsDspsSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/tesstkAcqsDspsSttus.json", identity, JSON_ONLY, None)?;
@@ -188,6 +233,15 @@ impl TesstkAcqsDspsSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::TesstkAcqsDspsSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_tesstkAcqsDspsSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/tesstkAcqsDspsSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -248,6 +302,15 @@ impl HyslrSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HyslrSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hyslrSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hyslrSttus.json", identity, JSON_ONLY, None)?;
@@ -255,6 +318,15 @@ impl HyslrSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HyslrSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hyslrSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hyslrSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -315,6 +387,15 @@ impl HyslrChgSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HyslrChgSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hyslrChgSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hyslrChgSttus.json", identity, JSON_ONLY, None)?;
@@ -322,6 +403,15 @@ impl HyslrChgSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HyslrChgSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hyslrChgSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hyslrChgSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -382,6 +472,15 @@ impl MrhlSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::MrhlSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_mrhlSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/mrhlSttus.json", identity, JSON_ONLY, None)?;
@@ -389,6 +488,15 @@ impl MrhlSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::MrhlSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_mrhlSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/mrhlSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -449,6 +557,15 @@ impl ExctvSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::ExctvSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_exctvSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/exctvSttus.json", identity, JSON_ONLY, None)?;
@@ -456,6 +573,15 @@ impl ExctvSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::ExctvSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_exctvSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/exctvSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -516,6 +642,15 @@ impl EmpSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::EmpSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_empSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/empSttus.json", identity, JSON_ONLY, None)?;
@@ -523,6 +658,15 @@ impl EmpSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::EmpSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_empSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/empSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -583,6 +727,15 @@ impl HmvAuditIndvdlBySttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HmvAuditIndvdlBySttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditIndvdlBySttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttus.json", identity, JSON_ONLY, None)?;
@@ -590,6 +743,15 @@ impl HmvAuditIndvdlBySttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HmvAuditIndvdlBySttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditIndvdlBySttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -650,6 +812,15 @@ impl HmvAuditAllSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HmvAuditAllSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditAllSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hmvAuditAllSttus.json", identity, JSON_ONLY, None)?;
@@ -657,6 +828,15 @@ impl HmvAuditAllSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HmvAuditAllSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditAllSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hmvAuditAllSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -717,6 +897,15 @@ impl IndvdlByPay {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::IndvdlByPayJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_indvdlByPay_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/indvdlByPay.json", identity, JSON_ONLY, None)?;
@@ -724,6 +913,15 @@ impl IndvdlByPay {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::IndvdlByPayXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_indvdlByPay_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/indvdlByPay.xml", identity, XML_ONLY, Some("result"))?;
@@ -784,6 +982,15 @@ impl OtrCprInvstmntSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::OtrCprInvstmntSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_otrCprInvstmntSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/otrCprInvstmntSttus.json", identity, JSON_ONLY, None)?;
@@ -791,6 +998,15 @@ impl OtrCprInvstmntSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::OtrCprInvstmntSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_otrCprInvstmntSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/otrCprInvstmntSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -851,6 +1067,15 @@ impl StockTotqySttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::StockTotqySttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_stockTotqySttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/stockTotqySttus.json", identity, JSON_ONLY, None)?;
@@ -858,6 +1083,15 @@ impl StockTotqySttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::StockTotqySttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_stockTotqySttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/stockTotqySttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -918,6 +1152,15 @@ impl DetScritsIsuAcmslt {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::DetScritsIsuAcmsltJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_detScritsIsuAcmslt_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/detScritsIsuAcmslt.json", identity, JSON_ONLY, None)?;
@@ -925,6 +1168,15 @@ impl DetScritsIsuAcmslt {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::DetScritsIsuAcmsltXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_detScritsIsuAcmslt_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/detScritsIsuAcmslt.xml", identity, XML_ONLY, Some("result"))?;
@@ -985,6 +1237,15 @@ impl EntrprsBilScritsNrdmpBlce {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::EntrprsBilScritsNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_entrprsBilScritsNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/entrprsBilScritsNrdmpBlce.json", identity, JSON_ONLY, None)?;
@@ -992,6 +1253,15 @@ impl EntrprsBilScritsNrdmpBlce {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::EntrprsBilScritsNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_entrprsBilScritsNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/entrprsBilScritsNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
@@ -1052,6 +1322,15 @@ impl SrtpdPsndbtNrdmpBlce {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::SrtpdPsndbtNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_srtpdPsndbtNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/srtpdPsndbtNrdmpBlce.json", identity, JSON_ONLY, None)?;
@@ -1059,6 +1338,15 @@ impl SrtpdPsndbtNrdmpBlce {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::SrtpdPsndbtNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_srtpdPsndbtNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/srtpdPsndbtNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
@@ -1119,6 +1407,15 @@ impl CprndNrdmpBlce {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::CprndNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_cprndNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/cprndNrdmpBlce.json", identity, JSON_ONLY, None)?;
@@ -1126,6 +1423,15 @@ impl CprndNrdmpBlce {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::CprndNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_cprndNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/cprndNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
@@ -1186,6 +1492,15 @@ impl NewCaplScritsNrdmpBlce {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::NewCaplScritsNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_newCaplScritsNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/newCaplScritsNrdmpBlce.json", identity, JSON_ONLY, None)?;
@@ -1193,6 +1508,15 @@ impl NewCaplScritsNrdmpBlce {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::NewCaplScritsNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_newCaplScritsNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/newCaplScritsNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
@@ -1253,6 +1577,15 @@ impl CndlCaplScritsNrdmpBlce {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::CndlCaplScritsNrdmpBlceJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_cndlCaplScritsNrdmpBlce_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/cndlCaplScritsNrdmpBlce.json", identity, JSON_ONLY, None)?;
@@ -1260,6 +1593,15 @@ impl CndlCaplScritsNrdmpBlce {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::CndlCaplScritsNrdmpBlceXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_cndlCaplScritsNrdmpBlce_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/cndlCaplScritsNrdmpBlce.xml", identity, XML_ONLY, Some("result"))?;
@@ -1320,6 +1662,15 @@ impl AccnutAdtorNmNdAdtOpinion {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::AccnutAdtorNmNdAdtOpinionJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_accnutAdtorNmNdAdtOpinion_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/accnutAdtorNmNdAdtOpinion.json", identity, JSON_ONLY, None)?;
@@ -1327,6 +1678,15 @@ impl AccnutAdtorNmNdAdtOpinion {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::AccnutAdtorNmNdAdtOpinionXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_accnutAdtorNmNdAdtOpinion_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/accnutAdtorNmNdAdtOpinion.xml", identity, XML_ONLY, Some("result"))?;
@@ -1387,6 +1747,15 @@ impl AdtServcCnclsSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::AdtServcCnclsSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_adtServcCnclsSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/adtServcCnclsSttus.json", identity, JSON_ONLY, None)?;
@@ -1394,6 +1763,15 @@ impl AdtServcCnclsSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::AdtServcCnclsSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_adtServcCnclsSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/adtServcCnclsSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -1454,6 +1832,15 @@ impl AccnutAdtorNonAdtServcCnclsSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::AccnutAdtorNonAdtServcCnclsSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_accnutAdtorNonAdtServcCnclsSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/accnutAdtorNonAdtServcCnclsSttus.json", identity, JSON_ONLY, None)?;
@@ -1461,6 +1848,15 @@ impl AccnutAdtorNonAdtServcCnclsSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::AccnutAdtorNonAdtServcCnclsSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_accnutAdtorNonAdtServcCnclsSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/accnutAdtorNonAdtServcCnclsSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -1521,6 +1917,15 @@ impl OutcmpnyDrctrNdChangeSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::OutcmpnyDrctrNdChangeSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_outcmpnyDrctrNdChangeSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/outcmpnyDrctrNdChangeSttus.json", identity, JSON_ONLY, None)?;
@@ -1528,6 +1933,15 @@ impl OutcmpnyDrctrNdChangeSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::OutcmpnyDrctrNdChangeSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_outcmpnyDrctrNdChangeSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/outcmpnyDrctrNdChangeSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -1588,6 +2002,15 @@ impl UnrstExctvMendngSttus {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::UnrstExctvMendngSttusJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_unrstExctvMendngSttus_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/unrstExctvMendngSttus.json", identity, JSON_ONLY, None)?;
@@ -1595,6 +2018,15 @@ impl UnrstExctvMendngSttus {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::UnrstExctvMendngSttusXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_unrstExctvMendngSttus_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/unrstExctvMendngSttus.xml", identity, XML_ONLY, Some("result"))?;
@@ -1655,6 +2087,15 @@ impl DrctrAdtAllMendngSttusGmtsckConfmAmount {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::DrctrAdtAllMendngSttusGmtsckConfmAmountJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_drctrAdtAllMendngSttusGmtsckConfmAmount_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusGmtsckConfmAmount.json", identity, JSON_ONLY, None)?;
@@ -1662,6 +2103,15 @@ impl DrctrAdtAllMendngSttusGmtsckConfmAmount {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::DrctrAdtAllMendngSttusGmtsckConfmAmountXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_drctrAdtAllMendngSttusGmtsckConfmAmount_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusGmtsckConfmAmount.xml", identity, XML_ONLY, Some("result"))?;
@@ -1722,6 +2172,15 @@ impl DrctrAdtAllMendngSttusMendngPymntamtTyCl {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::DrctrAdtAllMendngSttusMendngPymntamtTyClJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_drctrAdtAllMendngSttusMendngPymntamtTyCl_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusMendngPymntamtTyCl.json", identity, JSON_ONLY, None)?;
@@ -1729,6 +2188,15 @@ impl DrctrAdtAllMendngSttusMendngPymntamtTyCl {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::DrctrAdtAllMendngSttusMendngPymntamtTyClXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_drctrAdtAllMendngSttusMendngPymntamtTyCl_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/drctrAdtAllMendngSttusMendngPymntamtTyCl.xml", identity, XML_ONLY, Some("result"))?;
@@ -1789,6 +2257,15 @@ impl PssrpCptalUseDtls {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::PssrpCptalUseDtlsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_pssrpCptalUseDtls_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/pssrpCptalUseDtls.json", identity, JSON_ONLY, None)?;
@@ -1796,6 +2273,15 @@ impl PssrpCptalUseDtls {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::PssrpCptalUseDtlsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_pssrpCptalUseDtls_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/pssrpCptalUseDtls.xml", identity, XML_ONLY, Some("result"))?;
@@ -1856,6 +2342,15 @@ impl PrvsrpCptalUseDtls {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::PrvsrpCptalUseDtlsJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_prvsrpCptalUseDtls_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/prvsrpCptalUseDtls.json", identity, JSON_ONLY, None)?;
@@ -1863,6 +2358,15 @@ impl PrvsrpCptalUseDtls {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::PrvsrpCptalUseDtlsXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_prvsrpCptalUseDtls_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/prvsrpCptalUseDtls.xml", identity, XML_ONLY, Some("result"))?;
@@ -1923,6 +2427,15 @@ impl HmvAuditIndvdlBySttusV2 {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::HmvAuditIndvdlBySttusV2JsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditIndvdlBySttusV2_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttusV2.json", identity, JSON_ONLY, None)?;
@@ -1930,6 +2443,15 @@ impl HmvAuditIndvdlBySttusV2 {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::HmvAuditIndvdlBySttusV2XmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_hmvAuditIndvdlBySttusV2_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/hmvAuditIndvdlBySttusV2.xml", identity, XML_ONLY, Some("result"))?;
@@ -1990,6 +2512,15 @@ impl IndvdlByPayV2 {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::IndvdlByPayV2JsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_indvdlByPayV2_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/indvdlByPayV2.json", identity, JSON_ONLY, None)?;
@@ -1997,6 +2528,15 @@ impl IndvdlByPayV2 {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::IndvdlByPayV2XmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_indvdlByPayV2_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/indvdlByPayV2.xml", identity, XML_ONLY, Some("result"))?;

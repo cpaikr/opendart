@@ -365,6 +365,12 @@ pub struct ApiKey {
 
 impl ApiKey {
     /// Validates and owns an API key without exposing it through formatting.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AuthorizationError::EmptyApiKey`] for an empty or whitespace-only
+    /// value. Returns [`AuthorizationError::ControlCharacterApiKey`] when a value
+    /// that is not whitespace-only contains any control character.
     pub fn new(value: impl Into<String>) -> Result<Self, AuthorizationError> {
         let value = value.into();
         if value.chars().all(char::is_whitespace) {

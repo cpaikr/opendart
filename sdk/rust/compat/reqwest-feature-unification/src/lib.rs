@@ -1,13 +1,5 @@
 //! Stable-only compatibility proof for adversarial `reqwest` feature unification.
 
-use opendart::{ApiKey, Client, ClientBuildError};
-
-/// Builds the official client while all transport-affecting dependency features are unified.
-pub fn build_official_client() -> Result<Client, ClientBuildError> {
-    Client::builder(ApiKey::new("feature-unification-fixture").expect("nonempty fixture key"))
-        .build()
-}
-
 #[cfg(test)]
 mod tests {
     use std::{error::Error, time::Duration};
@@ -70,7 +62,11 @@ mod tests {
 
     #[test]
     fn official_factory_builds_under_adversarial_feature_unification() {
-        super::build_official_client().expect("the guarded official factory must remain valid");
+        Client::builder(
+            ApiKey::new("feature-unification-fixture").expect("nonempty fixture key"),
+        )
+            .build()
+            .expect("the guarded official factory must remain valid");
     }
 
     #[tokio::test]

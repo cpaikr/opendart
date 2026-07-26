@@ -21,6 +21,18 @@ and clean-install checks, with:
 ./scripts/verify rust
 ```
 
+To reproduce the two CLI compatibility contracts directly from the repository
+root, run:
+
+```sh
+RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback
+RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
+```
+
+The `opendart_compat` configuration activates repository-only loopback origins
+and deterministic failure seams that are unavailable in ordinary consumer
+builds. Both commands are credential-free and make no live OpenDART requests.
+
 The faithful cross-language pre-push gate composes that exact Rust mode with
 the required Linux Go contract:
 
