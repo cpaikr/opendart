@@ -1,12 +1,14 @@
 //! Black-box checks for the transport-independent public contract.
 
-use std::fmt::Display;
+use std::{cell::Cell, fmt::Display};
 
 use opendart::{
-    ApiKey, Authentication, AuthorizedRequest, EnvelopeFormat, OperationIdentity,
+    ApiKey, Authentication, AuthorizedRequest, EnvelopeFormat, OperationIdentity, PrepareError,
     PreparedBinaryRequest, PreparedRequest, Representation, RequestMethod, ResponseMetadata,
     SourceReply, SourceValue, SourceValueKind, WireInspectError, WireInspector,
-    operations::{AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttMultiAcnt, List},
+    operations::{
+        AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttCmpnyIndx, FnlttMultiAcnt, List,
+    },
     responses::CompanyJsonResponse,
     source_provenance,
 };
@@ -105,16 +107,102 @@ fn fixed_binary_operation_routes_zip_and_xml_source_error() {
     );
 }
 
+fn assert_invalid_cardinality(error: PrepareError, physical: &'static str, logical: &'static str) {
+    let PrepareError::InvalidCardinality {
+        operation,
+        parameter,
+        minimum,
+        maximum,
+    } = error
+    else {
+        panic!("unexpected preparation error: {error:?}");
+    };
+    assert_eq!(operation.physical(), physical);
+    assert_eq!(operation.logical(), logical);
+    assert_eq!(parameter, "corp_code");
+    assert_eq!(minimum, 1);
+    assert_eq!(maximum, 100);
+}
+
 #[test]
-fn multi_company_request_enforces_cardinality_and_comma_serialization() {
-    let prepared = FnlttMultiAcnt::new(["00334624", "00126380"], "2025", "11011")
+fn bounded_array_consumes_each_available_valid_item_once() {
+    let yielded = Cell::new(0);
+    let values = ["00334624", "00126380"].into_iter().map(|value| {
+        yielded.set(yielded.get() + 1);
+        value
+    });
+    let operation = FnlttMultiAcnt::new(values, "2025", "11011");
+
+    assert_eq!(yielded.get(), 2);
+    assert_eq!(operation.corp_code(), ["00334624", "00126380"]);
+}
+
+#[test]
+fn bounded_array_preserves_exact_maximum_serialization() {
+    let values = vec!["00126380"; 100];
+    let prepared = FnlttMultiAcnt::new(values.clone(), "2025", "11011")
         .prepare_json()
-        .expect("documented multi-company input should prepare");
+        .expect("the documented maximum should prepare");
     assert_eq!(
         prepared.encoded_query(),
-        "corp_code=00334624,00126380&bsns_year=2025&reprt_code=11011"
+        format!(
+            "corp_code={}&bsns_year=2025&reprt_code=11011",
+            values.join(",")
+        )
     );
+}
 
+#[test]
+fn bounded_array_stops_at_overflow_sentinel_and_reports_every_representation() {
+    let yielded = Cell::new(0);
+    let operation = FnlttMultiAcnt::new(
+        std::iter::repeat_with(|| {
+            yielded.set(yielded.get() + 1);
+            "00126380"
+        }),
+        "2025",
+        "11011",
+    );
+    assert_eq!(yielded.get(), 101);
+    assert_eq!(operation.corp_code().len(), 101);
+    assert_invalid_cardinality(
+        operation
+            .prepare_json()
+            .expect_err("the overflow sentinel must fail JSON preparation"),
+        "get_fnlttMultiAcnt_json",
+        "DS003-2019017",
+    );
+    assert_invalid_cardinality(
+        operation
+            .prepare_xml()
+            .expect_err("the overflow sentinel must fail XML preparation"),
+        "get_fnlttMultiAcnt_xml",
+        "DS003-2019017",
+    );
+}
+
+#[test]
+fn every_generated_bounded_parameter_uses_the_same_overflow_contract() {
+    let operation = FnlttCmpnyIndx::new(std::iter::repeat("00126380"), "2025", "11011", "M210000");
+    assert_eq!(operation.corp_code().len(), 101);
+    assert_invalid_cardinality(
+        operation
+            .prepare_json()
+            .expect_err("the overflow sentinel must fail JSON preparation"),
+        "get_fnlttCmpnyIndx_json",
+        "DS003-2022002",
+    );
+    assert_invalid_cardinality(
+        operation
+            .prepare_xml()
+            .expect_err("the overflow sentinel must fail XML preparation"),
+        "get_fnlttCmpnyIndx_xml",
+        "DS003-2022002",
+    );
+}
+
+#[test]
+fn multi_company_request_rejects_empty_and_invalid_elements() {
     assert!(
         FnlttMultiAcnt::new(Vec::<String>::new(), "2025", "11011")
             .prepare_json()
@@ -125,17 +213,6 @@ fn multi_company_request_enforces_cardinality_and_comma_serialization() {
             .prepare_json()
             .is_err()
     );
-    assert!(
-        FnlttMultiAcnt::new(vec!["00126380"; 101], "2025", "11011")
-            .prepare_json()
-            .is_err()
-    );
-    assert!(
-        FnlttMultiAcnt::new(vec!["00126380"; 100], "2025", "11011")
-            .prepare_json()
-            .is_ok()
-    );
-
     assert!(
         FnlttMultiAcnt::new(["a,b", "회사 /+"], "2025", "11011")
             .prepare_json()

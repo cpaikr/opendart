@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"math"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -149,6 +150,23 @@ func TestBuildPreservesCommaSerializationAndZIPErrorRouting(t *testing.T) {
 			t.Fatalf("ZIP operation %q routing = %#v", operation.OperationID, operation.ExpectedRepresentations)
 		}
 	}
+}
+
+func TestBuildRejectsUnrepresentableArraySentinel(t *testing.T) {
+	surface := canonicalSurface(t)
+	for operationIndex := range surface.Operations {
+		for parameterIndex := range surface.Operations[operationIndex].Parameters {
+			parameter := &surface.Operations[operationIndex].Parameters[parameterIndex]
+			if parameter.MaxItems == nil {
+				continue
+			}
+			*parameter.MaxItems = math.MaxInt64
+			_, err := model.Build(surface)
+			assertModelRule(t, err, "invalid-cardinality")
+			return
+		}
+	}
+	t.Fatal("canonical surface has no bounded array parameter")
 }
 
 func TestBuildFailsClosedOnUnsupportedOrContradictoryInputs(t *testing.T) {

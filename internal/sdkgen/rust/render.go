@@ -3,6 +3,7 @@ package rust
 
 import (
 	"fmt"
+	"math"
 	"net/url"
 	"regexp"
 	"sort"
@@ -18,6 +19,9 @@ import (
 func Render(source model.Model) (map[string][]byte, error) {
 	if source.SchemaVersion != model.SchemaVersion || source.Checksum == "" {
 		return nil, fmt.Errorf("render Rust SDK: invalid model schema or checksum")
+	}
+	if err := validateArraySentinels(source); err != nil {
+		return nil, err
 	}
 	if err := validateRustSymbols(source); err != nil {
 		return nil, err
@@ -352,6 +356,11 @@ func renderConstructor(output *strings.Builder, operation model.LogicalOperation
 		return
 	}
 	output.WriteString("    /// Creates an operation input. Explicit contract validation occurs during preparation.\n")
+	for _, parameter := range operation.Parameters {
+		if parameter.Shape == model.StringArray && parameter.MaxItems != nil {
+			fmt.Fprintf(output, "    ///\n    /// The `%s` iterator retains at most %d items so oversized or infinite inputs fail without being exhausted.\n", parameter.WireName, *parameter.MaxItems+1)
+		}
+	}
 	output.WriteString("    #[must_use]\n")
 	if len(required) == 0 {
 		output.WriteString("    pub fn new() -> Self {\n")
@@ -370,7 +379,7 @@ func renderConstructor(output *strings.Builder, operation model.LogicalOperation
 		if !parameter.Required {
 			fmt.Fprintf(output, "            %s: None,\n", parameter.RustName)
 		} else if parameter.Shape == model.StringArray {
-			fmt.Fprintf(output, "            %s: %s.into_iter().map(Into::into).collect(),\n", parameter.RustName, parameter.RustName)
+			fmt.Fprintf(output, "            %s: %s,\n", parameter.RustName, ownedConversion(parameter, parameter.RustName))
 		} else {
 			fmt.Fprintf(output, "            %s: %s.into(),\n", parameter.RustName, parameter.RustName)
 		}
@@ -905,9 +914,23 @@ func getterExpression(parameter model.Parameter) string {
 
 func ownedConversion(parameter model.Parameter, value string) string {
 	if parameter.Shape == model.StringArray {
-		return value + ".into_iter().map(Into::into).collect()"
+		if parameter.MaxItems == nil {
+			return value + ".into_iter().map(Into::into).collect()"
+		}
+		return fmt.Sprintf("%s.into_iter().take(%d).map(Into::into).collect()", value, *parameter.MaxItems+1)
 	}
 	return value + ".into()"
+}
+
+func validateArraySentinels(source model.Model) error {
+	for _, operation := range source.Logical {
+		for _, parameter := range operation.Parameters {
+			if parameter.Shape == model.StringArray && parameter.MaxItems != nil && *parameter.MaxItems == math.MaxInt64 {
+				return fmt.Errorf("render Rust SDK: parameter %s.%s has no representable overflow sentinel", operation.ID, parameter.WireName)
+			}
+		}
+	}
+	return nil
 }
 
 func expectedConstant(representations []model.Representation) string {

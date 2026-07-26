@@ -93,10 +93,12 @@ impl FnlttMultiAcnt {
     const LOGICAL_OPERATION_ID: &'static str = "DS003-2019017";
 
     /// Creates an operation input. Explicit contract validation occurs during preparation.
+    ///
+    /// The `corp_code` iterator retains at most 101 items so oversized or infinite inputs fail without being exhausted.
     #[must_use]
     pub fn new(corp_code: impl IntoIterator<Item = impl Into<String>>, bsns_year: impl Into<String>, reprt_code: impl Into<String>) -> Self {
         Self {
-            corp_code: corp_code.into_iter().map(Into::into).collect(),
+            corp_code: corp_code.into_iter().take(101).map(Into::into).collect(),
             bsns_year: bsns_year.into(),
             reprt_code: reprt_code.into(),
         }
@@ -410,10 +412,12 @@ impl FnlttCmpnyIndx {
     const LOGICAL_OPERATION_ID: &'static str = "DS003-2022002";
 
     /// Creates an operation input. Explicit contract validation occurs during preparation.
+    ///
+    /// The `corp_code` iterator retains at most 101 items so oversized or infinite inputs fail without being exhausted.
     #[must_use]
     pub fn new(corp_code: impl IntoIterator<Item = impl Into<String>>, bsns_year: impl Into<String>, reprt_code: impl Into<String>, idx_cl_code: impl Into<String>) -> Self {
         Self {
-            corp_code: corp_code.into_iter().map(Into::into).collect(),
+            corp_code: corp_code.into_iter().take(101).map(Into::into).collect(),
             bsns_year: bsns_year.into(),
             reprt_code: reprt_code.into(),
             idx_cl_code: idx_cl_code.into(),

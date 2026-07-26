@@ -1,6 +1,7 @@
 package rust
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -105,12 +106,65 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 		t.Fatal(err)
 	}
 	operation := string(files["operations/group.rs"])
+	if !strings.Contains(operation, "corp_code: corp_code.into_iter().take(101).map(Into::into).collect(),") {
+		t.Fatal("bounded array constructor does not retain only the maximum plus one values")
+	}
+	if !strings.Contains(operation, "The `corp_code` iterator retains at most 101 items so oversized or infinite inputs fail without being exhausted.") {
+		t.Fatal("bounded array constructor does not document its consumption and retention contract")
+	}
 	if !strings.Contains(operation, "for value in &self.corp_code {\n            require_nonempty(identity, \"corp_code\", value)?;") {
 		t.Fatal("array elements are not checked for empty strings")
 	}
 	responses := string(files["responses/group.rs"])
 	if !strings.Contains(responses, `back\u{8}separator\u{2028}`) {
 		t.Fatalf("response description was not retained safely:\n%s", responses)
+	}
+}
+
+func TestRenderBoundsOptionalArrayInputs(t *testing.T) {
+	source := model.Model{
+		SchemaVersion: model.SchemaVersion,
+		Checksum:      strings.Repeat("a", 64),
+		Logical: []model.LogicalOperation{{
+			ID: "array", RustName: "ArrayInput", Group: "group",
+			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: int64Pointer(2)}},
+			Variants:   []model.PhysicalReference{{OperationID: "array.json", Representation: model.RepresentationJSON}},
+		}},
+		Physical: []model.PhysicalOperation{{
+			OperationID: "array.json", LogicalID: "array", RustConstant: "ARRAY_JSON", Path: "/api/array.json", PrimaryRepresentation: model.RepresentationJSON, ExpectedRepresentations: []model.Representation{model.RepresentationJSON},
+			Responses: []model.Response{{Selector: "default", HTTPStatusEvidence: "not-documented", Media: []model.ResponseMedia{{Name: "application/json", ContentTypeStatus: "inferred-from-documented-output-format", Shape: model.ResponseShape{Kind: "object", AdditionalPropertiesPolicy: "allowed"}}}}},
+		}},
+	}
+
+	files, err := Render(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	operation := string(files["operations/group.rs"])
+	if !strings.Contains(operation, "self.corp_code = Some(value.into_iter().take(3).map(Into::into).collect())") {
+		t.Fatal("bounded optional array setter does not retain only the maximum plus one values")
+	}
+}
+
+func TestRenderRejectsUnrepresentableArraySentinel(t *testing.T) {
+	source := model.Model{
+		SchemaVersion: model.SchemaVersion,
+		Checksum:      strings.Repeat("a", 64),
+		Logical: []model.LogicalOperation{{
+			ID: "array", RustName: "ArrayInput", Group: "group",
+			Parameters: []model.Parameter{{WireName: "corp_code", RustName: "corp_code", Required: true, Shape: model.StringArray, MinItems: int64Pointer(1), MaxItems: int64Pointer(math.MaxInt64)}},
+		}},
+	}
+
+	if _, err := Render(source); err == nil || !strings.Contains(err.Error(), "overflow sentinel") {
+		t.Fatalf("Render() error = %v", err)
+	}
+}
+
+func TestOwnedConversionLeavesUnboundedArraysUnchanged(t *testing.T) {
+	parameter := model.Parameter{Shape: model.StringArray}
+	if conversion := ownedConversion(parameter, "values"); conversion != "values.into_iter().map(Into::into).collect()" {
+		t.Fatalf("ownedConversion() = %q", conversion)
 	}
 }
 
