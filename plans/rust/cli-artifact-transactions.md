@@ -47,10 +47,11 @@ filesystem work on the current-thread async runtime.
 - If a private stage is created but cannot be opened, failure to remove that
   unopened stage is retained as the same secondary cleanup evidence used by
   later transaction failures.
-- Stable Clippy and the full compatibility artifact process suite pass. Native
-  macOS checks pass on the Rust 1.85 floor, and the Rust 1.85 CLI cross-check
+- Full Go and Rust repository verification passes locally on macOS, including
+  stable Clippy, the compatibility artifact process suite, package verification,
+  clean installation, and the Rust 1.85 floor. The Rust 1.85 CLI cross-check
   passes for Windows. The Linux CLI cross-check is blocked locally by the
-  native-TLS OpenSSL sysroot, while the isolated publication prototype still
+  native-TLS OpenSSL sysroot, while the isolated publication path still
   compiles for Linux. Native Linux and Windows process behavior remains a
   validation gate.
 - The deadline, staging-setup trust boundary, and commit handoff policies found
