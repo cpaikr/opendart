@@ -9,25 +9,30 @@ query values without consuming real flags as data.
 
 ## Current state
 
-- `sdk/rust/crates/opendart-cli/tests/discovery.rs` exercises generated
-  dispatch through a representative company operation. It does not prove every
-  operation, logical-ID alias, and representation reaches the expected typed
-  SDK method and physical identity.
-- Generated dispatch is exhaustive at compile time, but many arms return the
-  same Rust types. A same-typed arm swap or incorrect representation mapping
-  can compile and escape the representative test.
-- An independent exhaustive review probe succeeded for the current generated
-  tree. The finding is a missing durable regression gate, not a known current
-  mapping mismatch.
-- `usage_help` falls back to root help when no known operation or
-  `operations list` context is detected. Bare `opendart call`, an unknown call
-  operation, and bare `opendart operations describe` therefore recommend root
-  commands instead of the relevant nested syntax and choices.
-- Clap interprets a separate value beginning with `-` as another option.
-  `--output -artifact.zip` fails even though the public contract accepts every
-  nonempty Unicode path except exactly `-`; `--output=-artifact.zip` works.
-- Enabling `allow_hyphen_values` blindly would consume `--help`, `--version`, or
-  known operation flags as values. Query filters have the same boundary.
+- The CLI projection now derives one minimal valid argv suffix for every
+  operation and representation from canonical constraints. Generation emits a
+  separately owned dispatch-case fixture, and freshness rejects missing,
+  stale, or extra fixture output.
+- The keyless process matrix exercises every generated canonical operation and
+  advertised logical-ID alias through public parsing and SDK preparation. It
+  asserts the exact logical ID, physical ID, representation, and operation
+  context at the credential boundary. The SDK's exhaustive physical request
+  vectors independently prove the corresponding paths.
+- A private command-context resolver walks the generated Clap tree once for
+  each invalid invocation. Reason, allowed choices, safe argument lookup, and
+  help all use the same deepest valid context for root, operations, list,
+  describe, call, and known operations.
+- Narrow `OsString` preprocessing joins only separate `--query` and `--output`
+  values that begin with `-` and are not repository-owned options. Exact `-`
+  remains artifact validation's responsibility, real flags remain options,
+  and preprocessing stops at `--`.
+- Process coverage includes nested missing and unknown commands, safe
+  non-UTF-8 behavior on Unix, separate and equals hyphen forms, every known
+  following flag, missing values, exact `-`, and option termination.
+- The complete credential-free pre-push gate passes locally, including
+  generated freshness, stable and MSRV Rust, structured and binary
+  compatibility suites, dependency graphs, rustdoc, package verification, and
+  clean source installation.
 
 ## Design decisions
 
@@ -142,5 +147,5 @@ query values without consuming real flags as data.
 
 ## Next action
 
-Add the exhaustive keyless dispatch matrix and the failing nested-help and
-hyphen-leading argv boundary tests before refactoring command context.
+Finish independent review, deliver the completed command contract through PR
+CI, resolve all actionable feedback, and merge it before starting portability.

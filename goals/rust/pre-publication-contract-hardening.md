@@ -41,9 +41,9 @@ _None._
 
 ### Next in-scope action
 
-- Add the exhaustive generated keyless dispatch evidence and the failing
-  nested-help and hyphen-leading argv boundaries, then implement the shared
-  command-context and normalization paths that make them pass.
+- Finish independent review of the completed CLI command contract, deliver it
+  through PR CI, resolve all actionable feedback, and merge it before starting
+  portability work.
 
 ### Evidence and blockers
 
@@ -62,6 +62,11 @@ _None._
   review passed. The valid review finding was fixed by routing deterministic
   failures through the production cleanup handlers; the final review had no
   unresolved actionable findings.
+- Commits `16df19e`, `f9a154c`, and `200341c` add exhaustive generated dispatch
+  evidence, shared deepest-prefix help, and narrow hyphen-value normalization.
+  The full credential-free pre-push gate passes with the new discovery matrix,
+  compatibility suites, stable/MSRV checks, package verification, and clean
+  installation.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.
