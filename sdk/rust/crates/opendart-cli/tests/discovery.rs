@@ -799,6 +799,31 @@ fn non_utf8_command_and_hyphen_value_errors_remain_contextual_and_sanitized() {
     }
 }
 
+#[cfg(target_os = "linux")]
+#[test]
+fn non_utf8_executable_path_emits_one_global_output_encode_error() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    let root = tempfile::tempdir().expect("temporary executable directory");
+    let executable = root
+        .path()
+        .join(OsString::from_vec(b"opendart-\xff".to_vec()));
+    std::fs::copy(env!("CARGO_BIN_EXE_opendart"), &executable)
+        .expect("copy executable to non-UTF-8 path");
+
+    let output = Command::new(executable)
+        .env_remove("OPENDART_API_KEY")
+        .output()
+        .expect("copied CLI process should start");
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stderr.is_empty());
+    assert_eq!(
+        output.stdout,
+        b"{\"kind\":\"error\",\"error\":{\"code\":\"output_encode\",\"message\":\"the structured result could not be encoded safely\"}}\n"
+    );
+}
+
 #[test]
 fn stable_error_outputs_match_repository_fixtures() {
     let invalid = invoke(&["unknown".to_owned()], None);

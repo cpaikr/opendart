@@ -1,9 +1,5 @@
 use std::io::Write;
 
-pub(crate) fn json(value: &impl serde::Serialize) -> Result<(), ()> {
-    write(encode(value)?)
-}
-
 pub(crate) fn encode(value: &impl serde::Serialize) -> Result<Vec<u8>, ()> {
     let mut encoded = serde_json::to_vec(value).map_err(|_| ())?;
     encoded.push(b'\n');

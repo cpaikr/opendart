@@ -457,6 +457,27 @@ impl ErrorEnvelope {
         )
     }
 
+    pub(crate) fn output_encode_global() -> Self {
+        Self {
+            kind: "error",
+            operation: None,
+            metadata: None,
+            cleanup: None,
+            error: Box::new(ErrorBody {
+                code: "output_encode",
+                message: "the structured result could not be encoded safely",
+                path: None,
+                reason: None,
+                argument: None,
+                allowed: Vec::new(),
+                minimum: None,
+                maximum: None,
+                format: None,
+                help: Vec::new(),
+            }),
+        }
+    }
+
     pub(crate) fn output_encode_with_metadata(
         operation: OperationContext,
         metadata: ResponseMetadata,

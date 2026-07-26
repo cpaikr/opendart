@@ -121,8 +121,9 @@ RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manife
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --no-default-features
 RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features --no-deps`
-	nativeArtifactFetchScript       = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
-	nativeArtifactTestScript        = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
+	nativeArtifactFetchScript = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml`
+	nativeArtifactTestScript  = `cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --bin opendart
+cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback`
 	compatibilityVerificationScript = `RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
 	transportIndependentGraphScript = `no_default_tree="${verification_tmp}/no-default-tree.txt"
 cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features -e normal --prefix none > "${no_default_tree}"
@@ -178,7 +179,12 @@ $binary = Join-Path $installRoot "bin/opendart.exe"
 & $binary --version
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $binary operations list | Out-Null
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }`
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Remove-Item Env:HOME -ErrorAction SilentlyContinue
+$env:USERPROFILE = $installRoot
+$home = & $binary | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if (-not $home.executable.display.StartsWith("~")) { exit 1 }`
 )
 
 var canonicalSpecificationSources = []string{

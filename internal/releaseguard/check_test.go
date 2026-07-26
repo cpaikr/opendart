@@ -1037,13 +1037,18 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "native artifact jobs use only approved steps",
 		},
 		{
+			name: "Windows native home discovery", artifact: verifyWorkflowArtifact,
+			old: `$env:USERPROFILE = $installRoot`, replacement: `$env:USERPROFILE = $installWorkspace`,
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
 			name: "native artifact compatibility cfg", artifact: verifyWorkflowArtifact,
 			old: "RUSTFLAGS: --cfg opendart_compat", replacement: "RUSTFLAGS: --cfg other",
 			invariant: "native artifact jobs use only approved steps",
 		},
 		{
 			name: "native artifact command", artifact: verifyWorkflowArtifact,
-			old: "run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback", replacement: "run: cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli",
+			old: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli",
 			invariant: "native artifact jobs use only approved steps",
 		},
 		{
