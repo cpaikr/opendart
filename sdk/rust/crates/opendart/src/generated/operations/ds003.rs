@@ -48,6 +48,15 @@ impl FnlttSinglAcnt {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::FnlttSinglAcntJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttSinglAcnt_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttSinglAcnt.json", identity, JSON_ONLY, None)?;
@@ -55,6 +64,15 @@ impl FnlttSinglAcnt {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::FnlttSinglAcntXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttSinglAcnt_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttSinglAcnt.xml", identity, XML_ONLY, Some("result"))?;
@@ -117,6 +135,16 @@ impl FnlttMultiAcnt {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::FnlttMultiAcntJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttMultiAcnt_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttMultiAcnt.json", identity, JSON_ONLY, None)?;
@@ -124,6 +152,16 @@ impl FnlttMultiAcnt {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::FnlttMultiAcntXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttMultiAcnt_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttMultiAcnt.xml", identity, XML_ONLY, Some("result"))?;
@@ -181,6 +219,11 @@ impl FnlttXbrl {
     pub fn reprt_code(&self) -> &str { &self.reprt_code }
 
     /// Prepares the ZIP physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `rcept_no` or `reprt_code` is empty.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
     pub fn prepare_zip(&self) -> Result<PreparedBinaryRequest, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttXbrl_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttXbrl.xml", identity, ZIP_OR_XML, Some("result"))?;
@@ -241,6 +284,16 @@ impl FnlttSinglAcntAll {
     pub fn fs_div(&self) -> &str { &self.fs_div }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, `reprt_code`, or `fs_div` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `fs_div` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::FnlttSinglAcntAllJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttSinglAcntAll_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttSinglAcntAll.json", identity, JSON_ONLY, None)?;
@@ -248,6 +301,16 @@ impl FnlttSinglAcntAll {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, `reprt_code`, or `fs_div` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `fs_div` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::FnlttSinglAcntAllXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttSinglAcntAll_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttSinglAcntAll.xml", identity, XML_ONLY, Some("result"))?;
@@ -299,6 +362,10 @@ impl XbrlTaxonomy {
     pub fn sj_div(&self) -> &str { &self.sj_div }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `sj_div` is empty.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::XbrlTaxonomyJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_xbrlTaxonomy_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/xbrlTaxonomy.json", identity, JSON_ONLY, None)?;
@@ -306,6 +373,10 @@ impl XbrlTaxonomy {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `sj_div` is empty.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::XbrlTaxonomyXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_xbrlTaxonomy_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/xbrlTaxonomy.xml", identity, XML_ONLY, Some("result"))?;
@@ -363,6 +434,16 @@ impl FnlttSinglIndx {
     pub fn idx_cl_code(&self) -> &str { &self.idx_cl_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, `reprt_code`, or `idx_cl_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `idx_cl_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::FnlttSinglIndxJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttSinglIndx_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttSinglIndx.json", identity, JSON_ONLY, None)?;
@@ -370,6 +451,16 @@ impl FnlttSinglIndx {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, `reprt_code`, or `idx_cl_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `idx_cl_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::FnlttSinglIndxXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttSinglIndx_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttSinglIndx.xml", identity, XML_ONLY, Some("result"))?;
@@ -441,6 +532,17 @@ impl FnlttCmpnyIndx {
     pub fn idx_cl_code(&self) -> &str { &self.idx_cl_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, `reprt_code`, or `idx_cl_code` is empty.
+    /// - [`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `idx_cl_code` is outside its documented allowed set.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::FnlttCmpnyIndxJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttCmpnyIndx_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttCmpnyIndx.json", identity, JSON_ONLY, None)?;
@@ -448,6 +550,17 @@ impl FnlttCmpnyIndx {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bsns_year`, `reprt_code`, or `idx_cl_code` is empty.
+    /// - [`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bsns_year` has a character count outside 4..=4.
+    /// - [`PrepareError::InvalidFormat`] when `bsns_year` is not a valid `opendart-year` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `reprt_code` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `idx_cl_code` is outside its documented allowed set.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::FnlttCmpnyIndxXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_fnlttCmpnyIndx_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/fnlttCmpnyIndx.xml", identity, XML_ONLY, Some("result"))?;

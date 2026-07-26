@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
+#![warn(clippy::missing_errors_doc)]
 
 mod error;
 #[rustfmt::skip]

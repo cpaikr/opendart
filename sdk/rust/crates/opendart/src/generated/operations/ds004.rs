@@ -35,6 +35,12 @@ impl Majorstock {
     pub fn corp_code(&self) -> &str { &self.corp_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::MajorstockJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_majorstock_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/majorstock.json", identity, JSON_ONLY, None)?;
@@ -42,6 +48,12 @@ impl Majorstock {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::MajorstockXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_majorstock_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/majorstock.xml", identity, XML_ONLY, Some("result"))?;
@@ -83,6 +95,12 @@ impl Elestock {
     pub fn corp_code(&self) -> &str { &self.corp_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::ElestockJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_elestock_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/elestock.json", identity, JSON_ONLY, None)?;
@@ -90,6 +108,12 @@ impl Elestock {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::ElestockXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_elestock_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/elestock.xml", identity, XML_ONLY, Some("result"))?;

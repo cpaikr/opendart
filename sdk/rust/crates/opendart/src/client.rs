@@ -43,6 +43,13 @@ impl Client {
     }
 
     /// Executes a prepared JSON or XML request and inspects its bounded envelope.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ClientError`] when the prepared representation is not structured,
+    /// the HTTP exchange fails or times out, the body exceeds its configured limit,
+    /// the source envelope is malformed, or the success payload does not match the
+    /// generated response type.
     pub async fn execute<T>(
         &self,
         prepared: &PreparedRequest<T>,
@@ -66,6 +73,13 @@ impl Client {
     }
 
     /// Executes a typed structured request while retaining its normalized raw success payload.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ClientError`] when the prepared representation is not structured,
+    /// the HTTP exchange fails or times out, the body exceeds its configured limit,
+    /// the source envelope is malformed, or an XML root differs from the generated
+    /// operation contract.
     pub async fn execute_raw<T>(
         &self,
         prepared: &PreparedRequest<T>,
@@ -122,6 +136,13 @@ impl Client {
     }
 
     /// Executes a prepared ZIP-with-XML-error request without losing consumed bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ClientError::Representation`] if the request does not expect ZIP,
+    /// or [`ClientError::Transport`] if the request cannot be sent or its total
+    /// deadline cannot be represented. Streaming and alternate-envelope failures
+    /// are retained in the returned [`BinaryReply`].
     pub async fn execute_binary(
         &self,
         prepared: &PreparedBinaryRequest,
@@ -253,6 +274,13 @@ impl ClientBuilder {
     }
 
     /// Validates the configuration and constructs the only official HTTP adapter.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ClientBuildError::InvalidConfiguration`] for a zero or
+    /// unrepresentable timeout, a zero envelope limit, or a user-agent suffix that
+    /// is empty or not visible ASCII. Returns [`ClientBuildError::TransportSetup`]
+    /// if the private HTTP adapter cannot be initialized.
     pub fn build(self) -> Result<Client, ClientBuildError> {
         validate_timeout(self.connect_timeout, "connect timeout")?;
         validate_timeout(self.read_timeout, "read timeout")?;

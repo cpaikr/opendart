@@ -296,6 +296,7 @@ func renderLogicalOperation(output *strings.Builder, operation model.LogicalOper
 		xmlRoot := expectedXMLRoot(physicalOperation)
 		method := preparationMethod(variant.Representation)
 		fmt.Fprintf(output, "    /// Prepares the %s physical representation without performing I/O.\n", strings.ToUpper(string(variant.Representation)))
+		renderPreparationErrors(output, operation)
 		if variant.Representation == model.RepresentationZIP {
 			fmt.Fprintf(output, "    pub fn %s(&self) -> Result<PreparedBinaryRequest, PrepareError> {\n", method)
 			fmt.Fprintf(output, "        let identity = OperationIdentity::new(%s, Self::LOGICAL_OPERATION_ID);\n", quote(variant.OperationID))
@@ -342,6 +343,70 @@ func renderLogicalOperation(output *strings.Builder, operation model.LogicalOper
 	}
 	output.WriteString("        Ok(RequestParts::new(path, identity, &parameters, expected, expected_xml_root, GENERATOR_SCHEMA, PROJECTION_CHECKSUM))\n")
 	output.WriteString("    }\n}\n\n")
+}
+
+func renderPreparationErrors(output *strings.Builder, operation model.LogicalOperation) {
+	output.WriteString("    ///\n    /// # Errors\n    ///\n")
+	if len(operation.Parameters) == 0 {
+		output.WriteString("    /// This operation has no caller-input preparation failure; the result type remains uniform across generated operations.\n")
+		return
+	}
+
+	fmt.Fprintf(output, "    /// - [`PrepareError::MissingInput`] when a supplied value for %s is empty.\n", rustdocParameterList(operation.Parameters))
+	for _, parameter := range operation.Parameters {
+		if parameter.Shape == model.StringArray {
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidCardinality`] when `%s` contains a number of items outside %d..=%d.\n", parameter.WireName, *parameter.MinItems, *parameter.MaxItems)
+		}
+		constraints := parameter.Constraints
+		if constraints.MinLength != nil || constraints.MaxLength != nil {
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidLength`] when `%s` %s.\n", parameter.WireName, rustdocLengthFailure(constraints))
+		}
+		if constraints.Format != "" {
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidFormat`] when `%s` is not a valid `%s` value.\n", parameter.WireName, constraints.Format)
+		}
+		if len(constraints.AllowedValues) > 0 {
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidAllowedValue`] when `%s` is outside its documented allowed set.\n", parameter.WireName)
+		}
+		if constraints.DecimalMinimum != nil || constraints.DecimalMaximum != nil {
+			fmt.Fprintf(output, "    /// - [`PrepareError::InvalidDecimalRange`] when `%s` %s.\n", parameter.WireName, rustdocDecimalFailure(constraints))
+		}
+	}
+}
+
+func rustdocParameterList(parameters []model.Parameter) string {
+	names := make([]string, 0, len(parameters))
+	for _, parameter := range parameters {
+		names = append(names, "`"+parameter.WireName+"`")
+	}
+	if len(names) == 1 {
+		return names[0]
+	}
+	if len(names) == 2 {
+		return names[0] + " or " + names[1]
+	}
+	return strings.Join(names[:len(names)-1], ", ") + ", or " + names[len(names)-1]
+}
+
+func rustdocLengthFailure(constraints model.StringConstraints) string {
+	switch {
+	case constraints.MinLength != nil && constraints.MaxLength != nil:
+		return fmt.Sprintf("has a character count outside %d..=%d", *constraints.MinLength, *constraints.MaxLength)
+	case constraints.MinLength != nil:
+		return fmt.Sprintf("contains fewer than %d characters", *constraints.MinLength)
+	default:
+		return fmt.Sprintf("contains more than %d characters", *constraints.MaxLength)
+	}
+}
+
+func rustdocDecimalFailure(constraints model.StringConstraints) string {
+	switch {
+	case constraints.DecimalMinimum != nil && constraints.DecimalMaximum != nil:
+		return fmt.Sprintf("is not a decimal integer in %d..=%d", *constraints.DecimalMinimum, *constraints.DecimalMaximum)
+	case constraints.DecimalMinimum != nil:
+		return fmt.Sprintf("is not a decimal integer greater than or equal to %d", *constraints.DecimalMinimum)
+	default:
+		return fmt.Sprintf("is not a decimal integer less than or equal to %d", *constraints.DecimalMaximum)
+	}
 }
 
 func renderConstructor(output *strings.Builder, operation model.LogicalOperation) {

@@ -140,6 +140,23 @@ impl List {
     pub fn page_count(&self) -> Option<&str> { self.page_count.as_deref() }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, `end_de`, `last_reprt_at`, `pblntf_ty`, `pblntf_detail_ty`, `corp_cls`, `sort`, `sort_mth`, `page_no`, or `page_count` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `last_reprt_at` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `pblntf_ty` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `corp_cls` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `sort` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `sort_mth` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidDecimalRange`] when `page_no` is not a decimal integer greater than or equal to 1.
+    /// - [`PrepareError::InvalidDecimalRange`] when `page_count` is not a decimal integer in 1..=100.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::ListJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_list_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/list.json", identity, JSON_ONLY, None)?;
@@ -147,6 +164,23 @@ impl List {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code`, `bgn_de`, `end_de`, `last_reprt_at`, `pblntf_ty`, `pblntf_detail_ty`, `corp_cls`, `sort`, `sort_mth`, `page_no`, or `page_count` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
+    /// - [`PrepareError::InvalidLength`] when `bgn_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `bgn_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidLength`] when `end_de` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `end_de` is not a valid `opendart-date` value.
+    /// - [`PrepareError::InvalidAllowedValue`] when `last_reprt_at` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `pblntf_ty` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `corp_cls` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `sort` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidAllowedValue`] when `sort_mth` is outside its documented allowed set.
+    /// - [`PrepareError::InvalidDecimalRange`] when `page_no` is not a decimal integer greater than or equal to 1.
+    /// - [`PrepareError::InvalidDecimalRange`] when `page_count` is not a decimal integer in 1..=100.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::ListXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_list_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/list.xml", identity, XML_ONLY, Some("result"))?;
@@ -240,6 +274,12 @@ impl Company {
     pub fn corp_code(&self) -> &str { &self.corp_code }
 
     /// Prepares the JSON physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
     pub fn prepare_json(&self) -> Result<PreparedRequest<response::CompanyJsonResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_company_json", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/company.json", identity, JSON_ONLY, None)?;
@@ -247,6 +287,12 @@ impl Company {
     }
 
     /// Prepares the XML physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `corp_code` is empty.
+    /// - [`PrepareError::InvalidLength`] when `corp_code` has a character count outside 8..=8.
+    /// - [`PrepareError::InvalidFormat`] when `corp_code` is not a valid `opendart-corp-code` value.
     pub fn prepare_xml(&self) -> Result<PreparedRequest<response::CompanyXmlResponse>, PrepareError> {
         let identity = OperationIdentity::new("get_company_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/company.xml", identity, XML_ONLY, Some("result"))?;
@@ -288,6 +334,10 @@ impl Document {
     pub fn rcept_no(&self) -> &str { &self.rcept_no }
 
     /// Prepares the ZIP physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// - [`PrepareError::MissingInput`] when a supplied value for `rcept_no` is empty.
     pub fn prepare_zip(&self) -> Result<PreparedBinaryRequest, PrepareError> {
         let identity = OperationIdentity::new("get_document_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/document.xml", identity, ZIP_OR_XML, Some("result"))?;
@@ -317,6 +367,10 @@ impl CorpCode {
     pub const fn new() -> Self { Self }
 
     /// Prepares the ZIP physical representation without performing I/O.
+    ///
+    /// # Errors
+    ///
+    /// This operation has no caller-input preparation failure; the result type remains uniform across generated operations.
     pub fn prepare_zip(&self) -> Result<PreparedBinaryRequest, PrepareError> {
         let identity = OperationIdentity::new("get_corpCode_xml", Self::LOGICAL_OPERATION_ID);
         let parts = self.prepare_parts("/api/corpCode.xml", identity, ZIP_OR_XML, Some("result"))?;

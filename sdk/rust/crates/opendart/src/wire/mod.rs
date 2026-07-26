@@ -228,6 +228,11 @@ impl SourceValue {
     ///
     /// The accepted grammar is JSON's decimal number grammar with no surrounding
     /// whitespace, fixed magnitude bound, or conversion through a Rust numeric type.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::InvalidSourceNumberError`] when the supplied spelling does
+    /// not match JSON's decimal number grammar.
     pub fn number(value: impl Into<String>) -> Result<Self, crate::InvalidSourceNumberError> {
         let value = value.into();
         if !is_valid_json_number(&value) {

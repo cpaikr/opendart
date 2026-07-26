@@ -127,9 +127,8 @@ fn assert_invalid_cardinality(error: PrepareError, physical: &'static str, logic
 #[test]
 fn bounded_array_consumes_each_available_valid_item_once() {
     let yielded = Cell::new(0);
-    let values = ["00334624", "00126380"].into_iter().map(|value| {
+    let values = ["00334624", "00126380"].into_iter().inspect(|_| {
         yielded.set(yielded.get() + 1);
-        value
     });
     let operation = FnlttMultiAcnt::new(values, "2025", "11011");
 

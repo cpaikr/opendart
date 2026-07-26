@@ -56,6 +56,9 @@ func TestRenderUsesLintCleanParameterConstruction(t *testing.T) {
 		t.Fatalf("Render() error = %v", err)
 	}
 	generated := string(files["operations/group.rs"])
+	if methods, sections := strings.Count(generated, "pub fn prepare_"), strings.Count(generated, "/// # Errors"); methods != sections {
+		t.Fatalf("generated preparation methods = %d, error sections = %d", methods, sections)
+	}
 	if !strings.Contains(generated, "#[derive(Clone, Debug, Default, Eq, PartialEq)]\npub struct OptionalInput") {
 		t.Fatal("optional-only operation input does not derive Default")
 	}
@@ -112,6 +115,15 @@ func TestRenderEscapesRustStringsAndArrayInputs(t *testing.T) {
 	if !strings.Contains(operation, "The `corp_code` iterator retains at most 101 items so oversized or infinite inputs fail without being exhausted.") {
 		t.Fatal("bounded array constructor does not document its consumption and retention contract")
 	}
+	for _, want := range []string{
+		"# Errors",
+		"[`PrepareError::MissingInput`] when a supplied value for `corp_code` is empty.",
+		"[`PrepareError::InvalidCardinality`] when `corp_code` contains a number of items outside 1..=100.",
+	} {
+		if !strings.Contains(operation, want) {
+			t.Fatalf("generated preparation documentation does not contain %q", want)
+		}
+	}
 	if !strings.Contains(operation, "for value in &self.corp_code {\n            require_nonempty(identity, \"corp_code\", value)?;") {
 		t.Fatal("array elements are not checked for empty strings")
 	}
@@ -165,6 +177,43 @@ func TestOwnedConversionLeavesUnboundedArraysUnchanged(t *testing.T) {
 	parameter := model.Parameter{Shape: model.StringArray}
 	if conversion := ownedConversion(parameter, "values"); conversion != "values.into_iter().map(Into::into).collect()" {
 		t.Fatalf("ownedConversion() = %q", conversion)
+	}
+}
+
+func TestRenderPreparationErrorsUsesValidationFacts(t *testing.T) {
+	minimum, maximum := int64(2), int64(9)
+	var output strings.Builder
+	renderPreparationErrors(&output, model.LogicalOperation{Parameters: []model.Parameter{{
+		WireName: "value",
+		Shape:    model.ScalarString,
+		Constraints: model.StringConstraints{
+			MinLength:      &minimum,
+			MaxLength:      &maximum,
+			Format:         "source-format",
+			AllowedValues:  []string{"accepted"},
+			DecimalMinimum: &minimum,
+			DecimalMaximum: &maximum,
+		},
+	}}})
+	for _, want := range []string{
+		"PrepareError::MissingInput",
+		"PrepareError::InvalidLength",
+		"outside 2..=9",
+		"PrepareError::InvalidFormat",
+		"`source-format`",
+		"PrepareError::InvalidAllowedValue",
+		"PrepareError::InvalidDecimalRange",
+		"decimal integer in 2..=9",
+	} {
+		if !strings.Contains(output.String(), want) {
+			t.Fatalf("preparation error documentation does not contain %q:\n%s", want, output.String())
+		}
+	}
+
+	output.Reset()
+	renderPreparationErrors(&output, model.LogicalOperation{})
+	if !strings.Contains(output.String(), "no caller-input preparation failure") {
+		t.Fatalf("parameter-free documentation = %q", output.String())
 	}
 }
 
