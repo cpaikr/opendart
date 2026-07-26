@@ -9,26 +9,57 @@ filesystem work on the current-thread async runtime.
 
 ## Current state
 
-- `ArtifactTarget::stage` creates a `tempfile::NamedTempFile` in the destination
-  directory. `stream_to_artifact` later publishes it through
-  `persist_noclobber(&path)`.
-- The tempfile crate documents path-based persistence as unsafe when another
-  writer can replace the temporary path. In a shared writable parent, an
-  attacker can unlink and recreate the staged name; publication can then move
-  bytes that were not written through the retained handle while the report
-  still carries the original byte count and metadata.
-- `discard_error` replaces the primary error whenever `NamedTempFile::close`
-  fails. A cleanup failure can therefore erase a source `Status`, transport
-  failure, body-stream failure, `artifact_limit`, or earlier artifact I/O
-  failure.
-- Temporary-file creation, writes, flush, close, and no-clobber publication use
-  synchronous `std::fs` and `std::io` calls from the CLI's current-thread Tokio
-  runtime. A slow or stalled filesystem can prevent HTTP progress and timer
-  polling, so configured deadlines are not observed while a write blocks.
-- Existing process tests cover ordinary cleanup, destination races, size
-  limits, exact bytes, source status, and broken stdout, but do not replace the
-  staged pathname, force cleanup failure while another error is active, or
-  stall a writer while observing the runtime.
+- `ArtifactTransaction` now starts one blocking worker before network access.
+  The worker alone owns the retained destination and staging directory
+  capabilities, staged file, byte counter, limit, and no-clobber commit.
+- Body chunks cross a bounded Tokio channel with capacity one. File creation,
+  writes, flush, identity-based publication, and cleanup all execute on the
+  blocking worker rather than the current-thread async runtime.
+- Publication operates directly on the retained file identity: Linux uses a
+  validated `/proc/self/fd` capability and `linkat`, macOS uses
+  `fclonefileat`, and Windows keeps its staging pathname immutable through
+  deny-delete sharing. The adversarial pathname-replacement and
+  rival-destination process tests pass without a verify-then-link race. Linux
+  fails safely with no destination if replacement removes the retained inode's
+  last link; macOS can still clone the unlinked retained descriptor.
+- Cleanup failure is optional top-level secondary evidence. Process coverage
+  preserves artifact-limit errors, source status, and successful archive
+  replies while attaching the documented cleanup object.
+- The production-boundary stalled-writer test fills the one-chunk queue,
+  observes a Tokio timer on the current-thread runtime, permanently revokes
+  commit authority, returns without waiting for the stalled call, and confirms
+  deferred staging cleanup after that call is released.
+- The effective SDK total deadline, including its default when the CLI flag is
+  omitted, now covers bounded-channel backpressure and flush completion. Any
+  request or body timeout reports `cleanup_pending` without awaiting a detached
+  worker's private-staging cleanup; that worker can no longer publish.
+- Until the package dependency version advances, the CLI mirrors the current
+  SDK default in `execution.rs`: its tarball must keep compiling against the
+  already-published SDK at the same exact version. An explicit CLI override is
+  still passed to both the SDK and artifact worker from one value. The release
+  guard compares the SDK and CLI source constants so a future default change
+  cannot silently leave the packaged CLI timeout stale.
+- Private staging names use 128 bits of operating-system randomness. Pathname
+  replacement safety begins once the private directory capability is acquired;
+  the public contract requires a non-hostile parent during that short setup
+  window.
+- Commit and cancellation use an acknowledged atomic state handoff. A timeout
+  wins only from the active state; after commit begins, the caller waits for
+  publication and cannot report cancellation.
+- If a private stage is created but cannot be opened, failure to remove that
+  unopened stage is retained as the same secondary cleanup evidence used by
+  later transaction failures.
+- Full Go and Rust repository verification passes locally on macOS, including
+  stable Clippy, the compatibility artifact process suite, package verification,
+  clean installation, and the Rust 1.85 floor. The Rust 1.85 CLI cross-check
+  passes for Windows. PR verification also passes the native macOS and Windows
+  artifact jobs and the full Linux Rust suite, including the safe
+  pathname-replacement rejection when an unlinked inode cannot be published.
+- The deadline, staging-setup trust boundary, and commit handoff policies found
+  by review are now resolved in implementation and public documentation.
+- Follow-up review also verified the SDK-default deadline path and pre-stream
+  timeout cleanup path after their focused regressions were added; no further
+  implementation finding remains for this slice.
 
 ## Transaction contract
 
@@ -72,25 +103,31 @@ filesystem work on the current-thread async runtime.
 
 ### Select an identity-stable publication primitive
 
-- Spike safe, maintained descriptor-relative or handle-relative filesystem
-  APIs on every supported source-install platform.
-- Evaluate retained parent-directory identity, private staging-directory
-  permissions, source-file identity, atomic no-clobber publication, symlink and
-  directory replacement behavior, cleanup, MSRV, and crate feature cost.
-- Prefer a safe library abstraction over repository-owned `unsafe`. The
-  workspace forbids unsafe Rust, and this plan must not weaken that lint.
-- If portable identity-stable publication cannot satisfy the existing
-  arbitrary-parent contract, stop for an explicit contract decision. The only
-  fallback is to restrict output to a caller-affirmed trusted directory and
-  document that limitation; silently accepting attacker-writable parents is
-  not acceptable.
-- Record the chosen primitive and threat boundary in
-  `docs/rust-cli/architecture.md` and `docs/rust-cli/public-contract.md`.
+- Use `cap-std` directory capabilities for the opened destination parent and a
+  private staging directory. Publish from the retained file descriptor with
+  safe `rustix` APIs on Linux and macOS; on Windows, publish the protected
+  staging entry while its open handle denies replacement. Then remove the
+  staging link and directory.
+- Create the private staging directory with owner-only access on Unix. On
+  Windows, keep directory handles open and deny write/delete sharing on the
+  staged file through publication. Validate those native guarantees in the
+  platform process suites.
+- Treat missing filesystem support for the platform's identity-based operation
+  as a safe publish failure with no destination. Do not fall back to an
+  unprotected path lookup.
+- Preserve the retained parent identity if its pathname changes. Document that
+  callers must keep ancestors of the destination parent stable; no publication
+  primitive can keep a caller-visible path stable after an adversary replaces
+  its ancestor.
+- Keep all repository code safe. Platform-specific descriptor and handle work
+  remains encapsulated by the maintained dependency.
 
 ### Preserve primary errors and attach cleanup context
 
-- Extend the stable CLI error envelope with an optional structured cleanup
-  field or equivalent bounded secondary context.
+- Add one optional top-level `cleanup` field to every binary error or response
+  document, including successful archive publication. This location is the
+  confirmed public contract; consumers must not need to inspect different
+  nested paths based on the primary outcome.
 - Use a small enum for cleanup stage/reason. Do not store raw OS messages,
   paths other than the already-sanitized caller spelling, or dependency debug
   output.
@@ -122,6 +159,8 @@ filesystem work on the current-thread async runtime.
   and test the bounded shutdown policy explicitly.
 - Keep report encoding before the commit point and stdout writing after it, as
   required by the current artifact contract.
+  Pre-encode both the ordinary report and the sole cleanup-bearing variant,
+  then select between those buffers after commit cleanup finishes.
 
 ### Integrate without broadening the CLI
 
@@ -163,6 +202,5 @@ filesystem work on the current-thread async runtime.
 
 ## Next action
 
-Write the adversarial staged-name replacement, cleanup-secondary, and stalled
-writer tests, then run the cross-platform publication-primitive spike before
-refactoring `StagedArtifact`.
+Complete the cleanup-failure matrix for transport/body, write, and publication
+failures.

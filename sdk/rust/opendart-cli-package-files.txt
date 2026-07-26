@@ -6,6 +6,7 @@ Cargo.toml.orig
 LICENSE
 README.md
 src/app.rs
+src/artifact/transaction.rs
 src/artifact.rs
 src/command.rs
 src/discovery.rs

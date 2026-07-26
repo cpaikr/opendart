@@ -10,11 +10,15 @@ repository = "https://github.com/cpaikr/opendart"
 
 [workspace.dependencies]
 bytes = "1.12.1"
+cap-std = "4.0.2"
 clap = "4.6.2"
 form_urlencoded = "1.2.2"
 futures-core = "0.3.33"
+getrandom = "0.4.3"
 quick-xml = "0.41.0"
 roxmltree = { version = "0.21.1", default-features = false }
+rustix = { version = "1.1.4", features = ["fs"] }
+rustix-linux-procfs = "0.1.1"
 secrecy = "0.10.3"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "=1.0.150", features = ["arbitrary_precision", "preserve_order"] }

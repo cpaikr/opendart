@@ -14,7 +14,31 @@ pub(crate) struct ErrorEnvelope {
     operation: Option<OperationContext>,
     #[serde(skip_serializing_if = "Option::is_none")]
     metadata: Option<Box<ResponseMetadata>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cleanup: Option<Box<CleanupContext>>,
     error: Box<ErrorBody>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize)]
+pub(crate) struct CleanupContext {
+    stage: &'static str,
+    reason: &'static str,
+}
+
+impl CleanupContext {
+    pub(crate) const fn discard_staging_link() -> Self {
+        Self {
+            stage: "discard_staging_link",
+            reason: "cleanup_failed",
+        }
+    }
+
+    pub(crate) const fn staging_cleanup_pending() -> Self {
+        Self {
+            stage: "discard_staging_link",
+            reason: "cleanup_pending",
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -48,7 +72,6 @@ pub(crate) enum ArtifactIoReason {
     WriteFailed,
     FlushFailed,
     PublishFailed,
-    CleanupFailed,
 }
 
 impl ArtifactIoReason {
@@ -61,7 +84,6 @@ impl ArtifactIoReason {
             Self::WriteFailed => "write_failed",
             Self::FlushFailed => "flush_failed",
             Self::PublishFailed => "publish_failed",
-            Self::CleanupFailed => "cleanup_failed",
         }
     }
 
@@ -79,9 +101,6 @@ impl ArtifactIoReason {
                 "Check destination storage and permissions, then retry"
             }
             Self::PublishFailed => "Check the --output parent directory permissions and retry",
-            Self::CleanupFailed => {
-                "Inspect the --output parent directory for a temporary file before retrying"
-            }
         }
     }
 }
@@ -92,6 +111,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: None,
             metadata: None,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_invocation",
                 message: "the command invocation is invalid",
@@ -112,6 +132,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: None,
             metadata: None,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_invocation",
                 message: "the command invocation is invalid",
@@ -215,6 +236,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata: None,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_request",
                 message: "the operation inputs cannot prepare a valid SDK request",
@@ -237,6 +259,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata: None,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code: "missing_api_key",
                 message: "OPENDART_API_KEY is required",
@@ -257,6 +280,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata: None,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_invocation",
                 message: "the command invocation is invalid",
@@ -280,6 +304,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata: None,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_client_configuration",
                 message: "OPENDART_API_KEY is not a valid environment value",
@@ -300,6 +325,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: None,
             metadata: None,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code: "executable_resolution",
                 message: "the current executable path could not be resolved",
@@ -448,6 +474,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation,
             metadata: None,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code: "sdk_contract_mismatch",
                 message: "the prepared SDK request does not match generated CLI discovery",
@@ -463,6 +490,11 @@ impl ErrorEnvelope {
         }
     }
 
+    pub(crate) fn with_cleanup(mut self, cleanup: Option<CleanupContext>) -> Self {
+        self.cleanup = cleanup.map(Box::new);
+        self
+    }
+
     fn execution(
         operation: OperationContext,
         metadata: Option<Box<ResponseMetadata>>,
@@ -473,6 +505,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code,
                 message,
@@ -501,6 +534,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata,
+            cleanup: None,
             error: Box::new(ErrorBody {
                 code,
                 message,

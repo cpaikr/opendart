@@ -11,6 +11,9 @@ use crate::artifact::ArtifactTarget;
 use crate::error::ErrorEnvelope;
 
 const USER_AGENT_SUFFIX: &str = concat!("opendart-cli/", env!("CARGO_PKG_VERSION"));
+// The CLI package must compile against the already-published SDK at its exact
+// version, so it cannot query a new SDK accessor until the next version exists.
+const SDK_DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Clone, Copy, Eq, PartialEq, Serialize)]
 pub(crate) struct OperationContext {
@@ -66,6 +69,7 @@ pub(crate) struct BufferedOutput {
 pub(crate) struct Executor {
     client: Client,
     runtime: tokio::runtime::Runtime,
+    total_timeout: Duration,
 }
 
 impl Executor {
@@ -74,6 +78,10 @@ impl Executor {
         overrides: ClientOverrides,
         operation: OperationContext,
     ) -> Result<Self, ErrorEnvelope> {
+        let total_timeout = overrides
+            .total_timeout_ms
+            .map(Duration::from_millis)
+            .unwrap_or(SDK_DEFAULT_TOTAL_TIMEOUT);
         let mut builder = Client::builder(key).user_agent_suffix(USER_AGENT_SUFFIX);
         if let Some(value) = overrides.connect_timeout_ms {
             builder = builder.connect_timeout(Duration::from_millis(value));
@@ -98,7 +106,11 @@ impl Executor {
             .enable_all()
             .build()
             .map_err(|_| ErrorEnvelope::client_initialization_for(operation))?;
-        Ok(Self { client, runtime })
+        Ok(Self {
+            client,
+            runtime,
+            total_timeout,
+        })
     }
 
     pub(crate) fn execute<T>(
@@ -122,12 +134,12 @@ impl Executor {
         operation: OperationContext,
         target: ArtifactTarget,
     ) -> Result<BufferedOutput, ErrorEnvelope> {
-        let staged = target.stage(operation)?;
         self.runtime.block_on(crate::artifact::execute(
             &self.client,
             request,
             operation,
-            staged,
+            target,
+            self.total_timeout,
         ))
     }
 }

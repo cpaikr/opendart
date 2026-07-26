@@ -421,6 +421,12 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 			invariant: "excludes repository-private inputs",
 		},
 		{
+			name: "CLI SDK timeout mirror", artifact: rustCLIExecutionArtifact,
+			old:         `const SDK_DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs(60);`,
+			replacement: `const SDK_DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs(61);`,
+			invariant:   "mirrors the published SDK total timeout default",
+		},
+		{
 			name: "CLI registry scope", artifact: rustCLICargoArtifact,
 			old: `publish = ["crates-io"]`, replacement: `publish = true`,
 			invariant: "authorizes only the crates.io registry",
@@ -1565,6 +1571,8 @@ func (fixture releaseArtifactFixture) copy(t *testing.T) string {
 		rustWorkspaceArtifact,
 		rustLockArtifact,
 		rustProvenanceArtifact,
+		rustSDKClientArtifact,
+		rustCLIExecutionArtifact,
 		rustPackageListArtifact,
 		rustCLIPackageListArtifact,
 		canonicalBundleArtifact,

@@ -131,17 +131,68 @@ second public model.
 
 1. Parse the invocation, construct the generated SDK input, prepare the binary
    request, and require a destination that does not exist.
-2. Read and validate `OPENDART_API_KEY`, build the SDK client, and create a
-   temporary file in the destination directory before network access.
+2. Read and validate `OPENDART_API_KEY`, build the SDK client, and create owned
+   staging state beneath a private same-directory staging directory before
+   network access.
 3. Execute once through `Client::execute_binary` and preserve response metadata;
-   remove the owned temporary file if execution fails.
+   attempt to remove the owned staging state if execution fails.
 4. For `Archive` or `Unrecognized`, count and stream every body chunk into the
-   temporary file within the selected finite artifact budget, then publish it
+   staging file within the selected finite artifact budget, then publish it
    without clobbering the destination.
 5. Emit an artifact reply with the SDK classification, path, and byte count.
-6. Remove the temporary file on a source `Status` or any failure before
-   publication, including transport, timeout, stream, filesystem, and
-   no-clobber publication failures; no such path publishes a destination.
+6. Attempt to remove private staging state on a source `Status` or any failure
+   before publication, including transport, timeout, stream, filesystem, and
+   no-clobber publication failures; no such path publishes a destination, and
+   any cleanup failure remains secondary evidence.
+
+Artifact publication uses a retained `cap-std` directory capability for the
+destination parent and a separately retained capability for a private staging
+directory beneath it. The staging file is created and written only through
+that private directory. Publication creates the destination from the retained
+file identity in one no-clobber filesystem operation, then removes the staging
+link and directory. Linux resolves the retained descriptor through a validated
+`/proc/self/fd` capability and hard-links that identity; macOS clones directly
+from the retained descriptor; Windows hard-links the staging entry while its
+open handle denies write and delete sharing. If replacement removes the
+retained Linux inode's last filesystem link, Linux may reject publication; this
+is a safe failure and creates no destination. A filesystem that cannot perform
+its identity-based operation likewise fails without creating the destination.
+
+The async side pre-encodes both possible final report documents before the
+commit point: the ordinary report and the same report with the one documented
+cleanup object. After the destination link is created, it selects the buffer
+that matches staging cleanup. This keeps all fallible report encoding before
+publication while still reporting a post-publication cleanup failure.
+
+The private staging directory uses a 128-bit name from operating-system
+randomness and owner-only access on Unix. On Windows, the staging file denies
+write and delete sharing while it is being written and published, and the
+retained directory handles prevent their directories from being renamed
+underneath capability-relative operations. The implementation remains safe
+Rust; platform-specific descriptor, path, and handle mechanics belong to
+`rustix`, `rustix-linux-procfs`, and `cap-std`.
+
+Directory capabilities intentionally preserve identity rather than spelling.
+The output parent must not be hostile during the short synchronous step that
+creates and opens the unpredictable private staging directory. After its
+directory capability is acquired and before network access begins, replacing
+a staging pathname or entries within the opened destination parent cannot
+substitute different bytes. If an adversary can rename or replace an ancestor
+of the destination parent itself, publication follows the originally opened
+directory identity and the caller's original spelling may no longer resolve to
+it. Callers are responsible for choosing a trusted output parent whose
+ancestors remain stable for the duration of the command.
+
+Body chunks cross a bounded one-entry channel to a dedicated filesystem worker.
+The CLI applies the client's effective total deadline, including the SDK
+default, while waiting for channel capacity or flush completion. If a request,
+body, backpressure, or flush timeout wins, an atomic state transition
+permanently revokes publication authority and the CLI returns promptly. An
+in-flight filesystem call may finish writing only to private staging, whose
+cleanup is reported as pending until the detached worker can confirm it. Commit
+uses the opposite acknowledged transition: once publication begins,
+cancellation can no longer claim success and the CLI waits for the commit
+outcome.
 
 ## Target code map
 
@@ -187,6 +238,9 @@ generator-owned and handwritten runtime code remains crate-owned.
 - Structured source responses remain complete. The CLI adds no silent filtering
   or successful-empty interpretation.
 - A binary destination is explicit, exact, atomic, and never overwritten.
+- Artifact publication is anchored to retained directory identities. A
+  successful commit contains only bytes written through the owned staging
+  handle; unsupported identity-based publication fails without a destination.
 - The packaged source distribution is verified natively on Linux, macOS, and
   Windows. Prebuilt target and platform-version policy is a separate boundary.
 - Generated SDK and CLI outputs are committed, deterministic, and verified
