@@ -300,6 +300,14 @@ fn run_worker(
                 if !commit_authority.is_active() {
                     continue;
                 }
+                if hook.fail_write() {
+                    let cleanup = staged.cleanup();
+                    let _ = events.send(WorkerEvent::Stopped {
+                        failure: Some(FailureKind::Write),
+                        cleanup,
+                    });
+                    return;
+                }
                 let result = staged.write(&chunk);
                 if let Err(kind) = result {
                     let cleanup = staged.cleanup();
@@ -452,6 +460,13 @@ impl StagedArtifact {
             cleanup: None,
         })?;
         hook.before_publish();
+        if hook.fail_publish() {
+            let cleanup = self.cleanup();
+            return Err(WorkerError {
+                kind: FailureKind::Publish,
+                cleanup,
+            });
+        }
         if let Err(error) = publish_retained(file, stage, &self.parent, &self.destination) {
             let kind = if error.kind() == io::ErrorKind::AlreadyExists {
                 FailureKind::DestinationExists
@@ -634,6 +649,22 @@ impl WorkerHook {
         if let Some(stall) = &self.publish_stall {
             stall.wait();
         }
+    }
+
+    fn fail_write(&self) -> bool {
+        #[cfg(opendart_compat)]
+        let failure = std::env::var_os("OPENDART_COMPAT_ARTIFACT_WRITE_FAILURE").is_some();
+        #[cfg(not(opendart_compat))]
+        let failure = false;
+        failure
+    }
+
+    fn fail_publish(&self) -> bool {
+        #[cfg(opendart_compat)]
+        let failure = std::env::var_os("OPENDART_COMPAT_ARTIFACT_PUBLISH_FAILURE").is_some();
+        #[cfg(not(opendart_compat))]
+        let failure = false;
+        failure
     }
 }
 

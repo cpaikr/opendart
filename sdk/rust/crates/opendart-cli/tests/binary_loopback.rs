@@ -157,6 +157,18 @@ fn write_chunked_result(
     stream.write_all(b"0\r\n\r\n")
 }
 
+fn write_incomplete(stream: &mut TcpStream, content_type: &str, body: &[u8]) {
+    write!(
+        stream,
+        "HTTP/1.1 200 OK\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len() + 9
+    )
+    .unwrap();
+    stream.write_all(body).unwrap();
+    stream.flush().unwrap();
+    stream.shutdown(Shutdown::Write).unwrap();
+}
+
 fn json(output: &Output, expected_exit: i32) -> Value {
     assert_eq!(output.status.code(), Some(expected_exit));
     serde_json::from_slice(&output.stdout).expect("stdout should be one JSON document")
@@ -208,6 +220,18 @@ fn assert_artifact_error(error: &Value, code: &str, destination: &Path, reason: 
 
 fn assert_directory_empty(directory: &Path) {
     assert_eq!(fs::read_dir(directory).unwrap().count(), 0);
+}
+
+fn without_cleanup(mut document: Value) -> Value {
+    assert!(
+        document
+            .as_object_mut()
+            .expect("CLI output is a JSON object")
+            .remove("cleanup")
+            .is_some(),
+        "cleanup-failure output must contain secondary evidence"
+    );
+    document
 }
 
 fn staged_path(directory: &Path, destination: &Path) -> PathBuf {
@@ -341,15 +365,7 @@ fn limits_and_incomplete_streams_never_publish_partial_artifacts() {
     let incomplete = incomplete_dir.path().join("incomplete.zip");
     let partial = b"PK\x03\x04partial";
     let output = with_server(&binary_arguments(&incomplete), |stream| {
-        write!(
-            stream,
-            "HTTP/1.1 200 OK\r\nContent-Type: application/zip\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-            partial.len() + 9
-        )
-        .unwrap();
-        stream.write_all(partial).unwrap();
-        stream.flush().unwrap();
-        stream.shutdown(Shutdown::Write).unwrap();
+        write_incomplete(stream, "application/zip", partial);
     });
     let error = json(&output, 1);
     assert_eq!(error["error"]["code"], "transport_body");
@@ -615,6 +631,111 @@ fn cleanup_failure_does_not_replace_the_primary_artifact_limit_error() {
     );
     let error = json(&output, 1);
     assert_eq!(error["error"]["code"], "artifact_limit");
+    assert_eq!(error["operation"]["name"], "corp-code");
+    assert_eq!(error["metadata"]["status"], 200);
+    assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
+    assert_eq!(error["cleanup"]["reason"], "cleanup_failed");
+    assert!(!destination.exists());
+}
+
+#[test]
+fn cleanup_failure_does_not_replace_the_primary_body_stream_error() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("body-cleanup-failure.zip");
+    let partial = b"PK\x03\x04partial";
+    let baseline = with_server(&binary_arguments(&destination), move |stream| {
+        write_incomplete(stream, "application/zip", partial);
+    });
+    let baseline = json(&baseline, 1);
+    let output = with_server_configured(
+        &binary_arguments(&destination),
+        |process| {
+            process.env("OPENDART_COMPAT_ARTIFACT_CLEANUP_FAILURE", "1");
+        },
+        move |stream| {
+            write_incomplete(stream, "application/zip", partial);
+        },
+    );
+
+    let error = json(&output, 1);
+    assert_eq!(without_cleanup(error.clone()), baseline);
+    assert_eq!(error["error"]["code"], "transport_body");
+    assert_eq!(error["operation"]["name"], "corp-code");
+    assert_eq!(error["metadata"]["status"], 200);
+    assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
+    assert_eq!(error["cleanup"]["reason"], "cleanup_failed");
+    assert!(!destination.exists());
+}
+
+#[test]
+fn cleanup_failure_does_not_replace_the_primary_write_error() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("write-cleanup-failure.zip");
+    let baseline = with_server_configured(
+        &binary_arguments(&destination),
+        |process| {
+            process.env("OPENDART_COMPAT_ARTIFACT_WRITE_FAILURE", "1");
+        },
+        |stream| write_fixed(stream, "application/zip", b"PK\x03\x04complete"),
+    );
+    let baseline = json(&baseline, 1);
+    let output = with_server_configured(
+        &binary_arguments(&destination),
+        |process| {
+            process
+                .env("OPENDART_COMPAT_ARTIFACT_WRITE_FAILURE", "1")
+                .env("OPENDART_COMPAT_ARTIFACT_CLEANUP_FAILURE", "1");
+        },
+        |stream| write_fixed(stream, "application/zip", b"PK\x03\x04complete"),
+    );
+
+    let error = json(&output, 1);
+    assert_eq!(without_cleanup(error.clone()), baseline);
+    assert_artifact_error(
+        &error,
+        "artifact_io",
+        &destination,
+        "write_failed",
+        "Check destination storage and permissions, then retry",
+    );
+    assert_eq!(error["operation"]["name"], "corp-code");
+    assert_eq!(error["metadata"]["status"], 200);
+    assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
+    assert_eq!(error["cleanup"]["reason"], "cleanup_failed");
+    assert!(!destination.exists());
+}
+
+#[test]
+fn cleanup_failure_does_not_replace_the_primary_publication_error() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("publication-cleanup-failure.zip");
+    let baseline = with_server_configured(
+        &binary_arguments(&destination),
+        |process| {
+            process.env("OPENDART_COMPAT_ARTIFACT_PUBLISH_FAILURE", "1");
+        },
+        |stream| write_fixed(stream, "application/zip", b"PK\x03\x04complete"),
+    );
+    let baseline = json(&baseline, 1);
+    let output = with_server_configured(
+        &binary_arguments(&destination),
+        |process| {
+            process
+                .env("OPENDART_COMPAT_ARTIFACT_PUBLISH_FAILURE", "1")
+                .env("OPENDART_COMPAT_ARTIFACT_CLEANUP_FAILURE", "1");
+        },
+        |stream| write_fixed(stream, "application/zip", b"PK\x03\x04complete"),
+    );
+
+    let error = json(&output, 1);
+    assert_eq!(without_cleanup(error.clone()), baseline);
+    assert_artifact_error(
+        &error,
+        "artifact_io",
+        &destination,
+        "publish_failed",
+        "Check the --output parent directory permissions and retry",
+    );
     assert_eq!(error["operation"]["name"], "corp-code");
     assert_eq!(error["metadata"]["status"], 200);
     assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
