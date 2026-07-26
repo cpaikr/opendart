@@ -60,6 +60,18 @@ filesystem work on the current-thread async runtime.
 - Follow-up review also verified the SDK-default deadline path and pre-stream
   timeout cleanup path after their focused regressions were added; no further
   implementation finding remains for this slice.
+- The deferred cleanup-failure matrix now exercises body delivery, staged
+  writes, and publication through the process boundary. Each case compares the
+  complete primary document with and without cleanup failure, allowing only
+  the documented top-level `cleanup` evidence to differ, and proves that no
+  destination is published.
+- Deterministic write and publication failures use compatibility-only worker
+  hooks. Ordinary CLI builds retain the same filesystem path and configuration
+  surface.
+- The committed follow-up passes the complete credential-free pre-push gate on
+  macOS, including repository freshness, stable and MSRV Rust, compatibility
+  suites, dependency graphs, rustdoc, package verification, and clean install.
+  Native Linux and Windows process behavior remains a PR CI gate.
 
 ## Transaction contract
 
@@ -202,5 +214,5 @@ filesystem work on the current-thread async runtime.
 
 ## Next action
 
-Complete the cleanup-failure matrix for transport/body, write, and publication
-failures.
+Deliver and merge the reviewed cleanup-failure matrix after the native Linux,
+macOS, and Windows artifact jobs pass, then advance to the CLI command contract.

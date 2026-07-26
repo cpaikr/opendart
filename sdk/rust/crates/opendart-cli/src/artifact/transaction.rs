@@ -300,7 +300,11 @@ fn run_worker(
                 if !commit_authority.is_active() {
                     continue;
                 }
-                let result = staged.write(&chunk);
+                let result = if hook.fail_write() {
+                    Err(FailureKind::Write)
+                } else {
+                    staged.write(&chunk)
+                };
                 if let Err(kind) = result {
                     let cleanup = staged.cleanup();
                     let _ = events.send(WorkerEvent::Stopped {
@@ -452,7 +456,14 @@ impl StagedArtifact {
             cleanup: None,
         })?;
         hook.before_publish();
-        if let Err(error) = publish_retained(file, stage, &self.parent, &self.destination) {
+        let result = if hook.fail_publish() {
+            Err(io::Error::other(
+                "compatibility-injected publication failure",
+            ))
+        } else {
+            publish_retained(file, stage, &self.parent, &self.destination)
+        };
+        if let Err(error) = result {
             let kind = if error.kind() == io::ErrorKind::AlreadyExists {
                 FailureKind::DestinationExists
             } else {
@@ -634,6 +645,22 @@ impl WorkerHook {
         if let Some(stall) = &self.publish_stall {
             stall.wait();
         }
+    }
+
+    fn fail_write(&self) -> bool {
+        #[cfg(opendart_compat)]
+        let failure = std::env::var_os("OPENDART_COMPAT_ARTIFACT_WRITE_FAILURE").is_some();
+        #[cfg(not(opendart_compat))]
+        let failure = false;
+        failure
+    }
+
+    fn fail_publish(&self) -> bool {
+        #[cfg(opendart_compat)]
+        let failure = std::env::var_os("OPENDART_COMPAT_ARTIFACT_PUBLISH_FAILURE").is_some();
+        #[cfg(not(opendart_compat))]
+        let failure = false;
+        failure
     }
 }
 
