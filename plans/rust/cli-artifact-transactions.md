@@ -19,7 +19,9 @@ filesystem work on the current-thread async runtime.
   validated `/proc/self/fd` capability and `linkat`, macOS uses
   `fclonefileat`, and Windows keeps its staging pathname immutable through
   deny-delete sharing. The adversarial pathname-replacement and
-  rival-destination process tests pass without a verify-then-link race.
+  rival-destination process tests pass without a verify-then-link race. Linux
+  fails safely with no destination if replacement removes the retained inode's
+  last link; macOS can still clone the unlinked retained descriptor.
 - Cleanup failure is optional top-level secondary evidence. Process coverage
   preserves artifact-limit errors, source status, and successful archive
   replies while attaching the documented cleanup object.

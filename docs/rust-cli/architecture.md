@@ -153,9 +153,10 @@ file identity in one no-clobber filesystem operation, then removes the staging
 link and directory. Linux resolves the retained descriptor through a validated
 `/proc/self/fd` capability and hard-links that identity; macOS clones directly
 from the retained descriptor; Windows hard-links the staging entry while its
-open handle denies write and delete sharing. A filesystem that cannot perform
-its identity-based operation fails publication without creating the
-destination.
+open handle denies write and delete sharing. If replacement removes the
+retained Linux inode's last filesystem link, Linux may reject publication; this
+is a safe failure and creates no destination. A filesystem that cannot perform
+its identity-based operation likewise fails without creating the destination.
 
 The async side pre-encodes both possible final report documents before the
 commit point: the ordinary report and the same report with the one documented

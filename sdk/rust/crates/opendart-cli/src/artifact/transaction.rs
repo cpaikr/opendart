@@ -665,7 +665,7 @@ mod tests {
 
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     use super::STAGED_FILE_NAME;
-    use super::{ArtifactTransaction, TestStall, WorkerHook, cleanup_unopened_stage};
+    use super::{ArtifactTransaction, FailureKind, TestStall, WorkerHook, cleanup_unopened_stage};
     use crate::artifact::ArtifactTarget;
     use crate::artifact::before_deadline;
 
@@ -775,7 +775,7 @@ mod tests {
 
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
-    fn publication_uses_the_retained_file_after_its_staging_path_is_replaced() {
+    fn publication_never_uses_a_replaced_staging_path() {
         let directory = tempfile::tempdir().unwrap();
         let destination = directory.path().join("result.zip");
         let target = ArtifactTarget {
@@ -819,10 +819,18 @@ mod tests {
             let (lock, ready) = &*release;
             *lock.lock().unwrap() = true;
             ready.notify_all();
-            assert!(commit.await.unwrap().unwrap().is_none());
+            match commit.await.unwrap() {
+                Ok(cleanup) => {
+                    assert!(cleanup.is_none());
+                    assert_eq!(std::fs::read(&destination).unwrap(), b"original");
+                }
+                Err(error) => {
+                    assert!(matches!(error.kind, FailureKind::Publish));
+                    assert!(error.cleanup.is_none());
+                    assert!(!destination.exists());
+                }
+            }
         });
-
-        assert_eq!(std::fs::read(destination).unwrap(), b"original");
     }
 
     #[test]

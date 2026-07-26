@@ -356,6 +356,8 @@ pathname-based hard link by denying write and delete sharing on the open file.
 Each operation atomically creates an absent destination and never replaces an
 existing entry. A filesystem that cannot perform the required identity-based
 operation returns `artifact_io` and publishes no destination.
+On Linux, removing the staged inode's last link before commit can produce this
+safe failure because the retained descriptor is no longer linkable.
 
 The structured reply preserves the SDK classification:
 
