@@ -27,21 +27,23 @@ _None._
 
 ### Completed included results
 
-_None. The artifact result remains active until its follow-up delivery
-lifecycle is complete._
+- Transactional artifact cleanup-failure coverage is complete. PR #55 merged
+  the body-delivery, staged-write, and publication matrix after native CI and
+  review passed; each case preserves the full primary result while attaching
+  only bounded cleanup evidence.
 
 ### Current in-scope result
 
-- The transactional artifact implementation merged in PR #54. Its deferred
-  cleanup-failure matrix now covers transport/body delivery, staged writes,
-  and publication while proving the complete primary document is unchanged
-  when cleanup evidence is attached. Deliver the follow-up through native CI,
-  review, and merge.
+- Close the CLI command and dispatch contract gaps: mechanically prove every
+  generated canonical operation, logical-ID alias, and representation; return
+  help for the deepest valid command prefix; and accept supported
+  hyphen-leading values without consuming real flags.
 
 ### Next in-scope action
 
-- Push the reviewed matrix, open its follow-up PR, and finish native CI, review,
-  and merge before starting CLI command-contract work.
+- Add the exhaustive generated keyless dispatch evidence and the failing
+  nested-help and hyphen-leading argv boundaries, then implement the shared
+  command-context and normalization paths that make them pass.
 
 ### Evidence and blockers
 
@@ -56,6 +58,10 @@ lifecycle is complete._
   repository verification, stable and MSRV Rust, structured and binary
   compatibility suites, transport-independent and reqwest compatibility
   graphs, rustdoc, package contents and verification, and clean CLI install.
+- PR #55 merged as `b6439e5` after Linux, macOS, Windows, aggregate CI, and
+  review passed. The valid review finding was fixed by routing deterministic
+  failures through the production cleanup handlers; the final review had no
+  unresolved actionable findings.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.
