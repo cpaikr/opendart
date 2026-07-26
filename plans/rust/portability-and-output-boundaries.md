@@ -138,5 +138,5 @@ and home-directory representations.
 ## Next action
 
 Completed in PR #57 after Go, Rust, macOS, Windows, aggregate CI, and review
-passed with no unresolved actionable feedback. The active Rust roadmap work is
-now the API-contract and verification plan.
+passed with no unresolved actionable feedback. No in-scope action remains for
+this plan.

@@ -215,4 +215,5 @@ filesystem work on the current-thread async runtime.
 ## Next action
 
 Completed in PR #55 after native Linux, macOS, and Windows artifact jobs and
-review passed. The active Rust roadmap work is now the CLI command contract.
+review passed with no unresolved actionable feedback. No in-scope action
+remains for this plan.

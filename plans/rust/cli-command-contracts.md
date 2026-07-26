@@ -148,4 +148,5 @@ query values without consuming real flags as data.
 ## Next action
 
 Completed in PR #56 after Go, Rust, macOS, Windows, aggregate CI, and review
-passed with no unresolved actionable feedback.
+passed with no unresolved actionable feedback. No in-scope action remains for
+this plan.
