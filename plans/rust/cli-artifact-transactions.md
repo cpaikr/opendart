@@ -13,12 +13,13 @@ filesystem work on the current-thread async runtime.
   The worker alone owns the retained destination and staging directory
   capabilities, staged file, byte counter, limit, and no-clobber commit.
 - Body chunks cross a bounded Tokio channel with capacity one. File creation,
-  writes, flush, hard-link publication, and cleanup all execute on the blocking
-  worker rather than the current-thread async runtime.
-- Publication uses `cap-std` 4.0.2 and verifies that the private staged entry
-  still identifies the retained file before creating the destination hard
-  link. The adversarial pathname-replacement and rival-destination process
-  tests now pass on macOS.
+  writes, flush, identity-based publication, and cleanup all execute on the
+  blocking worker rather than the current-thread async runtime.
+- Publication operates directly on the retained file identity: Linux uses a
+  validated `/proc/self/fd` capability and `linkat`, macOS uses
+  `fclonefileat`, and Windows keeps its staging pathname immutable through
+  deny-delete sharing. The adversarial pathname-replacement and
+  rival-destination process tests pass without a verify-then-link race.
 - Cleanup failure is optional top-level secondary evidence. Process coverage
   preserves artifact-limit errors, source status, and successful archive
   replies while attaching the documented cleanup object.
@@ -33,7 +34,9 @@ filesystem work on the current-thread async runtime.
 - Until the package dependency version advances, the CLI mirrors the current
   SDK default in `execution.rs`: its tarball must keep compiling against the
   already-published SDK at the same exact version. An explicit CLI override is
-  still passed to both the SDK and artifact worker from one value.
+  still passed to both the SDK and artifact worker from one value. The release
+  guard compares the SDK and CLI source constants so a future default change
+  cannot silently leave the packaged CLI timeout stale.
 - Private staging names use 128 bits of operating-system randomness. Pathname
   replacement safety begins once the private directory capability is acquired;
   the public contract requires a non-hostile parent during that short setup
@@ -41,6 +44,9 @@ filesystem work on the current-thread async runtime.
 - Commit and cancellation use an acknowledged atomic state handoff. A timeout
   wins only from the active state; after commit begins, the caller waits for
   publication and cannot report cancellation.
+- If a private stage is created but cannot be opened, failure to remove that
+  unopened stage is retained as the same secondary cleanup evidence used by
+  later transaction failures.
 - Stable Clippy and the full compatibility artifact process suite pass. Native
   macOS checks pass on the Rust 1.85 floor, and the Rust 1.85 CLI cross-check
   passes for Windows. The Linux CLI cross-check is blocked locally by the
@@ -96,15 +102,17 @@ filesystem work on the current-thread async runtime.
 ### Select an identity-stable publication primitive
 
 - Use `cap-std` directory capabilities for the opened destination parent and a
-  private staging directory. Publish with `Dir::hard_link`, which creates the
-  destination without replacing an existing entry, then remove the staging
-  link and directory.
+  private staging directory. Publish from the retained file descriptor with
+  safe `rustix` APIs on Linux and macOS; on Windows, publish the protected
+  staging entry while its open handle denies replacement. Then remove the
+  staging link and directory.
 - Create the private staging directory with owner-only access on Unix. On
   Windows, keep directory handles open and deny write/delete sharing on the
   staged file through publication. Validate those native guarantees in the
   platform process suites.
-- Treat missing filesystem hard-link support as a safe publish failure with no
-  destination. Do not fall back to path-based persistence.
+- Treat missing filesystem support for the platform's identity-based operation
+  as a safe publish failure with no destination. Do not fall back to an
+  unprotected path lookup.
 - Preserve the retained parent identity if its pathname changes. Document that
   callers must keep ancestors of the destination parent stable; no publication
   primitive can keep a caller-visible path stable after an adversary replaces

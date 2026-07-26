@@ -350,10 +350,12 @@ A ZIP operation requires a destination path that does not exist. The CLI writes
 into a file beneath a private staging directory in the destination directory,
 streams every SDK body chunk once, and publishes without overwriting another
 path. Publication uses retained directory identities rather than resolving a
-previously exposed staging pathname. It atomically creates the destination as
-a hard link to the staged file and then removes the private staging state. A
-filesystem that cannot create the required hard link returns `artifact_io` and
-publishes no destination.
+previously exposed staging pathname. Linux hard-links the retained open file
+identity, macOS clones from that retained identity, and Windows protects its
+pathname-based hard link by denying write and delete sharing on the open file.
+Each operation atomically creates an absent destination and never replaces an
+existing entry. A filesystem that cannot perform the required identity-based
+operation returns `artifact_io` and publishes no destination.
 
 The structured reply preserves the SDK classification:
 

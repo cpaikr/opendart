@@ -148,11 +148,14 @@ second public model.
 Artifact publication uses a retained `cap-std` directory capability for the
 destination parent and a separately retained capability for a private staging
 directory beneath it. The staging file is created and written only through
-that private directory. Publication creates the destination as a hard link to
-the staged file through the two retained directory identities, then removes
-the staging link and directory. Creating the destination link is atomic and
-fails rather than replacing an existing entry. A filesystem that cannot create
-the required hard link fails publication without creating the destination.
+that private directory. Publication creates the destination from the retained
+file identity in one no-clobber filesystem operation, then removes the staging
+link and directory. Linux resolves the retained descriptor through a validated
+`/proc/self/fd` capability and hard-links that identity; macOS clones directly
+from the retained descriptor; Windows hard-links the staging entry while its
+open handle denies write and delete sharing. A filesystem that cannot perform
+its identity-based operation fails publication without creating the
+destination.
 
 The async side pre-encodes both possible final report documents before the
 commit point: the ordinary report and the same report with the one documented
@@ -165,7 +168,8 @@ randomness and owner-only access on Unix. On Windows, the staging file denies
 write and delete sharing while it is being written and published, and the
 retained directory handles prevent their directories from being renamed
 underneath capability-relative operations. The implementation remains safe
-Rust; platform-specific path and handle mechanics belong to `cap-std`.
+Rust; platform-specific descriptor, path, and handle mechanics belong to
+`rustix`, `rustix-linux-procfs`, and `cap-std`.
 
 Directory capabilities intentionally preserve identity rather than spelling.
 The output parent must not be hostile during the short synchronous step that
@@ -235,7 +239,7 @@ generator-owned and handwritten runtime code remains crate-owned.
 - A binary destination is explicit, exact, atomic, and never overwritten.
 - Artifact publication is anchored to retained directory identities. A
   successful commit contains only bytes written through the owned staging
-  handle; unsupported hard-link publication fails without a destination.
+  handle; unsupported identity-based publication fails without a destination.
 - The packaged source distribution is verified natively on Linux, macOS, and
   Windows. Prebuilt target and platform-version policy is a separate boundary.
 - Generated SDK and CLI outputs are committed, deterministic, and verified

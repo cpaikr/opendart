@@ -1008,6 +1008,8 @@ dependencies = [
  "getrandom 0.4.3",
  "opendart",
  "reqwest",
+ "rustix",
+ "rustix-linux-procfs",
  "serde",
  "serde_json",
  "tempfile",

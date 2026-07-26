@@ -567,6 +567,8 @@ fn staged_path_replacement_never_publishes_replacement_bytes() {
         Some(1) => {
             let error = json(&output, 1);
             assert_eq!(error["kind"], "error");
+            assert_eq!(error["error"]["code"], "artifact_io");
+            assert_eq!(error["error"]["reason"], "publish_failed");
             assert_eq!(error["operation"]["name"], "corp-code");
             assert_eq!(error["metadata"]["status"], 200);
             assert!(

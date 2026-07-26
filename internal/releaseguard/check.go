@@ -36,6 +36,8 @@ const (
 	rustCLICargoArtifact       = "sdk/rust/crates/opendart-cli/Cargo.toml"
 	rustLockArtifact           = "sdk/rust/Cargo.lock"
 	rustProvenanceArtifact     = "sdk/rust/crates/opendart/src/provenance.rs"
+	rustSDKClientArtifact      = "sdk/rust/crates/opendart/src/client.rs"
+	rustCLIExecutionArtifact   = "sdk/rust/crates/opendart-cli/src/execution.rs"
 	rustPackageListArtifact    = "sdk/rust/package-files.txt"
 	rustCLIPackageListArtifact = "sdk/rust/opendart-cli-package-files.txt"
 	canonicalBundleArtifact    = "openapi/generated/openapi.bundle.yaml"
@@ -182,6 +184,8 @@ var (
 	pinnedAction    = regexp.MustCompile(`^[^@]+@[0-9a-f]{40}$`)
 	rustBundleSHA   = regexp.MustCompile(`(?m)^const CANONICAL_BUNDLE_SHA256: &str =\s*"([0-9a-f]{64})";$`)
 	rustSourceTag   = regexp.MustCompile(`(?m)^const SPECIFICATION_SOURCE_RELEASE: Option<&str> = Some\("(v[0-9]+\.[0-9]+\.[0-9]+)"\);$`)
+	rustSDKTimeout  = regexp.MustCompile(`(?m)^const DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs\(([0-9]+)\);$`)
+	rustCLITimeout  = regexp.MustCompile(`(?m)^const SDK_DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs\(([0-9]+)\);$`)
 )
 
 // Error identifies the repository artifact and invariant that failed without
@@ -269,6 +273,17 @@ func Check(repositoryRoot string) error {
 		return err
 	}
 	if err := checkRustCLIPackage(cliCargoSource, workspaceSource, lockSource, cliPackageListSource); err != nil {
+		return err
+	}
+	sdkClientSource, err := readArtifact(absoluteRoot, rustSDKClientArtifact)
+	if err != nil {
+		return err
+	}
+	cliExecutionSource, err := readArtifact(absoluteRoot, rustCLIExecutionArtifact)
+	if err != nil {
+		return err
+	}
+	if err := checkRustCLITimeoutMirror(sdkClientSource, cliExecutionSource); err != nil {
 		return err
 	}
 
@@ -369,7 +384,7 @@ func checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSo
 	}
 
 	lines := strings.Fields(string(packageListSource))
-	if !sort.StringsAreSorted(lines) {
+	if !packagePathsAreSorted(lines) {
 		return &Error{Artifact: rustPackageListArtifact, Invariant: "is sorted for deterministic comparison"}
 	}
 	for _, name := range []string{
@@ -383,7 +398,7 @@ func checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSo
 		"src/lib.rs",
 		"src/provenance.rs",
 	} {
-		if !sortedContains(lines, name) {
+		if !contains(lines, name) {
 			return &Error{Artifact: rustPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
 		}
 	}
@@ -432,7 +447,7 @@ func checkRustCLIPackage(cliCargoSource, workspaceSource, lockSource, packageLis
 	}
 
 	lines := strings.Fields(string(packageListSource))
-	if !sort.StringsAreSorted(lines) {
+	if !packagePathsAreSorted(lines) {
 		return &Error{Artifact: rustCLIPackageListArtifact, Invariant: "is sorted for deterministic comparison"}
 	}
 	for _, name := range []string{
@@ -455,11 +470,29 @@ func checkRustCLIPackage(cliCargoSource, workspaceSource, lockSource, packageLis
 		"tests/live_smoke.rs",
 		"tests/structured_loopback.rs",
 	} {
-		if !sortedContains(lines, name) {
+		if !contains(lines, name) {
 			return &Error{Artifact: rustCLIPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
 		}
 	}
 	return checkPackageInventoryPrivateInputs(rustCLIPackageListArtifact, lines)
+}
+
+func checkRustCLITimeoutMirror(sdkClientSource, cliExecutionSource []byte) error {
+	sdkMatches := rustSDKTimeout.FindAllSubmatch(sdkClientSource, -1)
+	if len(sdkMatches) != 1 {
+		return &Error{
+			Artifact:  rustSDKClientArtifact,
+			Invariant: "defines one SDK total timeout default",
+		}
+	}
+	cliMatches := rustCLITimeout.FindAllSubmatch(cliExecutionSource, -1)
+	if len(cliMatches) != 1 || !bytes.Equal(cliMatches[0][1], sdkMatches[0][1]) {
+		return &Error{
+			Artifact:  rustCLIExecutionArtifact,
+			Invariant: "mirrors the published SDK total timeout default",
+		}
+	}
+	return nil
 }
 
 func cargoInlineDependencyVersion(source []byte, dependency string) (string, error) {
@@ -494,9 +527,31 @@ func checkPackageInventoryPrivateInputs(artifact string, lines []string) error {
 	return nil
 }
 
-func sortedContains(values []string, target string) bool {
-	index := sort.SearchStrings(values, target)
-	return index < len(values) && values[index] == target
+func packagePathsAreSorted(values []string) bool {
+	return sort.SliceIsSorted(values, func(left, right int) bool {
+		return packagePathLess(values[left], values[right])
+	})
+}
+
+func packagePathLess(left, right string) bool {
+	leftParts := strings.Split(left, "/")
+	rightParts := strings.Split(right, "/")
+	shared := min(len(leftParts), len(rightParts))
+	for index := range shared {
+		if leftParts[index] != rightParts[index] {
+			return leftParts[index] < rightParts[index]
+		}
+	}
+	return len(leftParts) < len(rightParts)
+}
+
+func contains(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 type workflow struct {

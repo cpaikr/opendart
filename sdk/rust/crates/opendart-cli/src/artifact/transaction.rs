@@ -1,4 +1,4 @@
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -9,7 +9,7 @@ use cap_std::ambient_authority;
 use cap_std::fs::OpenOptionsExt;
 use cap_std::fs::{Dir, DirBuilder, File, OpenOptions};
 #[cfg(unix)]
-use cap_std::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt};
+use cap_std::fs::{DirBuilderExt, OpenOptionsExt};
 use tokio::sync::mpsc;
 
 use super::{ArtifactTarget, ArtifactWriteError, write_bounded};
@@ -331,8 +331,7 @@ fn run_worker(
                 if !commit_authority.begin_commit() {
                     continue;
                 }
-                hook.before_publish();
-                match staged.commit() {
+                match staged.commit(&hook) {
                     Ok(cleanup) => {
                         commit_authority.mark_committed();
                         let _ = events.send(WorkerEvent::Committed { cleanup });
@@ -403,10 +402,7 @@ impl StagedArtifact {
                 });
             }
         }
-        let stage = create_private_stage(&parent).map_err(|_| WorkerError {
-            kind: FailureKind::TemporaryFileCreation,
-            cleanup: None,
-        })?;
+        let stage = create_private_stage(&parent)?;
         let file = match create_staged_file(&stage) {
             Ok(file) => file,
             Err(_) => {
@@ -446,7 +442,7 @@ impl StagedArtifact {
         Ok(self.bytes)
     }
 
-    fn commit(mut self) -> Result<Option<CleanupContext>, WorkerError> {
+    fn commit(mut self, hook: &WorkerHook) -> Result<Option<CleanupContext>, WorkerError> {
         let stage = self.stage.as_ref().ok_or(WorkerError {
             kind: FailureKind::WorkerUnavailable,
             cleanup: None,
@@ -455,18 +451,8 @@ impl StagedArtifact {
             kind: FailureKind::WorkerUnavailable,
             cleanup: None,
         })?;
-        let linked = stage
-            .symlink_metadata(STAGED_FILE_NAME)
-            .ok()
-            .is_some_and(|metadata| same_file(file, &metadata));
-        if !linked {
-            let cleanup = self.cleanup();
-            return Err(WorkerError {
-                kind: FailureKind::Publish,
-                cleanup,
-            });
-        }
-        if let Err(error) = stage.hard_link(STAGED_FILE_NAME, &self.parent, &self.destination) {
+        hook.before_publish();
+        if let Err(error) = publish_retained(file, stage, &self.parent, &self.destination) {
             let kind = if error.kind() == io::ErrorKind::AlreadyExists {
                 FailureKind::DestinationExists
             } else {
@@ -485,7 +471,7 @@ impl StagedArtifact {
     }
 }
 
-fn create_private_stage(parent: &Dir) -> io::Result<Dir> {
+fn create_private_stage(parent: &Dir) -> Result<Dir, WorkerError> {
     #[cfg(unix)]
     let builder = {
         let mut builder = DirBuilder::new();
@@ -496,26 +482,43 @@ fn create_private_stage(parent: &Dir) -> io::Result<Dir> {
     let builder = DirBuilder::new();
     loop {
         let mut random = [0_u8; 16];
-        getrandom::fill(&mut random)
-            .map_err(|_| io::Error::other("operating system randomness unavailable"))?;
+        getrandom::fill(&mut random).map_err(|_| WorkerError {
+            kind: FailureKind::TemporaryFileCreation,
+            cleanup: None,
+        })?;
         let name = format!(".opendart-{:032x}", u128::from_ne_bytes(random));
         match parent.create_dir_with(&name, &builder) {
             Ok(()) => match parent.open_dir(&name) {
                 Ok(stage) => return Ok(stage),
-                Err(error) => {
-                    let _ = parent.remove_dir(&name);
-                    return Err(error);
+                Err(_) => {
+                    return Err(WorkerError {
+                        kind: FailureKind::TemporaryFileCreation,
+                        cleanup: cleanup_unopened_stage(parent, &name),
+                    });
                 }
             },
             Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
-            Err(error) => return Err(error),
+            Err(_) => {
+                return Err(WorkerError {
+                    kind: FailureKind::TemporaryFileCreation,
+                    cleanup: None,
+                });
+            }
         }
+    }
+}
+
+fn cleanup_unopened_stage(parent: &Dir, name: &str) -> Option<CleanupContext> {
+    match parent.remove_dir(name) {
+        Ok(()) => None,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => None,
+        Err(_) => Some(CleanupContext::discard_staging_link()),
     }
 }
 
 fn create_staged_file(stage: &Dir) -> io::Result<File> {
     let mut options = OpenOptions::new();
-    options.write(true).create_new(true);
+    options.read(true).write(true).create_new(true);
     #[cfg(unix)]
     options.mode(0o600);
     #[cfg(windows)]
@@ -523,19 +526,64 @@ fn create_staged_file(stage: &Dir) -> io::Result<File> {
     stage.open_with(STAGED_FILE_NAME, &options)
 }
 
-#[cfg(unix)]
-fn same_file(file: &File, path_metadata: &cap_std::fs::Metadata) -> bool {
-    let Ok(file_metadata) = file.metadata() else {
-        return false;
-    };
-    file_metadata.dev() == path_metadata.dev() && file_metadata.ino() == path_metadata.ino()
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn publish_retained(
+    file: &File,
+    _stage: &Dir,
+    parent: &Dir,
+    destination: &OsStr,
+) -> io::Result<()> {
+    let proc_self_fd = rustix_linux_procfs::proc_self_fd().map_err(io::Error::from)?;
+    let source = rustix::path::DecInt::from_fd(file);
+    rustix::fs::linkat(
+        proc_self_fd,
+        source,
+        parent,
+        destination,
+        rustix::fs::AtFlags::SYMLINK_FOLLOW,
+    )
+    .map_err(io::Error::from)
 }
 
-#[cfg(not(unix))]
-fn same_file(_file: &File, _path_metadata: &cap_std::fs::Metadata) -> bool {
-    // Windows denies deletion and write sharing for the open staged file. The
-    // retained directory handle also prevents its directory from being moved.
-    true
+#[cfg(target_os = "macos")]
+fn publish_retained(
+    file: &File,
+    _stage: &Dir,
+    parent: &Dir,
+    destination: &OsStr,
+) -> io::Result<()> {
+    rustix::fs::fclonefileat(file, parent, destination, rustix::fs::CloneFlags::empty())
+        .map_err(io::Error::from)
+}
+
+#[cfg(windows)]
+fn publish_retained(
+    _file: &File,
+    stage: &Dir,
+    parent: &Dir,
+    destination: &OsStr,
+) -> io::Result<()> {
+    // The staged file denies deletion and write sharing while this
+    // pathname-based link is created.
+    stage.hard_link(STAGED_FILE_NAME, parent, destination)
+}
+
+#[cfg(not(any(
+    target_os = "linux",
+    target_os = "android",
+    target_os = "macos",
+    windows
+)))]
+fn publish_retained(
+    _file: &File,
+    _stage: &Dir,
+    _parent: &Dir,
+    _destination: &OsStr,
+) -> io::Result<()> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "identity-based artifact publication is unsupported",
+    ))
 }
 
 fn cleanup_stage(stage: Dir, file: Option<File>) -> Option<CleanupContext> {
@@ -612,7 +660,12 @@ mod tests {
     use std::sync::{Arc, Condvar, Mutex};
     use std::time::{Duration, Instant};
 
-    use super::{ArtifactTransaction, TestStall, WorkerHook};
+    use cap_std::ambient_authority;
+    use cap_std::fs::Dir;
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    use super::STAGED_FILE_NAME;
+    use super::{ArtifactTransaction, TestStall, WorkerHook, cleanup_unopened_stage};
     use crate::artifact::ArtifactTarget;
     use crate::artifact::before_deadline;
 
@@ -718,5 +771,67 @@ mod tests {
         });
 
         assert_eq!(std::fs::read(destination).unwrap(), b"original");
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[test]
+    fn publication_uses_the_retained_file_after_its_staging_path_is_replaced() {
+        let directory = tempfile::tempdir().unwrap();
+        let destination = directory.path().join("result.zip");
+        let target = ArtifactTarget {
+            path: destination.clone(),
+            spelling: destination.to_string_lossy().into_owned(),
+            limit: 64,
+        };
+        let (entered, mut entered_receiver) = tokio::sync::mpsc::unbounded_channel();
+        let release = Arc::new((Mutex::new(false), Condvar::new()));
+        let hook = WorkerHook {
+            write_stall: None,
+            publish_stall: Some(Arc::new(TestStall {
+                entered,
+                release: Arc::clone(&release),
+            })),
+        };
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        runtime.block_on(async {
+            let mut transaction = ArtifactTransaction::start_with_hook(target, hook)
+                .await
+                .unwrap();
+            transaction.enqueue(b"original".to_vec()).await.unwrap();
+            assert_eq!(transaction.finish().await.unwrap(), 8);
+            let commit = tokio::spawn(transaction.commit());
+
+            entered_receiver.recv().await.unwrap();
+            let stage = std::fs::read_dir(directory.path())
+                .unwrap()
+                .next()
+                .unwrap()
+                .unwrap()
+                .path();
+            let staged_file = stage.join(STAGED_FILE_NAME);
+            std::fs::remove_file(&staged_file).unwrap();
+            std::fs::write(&staged_file, b"replacement").unwrap();
+
+            let (lock, ready) = &*release;
+            *lock.lock().unwrap() = true;
+            ready.notify_all();
+            assert!(commit.await.unwrap().unwrap().is_none());
+        });
+
+        assert_eq!(std::fs::read(destination).unwrap(), b"original");
+    }
+
+    #[test]
+    fn unopened_stage_cleanup_failure_is_reported() {
+        let directory = tempfile::tempdir().unwrap();
+        let parent = Dir::open_ambient_dir(directory.path(), ambient_authority()).unwrap();
+        parent.create_dir("stage").unwrap();
+        std::fs::write(directory.path().join("stage").join("keep"), b"keep").unwrap();
+
+        assert!(cleanup_unopened_stage(&parent, "stage").is_some());
     }
 }
