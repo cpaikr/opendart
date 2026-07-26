@@ -43,9 +43,9 @@ _None._
 
 ### Next in-scope action
 
-- Add the failing default-feature WebAssembly gate, Unix non-UTF-8 home-output
-  test, and platform-native home resolver tests before changing cfg or emission
-  code.
+- Finish independent review of the completed portability and output contract,
+  deliver it through PR CI, resolve all actionable feedback, and merge it
+  before starting API-contract work.
 
 ### Evidence and blockers
 
@@ -72,6 +72,11 @@ _None._
 - PR #56 merged as `14eb163` after Go, Rust, macOS, Windows, aggregate CI, and
   review passed. Its valid test-isolation finding was fixed, the rejected
   source-group expansion was withdrawn, and no review thread remained open.
+- Commits `39638f5` and `8a12da8` make the native client boundary uniformly
+  target-gated, add maintained WebAssembly feature/graph verification, and make
+  CLI encoding and home discovery deterministic across native platforms. The
+  complete credential-free pre-push gate and Windows-target test compilation
+  pass locally.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.
