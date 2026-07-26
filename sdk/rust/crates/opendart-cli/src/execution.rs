@@ -66,6 +66,7 @@ pub(crate) struct BufferedOutput {
 pub(crate) struct Executor {
     client: Client,
     runtime: tokio::runtime::Runtime,
+    total_timeout: Duration,
 }
 
 impl Executor {
@@ -94,11 +95,16 @@ impl Executor {
         let client = builder
             .build()
             .map_err(|error| ErrorEnvelope::client_build(operation, error))?;
+        let total_timeout = client.total_timeout();
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .map_err(|_| ErrorEnvelope::client_initialization_for(operation))?;
-        Ok(Self { client, runtime })
+        Ok(Self {
+            client,
+            runtime,
+            total_timeout,
+        })
     }
 
     pub(crate) fn execute<T>(
@@ -122,12 +128,12 @@ impl Executor {
         operation: OperationContext,
         target: ArtifactTarget,
     ) -> Result<BufferedOutput, ErrorEnvelope> {
-        let staged = target.stage(operation)?;
         self.runtime.block_on(crate::artifact::execute(
             &self.client,
             request,
             operation,
-            staged,
+            target,
+            self.total_timeout,
         ))
     }
 }

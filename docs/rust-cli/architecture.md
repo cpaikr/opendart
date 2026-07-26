@@ -154,20 +154,40 @@ the staging link and directory. Creating the destination link is atomic and
 fails rather than replacing an existing entry. A filesystem that cannot create
 the required hard link fails publication without creating the destination.
 
-The private staging directory is created with owner-only access on Unix. On
-Windows, the staging file denies write and delete sharing while it is being
-written and published, and the retained directory handles prevent their
-directories from being renamed underneath capability-relative operations. The
-implementation remains safe Rust; platform-specific path and handle mechanics
-belong to `cap-std`.
+The async side pre-encodes both possible final report documents before the
+commit point: the ordinary report and the same report with the one documented
+cleanup object. After the destination link is created, it selects the buffer
+that matches staging cleanup. This keeps all fallible report encoding before
+publication while still reporting a post-publication cleanup failure.
+
+The private staging directory uses a 128-bit name from operating-system
+randomness and owner-only access on Unix. On Windows, the staging file denies
+write and delete sharing while it is being written and published, and the
+retained directory handles prevent their directories from being renamed
+underneath capability-relative operations. The implementation remains safe
+Rust; platform-specific path and handle mechanics belong to `cap-std`.
 
 Directory capabilities intentionally preserve identity rather than spelling.
-Replacing a staging pathname or entries within the opened destination parent
-cannot substitute different bytes. If an adversary can rename or replace an
-ancestor of the destination parent itself, publication follows the originally
-opened directory identity and the caller's original spelling may no longer
-resolve to it. Callers are responsible for choosing a path whose ancestors
-remain stable for the duration of the command.
+The output parent must not be hostile during the short synchronous step that
+creates and opens the unpredictable private staging directory. After its
+directory capability is acquired and before network access begins, replacing
+a staging pathname or entries within the opened destination parent cannot
+substitute different bytes. If an adversary can rename or replace an ancestor
+of the destination parent itself, publication follows the originally opened
+directory identity and the caller's original spelling may no longer resolve to
+it. Callers are responsible for choosing a trusted output parent whose
+ancestors remain stable for the duration of the command.
+
+Body chunks cross a bounded one-entry channel to a dedicated filesystem worker.
+The CLI applies the client's effective total deadline, including the SDK
+default, while waiting for channel capacity or flush completion. If a request,
+body, backpressure, or flush timeout wins, an atomic state transition
+permanently revokes publication authority and the CLI returns promptly. An
+in-flight filesystem call may finish writing only to private staging, whose
+cleanup is reported as pending until the detached worker can confirm it. Commit
+uses the opposite acknowledged transition: once publication begins,
+cancellation can no longer claim success and the CLI waits for the commit
+outcome.
 
 ## Target code map
 

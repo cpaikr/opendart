@@ -42,6 +42,12 @@ impl Client {
         ClientBuilder::new(api_key)
     }
 
+    /// Returns the configured total request and response-body deadline.
+    #[must_use]
+    pub const fn total_timeout(&self) -> Duration {
+        self.total_timeout
+    }
+
     /// Executes a prepared JSON or XML request and inspects its bounded envelope.
     pub async fn execute<T>(
         &self,
@@ -1361,6 +1367,21 @@ mod tests {
                 }) if rejected == setting
             ));
         }
+    }
+
+    #[test]
+    fn client_reports_its_effective_total_timeout() {
+        let default = Client::builder(ApiKey::new("key").unwrap())
+            .build()
+            .unwrap();
+        assert_eq!(default.total_timeout(), DEFAULT_TOTAL_TIMEOUT);
+
+        let configured_timeout = Duration::from_millis(125);
+        let configured = Client::builder(ApiKey::new("key").unwrap())
+            .total_timeout(configured_timeout)
+            .build()
+            .unwrap();
+        assert_eq!(configured.total_timeout(), configured_timeout);
     }
 
     #[tokio::test]

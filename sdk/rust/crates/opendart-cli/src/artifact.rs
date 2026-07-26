@@ -1,19 +1,24 @@
 use std::fs;
-use std::future::poll_fn;
+use std::future::{Future, poll_fn};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
+use std::time::Duration;
 
 use clap::ArgMatches;
 use futures_core::Stream;
 use opendart::{
-    BinaryReply, BodyStream, Client, PreparedBinaryRequest, ResponseMetadata, SourceResponse,
-    StatusEnvelope,
+    BinaryReply, BodyStream, Client, ClientError, PreparedBinaryRequest, ResponseMetadata,
+    SourceResponse, StatusEnvelope, TransportFailureKind,
 };
 use serde::Serialize;
 
-use crate::error::{ArtifactIoReason, ErrorEnvelope};
+use crate::error::{ArtifactIoReason, CleanupContext, ErrorEnvelope};
 use crate::execution::{BufferedOutput, OperationContext};
+
+mod transaction;
+
+use transaction::{ArtifactTransaction, FailureKind, WorkerError};
 
 pub(crate) enum TargetError {
     Usage(ErrorEnvelope),
@@ -96,27 +101,6 @@ impl ArtifactTarget {
             limit,
         })
     }
-
-    pub(crate) fn stage(
-        self,
-        operation: OperationContext,
-    ) -> Result<StagedArtifact, ErrorEnvelope> {
-        let parent = artifact_parent(&self.path);
-        let file = tempfile::NamedTempFile::new_in(parent).map_err(|_| {
-            ErrorEnvelope::artifact_io(
-                operation,
-                None,
-                self.spelling.clone(),
-                ArtifactIoReason::TemporaryFileCreation,
-            )
-        })?;
-        Ok(StagedArtifact {
-            file,
-            path: self.path,
-            spelling: self.spelling,
-            limit: self.limit,
-        })
-    }
 }
 
 fn artifact_parent(path: &Path) -> &Path {
@@ -125,31 +109,35 @@ fn artifact_parent(path: &Path) -> &Path {
         .unwrap_or_else(|| Path::new("."))
 }
 
-pub(crate) struct StagedArtifact {
-    file: tempfile::NamedTempFile,
-    path: PathBuf,
-    spelling: String,
-    limit: u64,
-}
-
 pub(crate) async fn execute(
     client: &Client,
     request: PreparedBinaryRequest,
     operation: OperationContext,
-    staged: StagedArtifact,
+    target: ArtifactTarget,
+    total_timeout: Duration,
 ) -> Result<BufferedOutput, ErrorEnvelope> {
+    let spelling = target.spelling.clone();
+    let staged = ArtifactTransaction::start(target)
+        .await
+        .map_err(|error| worker_error(operation, None, &spelling, error))?;
+    let deadline = tokio::time::Instant::now()
+        .checked_add(total_timeout)
+        .expect("the SDK validates its configured total timeout");
     let response = match client.execute_binary(&request).await {
         Ok(response) => response,
         Err(error) => {
-            let metadata = error.metadata().cloned();
+            let timeout = matches!(
+                &error,
+                ClientError::Transport(error)
+                    if matches!(error.kind(), TransportFailureKind::Timeout)
+            );
             let fallback = ErrorEnvelope::client(operation, error);
-            return Err(discard_error(
-                staged.file,
-                operation,
-                metadata,
-                &staged.spelling,
-                fallback,
-            ));
+            let cleanup = if timeout {
+                Some(staged.abandon())
+            } else {
+                staged.discard().await
+            };
+            return Err(fallback.with_cleanup(cleanup));
         }
     };
     let SourceResponse {
@@ -157,19 +145,27 @@ pub(crate) async fn execute(
     } = response;
     match reply {
         BinaryReply::Archive(stream) => {
-            stream_to_artifact(operation, metadata, stream, staged, ArtifactKind::Archive).await
+            stream_to_artifact(
+                operation,
+                metadata,
+                stream,
+                staged,
+                spelling,
+                ArtifactKind::Archive,
+                deadline,
+            )
+            .await
         }
         BinaryReply::Status(status) => {
-            let spelling = staged.spelling;
-            close_staged(staged.file).map_err(|_| {
-                ErrorEnvelope::artifact_io(
-                    operation,
-                    Some(metadata.clone()),
-                    spelling,
-                    ArtifactIoReason::CleanupFailed,
-                )
-            })?;
-            encode_report(operation, &metadata, ArtifactReply::Status(&status), 1)
+            let cleanup = staged.discard().await;
+            encode_report(
+                operation,
+                &metadata,
+                cleanup,
+                ArtifactReply::Status(&status),
+                1,
+            )
+            .map_err(|error| error.with_cleanup(cleanup))
         }
         BinaryReply::Unrecognized(stream) => {
             stream_to_artifact(
@@ -177,19 +173,15 @@ pub(crate) async fn execute(
                 metadata,
                 stream,
                 staged,
+                spelling,
                 ArtifactKind::Unrecognized,
+                deadline,
             )
             .await
         }
         _ => {
             let fallback = ErrorEnvelope::sdk_contract_mismatch(Some(operation));
-            Err(discard_error(
-                staged.file,
-                operation,
-                Some(metadata),
-                &staged.spelling,
-                fallback,
-            ))
+            Err(fallback.with_cleanup(staged.discard().await))
         }
     }
 }
@@ -204,75 +196,54 @@ async fn stream_to_artifact(
     operation: OperationContext,
     metadata: ResponseMetadata,
     mut stream: BodyStream,
-    staged: StagedArtifact,
+    mut staged: ArtifactTransaction,
+    spelling: String,
     kind: ArtifactKind,
+    deadline: tokio::time::Instant,
 ) -> Result<BufferedOutput, ErrorEnvelope> {
-    let StagedArtifact {
-        mut file,
-        path,
-        spelling,
-        limit,
-    } = staged;
-    let mut bytes = 0_u64;
     while let Some(chunk) = poll_fn(|context| Pin::new(&mut stream).poll_next(context)).await {
         let chunk = match chunk {
             Ok(chunk) => chunk,
             Err(error) => {
+                let timeout = matches!(error.kind(), TransportFailureKind::Timeout);
                 let fallback =
                     ErrorEnvelope::body_stream(operation, metadata.clone(), error.kind());
-                return Err(discard_error(
-                    file,
-                    operation,
-                    Some(metadata),
-                    &spelling,
-                    fallback,
-                ));
+                let cleanup = if timeout {
+                    Some(staged.abandon())
+                } else {
+                    staged.discard().await
+                };
+                return Err(fallback.with_cleanup(cleanup));
             }
         };
-        bytes = match write_bounded(&mut file, bytes, chunk.as_bytes(), limit) {
-            Ok(next) => next,
-            Err(ArtifactWriteError::Limit) => {
-                let fallback = ErrorEnvelope::artifact_limit(operation, metadata.clone());
-                return Err(discard_error(
-                    file,
-                    operation,
-                    Some(metadata),
-                    &spelling,
-                    fallback,
-                ));
+        match before_deadline(deadline, staged.enqueue(chunk.as_bytes().to_vec())).await {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => {
+                return Err(worker_error(operation, Some(metadata), &spelling, error));
             }
-            Err(ArtifactWriteError::Io) => {
-                let fallback = ErrorEnvelope::artifact_io(
-                    operation,
-                    Some(metadata.clone()),
-                    spelling.clone(),
-                    ArtifactIoReason::WriteFailed,
-                );
-                return Err(discard_error(
-                    file,
-                    operation,
-                    Some(metadata),
-                    &spelling,
-                    fallback,
-                ));
+            Err(()) => {
+                let fallback =
+                    ErrorEnvelope::body_stream(operation, metadata, TransportFailureKind::Timeout);
+                return Err(fallback.with_cleanup(Some(staged.abandon())));
             }
-        };
+        }
     }
-    if file.flush().is_err() {
-        let fallback = ErrorEnvelope::artifact_io(
-            operation,
-            Some(metadata.clone()),
-            spelling.clone(),
-            ArtifactIoReason::FlushFailed,
-        );
-        return Err(discard_error(
-            file,
-            operation,
-            Some(metadata),
-            &spelling,
-            fallback,
-        ));
-    }
+    let bytes = match before_deadline(deadline, staged.finish()).await {
+        Ok(Ok(bytes)) => bytes,
+        Ok(Err(error)) => {
+            return Err(worker_error(
+                operation,
+                Some(metadata.clone()),
+                &spelling,
+                error,
+            ));
+        }
+        Err(()) => {
+            let fallback =
+                ErrorEnvelope::body_stream(operation, metadata, TransportFailureKind::Timeout);
+            return Err(fallback.with_cleanup(Some(staged.abandon())));
+        }
+    };
 
     let reference = ArtifactReference {
         path: &spelling,
@@ -282,72 +253,102 @@ async fn stream_to_artifact(
         ArtifactKind::Archive => (ArtifactReply::Archive(reference), 0),
         ArtifactKind::Unrecognized => (ArtifactReply::Unrecognized(reference), 1),
     };
-    let output = match encode_report(operation, &metadata, reply, exit) {
+    let output = match encode_report(operation, &metadata, None, reply, exit) {
         Ok(output) => output,
         Err(error) => {
-            return Err(discard_error(
-                file,
-                operation,
-                Some(metadata),
-                &spelling,
-                error,
-            ));
+            return Err(error.with_cleanup(staged.discard().await));
         }
     };
+    let cleanup_output = match encode_report(
+        operation,
+        &metadata,
+        Some(CleanupContext::discard_staging_link()),
+        reply,
+        exit,
+    ) {
+        Ok(output) => output,
+        Err(error) => return Err(error.with_cleanup(staged.discard().await)),
+    };
 
-    match file.persist_noclobber(&path) {
-        Ok(_) => Ok(output),
-        Err(error) => {
-            let fallback = if error.error.kind() == io::ErrorKind::AlreadyExists {
-                ErrorEnvelope::destination_exists(
-                    operation,
-                    Some(metadata.clone()),
-                    spelling.clone(),
-                )
-            } else {
-                ErrorEnvelope::artifact_io(
-                    operation,
-                    Some(metadata.clone()),
-                    spelling.clone(),
-                    ArtifactIoReason::PublishFailed,
-                )
-            };
-            Err(discard_error(
-                error.file,
-                operation,
-                Some(metadata),
-                &spelling,
-                fallback,
-            ))
-        }
+    match staged.commit().await {
+        Ok(Some(_)) => Ok(cleanup_output),
+        Ok(None) => Ok(output),
+        Err(error) => Err(worker_error(operation, Some(metadata), &spelling, error)),
     }
 }
 
-fn discard_error(
-    file: tempfile::NamedTempFile,
+async fn before_deadline<T>(
+    deadline: tokio::time::Instant,
+    future: impl Future<Output = T>,
+) -> Result<T, ()> {
+    tokio::time::timeout_at(deadline, future)
+        .await
+        .map_err(|_| ())
+}
+
+fn worker_error(
     operation: OperationContext,
     metadata: Option<ResponseMetadata>,
     spelling: &str,
-    fallback: ErrorEnvelope,
+    error: WorkerError,
 ) -> ErrorEnvelope {
-    match close_staged(file) {
-        Ok(()) => fallback,
-        Err(_) => ErrorEnvelope::artifact_io(
+    let envelope = match error.kind {
+        FailureKind::DestinationExists => {
+            ErrorEnvelope::destination_exists(operation, metadata, spelling.to_owned())
+        }
+        FailureKind::DestinationMetadataUnavailable => ErrorEnvelope::artifact_io(
             operation,
             metadata,
             spelling.to_owned(),
-            ArtifactIoReason::CleanupFailed,
+            ArtifactIoReason::DestinationMetadataUnavailable,
         ),
-    }
-}
-
-fn close_staged(file: tempfile::NamedTempFile) -> io::Result<()> {
-    #[cfg(opendart_compat)]
-    if std::env::var_os("OPENDART_COMPAT_ARTIFACT_CLEANUP_FAILURE").is_some() {
-        drop(file);
-        return Err(io::Error::other("compatibility fixture cleanup failure"));
-    }
-    file.close()
+        FailureKind::ParentNotDirectory => ErrorEnvelope::artifact_io(
+            operation,
+            metadata,
+            spelling.to_owned(),
+            ArtifactIoReason::ParentNotDirectory,
+        ),
+        FailureKind::ParentUnavailable => ErrorEnvelope::artifact_io(
+            operation,
+            metadata,
+            spelling.to_owned(),
+            ArtifactIoReason::ParentUnavailable,
+        ),
+        FailureKind::TemporaryFileCreation => ErrorEnvelope::artifact_io(
+            operation,
+            metadata,
+            spelling.to_owned(),
+            ArtifactIoReason::TemporaryFileCreation,
+        ),
+        FailureKind::Limit => match metadata {
+            Some(metadata) => ErrorEnvelope::artifact_limit(operation, metadata),
+            None => ErrorEnvelope::artifact_io(
+                operation,
+                None,
+                spelling.to_owned(),
+                ArtifactIoReason::WriteFailed,
+            ),
+        },
+        FailureKind::Write | FailureKind::WorkerUnavailable => ErrorEnvelope::artifact_io(
+            operation,
+            metadata,
+            spelling.to_owned(),
+            ArtifactIoReason::WriteFailed,
+        ),
+        FailureKind::Flush => ErrorEnvelope::artifact_io(
+            operation,
+            metadata,
+            spelling.to_owned(),
+            ArtifactIoReason::FlushFailed,
+        ),
+        FailureKind::Publish => ErrorEnvelope::artifact_io(
+            operation,
+            metadata,
+            spelling.to_owned(),
+            ArtifactIoReason::PublishFailed,
+        ),
+    };
+    envelope.with_cleanup(error.cleanup)
 }
 
 fn next_byte_count(current: u64, chunk: u64, limit: u64) -> Option<u64> {
@@ -377,12 +378,14 @@ fn write_bounded(
 fn encode_report(
     operation: OperationContext,
     metadata: &ResponseMetadata,
+    cleanup: Option<CleanupContext>,
     reply: ArtifactReply<'_>,
     exit: u8,
 ) -> Result<BufferedOutput, ErrorEnvelope> {
     let envelope = BinaryResponseEnvelope {
         kind: "response",
         operation,
+        cleanup,
         response: BinaryResponse { metadata, reply },
     };
     let bytes = crate::output::encode(&envelope)
@@ -394,6 +397,8 @@ fn encode_report(
 struct BinaryResponseEnvelope<'a> {
     kind: &'static str,
     operation: OperationContext,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cleanup: Option<CleanupContext>,
     response: BinaryResponse<'a>,
 }
 
@@ -403,7 +408,7 @@ struct BinaryResponse<'a> {
     reply: ArtifactReply<'a>,
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Copy, Serialize)]
 #[serde(tag = "kind", content = "value", rename_all = "snake_case")]
 enum ArtifactReply<'a> {
     Archive(ArtifactReference<'a>),
@@ -411,7 +416,7 @@ enum ArtifactReply<'a> {
     Unrecognized(ArtifactReference<'a>),
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Copy, Serialize)]
 struct ArtifactReference<'a> {
     path: &'a str,
     bytes: u64,

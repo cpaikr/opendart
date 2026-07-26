@@ -317,12 +317,15 @@ error uses JSON. Failure of stdout itself is the sole case in which the process
 cannot return this envelope on stdout.
 
 Binary error documents and binary response documents may contain an optional
-top-level `cleanup` object when disposal of owned staging state fails after the
-primary outcome is known. Its stable fields are `stage` and `reason`; the
-initial values are `discard_staging_link` and `cleanup_failed`. Cleanup evidence
-never replaces or reclassifies the primary error, source status, archive, or
-unrecognized reply, and it does not change that outcome's exit code. Raw
-filesystem errors and temporary paths are never included.
+top-level `cleanup` object when disposal of owned staging state fails or cannot
+yet be confirmed after the primary outcome is known. Its stable `stage` value
+is `discard_staging_link`; stable `reason` values are `cleanup_failed` and
+`cleanup_pending`. The latter means a timeout returned while an in-flight
+filesystem operation may still be followed by private-staging cleanup; it does
+not retain publication authority. Cleanup evidence never replaces or
+reclassifies the primary error, source status, archive, or unrecognized reply,
+and it does not change that outcome's exit code. Raw filesystem errors and
+temporary paths are never included.
 
 The initial stable error-code inventory is:
 
@@ -397,9 +400,12 @@ complete SDK `StatusEnvelope` in `value` and publishes no destination.
 
 Every failure before publication—including transport or connection, timeout,
 stream, filesystem, and no-clobber publication failures—exits `1`, reports any
-already-safe response metadata, attempts to remove its private staging state,
-and never publishes a partial destination. A cleanup failure is attached as
-secondary evidence. The CLI does not open or validate archive entries.
+already-safe response metadata, removes or permanently revokes publication of
+its private staging state, and never publishes a partial destination. A timeout
+returns without waiting for cleanup confirmation and uses
+`cleanup.reason: cleanup_pending`; the detached worker attempts cleanup after
+any in-flight filesystem call finishes. The CLI does not open or validate
+archive entries.
 
 Every binary call has a 512 MiB (`536870912` byte) default budget and accepts a
 positive `--artifact-limit-bytes` override. The inclusive limit applies to
@@ -421,12 +427,16 @@ that primary reply and exit code and adds the top-level `cleanup` object. This
 also applies after a successful artifact publication: the final artifact
 remains valid while `cleanup` reports that a private staging link may remain.
 
-The retained destination-parent identity is the publication boundary. Changes
-to staging names or entries inside that opened parent cannot substitute bytes.
-If an ancestor of the destination parent is renamed or replaced concurrently,
-publication remains attached to the originally opened directory, so the
-caller's path spelling is not guaranteed to keep resolving to that directory.
-Callers must keep destination ancestors stable until the command exits.
+The retained destination-parent identity is the publication boundary. The CLI
+creates its private staging directory under an unpredictable 128-bit name.
+The output parent must not permit hostile replacement during the short
+pre-network create-and-open step. Once the staging directory handle is
+acquired, changes to staging names or entries inside that opened parent cannot
+substitute bytes. If an ancestor of the destination parent is renamed or
+replaced concurrently, publication remains attached to the originally opened
+directory, so the caller's path spelling is not guaranteed to keep resolving
+to that directory. Callers must use a trusted output parent and keep its
+ancestors stable until the command exits.
 
 ## Channels and exit codes
 

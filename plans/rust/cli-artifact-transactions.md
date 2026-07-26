@@ -9,39 +9,45 @@ filesystem work on the current-thread async runtime.
 
 ## Current state
 
-- `ArtifactTarget::stage` creates a `tempfile::NamedTempFile` in the destination
-  directory. `stream_to_artifact` later publishes it through
-  `persist_noclobber(&path)`.
-- The tempfile crate documents path-based persistence as unsafe when another
-  writer can replace the temporary path. In a shared writable parent, an
-  attacker can unlink and recreate the staged name; publication can then move
-  bytes that were not written through the retained handle while the report
-  still carries the original byte count and metadata.
-- `discard_error` replaces the primary error whenever `NamedTempFile::close`
-  fails. A cleanup failure can therefore erase a source `Status`, transport
-  failure, body-stream failure, `artifact_limit`, or earlier artifact I/O
-  failure.
-- Temporary-file creation, writes, flush, close, and no-clobber publication use
-  synchronous `std::fs` and `std::io` calls from the CLI's current-thread Tokio
-  runtime. A slow or stalled filesystem can prevent HTTP progress and timer
-  polling, so configured deadlines are not observed while a write blocks.
-- Process coverage now demonstrates both known contract failures: replacing a
-  staged pathname can substitute attacker-controlled bytes, and a cleanup
-  failure can replace an existing `artifact_limit` error. These acceptance
-  tests remain red until the transaction implementation is corrected.
-- The runtime-stall acceptance test is still pending. It needs the private
-  worker boundary described below so the test blocks the actual production
-  write path rather than a test-only imitation.
-- The publication spike selected `cap-std` directory capabilities with a
-  no-clobber hard-link commit. The prototype runs on macOS under the declared
-  MSRV, survives staged-directory pathname replacement, preserves an existing
-  destination, and compiles for Linux and Windows. Native Linux and Windows
-  behavior remains an implementation-validation gate.
-- `cap-std` 4.0.2 has no default features, declares an upstream MSRV below the
-  workspace's Rust 1.85 floor, and keeps its dependency graph inside the CLI.
-  That cost is justified because `tempfile` and other path-based atomic-write
-  APIs retain the staged-name race, while direct `rustix` use does not provide
-  the required Windows abstraction.
+- `ArtifactTransaction` now starts one blocking worker before network access.
+  The worker alone owns the retained destination and staging directory
+  capabilities, staged file, byte counter, limit, and no-clobber commit.
+- Body chunks cross a bounded Tokio channel with capacity one. File creation,
+  writes, flush, hard-link publication, and cleanup all execute on the blocking
+  worker rather than the current-thread async runtime.
+- Publication uses `cap-std` 4.0.2 and verifies that the private staged entry
+  still identifies the retained file before creating the destination hard
+  link. The adversarial pathname-replacement and rival-destination process
+  tests now pass on macOS.
+- Cleanup failure is optional top-level secondary evidence. Process coverage
+  preserves artifact-limit errors, source status, and successful archive
+  replies while attaching the documented cleanup object.
+- The production-boundary stalled-writer test fills the one-chunk queue,
+  observes a Tokio timer on the current-thread runtime, permanently revokes
+  commit authority, returns without waiting for the stalled call, and confirms
+  deferred staging cleanup after that call is released.
+- The effective SDK total deadline, including its default when the CLI flag is
+  omitted, now covers bounded-channel backpressure and flush completion. Any
+  request or body timeout reports `cleanup_pending` without awaiting a detached
+  worker's private-staging cleanup; that worker can no longer publish.
+- Private staging names use 128 bits of operating-system randomness. Pathname
+  replacement safety begins once the private directory capability is acquired;
+  the public contract requires a non-hostile parent during that short setup
+  window.
+- Commit and cancellation use an acknowledged atomic state handoff. A timeout
+  wins only from the active state; after commit begins, the caller waits for
+  publication and cannot report cancellation.
+- Stable Clippy and the full compatibility artifact process suite pass. Native
+  macOS checks pass on the Rust 1.85 floor, and the Rust 1.85 CLI cross-check
+  passes for Windows. The Linux CLI cross-check is blocked locally by the
+  native-TLS OpenSSL sysroot, while the isolated publication prototype still
+  compiles for Linux. Native Linux and Windows process behavior remains a
+  validation gate.
+- The deadline, staging-setup trust boundary, and commit handoff policies found
+  by review are now resolved in implementation and public documentation.
+- Follow-up review also verified the SDK-default deadline path and pre-stream
+  timeout cleanup path after their focused regressions were added; no further
+  implementation finding remains for this slice.
 
 ## Transaction contract
 
@@ -139,6 +145,8 @@ filesystem work on the current-thread async runtime.
   and test the bounded shutdown policy explicitly.
 - Keep report encoding before the commit point and stdout writing after it, as
   required by the current artifact contract.
+  Pre-encode both the ordinary report and the sole cleanup-bearing variant,
+  then select between those buffers after commit cleanup finishes.
 
 ### Integrate without broadening the CLI
 
@@ -180,7 +188,5 @@ filesystem work on the current-thread async runtime.
 
 ## Next action
 
-Add `cap-std` to the CLI package and introduce the private staged-transaction
-worker boundary. Add the deterministic stalled-writer acceptance test against
-that production boundary before moving creation, writes, flush, publication,
-and cleanup off the async runtime.
+Complete the cleanup-failure matrix for transport/body, write, and publication
+failures, then run the artifact process suite natively on Linux and Windows.

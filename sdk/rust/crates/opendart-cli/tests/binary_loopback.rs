@@ -10,7 +10,7 @@ use std::net::{Shutdown, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
 
@@ -217,7 +217,16 @@ fn staged_path(directory: &Path, destination: &Path) -> PathBuf {
         .filter(|path| path != destination)
         .collect();
     assert_eq!(staged.len(), 1, "one same-directory tempfile is staged");
-    staged.into_iter().next().unwrap()
+    let staged = staged.into_iter().next().unwrap();
+    if staged.is_dir() {
+        let entries: Vec<_> = fs::read_dir(&staged)
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .collect();
+        assert_eq!(entries.len(), 1, "one file is staged privately");
+        return entries.into_iter().next().unwrap();
+    }
+    staged
 }
 
 #[test]
@@ -346,6 +355,72 @@ fn limits_and_incomplete_streams_never_publish_partial_artifacts() {
     assert_eq!(error["error"]["code"], "transport_body");
     assert_eq!(error["metadata"]["status"], 200);
     assert_directory_empty(incomplete_dir.path());
+}
+
+#[test]
+fn total_timeout_revokes_publication_without_waiting_for_a_stalled_write() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("timed-out.zip");
+    let mut arguments = binary_arguments(&destination);
+    arguments.extend(["--total-timeout-ms".to_owned(), "50".to_owned()]);
+    let started = Instant::now();
+    let output = with_server_configured(
+        &arguments,
+        |process| {
+            process.env("OPENDART_COMPAT_ARTIFACT_WRITE_DELAY_MS", "3000");
+        },
+        |stream| {
+            let chunks: Vec<Vec<u8>> = (0..8)
+                .map(|index| {
+                    let mut chunk = vec![b'a' + index; 16 * 1024];
+                    if index == 0 {
+                        chunk[..4].copy_from_slice(b"PK\x03\x04");
+                    }
+                    chunk
+                })
+                .collect();
+            let borrowed: Vec<&[u8]> = chunks.iter().map(Vec::as_slice).collect();
+            let _ = write_chunked_result(stream, "application/zip", &borrowed);
+        },
+    );
+
+    assert!(
+        started.elapsed() < Duration::from_secs(2),
+        "the CLI must not wait for the stalled filesystem call"
+    );
+    let error = json(&output, 1);
+    assert_eq!(error["error"]["code"], "transport_timeout");
+    assert_eq!(error["metadata"]["status"], 200);
+    assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
+    assert_eq!(error["cleanup"]["reason"], "cleanup_pending");
+    assert!(!destination.exists());
+}
+
+#[test]
+fn pre_stream_timeout_does_not_wait_for_stalled_cleanup() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("headers-timed-out.zip");
+    let mut arguments = binary_arguments(&destination);
+    arguments.extend(["--total-timeout-ms".to_owned(), "50".to_owned()]);
+    let started = Instant::now();
+    let output = with_server_configured(
+        &arguments,
+        |process| {
+            process.env("OPENDART_COMPAT_ARTIFACT_CLEANUP_DELAY_MS", "3000");
+        },
+        |_stream| thread::sleep(Duration::from_millis(100)),
+    );
+
+    assert!(
+        started.elapsed() < Duration::from_secs(2),
+        "the CLI must not wait for private-staging cleanup after timeout"
+    );
+    let error = json(&output, 1);
+    assert_eq!(error["error"]["code"], "transport_timeout");
+    assert!(error.get("metadata").is_none());
+    assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
+    assert_eq!(error["cleanup"]["reason"], "cleanup_pending");
+    assert!(!destination.exists());
 }
 
 #[test]
@@ -540,6 +615,46 @@ fn cleanup_failure_does_not_replace_the_primary_artifact_limit_error() {
     assert_eq!(error["error"]["code"], "artifact_limit");
     assert_eq!(error["operation"]["name"], "corp-code");
     assert_eq!(error["metadata"]["status"], 200);
+    assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
+    assert_eq!(error["cleanup"]["reason"], "cleanup_failed");
+    assert!(!destination.exists());
+}
+
+#[test]
+fn cleanup_failure_is_secondary_to_a_successful_artifact_reply() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("published-with-cleanup-evidence.zip");
+    let body = b"PK\x03\x04complete";
+    let output = with_server_configured(
+        &binary_arguments(&destination),
+        |process| {
+            process.env("OPENDART_COMPAT_ARTIFACT_CLEANUP_FAILURE", "1");
+        },
+        |stream| write_fixed(stream, "application/zip", body),
+    );
+    let response = json(&output, 0);
+    assert_eq!(response["response"]["reply"]["kind"], "archive");
+    assert_eq!(response["cleanup"]["stage"], "discard_staging_link");
+    assert_eq!(response["cleanup"]["reason"], "cleanup_failed");
+    assert_eq!(fs::read(&destination).unwrap(), body);
+}
+
+#[test]
+fn cleanup_failure_is_secondary_to_a_source_status_reply() {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("status-with-cleanup-evidence.zip");
+    let body = b"<result><status>013</status><message>no data</message></result>";
+    let output = with_server_configured(
+        &binary_arguments(&destination),
+        |process| {
+            process.env("OPENDART_COMPAT_ARTIFACT_CLEANUP_FAILURE", "1");
+        },
+        |stream| write_fixed(stream, "application/xml", body),
+    );
+    let response = json(&output, 1);
+    assert_eq!(response["response"]["reply"]["kind"], "status");
+    assert_eq!(response["cleanup"]["stage"], "discard_staging_link");
+    assert_eq!(response["cleanup"]["reason"], "cleanup_failed");
     assert!(!destination.exists());
 }
 
