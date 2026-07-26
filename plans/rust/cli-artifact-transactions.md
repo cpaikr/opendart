@@ -30,6 +30,10 @@ filesystem work on the current-thread async runtime.
   omitted, now covers bounded-channel backpressure and flush completion. Any
   request or body timeout reports `cleanup_pending` without awaiting a detached
   worker's private-staging cleanup; that worker can no longer publish.
+- Until the package dependency version advances, the CLI mirrors the current
+  SDK default in `execution.rs`: its tarball must keep compiling against the
+  already-published SDK at the same exact version. An explicit CLI override is
+  still passed to both the SDK and artifact worker from one value.
 - Private staging names use 128 bits of operating-system randomness. Pathname
   replacement safety begins once the private directory capability is acquired;
   the public contract requires a non-hostile parent during that short setup
