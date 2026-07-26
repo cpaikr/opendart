@@ -694,14 +694,24 @@ fn hyphen_leading_query_and_output_values_do_not_swallow_real_options() {
         assert_eq!(value["kind"], "operations");
     }
 
+    let output_root = tempfile::tempdir().expect("temporary output directory");
+    let hyphen_output = output_root.path().join("-artifact.zip");
     for arguments in [
         ["call", "corp-code", "--output", "-artifact.zip"].as_slice(),
         ["call", "corp-code", "--output=-artifact.zip"].as_slice(),
     ] {
-        let value = json_output(arguments, 1);
+        let output = Command::new(env!("CARGO_BIN_EXE_opendart"))
+            .args(arguments)
+            .current_dir(output_root.path())
+            .env_remove("OPENDART_API_KEY")
+            .output()
+            .expect("CLI process should start");
+        assert_eq!(output.status.code(), Some(1));
+        assert!(output.stderr.is_empty());
+        let value: Value = serde_json::from_slice(&output.stdout).expect("credential error JSON");
         assert_eq!(value["error"]["code"], "missing_api_key");
         assert_eq!(value["operation"]["representation"], "zip");
-        assert!(!Path::new("-artifact.zip").exists());
+        assert!(!hyphen_output.exists());
     }
 
     for following in [
