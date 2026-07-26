@@ -70,6 +70,10 @@ func TestRenderCLIDeduplicatesIdenticalNameAndLogicalID(t *testing.T) {
 	if !strings.Contains(dispatch, `Some(("same", _matches))`) {
 		t.Fatalf("dispatch omits the deduplicated match pattern:\n%s", dispatch)
 	}
+	dispatchCases := string(files["dispatch_cases.json"])
+	if !strings.Contains(dispatchCases, `"physical_id":""`) || !strings.Contains(dispatchCases, `"argv":["call","same"]`) {
+		t.Fatalf("dispatch fixture omits the generated identity case:\n%s", dispatchCases)
+	}
 }
 
 func TestRenderCLICatalogIncludesCanonicalStringConstraints(t *testing.T) {

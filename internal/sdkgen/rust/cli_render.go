@@ -1,6 +1,7 @@
 package rust
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -31,13 +32,45 @@ func renderCLI(source model.CLIModel) (map[string][]byte, error) {
 	if source.SchemaVersion != model.CLIProjectionSchemaVersion || source.Checksum == "" || len(source.Operations) == 0 {
 		return nil, fmt.Errorf("render Rust CLI: invalid model schema, checksum, or inventory")
 	}
+	dispatchCases, err := renderCLIDispatchCases(source)
+	if err != nil {
+		return nil, err
+	}
 	return map[string][]byte{
 		ownership.CLIFilename: []byte(ownership.CLIMarker(source.SchemaVersion)),
 		"mod.rs":              []byte(renderCLIModule(source)),
 		"catalog.rs":          []byte(renderCLICatalog(source)),
 		"command.rs":          []byte(renderCLICommand(source)),
 		"dispatch.rs":         []byte(renderCLIDispatch(source)),
+		"dispatch_cases.json": dispatchCases,
 	}, nil
+}
+
+func renderCLIDispatchCases(source model.CLIModel) ([]byte, error) {
+	type dispatchCase struct {
+		Name           string   `json:"name"`
+		LogicalID      string   `json:"logical_id"`
+		PhysicalID     string   `json:"physical_id"`
+		Representation string   `json:"representation"`
+		Argv           []string `json:"argv"`
+	}
+	cases := make([]dispatchCase, 0, len(source.Operations))
+	for _, operation := range source.Operations {
+		for _, representation := range operation.Representations {
+			argv := []string{"call", operation.Name}
+			argv = append(argv, representation.TestArgv...)
+			cases = append(cases, dispatchCase{
+				Name: operation.Name, LogicalID: operation.LogicalID,
+				PhysicalID:     representation.PhysicalID,
+				Representation: string(representation.Name), Argv: argv,
+			})
+		}
+	}
+	encoded, err := json.Marshal(cases)
+	if err != nil {
+		return nil, fmt.Errorf("render Rust CLI dispatch cases: %w", err)
+	}
+	return append(encoded, '\n'), nil
 }
 
 func cliHeader(source model.CLIModel) string {

@@ -16,6 +16,7 @@ src/generated/.opendart-cli-generated
 src/generated/catalog.rs
 src/generated/command.rs
 src/generated/dispatch.rs
+src/generated/dispatch_cases.json
 src/generated/mod.rs
 src/main.rs
 src/output.rs

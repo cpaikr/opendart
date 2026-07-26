@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -16,7 +17,7 @@ const (
 	// SemanticSchemaVersion identifies the combined normalized artifact model.
 	SemanticSchemaVersion uint32 = 2
 	// CLIProjectionSchemaVersion identifies the generated CLI contract projection.
-	CLIProjectionSchemaVersion uint32 = 2
+	CLIProjectionSchemaVersion uint32 = 3
 )
 
 // ArtifactSet is one normalized build with independently identified projections.
@@ -75,6 +76,7 @@ type CLIRepresentation struct {
 	ResponseType  string           `json:"responseType"`
 	Selector      bool             `json:"selector"`
 	ResponseShape CLIResponseShape `json:"responseShape"`
+	TestArgv      []string         `json:"testArgv"`
 }
 
 // CLIResponseShape is the recursive discovery view of an SDK response.
@@ -222,12 +224,18 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 					return CLIModel{}, err
 				}
 			}
-			representations = append(representations, CLIRepresentation{
+			representation := CLIRepresentation{
 				Name: variant.Representation, PhysicalID: variant.OperationID,
 				PrepareMethod: "prepare_" + string(variant.Representation), ResponseType: responseType,
 				Selector:      variant.Representation != RepresentationZIP && structuredCount > 1,
 				ResponseShape: shape,
-			})
+			}
+			testArgv, err := cliTestArgv(parameters, representation)
+			if err != nil {
+				return CLIModel{}, reject("missing-cli-test-invocation", operation.ID, "variants/"+variant.OperationID, err.Error())
+			}
+			representation.TestArgv = testArgv
+			representations = append(representations, representation)
 		}
 		sort.Slice(representations, func(i, j int) bool {
 			order := map[Representation]int{RepresentationJSON: 0, RepresentationXML: 1, RepresentationZIP: 2}
@@ -252,6 +260,64 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 	}
 	projection.Checksum = checksum
 	return projection, nil
+}
+
+func cliTestArgv(parameters []CLIParameter, representation CLIRepresentation) ([]string, error) {
+	arguments := make([]string, 0, len(parameters)*2+4)
+	for _, parameter := range parameters {
+		if !parameter.Required {
+			continue
+		}
+		value, err := cliTestValue(parameter)
+		if err != nil {
+			return nil, fmt.Errorf("parameter %s: %w", parameter.WireName, err)
+		}
+		count := int64(1)
+		if parameter.Shape == StringArray && parameter.MinItems != nil {
+			count = *parameter.MinItems
+		}
+		if count < 1 || count > 4096 {
+			return nil, fmt.Errorf("unsupported required item count %d", count)
+		}
+		for range count {
+			arguments = append(arguments, "--"+parameter.Flag, value)
+		}
+	}
+	if representation.Selector {
+		arguments = append(arguments, "--representation", string(representation.Name))
+	}
+	if representation.Name == RepresentationZIP {
+		arguments = append(arguments, "--output", "<generated-test-output>")
+	}
+	return arguments, nil
+}
+
+func cliTestValue(parameter CLIParameter) (string, error) {
+	constraints := parameter.Constraints
+	if len(constraints.AllowedValues) != 0 {
+		return constraints.AllowedValues[0], nil
+	}
+	if constraints.DecimalMinimum != nil {
+		return strconv.FormatInt(*constraints.DecimalMinimum, 10), nil
+	}
+	switch constraints.Format {
+	case "opendart-corp-code":
+		return "00126380", nil
+	case "opendart-date":
+		return "20150101", nil
+	case "opendart-year":
+		return "2015", nil
+	}
+	length := int64(len("fixture"))
+	if constraints.MinLength != nil {
+		length = *constraints.MinLength
+	} else if constraints.MaxLength != nil && length > *constraints.MaxLength {
+		length = *constraints.MaxLength
+	}
+	if length < 1 || length > 4096 {
+		return "", fmt.Errorf("unsupported fixture length %d", length)
+	}
+	return strings.Repeat("a", int(length)), nil
 }
 
 func primaryShape(operation PhysicalOperation) (ResponseShape, error) {
