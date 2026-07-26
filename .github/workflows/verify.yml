@@ -112,9 +112,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Remove-Item Env:HOME -ErrorAction SilentlyContinue
           $env:USERPROFILE = $installRoot
-          $home = & $binary | ConvertFrom-Json
+          $homeDocument = & $binary | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (-not $home.executable.display.StartsWith("~")) { exit 1 }
+          if (-not $homeDocument.executable.display.StartsWith("~")) { exit 1 }
 
   verify:
     if: ${{ always() }}

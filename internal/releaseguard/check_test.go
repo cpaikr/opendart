@@ -1047,6 +1047,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "native artifact jobs use only approved steps",
 		},
 		{
+			name: "Windows home document avoids automatic variable", artifact: verifyWorkflowArtifact,
+			old: `$homeDocument = & $binary | ConvertFrom-Json`, replacement: `$home = & $binary | ConvertFrom-Json`,
+			invariant: "native artifact jobs use only approved steps",
+		},
+		{
 			name: "native artifact compatibility cfg", artifact: verifyWorkflowArtifact,
 			old: "RUSTFLAGS: --cfg opendart_compat", replacement: "RUSTFLAGS: --cfg other",
 			invariant: "native artifact jobs use only approved steps",
