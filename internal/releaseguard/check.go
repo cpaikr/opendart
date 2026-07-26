@@ -108,6 +108,7 @@ do
 done`
 	publishReleaseScript        = `gh release edit "${TAG_NAME}" --draft=false --latest`
 	installRustToolchainsScript = `rustup toolchain install 1.97.1 --profile minimal --component clippy --component rustfmt
+rustup target add --toolchain 1.97.1 wasm32-unknown-unknown
 rustup toolchain install 1.85.0 --profile minimal`
 	fetchRustDependenciesScript = `cargo +1.97.1 fetch --locked --manifest-path sdk/rust/Cargo.toml
 cargo +1.97.1 fetch --locked --manifest-path sdk/rust/compat/reqwest-feature-unification/Cargo.toml`
@@ -127,6 +128,14 @@ RUSTDOCFLAGS="-D warnings" cargo +1.97.1 doc --locked --offline --manifest-path 
 cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features -e normal --prefix none > "${no_default_tree}"
 if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"; then
   grep -E '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${no_default_tree}"
+  exit 1
+fi`
+	wasmVerificationScript = `cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --lib --target wasm32-unknown-unknown -- -D warnings
+cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --lib --target wasm32-unknown-unknown --no-default-features -- -D warnings
+wasm_tree="${verification_tmp}/wasm-tree.txt"
+cargo +1.97.1 tree --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --target wasm32-unknown-unknown -e normal --prefix none > "${wasm_tree}"
+if grep -Eq '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${wasm_tree}"; then
+  grep -E '^(bytes|futures-(core|io|sink|task|util)|h2|hickory-[^ ]+|http-body(-[^ ]+)?|hyper(-[^ ]+)?|native-tls|openssl(-[^ ]+)?|reqwest|ring|rustls(-[^ ]+)?|tokio(-[^ ]+)?|tower(-[^ ]+)?|trust-dns-[^ ]+|webpki(-[^ ]+)?)[[:space:]]v' "${wasm_tree}"
   exit 1
 fi`
 	msrvVerificationScript = `cargo +1.85.0 check --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features

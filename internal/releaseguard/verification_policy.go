@@ -241,6 +241,7 @@ verification_tmp=
 		{name: "fetch_rust_dependencies", body: indentScript(fetchRustDependenciesScript)},
 		{name: "verify_rust_stable", body: indentScript(stableRustVerificationScript)},
 		{name: "verify_transport_independent_graph", body: indentScript(transportIndependentGraphScript)},
+		{name: "verify_wasm", body: indentScript(wasmVerificationScript)},
 		{name: "verify_reqwest_compatibility", body: indentScript(compatibilityVerificationScript)},
 		{name: "verify_rust_msrv", body: indentScript(msrvVerificationScript)},
 		{name: "verify_rust_packages", body: indentScript(packageVerificationScript)},
@@ -259,6 +260,8 @@ verification_tmp=
   verify_rust_stable
   phase "transport-independent dependency graph offline"
   verify_transport_independent_graph
+  phase "WebAssembly contracts offline"
+  verify_wasm
   phase "reqwest compatibility offline"
   verify_reqwest_compatibility
   phase "Rust MSRV offline"

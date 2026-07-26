@@ -1,5 +1,5 @@
 use std::fmt;
-#[cfg(not(feature = "client-reqwest"))]
+#[cfg(not(all(feature = "client-reqwest", not(target_family = "wasm"))))]
 use std::marker::PhantomData;
 
 use form_urlencoded::{Serializer, byte_serialize};
@@ -77,7 +77,7 @@ pub(crate) struct RequestParts {
     authentication: Authentication,
     identity: OperationIdentity,
     expected_representations: &'static [Representation],
-    #[cfg(feature = "client-reqwest")]
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     expected_xml_root: Option<&'static str>,
     generator_schema: u32,
     projection_identity: &'static str,
@@ -86,9 +86,9 @@ pub(crate) struct RequestParts {
 /// An immutable structured request bound to its generated success payload.
 pub struct PreparedRequest<T> {
     parts: RequestParts,
-    #[cfg(feature = "client-reqwest")]
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     decoder: ResponseDecoder<T>,
-    #[cfg(not(feature = "client-reqwest"))]
+    #[cfg(not(all(feature = "client-reqwest", not(target_family = "wasm"))))]
     _response: PhantomData<fn() -> T>,
 }
 
@@ -140,7 +140,7 @@ impl RequestParts {
             })
             .collect::<Vec<_>>()
             .join("&");
-        #[cfg(not(feature = "client-reqwest"))]
+        #[cfg(not(all(feature = "client-reqwest", not(target_family = "wasm"))))]
         let _ = expected_xml_root;
         Self {
             method: RequestMethod::Get,
@@ -149,7 +149,7 @@ impl RequestParts {
             authentication: Authentication::ApiKeyQuery,
             identity,
             expected_representations,
-            #[cfg(feature = "client-reqwest")]
+            #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
             expected_xml_root,
             generator_schema,
             projection_identity,
@@ -177,17 +177,17 @@ impl RequestParts {
             .finish()
     }
 
-    #[cfg(feature = "client-reqwest")]
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     pub(crate) const fn identity(&self) -> OperationIdentity {
         self.identity
     }
 
-    #[cfg(feature = "client-reqwest")]
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     pub(crate) const fn method(&self) -> RequestMethod {
         self.method
     }
 
-    #[cfg(feature = "client-reqwest")]
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     pub(crate) const fn expected_xml_root(&self) -> Option<&'static str> {
         self.expected_xml_root
     }
@@ -202,11 +202,11 @@ impl RequestParts {
 
 impl<T> PreparedRequest<T> {
     pub(crate) const fn new(parts: RequestParts, decoder: ResponseDecoder<T>) -> Self {
-        #[cfg(feature = "client-reqwest")]
+        #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
         {
             Self { parts, decoder }
         }
-        #[cfg(not(feature = "client-reqwest"))]
+        #[cfg(not(all(feature = "client-reqwest", not(target_family = "wasm"))))]
         {
             let _ = decoder;
             Self {
@@ -216,12 +216,12 @@ impl<T> PreparedRequest<T> {
         }
     }
 
-    #[cfg(feature = "client-reqwest")]
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     pub(crate) fn decode(&self, value: SourceValue) -> Result<T, ResponseDecodeError> {
         (self.decoder)(value)
     }
 
-    #[cfg(feature = "client-reqwest")]
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     pub(crate) const fn parts(&self) -> &RequestParts {
         &self.parts
     }
@@ -286,7 +286,7 @@ impl PreparedBinaryRequest {
         Self { parts }
     }
 
-    #[cfg(feature = "client-reqwest")]
+    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     pub(crate) const fn parts(&self) -> &RequestParts {
         &self.parts
     }
