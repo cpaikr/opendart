@@ -147,5 +147,5 @@ query values without consuming real flags as data.
 
 ## Next action
 
-Finish independent review, deliver the completed command contract through PR
-CI, resolve all actionable feedback, and merge it before starting portability.
+Completed in PR #56 after Go, Rust, macOS, Windows, aggregate CI, and review
+passed with no unresolved actionable feedback.
