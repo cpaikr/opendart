@@ -25,10 +25,13 @@ filesystem work on the current-thread async runtime.
   synchronous `std::fs` and `std::io` calls from the CLI's current-thread Tokio
   runtime. A slow or stalled filesystem can prevent HTTP progress and timer
   polling, so configured deadlines are not observed while a write blocks.
-- Existing process tests cover ordinary cleanup, destination races, size
-  limits, exact bytes, source status, and broken stdout, but do not replace the
-  staged pathname, force cleanup failure while another error is active, or
-  stall a writer while observing the runtime.
+- Process coverage now demonstrates both known contract failures: replacing a
+  staged pathname can substitute attacker-controlled bytes, and a cleanup
+  failure can replace an existing `artifact_limit` error. These acceptance
+  tests remain red until the transaction implementation is corrected.
+- The runtime-stall acceptance test is still pending. It needs the private
+  worker boundary described below so the test blocks the actual production
+  write path rather than a test-only imitation.
 
 ## Transaction contract
 
@@ -89,8 +92,10 @@ filesystem work on the current-thread async runtime.
 
 ### Preserve primary errors and attach cleanup context
 
-- Extend the stable CLI error envelope with an optional structured cleanup
-  field or equivalent bounded secondary context.
+- Add one optional top-level `cleanup` field to both CLI error documents and
+  binary source-status response documents. This location is the confirmed
+  public contract; consumers must not need to inspect different nested paths
+  based on the primary outcome.
 - Use a small enum for cleanup stage/reason. Do not store raw OS messages,
   paths other than the already-sanitized caller spelling, or dependency debug
   output.
@@ -163,6 +168,7 @@ filesystem work on the current-thread async runtime.
 
 ## Next action
 
-Write the adversarial staged-name replacement, cleanup-secondary, and stalled
-writer tests, then run the cross-platform publication-primitive spike before
-refactoring `StagedArtifact`.
+Run the cross-platform publication-primitive spike and record the selected safe
+API and threat boundary. Then introduce the private staged-transaction worker
+boundary, add the deterministic stalled-writer acceptance test against that
+production boundary, and move filesystem calls off the async runtime.
