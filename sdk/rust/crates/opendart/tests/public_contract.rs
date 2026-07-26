@@ -3,9 +3,9 @@
 use std::fmt::Display;
 
 use opendart::{
-    ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedBinaryRequest,
-    PreparedRequest, Representation, RequestMethod, ResponseMetadata, SourceReply, SourceValue,
-    SourceValueKind, WireInspector,
+    ApiKey, Authentication, AuthorizedRequest, EnvelopeFormat, OperationIdentity,
+    PreparedBinaryRequest, PreparedRequest, Representation, RequestMethod, ResponseMetadata,
+    SourceReply, SourceValue, SourceValueKind, WireInspectError, WireInspector,
     operations::{AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttMultiAcnt, List},
     responses::CompanyJsonResponse,
     source_provenance,
@@ -313,6 +313,206 @@ fn bounded_inspection_retains_unknown_json_and_xml_evidence() {
             .and_then(opendart::SourceValue::as_array)
             .map(<[_]>::len),
         Some(2)
+    );
+}
+
+#[test]
+fn malformed_xml_never_becomes_authoritative_public_status_evidence() {
+    for (case, body) in [
+        (
+            "illegal element name",
+            b"<1result><status>013</status></1result>".as_slice(),
+        ),
+        (
+            "illegal attribute name",
+            b"<result 1value=\"x\"><status>013</status></result>".as_slice(),
+        ),
+        (
+            "literal less-than in attribute",
+            b"<result value=\"<\"><status>013</status></result>".as_slice(),
+        ),
+        (
+            "duplicate attribute",
+            b"<result value=\"a\" value=\"b\"><status>013</status></result>".as_slice(),
+        ),
+        (
+            "unbound namespace prefix",
+            b"<result><x:status>013</x:status></result>".as_slice(),
+        ),
+        (
+            "double hyphen in comment",
+            b"<result><!--bad--comment--><status>013</status></result>".as_slice(),
+        ),
+        (
+            "trailing hyphen in comment",
+            b"<result><!--bad---><status>013</status></result>".as_slice(),
+        ),
+        (
+            "CDATA terminator in text",
+            b"<result><status>013]]></status></result>".as_slice(),
+        ),
+        (
+            "declaration inside root",
+            b"<result><?xml version=\"1.0\"?><status>013</status></result>".as_slice(),
+        ),
+        (
+            "repeated declaration",
+            b"<?xml version=\"1.0\"?><?xml version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+        ),
+        (
+            "declaration after comment",
+            b"<!--before--><?xml version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+        ),
+        (
+            "declaration without version",
+            b"<?xml encoding=\"UTF-8\"?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "declaration pseudo-attributes out of order",
+            b"<?xml standalone=\"no\" version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+        ),
+        (
+            "unsupported declaration version",
+            b"<?xml version=\"1.1\"?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "unsupported declared encoding",
+            b"<?xml version=\"1.0\" encoding=\"EUC-JP\"?><result><status>013</status></result>"
+                .as_slice(),
+        ),
+        (
+            "invalid standalone value",
+            b"<?xml version=\"1.0\" standalone=\"maybe\"?><result><status>013</status></result>"
+                .as_slice(),
+        ),
+        (
+            "unknown declaration pseudo-attribute",
+            b"<?xml version=\"1.0\" bogus=\"value\"?><result><status>013</status></result>"
+                .as_slice(),
+        ),
+        (
+            "tab-separated declaration inside root",
+            b"<result><?xml\tversion=\"1.0\"?><status>013</status></result>".as_slice(),
+        ),
+        (
+            "newline-separated repeated declaration",
+            b"<?xml version=\"1.0\"?><?xml\nversion=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+        ),
+        (
+            "processing instruction without target",
+            b"<? ?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "processing instruction with illegal target",
+            b"<?1bad?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "processing instruction data without whitespace",
+            b"<?pi?x?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "processing instruction target with slash",
+            b"<?pi/data?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "reserved target followed by question mark",
+            b"<?xml?x?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "reserved target followed by slash",
+            b"<?xml/data?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "reserved processing instruction target",
+            b"<?XmL note?><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "empty DTD",
+            b"<!DOCTYPE result><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "internal DTD",
+            b"<!DOCTYPE result [<!ENTITY code \"013\">]><result><status>&code;</status></result>"
+                .as_slice(),
+        ),
+        (
+            "external DTD",
+            b"<!DOCTYPE result SYSTEM \"https://example.invalid/source.dtd\"><result><status>013</status></result>"
+                .as_slice(),
+        ),
+        (
+            "unknown entity",
+            b"<result><status>&unknown;</status></result>".as_slice(),
+        ),
+        (
+            "CDATA before root",
+            b"<![CDATA[before]]><result><status>013</status></result>".as_slice(),
+        ),
+        (
+            "non-whitespace after root",
+            b"<result><status>013</status></result>after".as_slice(),
+        ),
+        (
+            "forbidden literal character",
+            b"<result><status>013\0</status></result>".as_slice(),
+        ),
+        (
+            "forbidden character reference",
+            b"<result><status>013&#0;</status></result>".as_slice(),
+        ),
+        (
+            "mismatched root",
+            b"<result><status>013</result></status>".as_slice(),
+        ),
+        (
+            "unclosed root",
+            b"<result><status>013</status>".as_slice(),
+        ),
+        (
+            "multiple roots",
+            b"<result><status>013</status></result><result/>".as_slice(),
+        ),
+    ] {
+        let result = WireInspector::new(body.len())
+            .expect("nonempty adversarial fixture")
+            .inspect_xml(body);
+        let Err(WireInspectError::Envelope(error)) = result else {
+            panic!("{case} became authoritative: {result:?}");
+        };
+        assert_eq!(error.format(), EnvelopeFormat::Xml, "{case}");
+    }
+}
+
+#[test]
+fn valid_xml_document_misc_and_line_endings_remain_public_evidence() {
+    let body = b"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\
+        <!--before--><?before ok?>\
+        <result xmlns:x=\"urn:example\" x:future=\"yes\">\
+        <status>000</status><x:item>A\r\nB\rC\nD&#13;E</x:item>\
+        <data><![CDATA[tail\r\nvalue]]></data><?inside ok?>\
+        </result><?after ok?><!--after-->";
+    let SourceReply::Success(value) = WireInspector::new(body.len())
+        .expect("nonempty valid fixture")
+        .inspect_xml(body)
+        .expect("supported XML 1.0 constructs must remain valid")
+    else {
+        panic!("payload-bearing XML must remain success evidence");
+    };
+    assert_eq!(
+        value.get("@x:future").and_then(SourceValue::as_str),
+        Some("yes")
+    );
+    assert_eq!(
+        value.get("x:item").and_then(SourceValue::as_str),
+        Some("A\nB\nC\nD\rE")
+    );
+    assert_eq!(
+        value.get("data").and_then(SourceValue::as_str),
+        Some("tail\nvalue")
     );
 }
 

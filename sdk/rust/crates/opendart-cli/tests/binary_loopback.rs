@@ -244,6 +244,13 @@ fn split_archives_and_unrecognized_bodies_publish_exact_bytes() {
         write_fixed(stream, "application/zip", unknown_body);
     });
     assert_artifact_reply(&output, 1, "unrecognized", &unknown, unknown_body);
+
+    let malformed = directory.path().join("malformed-status.xml");
+    let malformed_body = b"<result value=\"<\"><status>013</status></result>";
+    let output = with_server(&binary_arguments(&malformed), |stream| {
+        write_fixed(stream, "application/xml", malformed_body);
+    });
+    assert_artifact_reply(&output, 1, "unrecognized", &malformed, malformed_body);
 }
 
 #[test]

@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::VecDeque,
     fmt,
     future::{Future, poll_fn},
@@ -585,10 +586,12 @@ fn response_metadata(response: &reqwest::Response, api_key: &ApiKey) -> Response
             .filter_map(|(name, value)| {
                 let bytes = value.as_bytes();
                 if !safe_response_header(name.as_str())
-                    || contains_bytes(bytes, secret.as_bytes())
-                    || contains_ascii_case_insensitive(bytes, form_encoded.as_bytes())
-                    || contains_ascii_case_insensitive(bytes, percent_encoded.as_bytes())
-                    || contains_ascii_case_insensitive(bytes, b"crtfc_key")
+                    || !header_value_is_safe(
+                        bytes,
+                        secret.as_bytes(),
+                        form_encoded.as_bytes(),
+                        percent_encoded.as_bytes(),
+                    )
                 {
                     None
                 } else {
@@ -598,6 +601,110 @@ fn response_metadata(response: &reqwest::Response, api_key: &ApiKey) -> Response
             .collect()
     });
     ResponseMetadata::new(status, version, headers)
+}
+
+const MAX_HEADER_PERCENT_DECODING_PASSES: usize = 3;
+
+fn header_value_is_safe(
+    value: &[u8],
+    secret: &[u8],
+    form_encoded_secret: &[u8],
+    percent_encoded_secret: &[u8],
+) -> bool {
+    let mut stage = Cow::Borrowed(value);
+    if header_stage_contains_sensitive_value(
+        stage.as_ref(),
+        secret,
+        form_encoded_secret,
+        percent_encoded_secret,
+    ) {
+        return false;
+    }
+
+    for _ in 0..MAX_HEADER_PERCENT_DECODING_PASSES {
+        let Some(decoded) = (match percent_decode_header_value(stage.as_ref()) {
+            Ok(decoded) => decoded,
+            Err(()) => return false,
+        }) else {
+            return true;
+        };
+        let Ok(text) = std::str::from_utf8(&decoded) else {
+            return false;
+        };
+        if text.chars().any(char::is_control)
+            || header_stage_contains_sensitive_value(
+                &decoded,
+                secret,
+                form_encoded_secret,
+                percent_encoded_secret,
+            )
+        {
+            return false;
+        }
+        stage = Cow::Owned(decoded);
+    }
+
+    !stage.contains(&b'%')
+}
+
+fn header_stage_contains_sensitive_value(
+    value: &[u8],
+    secret: &[u8],
+    form_encoded_secret: &[u8],
+    percent_encoded_secret: &[u8],
+) -> bool {
+    contains_bytes(value, secret)
+        || contains_secret_after_partial_form_decoding(value, secret)
+        || contains_ascii_case_insensitive(value, form_encoded_secret)
+        || contains_ascii_case_insensitive(value, percent_encoded_secret)
+        || contains_ascii_case_insensitive(value, b"crtfc_key")
+}
+
+/// Matches form-space separators after percent decoding has made literal and
+/// separator `+` bytes indistinguishable.
+fn contains_secret_after_partial_form_decoding(value: &[u8], secret: &[u8]) -> bool {
+    !secret.is_empty()
+        && value.windows(secret.len()).any(|window| {
+            window
+                .iter()
+                .zip(secret)
+                .all(|(value, secret)| value == secret || (*value == b'+' && *secret == b' '))
+        })
+}
+
+fn percent_decode_header_value(value: &[u8]) -> Result<Option<Vec<u8>>, ()> {
+    let Some(first_escape) = value.iter().position(|byte| *byte == b'%') else {
+        return Ok(None);
+    };
+
+    let mut decoded = Vec::with_capacity(value.len());
+    decoded.extend_from_slice(&value[..first_escape]);
+    let mut index = first_escape;
+    while index < value.len() {
+        if value[index] != b'%' {
+            decoded.push(value[index]);
+            index += 1;
+            continue;
+        }
+
+        let high = value.get(index + 1).and_then(|byte| hex_value(*byte));
+        let low = value.get(index + 2).and_then(|byte| hex_value(*byte));
+        let (Some(high), Some(low)) = (high, low) else {
+            return Err(());
+        };
+        decoded.push((high << 4) | low);
+        index += 3;
+    }
+    Ok(Some(decoded))
+}
+
+fn hex_value(value: u8) -> Option<u8> {
+    match value {
+        b'0'..=b'9' => Some(value - b'0'),
+        b'a'..=b'f' => Some(value - b'a' + 10),
+        b'A'..=b'F' => Some(value - b'A' + 10),
+        _ => None,
+    }
 }
 
 fn percent_encode(value: &[u8]) -> String {
@@ -1095,6 +1202,51 @@ mod tests {
             b"PK\x03".as_slice(),
             b"<result><status>013".as_slice(),
             b"<result><payload>x</payload></result>".as_slice(),
+            b"<1result><status>013</status></1result>".as_slice(),
+            b"<result 1value=\"x\"><status>013</status></result>".as_slice(),
+            b"<result value=\"<\"><status>013</status></result>".as_slice(),
+            b"<result value=\"a\" value=\"b\"><status>013</status></result>".as_slice(),
+            b"<result><x:status>013</x:status></result>".as_slice(),
+            b"<result><!--bad--comment--><status>013</status></result>".as_slice(),
+            b"<result><!--bad---><status>013</status></result>".as_slice(),
+            b"<result><status>013]]></status></result>".as_slice(),
+            b"<result><?xml version=\"1.0\"?><status>013</status></result>".as_slice(),
+            b"<?xml version=\"1.0\"?><?xml version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<!--before--><?xml version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<?xml encoding=\"UTF-8\"?><result><status>013</status></result>".as_slice(),
+            b"<?xml standalone=\"no\" version=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<?xml version=\"1.1\"?><result><status>013</status></result>".as_slice(),
+            b"<?xml version=\"1.0\" encoding=\"EUC-JP\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<?xml version=\"1.0\" standalone=\"maybe\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<?xml version=\"1.0\" bogus=\"value\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<result><?xml\tversion=\"1.0\"?><status>013</status></result>".as_slice(),
+            b"<?xml version=\"1.0\"?><?xml\nversion=\"1.0\"?><result><status>013</status></result>"
+                .as_slice(),
+            b"<? ?><result><status>013</status></result>".as_slice(),
+            b"<?1bad?><result><status>013</status></result>".as_slice(),
+            b"<?pi?x?><result><status>013</status></result>".as_slice(),
+            b"<?pi/data?><result><status>013</status></result>".as_slice(),
+            b"<?xml?x?><result><status>013</status></result>".as_slice(),
+            b"<?xml/data?><result><status>013</status></result>".as_slice(),
+            b"<?XmL note?><result><status>013</status></result>".as_slice(),
+            b"<!DOCTYPE result><result><status>013</status></result>".as_slice(),
+            b"<!DOCTYPE result [<!ENTITY code \"013\">]><result><status>&code;</status></result>"
+                .as_slice(),
+            b"<!DOCTYPE result SYSTEM \"https://example.invalid/source.dtd\"><result><status>013</status></result>"
+                .as_slice(),
+            b"<result><status>&unknown;</status></result>".as_slice(),
+            b"<![CDATA[before]]><result><status>013</status></result>".as_slice(),
+            b"<result><status>013</status></result>after".as_slice(),
+            b"<result><status>013\0</status></result>".as_slice(),
+            b"<result><status>013&#0;</status></result>".as_slice(),
+            b"<result><status>013</result></status>".as_slice(),
+            b"<result><status>013</status></result><result/>".as_slice(),
         ] {
             let BinaryReply::Unrecognized(stream) = classify_binary(
                 chunks(&[&body[..1], &body[1..]]),
@@ -1119,6 +1271,23 @@ mod tests {
             panic!("oversized XML candidate was over-classified");
         };
         assert_eq!(collect(stream).await.0, oversized);
+
+        let mut attribute_limited = String::from("<result");
+        for index in 0..=crate::wire::inspect::MAX_XML_ATTRIBUTES_PER_ELEMENT {
+            attribute_limited.push_str(&format!(" a{index}=\"\""));
+        }
+        attribute_limited.push_str("><status>013</status></result>");
+        let body = attribute_limited.as_bytes();
+        let BinaryReply::Unrecognized(stream) = classify_binary(
+            chunks(&[&body[..1], &body[1..]]),
+            WireInspector::new(body.len()).unwrap(),
+            Some("result"),
+        )
+        .await
+        else {
+            panic!("attribute-limited XML was over-classified");
+        };
+        assert_eq!(collect(stream).await.0, body);
     }
 
     #[tokio::test]
@@ -1199,12 +1368,19 @@ mod tests {
         let sentinel = "secret /+ credential";
         let form_encoded = "secret+%2F%2B+credential";
         let percent_encoded = "secret%20%2F%2B%20credential";
+        let fully_encoded_marker = "%63%72%74%66%63%5f%6b%65%79";
+        let nested_marker = "%2563%2572%2574%2566%2563%255f%256b%2565%2579";
         let body = br#"{"status":"000","corp_name":"Example Corp","value":1.20e3}"#;
         let unsafe_location = "https://elsewhere.invalid/?crtfc%5Fkey=%73ecret";
         let (origin, server) = serve_once(response(
             &[
                 ("content-type", "application/json"),
                 ("content-language", sentinel),
+                ("content-language", "prefix crtfc%5Fkey suffix"),
+                ("content-language", fully_encoded_marker),
+                ("content-language", nested_marker),
+                ("content-language", "safe%2"),
+                ("content-language", "secret+/++credential"),
                 ("content-encoding", form_encoded),
                 ("retry-after", percent_encoded),
                 ("date", "crtfc_key"),
@@ -1270,6 +1446,60 @@ mod tests {
         ));
         assert_eq!(request.matches("crtfc_key=").count(), 1);
         assert!(!format!("{client:?}").contains(sentinel));
+    }
+
+    #[test]
+    fn response_header_safety_fails_closed_across_percent_decoding_stages() {
+        let secret = b"secret /+ credential";
+        let form_encoded = b"secret+%2F%2B+credential";
+        let percent_encoded = b"secret%20%2F%2B%20credential";
+
+        for unsafe_value in [
+            b"secret /+ credential".as_slice(),
+            b"prefix CRTFC_KEY suffix".as_slice(),
+            b"prefix crtfc%5fkey suffix".as_slice(),
+            b"%63%72%74%66%63%5F%6B%65%79=value".as_slice(),
+            b"%2563%2572%2574%2566%2563%255f%256b%2565%2579".as_slice(),
+            b"secret+%2f%2b+credential".as_slice(),
+            b"secret+/++credential".as_slice(),
+            b"%73%65%63%72%65%74%20%2f%2b%20%63%72%65%64%65%6e%74%69%61%6c".as_slice(),
+            b"trace=crtfc_key; value=secret /+ credential".as_slice(),
+            b"safe%".as_slice(),
+            b"safe%2".as_slice(),
+            b"safe%GG".as_slice(),
+            b"safe%FF".as_slice(),
+            b"safe%250A".as_slice(),
+            b"%25252563%25252572%25252574%25252566%25252563%2525255f%2525256b%25252565%25252579"
+                .as_slice(),
+        ] {
+            assert!(
+                !header_value_is_safe(unsafe_value, secret, form_encoded, percent_encoded),
+                "unsafe header value survived: {}",
+                String::from_utf8_lossy(unsafe_value)
+            );
+        }
+
+        assert!(!header_value_is_safe(
+            b"secret+/+credential",
+            b"secret / credential",
+            b"secret+%2F+credential",
+            b"secret%20%2F%20credential",
+        ));
+
+        for safe_value in [
+            b"application/json".as_slice(),
+            b"ko-KR".as_slice(),
+            b"retry after 10".as_slice(),
+            b"safe%20value".as_slice(),
+            b"caf%C3%A9".as_slice(),
+            b"opaque\x80value".as_slice(),
+        ] {
+            assert!(
+                header_value_is_safe(safe_value, secret, form_encoded, percent_encoded),
+                "safe header value was omitted: {}",
+                String::from_utf8_lossy(safe_value)
+            );
+        }
     }
 
     #[tokio::test]

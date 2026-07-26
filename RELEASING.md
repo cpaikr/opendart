@@ -71,11 +71,24 @@ or a CLI Release Please PR before dependent CLI work 8 does so.
 ## Verification gate
 
 Before merging an implementation or Release Please PR, require review,
-conversation resolution, and the `verify` job. Verification runs the Go
-repository gate plus pinned stable, MSRV, all-features, no-default-features,
-documentation, compatibility, offline, and exact package-content Cargo gates.
-The CLI is also installed with `cargo install --locked --offline --path` into a
-clean root and exercised on Linux, macOS, and Windows.
+conversation resolution, and the stable aggregate `verify` job. It waits for
+the independent Go, Rust, macOS artifact, and Windows artifact jobs and
+succeeds only when all four succeed. The Go job runs normal tests, the audited
+targeted-race set, and the repository gate; the Rust job runs the pinned stable,
+MSRV, all-features, no-default-features, documentation, compatibility, offline,
+and exact package-content Cargo gates. The CLI is also installed with
+`cargo install --locked --offline --path` into a clean root and exercised on
+Linux, macOS, and Windows.
+
+Before merging a Release Please PR, also require a successful manual full-race
+run for the candidate branch:
+
+```sh
+gh workflow run full-race.yml --ref <release-please-branch>
+gh run list --workflow full-race.yml --branch <release-please-branch> \
+  --event workflow_dispatch --limit 1
+gh run watch <run-id> --exit-status
+```
 
 Release Please uses the repository `GITHUB_TOKEN`, so its own PR may require a
 manual Verify dispatch:
@@ -86,6 +99,12 @@ gh workflow run verify.yml --ref <release-please-branch>
 
 Do not merge the release PR until that run passes and the proposed component,
 version, changelog, tag, Cargo lock, and artifact scope are correct.
+
+The full-race workflow also runs weekly on the default branch. Its failure is a
+maintainer-owned regression: reproduce with `./scripts/verify exhaustive`,
+land a repair through normal review, rerun `full-race.yml` on the candidate
+branch, and link the successful run before closing the incident. The scheduled
+gate is not best-effort telemetry.
 
 ## Specification release flow
 

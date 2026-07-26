@@ -47,6 +47,12 @@ match client.execute(&request).await?.reply {
 recognized status envelope—including `000`, `013`, documented error values,
 and unknown future strings—as `SourceReply::Status`. The SDK does not decide
 that `013` is an empty success and does not mark any source status retryable.
+An XML reply becomes authoritative only after complete bounded UTF-8 XML 1.0
+validation. DTDs and custom entities are rejected; valid declarations,
+comments, processing instructions, namespaces, and references remain
+supported within the SDK's depth and per-element attribute bounds. Literal XML
+line endings are normalized according to XML 1.0 while numeric character
+references retain their referenced character.
 Each `prepare_json` or `prepare_xml` call binds its representation-specific
 generated success type. Use `Client::execute_raw(&request)` when you need the
 complete normalized `SourceValue` envelope instead.

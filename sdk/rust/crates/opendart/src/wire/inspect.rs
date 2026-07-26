@@ -1,10 +1,15 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, BTreeSet},
+};
 
 use quick_xml::{Reader, events::Event};
+use roxmltree::{Document, ParsingOptions};
 
 use super::{SourceReply, SourceStatus, SourceValue, StatusEnvelope};
 
 const MAX_NESTING_DEPTH: usize = 64;
+pub(crate) const MAX_XML_ATTRIBUTES_PER_ELEMENT: usize = 128;
 
 /// The source representation inspected by a bounded wire parser.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -124,6 +129,7 @@ impl WireInspector {
         body: &[u8],
     ) -> Result<(String, SourceReply<SourceValue>), WireInspectError> {
         self.check_size(body)?;
+        validate_xml_document(body).map_err(|()| envelope_error(EnvelopeFormat::Xml))?;
         let (root, value) = xml_value(body).map_err(|()| envelope_error(EnvelopeFormat::Xml))?;
         Ok((root, classify_status(value)))
     }
@@ -137,6 +143,180 @@ impl WireInspector {
             Ok(())
         }
     }
+}
+
+fn validate_xml_document(body: &[u8]) -> Result<(), ()> {
+    // Preflight limits structural work before roxmltree's recursive tokenizer
+    // and owns declaration/PI rules on which the two parsers otherwise differ.
+    validate_xml_preflight(body)?;
+    let text = std::str::from_utf8(body).map_err(|_| ())?;
+    let options = ParsingOptions {
+        allow_dtd: false,
+        nodes_limit: u32::try_from(body.len()).unwrap_or(u32::MAX).max(1),
+        entity_resolver: None,
+    };
+    Document::parse_with_options(text, options).map_err(|_| ())?;
+    Ok(())
+}
+
+fn validate_xml_preflight(body: &[u8]) -> Result<(), ()> {
+    let mut reader = Reader::from_reader(body);
+    let config = reader.config_mut();
+    config.check_comments = true;
+    let mut depth = 0usize;
+    let mut seen_event = false;
+
+    loop {
+        match reader.read_event().map_err(|_| ())? {
+            Event::Start(start) => {
+                seen_event = true;
+                validate_xml_attribute_count(&start)?;
+                depth = depth.checked_add(1).ok_or(())?;
+                if depth > MAX_NESTING_DEPTH {
+                    return Err(());
+                }
+            }
+            Event::Empty(empty) => {
+                seen_event = true;
+                validate_xml_attribute_count(&empty)?;
+                if depth >= MAX_NESTING_DEPTH {
+                    return Err(());
+                }
+            }
+            Event::End(_) => {
+                seen_event = true;
+                depth = depth.checked_sub(1).ok_or(())?;
+            }
+            Event::Decl(declaration) => {
+                if seen_event {
+                    return Err(());
+                }
+                validate_xml_declaration(&declaration)?;
+                seen_event = true;
+            }
+            Event::PI(instruction) => {
+                seen_event = true;
+                validate_xml_processing_instruction(&instruction)?;
+            }
+            Event::DocType(_) => return Err(()),
+            Event::Eof => return Ok(()),
+            Event::Text(_) | Event::CData(_) | Event::Comment(_) | Event::GeneralRef(_) => {
+                seen_event = true;
+            }
+        }
+    }
+}
+
+fn validate_xml_attribute_count(element: &quick_xml::events::BytesStart<'_>) -> Result<(), ()> {
+    // Bound roxmltree's per-element duplicate and namespace resolution before
+    // its full-document authority pass.
+    let mut attributes = element.attributes();
+    attributes.with_checks(false);
+    for (index, attribute) in attributes.enumerate() {
+        attribute.map_err(|_| ())?;
+        if index >= MAX_XML_ATTRIBUTES_PER_ELEMENT {
+            return Err(());
+        }
+    }
+    Ok(())
+}
+
+fn validate_xml_processing_instruction(
+    instruction: &quick_xml::events::BytesPI<'_>,
+) -> Result<(), ()> {
+    let content = std::str::from_utf8(instruction.as_ref()).map_err(|_| ())?;
+    let mut chars = content.char_indices();
+    let (_, first) = chars.next().ok_or(())?;
+    if !is_xml_name_start(first) {
+        return Err(());
+    }
+
+    let mut target_end = first.len_utf8();
+    for (index, value) in chars {
+        if !is_xml_name_char(value) {
+            target_end = index;
+            break;
+        }
+        target_end = index + value.len_utf8();
+    }
+
+    let target = &content[..target_end];
+    let data = &content[target_end..];
+    if !data.is_empty() && !data.chars().next().is_some_and(is_xml_whitespace) {
+        return Err(());
+    }
+    if target.eq_ignore_ascii_case("xml") {
+        return Err(());
+    }
+    Ok(())
+}
+
+fn validate_xml_declaration(declaration: &quick_xml::events::BytesDecl<'_>) -> Result<(), ()> {
+    let mut input = declaration.as_ref();
+    input = input.strip_prefix(b"xml").ok_or(())?;
+    if !consume_xml_space(&mut input) {
+        return Err(());
+    }
+
+    if take_xml_declaration_attribute(&mut input, b"version")? != b"1.0" {
+        return Err(());
+    }
+    let mut separated = consume_xml_space(&mut input);
+    if input.is_empty() {
+        return Ok(());
+    }
+    if !separated {
+        return Err(());
+    }
+
+    if input.starts_with(b"encoding") {
+        let encoding = take_xml_declaration_attribute(&mut input, b"encoding")?;
+        if !encoding.eq_ignore_ascii_case(b"UTF-8") {
+            return Err(());
+        }
+        separated = consume_xml_space(&mut input);
+        if input.is_empty() {
+            return Ok(());
+        }
+        if !separated {
+            return Err(());
+        }
+    }
+
+    let standalone = take_xml_declaration_attribute(&mut input, b"standalone")?;
+    if !matches!(standalone, b"yes" | b"no") {
+        return Err(());
+    }
+    consume_xml_space(&mut input);
+    input.is_empty().then_some(()).ok_or(())
+}
+
+fn consume_xml_space(input: &mut &[u8]) -> bool {
+    let start_len = input.len();
+    while input
+        .first()
+        .is_some_and(|byte| matches!(byte, b' ' | b'\t' | b'\r' | b'\n'))
+    {
+        *input = &input[1..];
+    }
+    input.len() != start_len
+}
+
+fn take_xml_declaration_attribute<'a>(input: &mut &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
+    *input = input.strip_prefix(name).ok_or(())?;
+    consume_xml_space(input);
+    *input = input.strip_prefix(b"=").ok_or(())?;
+    consume_xml_space(input);
+
+    let quote = *input.first().ok_or(())?;
+    if !matches!(quote, b'\'' | b'"') {
+        return Err(());
+    }
+    *input = &input[1..];
+    let end = input.iter().position(|byte| *byte == quote).ok_or(())?;
+    let value = &input[..end];
+    *input = &input[end + 1..];
+    Ok(value)
 }
 
 fn envelope_error(format: EnvelopeFormat) -> EnvelopeError {
@@ -522,6 +702,7 @@ fn xml_value(body: &[u8]) -> Result<(String, SourceValue), ()> {
             }
             Event::Text(text) => {
                 let text = text.decode().map_err(|_| ())?;
+                let text = normalize_xml_line_endings(&text);
                 validate_xml_text(&text)?;
                 if let Some(frame) = stack.last_mut() {
                     frame.push_text(&text);
@@ -532,6 +713,7 @@ fn xml_value(body: &[u8]) -> Result<(String, SourceValue), ()> {
             Event::CData(text) => {
                 let frame = stack.last_mut().ok_or(())?;
                 let text = text.decode().map_err(|_| ())?;
+                let text = normalize_xml_line_endings(&text);
                 validate_xml_text(&text)?;
                 frame.push_text(&text);
             }
@@ -569,6 +751,25 @@ fn xml_value(body: &[u8]) -> Result<(String, SourceValue), ()> {
     root.ok_or(())
 }
 
+fn normalize_xml_line_endings(value: &str) -> Cow<'_, str> {
+    if !value.as_bytes().contains(&b'\r') {
+        return Cow::Borrowed(value);
+    }
+
+    let mut normalized = String::with_capacity(value.len());
+    let mut remaining = value;
+    while let Some(index) = remaining.find('\r') {
+        normalized.push_str(&remaining[..index]);
+        remaining = &remaining[index + 1..];
+        if let Some(without_lf) = remaining.strip_prefix('\n') {
+            remaining = without_lf;
+        }
+        normalized.push('\n');
+    }
+    normalized.push_str(remaining);
+    Cow::Owned(normalized)
+}
+
 fn attach_xml_value(
     stack: &mut [XmlFrame],
     root: &mut Option<(String, SourceValue)>,
@@ -601,6 +802,35 @@ fn validate_xml_text(value: &str) -> Result<(), ()> {
 fn is_xml_1_0_char(value: char) -> bool {
     matches!(value, '\u{9}' | '\u{A}' | '\u{D}')
         || matches!(value, '\u{20}'..='\u{D7FF}' | '\u{E000}'..='\u{FFFD}' | '\u{10000}'..='\u{10FFFF}')
+}
+
+fn is_xml_name_start(value: char) -> bool {
+    matches!(
+        value,
+        ':' | 'A'..='Z'
+            | '_'
+            | 'a'..='z'
+            | '\u{C0}'..='\u{D6}'
+            | '\u{D8}'..='\u{F6}'
+            | '\u{F8}'..='\u{2FF}'
+            | '\u{370}'..='\u{37D}'
+            | '\u{37F}'..='\u{1FFF}'
+            | '\u{200C}'..='\u{200D}'
+            | '\u{2070}'..='\u{218F}'
+            | '\u{2C00}'..='\u{2FEF}'
+            | '\u{3001}'..='\u{D7FF}'
+            | '\u{F900}'..='\u{FDCF}'
+            | '\u{FDF0}'..='\u{FFFD}'
+            | '\u{10000}'..='\u{EFFFF}'
+    )
+}
+
+fn is_xml_name_char(value: char) -> bool {
+    is_xml_name_start(value)
+        || matches!(
+            value,
+            '-' | '.' | '0'..='9' | '\u{B7}' | '\u{300}'..='\u{36F}' | '\u{203F}'..='\u{2040}'
+        )
 }
 
 fn is_xml_whitespace(value: char) -> bool {
@@ -779,6 +1009,129 @@ mod tests {
         let items = value.get("item").and_then(SourceValue::as_array).unwrap();
         assert_eq!(items[0].as_str(), Some("A&B"));
         assert_eq!(items[1].as_str(), Some("C"));
+    }
+
+    #[test]
+    fn xml_accepts_supported_document_misc_namespaces_and_declarations() {
+        for standalone in ["yes", "no"] {
+            let body = format!(
+                "\u{feff}<?xml version='1.0' encoding='utf-8' standalone='{standalone}'?>\
+                 <!--before--><?before ok?>\
+                 <결과 xmlns:x='urn:example' x:future='yes'>\
+                 <?inside ok?><?처리 값?><x:item>값</x:item>\
+                 </결과><?after ok?><!--after-->"
+            );
+            let SourceReply::Success(value) =
+                inspector(body.len()).inspect_xml(body.as_bytes()).unwrap()
+            else {
+                panic!("supported XML document misc must remain valid");
+            };
+            assert_eq!(
+                value.get("@x:future").and_then(SourceValue::as_str),
+                Some("yes")
+            );
+            assert_eq!(
+                value.get("x:item").and_then(SourceValue::as_str),
+                Some("값")
+            );
+        }
+        for separator in ["\t", "\r", "\n"] {
+            let body = format!("<?xml{separator}version='1.0'?><result>ok</result>");
+            assert!(
+                inspector(body.len()).inspect_xml(body.as_bytes()).is_ok(),
+                "XML space is valid between the declaration target and version"
+            );
+        }
+
+        let long_text = "x".repeat(16 * 1024);
+        let body = format!("<result><future>{long_text}</future></result>");
+        let SourceReply::Success(value) =
+            inspector(body.len()).inspect_xml(body.as_bytes()).unwrap()
+        else {
+            panic!("bounded long XML tokens must remain valid");
+        };
+        assert_eq!(
+            value
+                .get("future")
+                .and_then(SourceValue::as_str)
+                .map(str::len),
+            Some(long_text.len())
+        );
+
+        let SourceReply::Success(value) = inspector(128)
+            .inspect_xml(b"<result><item>ok</item></result >")
+            .unwrap()
+        else {
+            panic!("closing-tag whitespace permitted by XML 1.0 must remain valid");
+        };
+        assert_eq!(value.get("item").and_then(SourceValue::as_str), Some("ok"));
+    }
+
+    #[test]
+    fn xml_attribute_limit_is_inclusive() {
+        let body_at_limit = xml_with_attributes(MAX_XML_ATTRIBUTES_PER_ELEMENT);
+        assert!(
+            inspector(body_at_limit.len())
+                .inspect_xml(body_at_limit.as_bytes())
+                .is_ok()
+        );
+
+        let body_over_limit = xml_with_attributes(MAX_XML_ATTRIBUTES_PER_ELEMENT + 1);
+        assert!(
+            inspector(body_over_limit.len())
+                .inspect_xml(body_over_limit.as_bytes())
+                .is_err()
+        );
+    }
+
+    fn xml_with_attributes(count: usize) -> String {
+        let mut body = String::from("<result");
+        for index in 0..count {
+            body.push_str(&format!(" a{index}=\"\""));
+        }
+        body.push_str("><status>013</status></result>");
+        body
+    }
+
+    #[test]
+    fn xml_normalizes_literal_line_endings_without_changing_references() {
+        let body = b"<result value=\"a\tb\nc\rd\r\ne&#9;f&#10;g&#13;h\"><text>a\r\nb\rc\nd&#13;e</text><data><![CDATA[x\r\ny\rz\n]]></data></result>";
+        let SourceReply::Success(value) = inspector(body.len()).inspect_xml(body).unwrap() else {
+            panic!("line-ending fixture must remain a valid success value");
+        };
+        assert_eq!(
+            value.get("@value").and_then(SourceValue::as_str),
+            Some("a b c d e\tf\ng\rh")
+        );
+        assert_eq!(
+            value.get("text").and_then(SourceValue::as_str),
+            Some("a\nb\nc\nd\re")
+        );
+        assert_eq!(
+            value.get("data").and_then(SourceValue::as_str),
+            Some("x\ny\nz\n")
+        );
+    }
+
+    #[test]
+    fn unsupported_declaration_values_and_reserved_pi_targets_are_rejected() {
+        for body in [
+            br#"<?xml version="1.1"?><result/>"#.as_slice(),
+            br#"<?xml version="2.0"?><result/>"#.as_slice(),
+            br#"<?xml version="1.0" encoding="EUC-JP"?><result/>"#.as_slice(),
+            br#"<?xml version="1.0" standalone="maybe"?><result/>"#.as_slice(),
+            br#"<?xml version="1.0" bogus="value"?><result/>"#.as_slice(),
+            b"<result><?xml\tversion=\"1.0\"?></result>".as_slice(),
+            b"<?xml version=\"1.0\"?><?xml\nversion=\"1.0\"?><result/>".as_slice(),
+            br#"<?pi?x?><result/>"#.as_slice(),
+            br#"<?pi/data?><result/>"#.as_slice(),
+            br#"<?xml?x?><result/>"#.as_slice(),
+            br#"<?xml/data?><result/>"#.as_slice(),
+            br#"<?XML note?><result/>"#.as_slice(),
+            br#"<?xMl?><result/>"#.as_slice(),
+        ] {
+            assert!(inspector(body.len()).inspect_xml(body).is_err());
+        }
     }
 
     #[test]
