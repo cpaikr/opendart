@@ -300,15 +300,11 @@ fn run_worker(
                 if !commit_authority.is_active() {
                     continue;
                 }
-                if hook.fail_write() {
-                    let cleanup = staged.cleanup();
-                    let _ = events.send(WorkerEvent::Stopped {
-                        failure: Some(FailureKind::Write),
-                        cleanup,
-                    });
-                    return;
-                }
-                let result = staged.write(&chunk);
+                let result = if hook.fail_write() {
+                    Err(FailureKind::Write)
+                } else {
+                    staged.write(&chunk)
+                };
                 if let Err(kind) = result {
                     let cleanup = staged.cleanup();
                     let _ = events.send(WorkerEvent::Stopped {
@@ -460,14 +456,14 @@ impl StagedArtifact {
             cleanup: None,
         })?;
         hook.before_publish();
-        if hook.fail_publish() {
-            let cleanup = self.cleanup();
-            return Err(WorkerError {
-                kind: FailureKind::Publish,
-                cleanup,
-            });
-        }
-        if let Err(error) = publish_retained(file, stage, &self.parent, &self.destination) {
+        let result = if hook.fail_publish() {
+            Err(io::Error::other(
+                "compatibility-injected publication failure",
+            ))
+        } else {
+            publish_retained(file, stage, &self.parent, &self.destination)
+        };
+        if let Err(error) = result {
             let kind = if error.kind() == io::ErrorKind::AlreadyExists {
                 FailureKind::DestinationExists
             } else {
