@@ -5,14 +5,13 @@ its linked work items from this worktree.
 
 ## Current
 
-- [Make CLI artifact writes transactional and runtime-safe](plans/rust/cli-artifact-transactions.md)
+- [Close CLI command and dispatch contract gaps](plans/rust/cli-command-contracts.md)
 
 ## Plans
 
-1. [Close CLI command and dispatch contract gaps](plans/rust/cli-command-contracts.md)
-2. [Harden Rust portability and output boundaries](plans/rust/portability-and-output-boundaries.md)
-3. [Finish Rust API contracts and verification coverage](plans/rust/api-contracts-and-verification.md)
-4. [Public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
+1. [Harden Rust portability and output boundaries](plans/rust/portability-and-output-boundaries.md)
+2. [Finish Rust API contracts and verification coverage](plans/rust/api-contracts-and-verification.md)
+3. [Public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
 
 ## Tasks
 

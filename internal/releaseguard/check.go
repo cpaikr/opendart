@@ -461,6 +461,7 @@ func checkRustCLIPackage(cliCargoSource, workspaceSource, lockSource, packageLis
 		"src/generated/catalog.rs",
 		"src/generated/command.rs",
 		"src/generated/dispatch.rs",
+		"src/generated/dispatch_cases.json",
 		"src/main.rs",
 		"tests/binary_loopback.rs",
 		"tests/common/mod.rs",

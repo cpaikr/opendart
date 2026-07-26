@@ -214,5 +214,5 @@ filesystem work on the current-thread async runtime.
 
 ## Next action
 
-Deliver and merge the reviewed cleanup-failure matrix after the native Linux,
-macOS, and Windows artifact jobs pass, then advance to the CLI command contract.
+Completed in PR #55 after native Linux, macOS, and Windows artifact jobs and
+review passed. The active Rust roadmap work is now the CLI command contract.

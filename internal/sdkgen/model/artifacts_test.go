@@ -132,8 +132,14 @@ func TestBuildArtifactsProjectsCanonicalDiscoveryFacts(t *testing.T) {
 	if len(company.Representations) != 2 || !company.Representations[0].Selector || company.Representations[0].ResponseShape.Kind != "object" {
 		t.Fatalf("company representations = %#v", company.Representations)
 	}
+	if !reflect.DeepEqual(company.Representations[0].TestArgv, []string{"--corp-code", "00126380", "--representation", "json"}) {
+		t.Fatalf("company JSON test argv = %#v", company.Representations[0].TestArgv)
+	}
 	for _, operation := range artifacts.CLI.Operations {
 		for _, representation := range operation.Representations {
+			if len(representation.TestArgv) == 0 {
+				t.Fatalf("%s/%s has no generated test invocation", operation.Name, representation.Name)
+			}
 			if representation.Name == model.RepresentationZIP && representation.ResponseType != "opendart::BinaryReply<opendart::BodyStream>" {
 				t.Fatalf("ZIP response type = %q", representation.ResponseType)
 			}

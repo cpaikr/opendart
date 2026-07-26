@@ -1,12 +1,24 @@
 //! Process-level contract tests for keyless generated CLI discovery.
 
+use std::collections::HashSet;
 use std::path::Path;
 use std::process::{Command, Output};
 
+use serde::Deserialize;
 use serde_json::Value;
 
 const MISSING_API_KEY_FIXTURE: &[u8] = include_bytes!("fixtures/missing-api-key.json");
 const INVALID_INVOCATION_FIXTURE: &[u8] = include_bytes!("fixtures/invalid-invocation.json");
+const DISPATCH_CASES: &[u8] = include_bytes!("../src/generated/dispatch_cases.json");
+
+#[derive(Deserialize)]
+struct DispatchCase {
+    name: String,
+    logical_id: String,
+    physical_id: String,
+    representation: String,
+    argv: Vec<String>,
+}
 
 fn invoke(arguments: &[String], api_key: Option<&str>) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_opendart"));
@@ -300,46 +312,73 @@ fn operation_inventory_filters_are_keyless_deterministic_and_composable() {
 }
 
 #[test]
-fn discovery_json_alone_constructs_an_sdk_prepared_call() {
-    let detail = json_output(&["operations", "describe", "company"], 0);
-    let operation = &detail["operation"];
-    let mut arguments: Vec<String> = operation["invocation"]["argv_prefix"]
-        .as_array()
-        .expect("argv prefix")
-        .iter()
-        .map(|value| value.as_str().expect("argument").to_owned())
-        .collect();
-    for flag in operation["flags"].as_array().expect("flags") {
-        if flag["required"] == true {
-            arguments.push(flag["name"].as_str().expect("flag name").to_owned());
-            arguments.push("00126380".to_owned());
+fn every_generated_dispatch_reaches_its_exact_sdk_identity_by_name_and_alias() {
+    let cases: Vec<DispatchCase> =
+        serde_json::from_slice(DISPATCH_CASES).expect("generated dispatch cases");
+    let output_root = tempfile::tempdir().expect("temporary output directory");
+    let mut identities = HashSet::new();
+    let mut saw_zip = false;
+    let mut saw_multiple_representations = false;
+    let mut previous_name = None;
+
+    for case in cases {
+        assert_eq!(case.argv.first().map(String::as_str), Some("call"));
+        assert_eq!(case.argv.get(1), Some(&case.name));
+        assert!(
+            identities.insert((case.name.clone(), case.representation.clone())),
+            "duplicate dispatch case for {}/{}",
+            case.name,
+            case.representation
+        );
+        if previous_name.as_deref() == Some(case.name.as_str()) {
+            saw_multiple_representations = true;
+        }
+        previous_name = Some(case.name.clone());
+
+        let destination = output_root
+            .path()
+            .join(format!("{}-{}.zip", case.name, case.representation));
+        let destination = destination.to_string_lossy().into_owned();
+        let mut arguments = case.argv;
+        for argument in &mut arguments {
+            if argument == "<generated-test-output>" {
+                *argument = destination.clone();
+                saw_zip = true;
+            }
+        }
+
+        let output = invoke(&arguments, None);
+        assert_eq!(
+            output.status.code(),
+            Some(1),
+            "canonical invocation failed for {}/{}: {}",
+            case.name,
+            case.representation,
+            String::from_utf8_lossy(&output.stdout)
+        );
+        assert!(output.stderr.is_empty());
+        let error: Value = serde_json::from_slice(&output.stdout).expect("credential error JSON");
+        assert_eq!(error["error"]["code"], "missing_api_key");
+        assert_eq!(error["operation"]["name"], case.name);
+        assert_eq!(error["operation"]["logical_id"], case.logical_id);
+        assert_eq!(error["operation"]["physical_id"], case.physical_id);
+        assert_eq!(error["operation"]["representation"], case.representation);
+        assert!(!Path::new(&destination).exists());
+
+        if case.logical_id != case.name {
+            arguments[1] = case.logical_id;
+            let alias_output = invoke(&arguments, None);
+            assert_eq!(alias_output.status.code(), Some(1));
+            assert!(alias_output.stderr.is_empty());
+            assert_eq!(alias_output.stdout, output.stdout);
         }
     }
-    let representation = &operation["representations"][0];
-    arguments.extend(
-        representation["selector_argv"]
-            .as_array()
-            .expect("selector argv")
-            .iter()
-            .map(|value| value.as_str().expect("argument").to_owned()),
+
+    assert!(saw_zip, "generated matrix omitted ZIP dispatch");
+    assert!(
+        saw_multiple_representations,
+        "generated matrix omitted a multi-representation operation"
     );
-
-    let output = invoke(&arguments, None);
-    assert_eq!(output.status.code(), Some(1));
-    let error: Value = serde_json::from_slice(&output.stdout).expect("error JSON");
-    assert_eq!(error["error"]["code"], "missing_api_key");
-    assert_eq!(error["operation"]["name"], "company");
-    assert_eq!(error["operation"]["logical_id"], "DS001-2019002");
-    assert_eq!(error["operation"]["physical_id"], "get_company_json");
-    assert_eq!(error["operation"]["representation"], "json");
-
-    arguments[1] = operation["logical_id"]
-        .as_str()
-        .expect("logical ID")
-        .to_owned();
-    let alias_output = invoke(&arguments, None);
-    assert_eq!(alias_output.status.code(), Some(1));
-    assert_eq!(alias_output.stdout, output.stdout);
 }
 
 #[test]
@@ -567,6 +606,197 @@ fn invalid_invocations_are_strict_json_usage_errors_before_credentials() {
             .is_some_and(|help| help.contains("--query") && help.contains("--representation"))
     );
     assert!(!invalid_filter.to_string().contains("private-value"));
+}
+
+#[test]
+fn nested_invocation_errors_use_the_deepest_valid_safe_context() {
+    let bare_call = json_output(&["call"], 2);
+    assert_eq!(bare_call["error"]["reason"], "missing_subcommand");
+    let operations = bare_call["error"]["allowed"]
+        .as_array()
+        .expect("generated operation choices");
+    assert!(operations.iter().any(|name| name == "company"));
+    assert!(!bare_call.to_string().contains("Valid commands: operations"));
+
+    let unknown_call = json_output(&["call", "private-operation-value"], 2);
+    assert_eq!(unknown_call["error"]["reason"], "unknown_command");
+    assert_eq!(
+        unknown_call["error"]["allowed"],
+        bare_call["error"]["allowed"]
+    );
+    assert!(
+        unknown_call["error"]["help"][0]
+            .as_str()
+            .is_some_and(|help| help.contains("opendart call <OPERATION>"))
+    );
+    assert!(!unknown_call.to_string().contains("private-operation-value"));
+
+    let bare_operations = json_output(&["operations"], 2);
+    assert_eq!(bare_operations["error"]["reason"], "missing_subcommand");
+    assert_eq!(
+        bare_operations["error"]["allowed"],
+        serde_json::json!(["list", "describe"])
+    );
+
+    let bare_describe = json_output(&["operations", "describe"], 2);
+    assert_eq!(
+        bare_describe["error"]["reason"],
+        "missing_required_argument"
+    );
+    assert!(
+        bare_describe["error"]["help"][0]
+            .as_str()
+            .is_some_and(|help| help.contains("operations describe <OPERATION>"))
+    );
+    assert!(
+        !bare_describe
+            .to_string()
+            .contains("Valid commands: operations")
+    );
+
+    let unknown_description =
+        json_output(&["operations", "describe", "private-description-value"], 2);
+    assert!(
+        unknown_description["error"]["help"][0]
+            .as_str()
+            .is_some_and(|help| help.contains("operations list"))
+    );
+    assert!(
+        !unknown_description
+            .to_string()
+            .contains("private-description-value")
+    );
+
+    let missing_operation_flag = json_output(&["call", "company"], 2);
+    assert_eq!(
+        missing_operation_flag["error"]["reason"],
+        "missing_required_argument"
+    );
+    assert_eq!(
+        missing_operation_flag["error"]["argument"],
+        "--representation"
+    );
+    let help = missing_operation_flag["error"]["help"][0]
+        .as_str()
+        .expect("operation help");
+    assert!(help.contains("--corp-code") && help.contains("--representation"));
+    assert!(!help.contains("Valid commands: operations"));
+}
+
+#[test]
+fn hyphen_leading_query_and_output_values_do_not_swallow_real_options() {
+    for arguments in [
+        ["operations", "list", "--query", "-company"].as_slice(),
+        ["operations", "list", "--query=-company"].as_slice(),
+        ["operations", "list", "--query", "--private-query-value"].as_slice(),
+    ] {
+        let value = json_output(arguments, 0);
+        assert_eq!(value["kind"], "operations");
+    }
+
+    let output_root = tempfile::tempdir().expect("temporary output directory");
+    let hyphen_output = output_root.path().join("-artifact.zip");
+    for arguments in [
+        ["call", "corp-code", "--output", "-artifact.zip"].as_slice(),
+        ["call", "corp-code", "--output=-artifact.zip"].as_slice(),
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_opendart"))
+            .args(arguments)
+            .current_dir(output_root.path())
+            .env_remove("OPENDART_API_KEY")
+            .output()
+            .expect("CLI process should start");
+        assert_eq!(output.status.code(), Some(1));
+        assert!(output.stderr.is_empty());
+        let value: Value = serde_json::from_slice(&output.stdout).expect("credential error JSON");
+        assert_eq!(value["error"]["code"], "missing_api_key");
+        assert_eq!(value["operation"]["representation"], "zip");
+        assert!(!hyphen_output.exists());
+    }
+
+    for following in [
+        "--query",
+        "--group",
+        "--representation",
+        "--help",
+        "--version",
+        "-h",
+        "-V",
+        "--",
+    ] {
+        let value = json_output(&["operations", "list", "--query", following], 2);
+        assert_eq!(value["error"]["argument"], "--query", "{following}");
+    }
+
+    for following in [
+        "--output",
+        "--artifact-limit-bytes",
+        "--connect-timeout-ms",
+        "--read-timeout-ms",
+        "--total-timeout-ms",
+        "--envelope-limit-bytes",
+        "--help",
+        "--version",
+        "-h",
+        "-V",
+        "--",
+    ] {
+        let value = json_output(&["call", "corp-code", "--output", following], 2);
+        assert_eq!(value["error"]["argument"], "--output", "{following}");
+    }
+
+    for arguments in [
+        ["call", "corp-code", "--output", "-"].as_slice(),
+        ["call", "corp-code", "--output=-"].as_slice(),
+    ] {
+        let value = json_output(arguments, 2);
+        assert_eq!(value["error"]["reason"], "invalid_output_path");
+        assert_eq!(value["error"]["argument"], "--output");
+    }
+
+    for arguments in [
+        ["operations", "list", "--", "--query", "-private"].as_slice(),
+        ["call", "corp-code", "--", "--output", "-private.zip"].as_slice(),
+    ] {
+        let value = json_output(arguments, 2);
+        assert_eq!(value["error"]["code"], "invalid_invocation");
+        assert_ne!(value["error"]["code"], "missing_api_key");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn non_utf8_command_and_hyphen_value_errors_remain_contextual_and_sanitized() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    for (arguments, reason) in [
+        (
+            vec![OsString::from("call"), OsString::from_vec(vec![0xff])],
+            "unknown_command",
+        ),
+        (
+            vec![
+                OsString::from("operations"),
+                OsString::from("list"),
+                OsString::from("--query"),
+                OsString::from_vec(vec![b'-', 0xff]),
+            ],
+            "invalid_utf8",
+        ),
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_opendart"))
+            .args(arguments)
+            .env_remove("OPENDART_API_KEY")
+            .output()
+            .expect("CLI process should start");
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stderr.is_empty());
+        assert!(!output.stdout.contains(&0xff));
+        let error: Value = serde_json::from_slice(&output.stdout).expect("usage error JSON");
+        assert_eq!(error["error"]["reason"], reason);
+        assert!(!error.to_string().contains("Valid commands: operations"));
+    }
 }
 
 #[test]

@@ -2,6 +2,19 @@ use clap::{
     Arg, Command,
     error::{ContextKind, ContextValue, ErrorKind},
 };
+use std::ffi::{OsStr, OsString};
+
+use crate::discovery::OperationSpec;
+
+#[derive(Clone, Copy)]
+enum CommandContext {
+    Root,
+    Operations,
+    OperationsList,
+    OperationsDescribe,
+    Call,
+    Operation(&'static OperationSpec),
+}
 
 pub(crate) struct InvocationError {
     pub(crate) reason: &'static str,
@@ -21,7 +34,8 @@ where
     I: IntoIterator<Item = T>,
     T: Into<std::ffi::OsString> + Clone,
 {
-    let arguments: Vec<std::ffi::OsString> = args.into_iter().map(Into::into).collect();
+    let arguments: Vec<OsString> = args.into_iter().map(Into::into).collect();
+    let arguments = normalize_arguments(arguments);
     match crate::generated::command::command().try_get_matches_from(arguments.clone()) {
         Ok(matches) => ParseOutcome::Matches(matches),
         Err(error)
@@ -36,17 +50,18 @@ where
     }
 }
 
-fn invocation_error(arguments: &[std::ffi::OsString], error: &clap::Error) -> InvocationError {
-    let operation = requested_operation(arguments);
-    let argument = safe_argument(arguments, error, operation);
+fn invocation_error(arguments: &[OsString], error: &clap::Error) -> InvocationError {
+    let context = command_context(arguments);
+    let operation = operation(context);
+    let argument = safe_argument(context, error, operation);
     let allowed = if argument == Some("--representation") {
-        if operation.is_some() {
+        if let Some(operation) = operation {
             operation
-                .into_iter()
-                .flat_map(|operation| operation.representations)
+                .representations
+                .iter()
                 .map(|representation| representation.name.to_owned())
                 .collect()
-        } else if is_operations_list(arguments) {
+        } else if matches!(context, CommandContext::OperationsList) {
             ["json", "xml", "zip"].map(str::to_owned).to_vec()
         } else {
             Vec::new()
@@ -57,20 +72,24 @@ fn invocation_error(arguments: &[std::ffi::OsString], error: &clap::Error) -> In
             | ErrorKind::MissingSubcommand
             | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
     ) {
-        valid_subcommands(arguments, error)
+        valid_subcommands(context)
     } else {
         Vec::new()
     };
     InvocationError {
-        reason: invocation_reason(arguments, error.kind()),
+        reason: invocation_reason(arguments, context, error.kind()),
         argument,
-        help: usage_help(arguments, error.kind(), &allowed),
+        help: usage_help(context, error.kind(), &allowed),
         allowed,
     }
 }
 
-fn invocation_reason(arguments: &[std::ffi::OsString], kind: ErrorKind) -> &'static str {
-    if unknown_root_command(arguments) {
+fn invocation_reason(
+    arguments: &[OsString],
+    context: CommandContext,
+    kind: ErrorKind,
+) -> &'static str {
+    if matches!(context, CommandContext::Root) && unknown_root_command(arguments) {
         return "unknown_command";
     }
     match kind {
@@ -91,7 +110,7 @@ fn invocation_reason(arguments: &[std::ffi::OsString], kind: ErrorKind) -> &'sta
     }
 }
 
-fn unknown_root_command(arguments: &[std::ffi::OsString]) -> bool {
+fn unknown_root_command(arguments: &[OsString]) -> bool {
     arguments.get(1).is_some_and(|value| {
         value
             .to_str()
@@ -99,66 +118,66 @@ fn unknown_root_command(arguments: &[std::ffi::OsString]) -> bool {
     })
 }
 
-fn valid_subcommands(arguments: &[std::ffi::OsString], error: &clap::Error) -> Vec<String> {
-    let contextual = context_strings(error, ContextKind::ValidSubcommand).unwrap_or_default();
-    if error.kind() == ErrorKind::InvalidSubcommand
-        && !matches!(
-            error.get(ContextKind::InvalidSubcommand),
-            Some(ContextValue::String(_))
-        )
-    {
-        return Vec::new();
-    }
+fn command_context(arguments: &[OsString]) -> CommandContext {
     let root = crate::generated::command::command();
-    let mut parent = &root;
+    let mut command = &root;
+    let mut context = CommandContext::Root;
     for argument in arguments.iter().skip(1) {
         let Some(argument) = argument.to_str() else {
-            return Vec::new();
-        };
-        let Some(subcommand) = parent.find_subcommand(argument) else {
             break;
         };
-        parent = subcommand;
+        if argument.starts_with('-') {
+            break;
+        }
+        let Some(subcommand) = command.find_subcommand(argument) else {
+            break;
+        };
+        context = match context {
+            CommandContext::Root if subcommand.get_name() == "operations" => {
+                CommandContext::Operations
+            }
+            CommandContext::Root if subcommand.get_name() == "call" => CommandContext::Call,
+            CommandContext::Operations if subcommand.get_name() == "list" => {
+                CommandContext::OperationsList
+            }
+            CommandContext::Operations if subcommand.get_name() == "describe" => {
+                CommandContext::OperationsDescribe
+            }
+            CommandContext::Call => crate::generated::catalog::operation(subcommand.get_name())
+                .map(CommandContext::Operation)
+                .unwrap_or(CommandContext::Call),
+            _ => break,
+        };
+        command = subcommand;
     }
-    parent
-        .get_subcommands()
-        .filter(|subcommand| !subcommand.is_hide_set())
-        .filter(|subcommand| {
-            contextual.is_empty()
-                || subcommand
-                    .get_name_and_visible_aliases()
-                    .into_iter()
-                    .any(|name| contextual.iter().any(|value| value == name))
-        })
-        .map(|subcommand| subcommand.get_name().to_owned())
-        .collect()
+    context
 }
 
-fn context_strings(error: &clap::Error, kind: ContextKind) -> Option<Vec<String>> {
-    match error.get(kind) {
-        Some(ContextValue::String(value)) => Some(vec![value.clone()]),
-        Some(ContextValue::Strings(values)) => Some(values.clone()),
+fn valid_subcommands(context: CommandContext) -> Vec<String> {
+    match context {
+        CommandContext::Root => ["operations", "call"].map(str::to_owned).to_vec(),
+        CommandContext::Operations => ["list", "describe"].map(str::to_owned).to_vec(),
+        CommandContext::Call => crate::generated::catalog::OPERATIONS
+            .iter()
+            .map(|operation| operation.name.to_owned())
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+fn operation(context: CommandContext) -> Option<&'static OperationSpec> {
+    match context {
+        CommandContext::Operation(operation) => Some(operation),
         _ => None,
     }
 }
 
-fn requested_operation(
-    arguments: &[std::ffi::OsString],
-) -> Option<&'static crate::discovery::OperationSpec> {
-    arguments
-        .get(1)
-        .filter(|value| value == &&std::ffi::OsString::from("call"))
-        .and_then(|_| arguments.get(2))
-        .and_then(|value| value.to_str())
-        .and_then(crate::generated::catalog::operation)
-}
-
 fn safe_argument(
-    arguments: &[std::ffi::OsString],
+    context: CommandContext,
     error: &clap::Error,
     operation: Option<&'static crate::discovery::OperationSpec>,
 ) -> Option<&'static str> {
-    known_arguments(arguments, operation)
+    known_arguments(context, operation)
         .into_iter()
         .filter(|argument| match error.get(ContextKind::InvalidArg) {
             Some(ContextValue::String(value)) => safe_context_matches(value, argument),
@@ -181,15 +200,15 @@ fn safe_context_matches(context: &str, argument: &str) -> bool {
 }
 
 fn known_arguments(
-    command_line: &[std::ffi::OsString],
-    operation: Option<&'static crate::discovery::OperationSpec>,
+    context: CommandContext,
+    operation: Option<&'static OperationSpec>,
 ) -> Vec<&'static str> {
-    valid_flag_names(command_line, operation)
+    valid_flag_names(context, operation)
 }
 
 fn valid_flag_names(
-    command_line: &[std::ffi::OsString],
-    operation: Option<&'static crate::discovery::OperationSpec>,
+    context: CommandContext,
+    operation: Option<&'static OperationSpec>,
 ) -> Vec<&'static str> {
     let mut flags = operation
         .into_iter()
@@ -212,27 +231,13 @@ fn valid_flag_names(
             flags.extend(["--output", "--artifact-limit-bytes"]);
         }
         flags.extend(crate::discovery::CALL_FLAGS.iter().map(|flag| flag.name));
-    } else if is_operations_list(command_line) {
+    } else if matches!(context, CommandContext::OperationsList) {
         flags.extend(["--query", "--group", "--representation"]);
     }
     flags
 }
 
-fn is_operations_list(arguments: &[std::ffi::OsString]) -> bool {
-    matches!(
-        (
-            arguments.get(1).and_then(|value| value.to_str()),
-            arguments.get(2).and_then(|value| value.to_str())
-        ),
-        (Some("operations"), Some("list"))
-    )
-}
-
-fn usage_help(
-    arguments: &[std::ffi::OsString],
-    kind: ErrorKind,
-    allowed: &[String],
-) -> Vec<String> {
+fn usage_help(context: CommandContext, kind: ErrorKind, allowed: &[String]) -> Vec<String> {
     if matches!(
         kind,
         ErrorKind::InvalidSubcommand
@@ -240,19 +245,94 @@ fn usage_help(
             | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
     ) && !allowed.is_empty()
     {
+        if matches!(context, CommandContext::Call) {
+            return vec![
+                "Choose an operation from error.allowed or operations list, then retry opendart call <OPERATION> [OPTIONS]".to_owned(),
+            ];
+        }
         return vec![format!(
             "Valid commands: {}, --help, --version",
             allowed.join(", ")
         )];
     }
-    let operation = requested_operation(arguments);
-    if operation.is_none() && !is_operations_list(arguments) {
-        return vec!["Valid commands: operations, call, --help, --version".to_owned()];
+    match context {
+        CommandContext::Root => {
+            return vec!["Valid commands: operations, call, --help, --version".to_owned()];
+        }
+        CommandContext::Operations => {
+            return vec!["Valid commands: list, describe, --help, --version".to_owned()];
+        }
+        CommandContext::OperationsDescribe => {
+            return vec![
+                "Usage: opendart operations describe <OPERATION>; choose a canonical name or logical ID with operations list".to_owned(),
+            ];
+        }
+        CommandContext::Call => {
+            return vec![
+                "Choose an operation with operations list, then retry opendart call <OPERATION> [OPTIONS]".to_owned(),
+            ];
+        }
+        CommandContext::OperationsList | CommandContext::Operation(_) => {}
     }
 
-    let mut flags = valid_flag_names(arguments, operation);
+    let mut flags = valid_flag_names(context, operation(context));
     flags.extend(["--help", "--version"]);
     vec![format!("Valid flags: {}", flags.join(", "))]
+}
+
+fn normalize_arguments(mut arguments: Vec<OsString>) -> Vec<OsString> {
+    let context = command_context(&arguments);
+    let candidate = match context {
+        CommandContext::OperationsList => Some(("--query", false)),
+        CommandContext::Operation(operation)
+            if operation
+                .representations
+                .iter()
+                .any(|representation| representation.name == "zip") =>
+        {
+            Some(("--output", true))
+        }
+        _ => None,
+    };
+    let Some((candidate, reject_dash)) = candidate else {
+        return arguments;
+    };
+    let mut recognized = valid_flag_names(context, operation(context));
+    recognized.extend(["--help", "--version", "-h", "-V", "--"]);
+
+    let mut index = 1;
+    while index + 1 < arguments.len() {
+        if arguments[index] == OsStr::new("--") {
+            break;
+        }
+        if arguments[index] != OsStr::new(candidate) {
+            index += 1;
+            continue;
+        }
+        let value = &arguments[index + 1];
+        if !value.as_encoded_bytes().starts_with(b"-")
+            || reject_dash && value == OsStr::new("-")
+            || recognized_option(value, &recognized)
+        {
+            index += 1;
+            continue;
+        }
+        let mut joined = OsString::from(candidate);
+        joined.push("=");
+        joined.push(value);
+        arguments[index] = joined;
+        arguments.remove(index + 1);
+        index += 1;
+    }
+    arguments
+}
+
+fn recognized_option(value: &OsStr, recognized: &[&str]) -> bool {
+    let Some(value) = value.to_str() else {
+        return false;
+    };
+    let name = value.split_once('=').map_or(value, |(name, _)| name);
+    recognized.contains(&name)
 }
 
 pub(crate) fn execution_arguments(command: Command, binary: bool) -> Command {

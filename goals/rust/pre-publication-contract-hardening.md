@@ -27,21 +27,23 @@ _None._
 
 ### Completed included results
 
-_None. The artifact result remains active until its follow-up delivery
-lifecycle is complete._
+- Transactional artifact cleanup-failure coverage is complete. PR #55 merged
+  the body-delivery, staged-write, and publication matrix after native CI and
+  review passed; each case preserves the full primary result while attaching
+  only bounded cleanup evidence.
 
 ### Current in-scope result
 
-- The transactional artifact implementation merged in PR #54. Its deferred
-  cleanup-failure matrix now covers transport/body delivery, staged writes,
-  and publication while proving the complete primary document is unchanged
-  when cleanup evidence is attached. Deliver the follow-up through native CI,
-  review, and merge.
+- Close the CLI command and dispatch contract gaps: mechanically prove every
+  generated canonical operation, logical-ID alias, and representation; return
+  help for the deepest valid command prefix; and accept supported
+  hyphen-leading values without consuming real flags.
 
 ### Next in-scope action
 
-- Push the reviewed matrix, open its follow-up PR, and finish native CI, review,
-  and merge before starting CLI command-contract work.
+- Finish independent review of the completed CLI command contract, deliver it
+  through PR CI, resolve all actionable feedback, and merge it before starting
+  portability work.
 
 ### Evidence and blockers
 
@@ -56,6 +58,15 @@ lifecycle is complete._
   repository verification, stable and MSRV Rust, structured and binary
   compatibility suites, transport-independent and reqwest compatibility
   graphs, rustdoc, package contents and verification, and clean CLI install.
+- PR #55 merged as `b6439e5` after Linux, macOS, Windows, aggregate CI, and
+  review passed. The valid review finding was fixed by routing deterministic
+  failures through the production cleanup handlers; the final review had no
+  unresolved actionable findings.
+- Commits `16df19e`, `f9a154c`, and `200341c` add exhaustive generated dispatch
+  evidence, shared deepest-prefix help, and narrow hyphen-value normalization.
+  The full credential-free pre-push gate passes with the new discovery matrix,
+  compatibility suites, stable/MSRV checks, package verification, and clean
+  installation.
 - The requested `$progress` skill is unavailable in this session. Recovery was
   performed from the original attached contract, repository plans, current
   implementation and tests, git history, and merged PR evidence.
