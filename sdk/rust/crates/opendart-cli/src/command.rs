@@ -302,6 +302,9 @@ fn normalize_arguments(mut arguments: Vec<OsString>) -> Vec<OsString> {
 
     let mut index = 1;
     while index + 1 < arguments.len() {
+        if arguments[index] == OsStr::new("--") {
+            break;
+        }
         if arguments[index] != OsStr::new(candidate) {
             index += 1;
             continue;

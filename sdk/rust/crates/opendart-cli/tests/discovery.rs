@@ -743,6 +743,15 @@ fn hyphen_leading_query_and_output_values_do_not_swallow_real_options() {
         assert_eq!(value["error"]["reason"], "invalid_output_path");
         assert_eq!(value["error"]["argument"], "--output");
     }
+
+    for arguments in [
+        ["operations", "list", "--", "--query", "-private"].as_slice(),
+        ["call", "corp-code", "--", "--output", "-private.zip"].as_slice(),
+    ] {
+        let value = json_output(arguments, 2);
+        assert_eq!(value["error"]["code"], "invalid_invocation");
+        assert_ne!(value["error"]["code"], "missing_api_key");
+    }
 }
 
 #[cfg(unix)]
