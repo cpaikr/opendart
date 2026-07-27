@@ -2,10 +2,6 @@ name: Rust crate release
 
 on:
   workflow_call:
-    secrets:
-      CARGO_REGISTRY_TOKEN:
-        description: Short-lived crates.io bootstrap token supplied by the protected environment
-        required: false
     inputs:
       package:
         description: Cargo package identity
@@ -21,10 +17,6 @@ on:
         type: string
       vcs_path:
         description: Expected Cargo VCS package path
-        required: true
-        type: string
-      environment:
-        description: GitHub publication environment
         required: true
         type: string
       expected_owner:
@@ -67,7 +59,6 @@ jobs:
       - name: Validate SDK release inputs
         env:
           CANDIDATE_SHA: ${{ inputs.candidate_sha }}
-          ENVIRONMENT: ${{ inputs.environment }}
           INVENTORY_PATH: ${{ inputs.inventory_path }}
           PACKAGE: ${{ inputs.package }}
           PACKAGE_PATH: ${{ inputs.package_path }}
@@ -79,7 +70,6 @@ jobs:
           test "${PACKAGE_PATH}" = sdk/rust/crates/opendart
           test "${INVENTORY_PATH}" = sdk/rust/package-files.txt
           test "${VCS_PATH}" = sdk/rust/crates/opendart
-          test "${ENVIRONMENT}" = crates-io-opendart
           test "${TAG_NAME}" = "opendart-v${VERSION}"
           grep -Eq '^0\.1\.0-beta\.[1-9][0-9]*$|^0\.1\.0$' <<<"${VERSION}"
           grep -Eq '^[0-9a-f]{40}$' <<<"${CANDIDATE_SHA}"
@@ -173,7 +163,7 @@ jobs:
     needs: candidate
     permissions:
       contents: read
-    environment: ${{ inputs.environment }}
+    environment: crates-io-opendart
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

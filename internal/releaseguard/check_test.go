@@ -1083,8 +1083,8 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "isolates actions-write authority",
 		},
 		{
-			name: "fixed SDK environment", artifact: releaseWorkflowArtifact,
-			old: "environment: crates-io-opendart", replacement: "environment: unprotected",
+			name: "caller SDK environment override", artifact: releaseWorkflowArtifact,
+			old: "      expected_owner: ${{ vars.OPENDART_CRATES_IO_OWNER }}", replacement: "      environment: unprotected\n      expected_owner: ${{ vars.OPENDART_CRATES_IO_OWNER }}",
 			invariant: "fixed component identity",
 		},
 		{
@@ -1098,9 +1098,9 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "callable only",
 		},
 		{
-			name: "crate workflow bootstrap secret interface", artifact: rustCrateWorkflowArtifact,
-			old: "        required: false\n    inputs:", replacement: "        required: true\n    inputs:",
-			invariant: "optional protected-environment bootstrap credential",
+			name: "crate workflow caller secret interface", artifact: rustCrateWorkflowArtifact,
+			old: "  workflow_call:\n    inputs:", replacement: "  workflow_call:\n    secrets:\n      CARGO_REGISTRY_TOKEN:\n        required: false\n    inputs:",
+			invariant: "no caller-provided registry credential interface",
 		},
 		{
 			name: "crate workflow extra job", artifact: rustCrateWorkflowArtifact,
@@ -1129,8 +1129,8 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "crate protected environment", artifact: rustCrateWorkflowArtifact,
-			old: "environment: ${{ inputs.environment }}", replacement: "environment: unprotected",
-			invariant: "protected publication job",
+			old: "environment: crates-io-opendart", replacement: "environment: unprotected",
+			invariant: "literal protected publication environment",
 		},
 		{
 			name: "crate registry token boundary", artifact: rustCrateWorkflowArtifact,

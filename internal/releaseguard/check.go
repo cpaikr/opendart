@@ -54,7 +54,7 @@ const (
 	componentScriptDigest          = "695c00a82d604738ac93fa794396acaf8f2d3e95d4f1b434721f727f10177fb8"
 	dispatchScriptDigest           = "8e243fcb82c1d33d2fa3414d504f9f33e1a553c0ed488695b3fb8e18ee7fd0e3"
 	reportProposalScriptDigest     = "d4d4c4abf3621cc737a28de686982e419fc3028199da05f02c9dbd4a70755129"
-	candidateInputScriptDigest     = "0921d426a5a45712b84c13f3d835173d6d9401f48b3e006c2568b44a4cfa9008"
+	candidateInputScriptDigest     = "58e8d863f7b44be6444100c828d15b5437ee3bce440c8883788cb902b45516d6"
 	candidateAttestScriptDigest    = "4af1a683a5744824aab2210dc052ca88bcb49d76d6be5febbf216a21c21d4f99"
 	candidateToolchainScriptDigest = "f8f6aaff0f83fe81760c269bbea9a39bad1ff01de95d86816a485dd3b5c818a7"
 	candidateVerifyScriptDigest    = "a8443131373c7f10358fc257225b31994ed570059f55c64efa8519c5f32f1bbc"
@@ -1222,7 +1222,6 @@ func checkReleasePipelineWorkflow(release workflow, source string) error {
 	sdk := release.Jobs["sdk-release"]
 	expectedSDKWith := map[string]any{
 		"candidate_sha":  "${{ needs.release-please.outputs.sdk_sha }}",
-		"environment":    "crates-io-opendart",
 		"expected_owner": "${{ vars.OPENDART_CRATES_IO_OWNER }}",
 		"inventory_path": "sdk/rust/package-files.txt",
 		"package":        "opendart",
@@ -1265,19 +1264,12 @@ func checkRustCrateWorkflow(release workflow, source string) error {
 	}
 	workflowCall, ok := release.On["workflow_call"].(map[string]any)
 	inputs, inputsOK := workflowCall["inputs"].(map[string]any)
-	secrets, secretsOK := workflowCall["secrets"].(map[string]any)
-	expectedInputs := []string{"candidate_sha", "environment", "expected_owner", "inventory_path", "package", "package_path", "prerelease", "tag_name", "vcs_path", "version"}
+	expectedInputs := []string{"candidate_sha", "expected_owner", "inventory_path", "package", "package_path", "prerelease", "tag_name", "vcs_path", "version"}
 	if !ok || !inputsOK || !reflect.DeepEqual(sortedKeys(inputs), expectedInputs) {
 		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "accepts only the fixed release identity inputs"}
 	}
-	expectedSecrets := map[string]any{
-		"CARGO_REGISTRY_TOKEN": map[string]any{
-			"description": "Short-lived crates.io bootstrap token supplied by the protected environment",
-			"required":    false,
-		},
-	}
-	if !secretsOK || !reflect.DeepEqual(secrets, expectedSecrets) {
-		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "declares only the optional protected-environment bootstrap credential"}
+	if _, exposesCallerSecrets := workflowCall["secrets"]; exposesCallerSecrets {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "exposes no caller-provided registry credential interface"}
 	}
 	if len(release.Permissions) != 0 || release.Concurrency.Group != "rust-crate-${{ inputs.package }}-${{ inputs.version }}" || release.Concurrency.CancelInProgress {
 		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "starts without authority and serializes an exact crate version"}
@@ -1298,7 +1290,7 @@ func checkRustCrateWorkflow(release workflow, source string) error {
 	expectedCandidateCheckout := map[string]any{"fetch-depth": 0, "persist-credentials": false, "ref": "${{ inputs.candidate_sha }}"}
 	expectedCandidate := []releaseStepExpectation{
 		{name: "Validate SDK release inputs", runDigest: candidateInputScriptDigest, env: map[string]string{
-			"CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "ENVIRONMENT": "${{ inputs.environment }}", "INVENTORY_PATH": "${{ inputs.inventory_path }}", "PACKAGE": "${{ inputs.package }}",
+			"CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "INVENTORY_PATH": "${{ inputs.inventory_path }}", "PACKAGE": "${{ inputs.package }}",
 			"PACKAGE_PATH": "${{ inputs.package_path }}", "TAG_NAME": "${{ inputs.tag_name }}", "VCS_PATH": "${{ inputs.vcs_path }}", "VERSION": "${{ inputs.version }}",
 		}},
 		{name: "Check out candidate revision", uses: checkoutAction, with: expectedCandidateCheckout},
@@ -1323,8 +1315,8 @@ func checkRustCrateWorkflow(release workflow, source string) error {
 
 	publish := release.Jobs["publish"]
 	expectedPublishSteps := []string{"Validate publication identity", "Check out candidate revision", "Download candidate evidence", "Recheck candidate evidence", "Install pinned Rust toolchain", "Publish at most once and reconcile"}
-	if !workflowNeedsExactly(publish.Needs, "candidate") || !reflect.DeepEqual(publish.Permissions, map[string]string{"contents": "read"}) || publish.Environment != "${{ inputs.environment }}" || publish.RunsOn != "ubuntu-latest" || publish.TimeoutMinutes != 20 || !defaultJobExecution(publish) || !defaultRunSettings(publish.Defaults) || !reflect.DeepEqual(stepNames(publish.Steps), expectedPublishSteps) {
-		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "isolates registry authority in the protected publication job"}
+	if !workflowNeedsExactly(publish.Needs, "candidate") || !reflect.DeepEqual(publish.Permissions, map[string]string{"contents": "read"}) || publish.Environment != "crates-io-opendart" || publish.RunsOn != "ubuntu-latest" || publish.TimeoutMinutes != 20 || !defaultJobExecution(publish) || !defaultRunSettings(publish.Defaults) || !reflect.DeepEqual(stepNames(publish.Steps), expectedPublishSteps) {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "isolates registry authority in the literal protected publication environment"}
 	}
 	expectedPublishEnv := map[string]string{
 		"CARGO_REGISTRY_TOKEN": "${{ secrets.CARGO_REGISTRY_TOKEN }}",
