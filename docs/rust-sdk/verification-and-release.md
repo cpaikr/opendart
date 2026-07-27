@@ -156,8 +156,14 @@ implements:
    `actions: write`, `contents: read`, and `pull-requests: read`. It dispatches
    Verify and full-race for every managed component PR's exact head SHA,
    requires each run to check out and attest that expected SHA, and
-   redispatches after each update. This supplies the otherwise-suppressed
-   checks without a routine manual dispatch.
+   redispatches after each update. A default-branch `workflow_run` reporter
+   then revalidates the GitHub Actions-owned proposal, its current `main`
+   ancestry, and its exact generated-file scope before mapping the completed
+   exact-SHA Verify conclusion to the branch-protection `verify` commit status.
+   The reporter alone has `statuses: write`; Verify remains credential-free. This
+   supplies the otherwise-suppressed checks without a routine manual dispatch
+   or approval. Extend the reporter allowlist and releaseguard invariant before
+   enabling another component or changing the generated release-file set.
    After the setup reaches `main`, add the stable `Verify / verify` aggregate
    to branch protection. Keep
    `Full race verification / full-race` release-only and make its exact-SHA

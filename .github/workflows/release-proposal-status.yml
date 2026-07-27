@@ -1,0 +1,86 @@
+name: Release proposal verification status
+
+on:
+  workflow_run:
+    workflows:
+      - Verify
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  report:
+    if: >-
+      github.event.workflow_run.event == 'workflow_dispatch' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      startsWith(github.event.workflow_run.head_branch, 'release-please--branches--main')
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Report exact-SHA verification status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          detail="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state open --base main --head "${HEAD_BRANCH}" --json author,baseRefName,baseRefOid,headRefName,headRefOid,labels,state)"
+          jq -e --arg base "${BASE_SHA}" --arg branch "${HEAD_BRANCH}" --arg sha "${HEAD_SHA}" '
+            length == 1 and
+            .[0].state == "OPEN" and
+            .[0].baseRefName == "main" and
+            .[0].baseRefOid == $base and
+            .[0].headRefName == $branch and
+            .[0].headRefOid == $sha and
+            .[0].author.login == "app/github-actions" and
+            any(.[0].labels[]; .name == "autorelease: pending")
+          ' <<<"${detail}" > /dev/null
+
+          comparison="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE_SHA}...${HEAD_SHA}")"
+          jq -e --arg base "${BASE_SHA}" '
+            .status == "ahead" and
+            .behind_by == 0 and
+            .merge_base_commit.sha == $base
+          ' <<<"${comparison}" > /dev/null
+
+          case "${HEAD_BRANCH}" in
+            release-please--branches--main--components--opendart-spec)
+              expected='[
+                {"filename":".release-please-manifest.json","status":"modified"},
+                {"filename":"CHANGELOG.md","status":"modified"}
+              ]'
+              ;;
+            release-please--branches--main--components--opendart)
+              expected='[
+                {"filename":".release-please-manifest.json","status":"modified"},
+                {"filename":"sdk/rust/Cargo.lock","status":"modified"},
+                {"filename":"sdk/rust/compat/reqwest-feature-unification/Cargo.lock","status":"modified"},
+                {"filename":"sdk/rust/crates/opendart-cli/Cargo.toml","status":"modified"},
+                {"filename":"sdk/rust/crates/opendart/CHANGELOG.md","status":"modified"},
+                {"filename":"sdk/rust/crates/opendart/Cargo.toml","status":"modified"}
+              ]'
+              ;;
+            *) echo "unsupported Release Please branch: ${HEAD_BRANCH}" >&2; exit 1 ;;
+          esac
+          jq -e --argjson expected "${expected}" '
+            [.files[] | {filename, status}] | sort_by(.filename) == $expected
+          ' <<<"${comparison}" > /dev/null
+
+          case "${RUN_CONCLUSION}" in
+            success) state=success ;;
+            failure|cancelled|timed_out|action_required|stale|neutral|skipped|startup_failure) state=failure ;;
+            *) echo "unsupported Verify conclusion: ${RUN_CONCLUSION}" >&2; exit 1 ;;
+          esac
+
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state="${state}" \
+            -f context=verify \
+            -f description="Exact-SHA release proposal verification ${state}" \
+            -f target_url="${RUN_URL}" > /dev/null

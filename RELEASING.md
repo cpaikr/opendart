@@ -190,6 +190,16 @@ policy. To supply those checks without a manual dispatch, the Rust publication
 setup uses a separate `actions: write` job to dispatch both `verify.yml` and
 `full-race.yml` for every managed component PR head SHA. Those workflows must
 check out and attest the expected SHA and be redispatched when that SHA changes.
+After a dispatched Verify run completes, the default-branch
+`release-proposal-status.yml` workflow revalidates the open GitHub Actions-owned
+Release Please PR, including current `main` ancestry and its exact
+generated-file scope, and reports that exact run's conclusion as the `verify`
+commit status. This bridges GitHub's token-recursion behavior to branch
+protection without giving the
+credential-free Verify workflow a token or requiring a manual approval of its
+suppressed `pull_request` run.
+Update the reporter's generated-file allowlist and releaseguard invariant before
+enabling another component or changing a component's Release Please outputs.
 Add the stable `Verify / verify` aggregate to `main` branch protection; retain
 `Full race verification / full-race` as an automatically produced release-only
 merge-readiness check rather than requiring the expensive sweep on every

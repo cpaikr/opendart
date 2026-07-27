@@ -57,11 +57,11 @@ generator model without depending on Rust source.
   `sjunepark` reviewer, owner variable, and short-lived bootstrap secret are
   configured. [SDK proposal #63](https://github.com/cpaikr/opendart/pull/63)
   correctly targets `0.1.0-beta.1`; both generated lockfiles and the CLI's
-  exact SDK pin are aligned. Its exact-SHA Rust and artifact checks pass, but
-  the Go and full-race checks expose releaseguard tests that hard-code the
-  unreleased `0.1.0` fixture version. A version-aware test repair is the
-  remaining proposal gate. The first beta, trusted-publishing cutover, and
-  stable promotion remain.
+  exact SDK pin are aligned, and its exact-SHA Verify and full-race checks pass.
+  GitHub does not surface workflow-dispatch check runs as the required PR
+  status for the `GITHUB_TOKEN`-created proposal, so a narrowly authorized
+  default-branch status reporter is the remaining branch-protection gate. The
+  first beta, trusted-publishing cutover, and stable promotion remain.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -354,9 +354,9 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Land the version-aware releaseguard test repair, then let Release Please
-regenerate [SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63)
-and require its exact-SHA Verify and full-race runs to pass. Review and
+Complete the release-proposal status reporter rollout, then require
+[SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63)'s exact-SHA
+Verify, reported `verify` status, and full-race run to pass. Review and
 explicitly confirm `0.1.0-beta.1` through `$release-please-release` before
 merging the proposal. Do not tag, publish, or finalize the proposal before
 those gates are complete.
