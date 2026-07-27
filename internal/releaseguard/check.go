@@ -19,6 +19,7 @@ import (
 
 const (
 	releaseWorkflowArtifact        = ".github/workflows/release-please.yml"
+	releaseProposalStatusArtifact  = ".github/workflows/release-proposal-status.yml"
 	rustCrateWorkflowArtifact      = ".github/workflows/rust-crate-release.yml"
 	verifyWorkflowArtifact         = ".github/workflows/verify.yml"
 	fullRaceWorkflowArtifact       = ".github/workflows/full-race.yml"
@@ -180,6 +181,62 @@ do
   esac
 done
 exit "${failed}"`
+	releaseProposalStatusScript = `detail="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state open --base main --head "${HEAD_BRANCH}" --json author,baseRefName,baseRefOid,headRefName,headRefOid,labels,number,state)"
+jq -e --arg base "${BASE_SHA}" --arg branch "${HEAD_BRANCH}" --arg sha "${HEAD_SHA}" '
+  length == 1 and
+  .[0].state == "OPEN" and
+  .[0].baseRefName == "main" and
+  .[0].baseRefOid == $base and
+  .[0].headRefName == $branch and
+  .[0].headRefOid == $sha and
+  .[0].author.login == "app/github-actions" and
+  any(.[0].labels[]; .name == "autorelease: pending")
+' <<<"${detail}" > /dev/null
+
+number="$(jq -er '.[0].number' <<<"${detail}")"
+comparison="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE_SHA}...${HEAD_SHA}")"
+jq -e --arg base "${BASE_SHA}" '
+  .status == "ahead" and
+  .behind_by == 0 and
+  .merge_base_commit.sha == $base
+' <<<"${comparison}" > /dev/null
+
+case "${HEAD_BRANCH}" in
+  release-please--branches--main--components--opendart-spec)
+    expected='[
+      {"filename":".release-please-manifest.json","status":"modified"},
+      {"filename":"CHANGELOG.md","status":"modified"}
+    ]'
+    ;;
+  release-please--branches--main--components--opendart)
+    expected='[
+      {"filename":".release-please-manifest.json","status":"modified"},
+      {"filename":"sdk/rust/Cargo.lock","status":"modified"},
+      {"filename":"sdk/rust/compat/reqwest-feature-unification/Cargo.lock","status":"modified"},
+      {"filename":"sdk/rust/crates/opendart-cli/Cargo.toml","status":"modified"},
+      {"filename":"sdk/rust/crates/opendart/CHANGELOG.md","status":"modified"},
+      {"filename":"sdk/rust/crates/opendart/Cargo.toml","status":"modified"}
+    ]'
+    ;;
+  *) echo "unsupported Release Please branch: ${HEAD_BRANCH}" >&2; exit 1 ;;
+esac
+changed="$(
+  gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/pulls/${number}/files" |
+    jq -c '[.[][] | {filename, status}] | sort_by(.filename)'
+)"
+jq -e --argjson expected "${expected}" '. == $expected' <<<"${changed}" > /dev/null
+
+case "${RUN_CONCLUSION}" in
+  success) state=success ;;
+  failure|cancelled|timed_out|action_required|stale|neutral|skipped|startup_failure) state=failure ;;
+  *) echo "unsupported Verify conclusion: ${RUN_CONCLUSION}" >&2; exit 1 ;;
+esac
+
+gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+  -f state="${state}" \
+  -f context=verify \
+  -f description="Exact-SHA release proposal verification ${state}" \
+  -f target_url="${RUN_URL}" > /dev/null`
 	windowsSourceInstallScript = `$installWorkspace = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid().ToString())
 $installRoot = Join-Path $installWorkspace "root"
 $env:CARGO_TARGET_DIR = Join-Path $installWorkspace "target"
@@ -320,6 +377,10 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
+	releaseProposalStatusSource, err := readArtifact(absoluteRoot, releaseProposalStatusArtifact)
+	if err != nil {
+		return err
+	}
 	rustCrateSource, err := readArtifact(absoluteRoot, rustCrateWorkflowArtifact)
 	if err != nil {
 		return err
@@ -358,7 +419,7 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
-	return checkWorkflows(releaseSource, rustCrateSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource)
+	return checkWorkflows(releaseSource, releaseProposalStatusSource, rustCrateSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource)
 }
 
 func checkSpecificationSourceRelease(repositoryRoot string, provenanceSource []byte) error {
@@ -992,8 +1053,12 @@ func quotedTOMLValue(line string) (string, error) {
 	return value[1 : len(value)-1], nil
 }
 
-func checkWorkflows(releaseSource, rustCrateSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
+func checkWorkflows(releaseSource, releaseProposalStatusSource, rustCrateSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
 	release, err := decodeWorkflow(releaseWorkflowArtifact, releaseSource)
+	if err != nil {
+		return err
+	}
+	releaseProposalStatus, err := decodeWorkflow(releaseProposalStatusArtifact, releaseProposalStatusSource)
 	if err != nil {
 		return err
 	}
@@ -1027,6 +1092,9 @@ func checkWorkflows(releaseSource, rustCrateSource, verifySource, fullRaceSource
 	}
 
 	if err := checkReleasePipelineWorkflow(release, string(releaseSource)); err != nil {
+		return err
+	}
+	if err := checkReleaseProposalStatusWorkflow(releaseProposalStatus, string(releaseProposalStatusSource)); err != nil {
 		return err
 	}
 	if err := checkRustCrateWorkflow(rustCrate, string(rustCrateSource)); err != nil {
@@ -1210,6 +1278,73 @@ func containsAll(source string, required ...string) bool {
 		}
 	}
 	return true
+}
+
+func checkReleaseProposalStatusWorkflow(status workflow, source string) error {
+	if err := require(releaseProposalStatusArtifact, "has the expected workflow name", status.Name == "Release proposal verification status", ""); err != nil {
+		return err
+	}
+	if err := require(releaseProposalStatusArtifact, "root permissions are empty", len(status.Permissions) == 0, ""); err != nil {
+		return err
+	}
+	if !defaultRunSettings(status.Defaults) {
+		return &Error{Artifact: releaseProposalStatusArtifact, Invariant: "workflow uses default run settings"}
+	}
+	workflowRun, ok := status.On["workflow_run"].(map[string]any)
+	expectedWorkflowRun := map[string]any{
+		"types":     []any{"completed"},
+		"workflows": []any{"Verify"},
+	}
+	if err := require(
+		releaseProposalStatusArtifact,
+		"runs only after completed Verify workflows",
+		reflect.DeepEqual(sortedKeys(status.On), []string{"workflow_run"}) && ok && reflect.DeepEqual(workflowRun, expectedWorkflowRun),
+		"",
+	); err != nil {
+		return err
+	}
+	if err := require(releaseProposalStatusArtifact, "contains only the status reporter job", reflect.DeepEqual(sortedKeys(status.Jobs), []string{"report"}), ""); err != nil {
+		return err
+	}
+
+	job := status.Jobs["report"]
+	expectedCondition := "github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_repository.full_name == github.repository && startsWith(github.event.workflow_run.head_branch, 'release-please--branches--main')"
+	if !exactWorkflowExpression(job.If, expectedCondition) ||
+		job.ContinueOnError || job.Environment != "" || job.Uses != "" ||
+		!workflowNeedsExactly(job.Needs) || !defaultRunSettings(job.Defaults) ||
+		job.RunsOn != "ubuntu-latest" || job.TimeoutMinutes != 5 {
+		return &Error{Artifact: releaseProposalStatusArtifact, Invariant: "reports only trusted dispatched Verify runs"}
+	}
+	expectedPermissions := map[string]string{"contents": "read", "pull-requests": "read", "statuses": "write"}
+	if !reflect.DeepEqual(job.Permissions, expectedPermissions) {
+		return &Error{Artifact: releaseProposalStatusArtifact, Invariant: "isolates read-only proposal inspection and commit-status write authority"}
+	}
+	if len(job.Steps) != 1 {
+		return &Error{Artifact: releaseProposalStatusArtifact, Invariant: "contains only the exact-SHA status step"}
+	}
+	step := job.Steps[0]
+	expectedEnvironment := map[string]string{
+		"GH_TOKEN":       "${{ github.token }}",
+		"BASE_SHA":       "${{ github.sha }}",
+		"HEAD_BRANCH":    "${{ github.event.workflow_run.head_branch }}",
+		"HEAD_SHA":       "${{ github.event.workflow_run.head_sha }}",
+		"RUN_CONCLUSION": "${{ github.event.workflow_run.conclusion }}",
+		"RUN_URL":        "${{ github.event.workflow_run.html_url }}",
+	}
+	if step.Name != "Report exact-SHA verification status" ||
+		!exactScript(step.Run, releaseProposalStatusScript) ||
+		!reflect.DeepEqual(step.Env, expectedEnvironment) ||
+		step.Uses != "" || len(step.With) != 0 ||
+		!defaultStepExecution(step) || !defaultStepRunSettings(step) {
+		return &Error{Artifact: releaseProposalStatusArtifact, Invariant: "validates the managed proposal before reporting its exact-SHA result"}
+	}
+	if strings.Contains(source, "secrets.") || strings.Contains(source, "secrets[") ||
+		strings.Contains(source, "actions/checkout") || strings.Contains(source, "contents: write") ||
+		strings.Contains(source, "actions: write") || strings.Contains(source, "issues: write") ||
+		strings.Contains(source, "OPENDART_API_KEY") || strings.Count(source, "github.token") != 1 {
+		return &Error{Artifact: releaseProposalStatusArtifact, Invariant: "cannot check out or mutate repository contents, use release authority, or access external credentials"}
+	}
+	return checkActionPins(releaseProposalStatusArtifact, status)
 }
 
 func checkRustCrateWorkflow(release workflow, source string) error {
