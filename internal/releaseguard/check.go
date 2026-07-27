@@ -810,7 +810,7 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 		map[string]any{
 			"type":     "toml",
 			"path":     "/sdk/rust/Cargo.lock",
-			"jsonpath": `$.package[?(@.name == "opendart")].version`,
+			"jsonpath": `$.package[?(@.name.value == "opendart")].version`,
 		},
 		map[string]any{
 			"type": "generic",
@@ -858,7 +858,7 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 	expectedCLIExtraFiles := []any{map[string]any{
 		"type":     "toml",
 		"path":     "/sdk/rust/Cargo.lock",
-		"jsonpath": `$.package[?(@.name == "opendart-cli")].version`,
+		"jsonpath": `$.package[?(@.name.value == "opendart-cli")].version`,
 	}}
 	if err := require(configArtifact, "CLI package updates its workspace lock version", reflect.DeepEqual(cliPackage["extra-files"], expectedCLIExtraFiles), "exact root-relative TOML updater is required"); err != nil {
 		return err
