@@ -1098,6 +1098,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "callable only",
 		},
 		{
+			name: "crate workflow bootstrap secret interface", artifact: rustCrateWorkflowArtifact,
+			old: "        required: false\n    inputs:", replacement: "        required: true\n    inputs:",
+			invariant: "optional protected-environment bootstrap credential",
+		},
+		{
 			name: "crate workflow extra job", artifact: rustCrateWorkflowArtifact,
 			old: "jobs:\n  candidate:", replacement: "jobs:\n  unsafe:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo unsafe\n\n  candidate:",
 			invariant: "contains only candidate",

@@ -261,6 +261,23 @@ deployment. The repository guard separately restricts access to the canonical
 workflow. Do not store the token as a repository-wide secret or use it outside
 the publication job.
 
+The source copy is the `credential` field of API Credential item
+`opendart crates.io bootstrap` in the `Developer` 1Password vault. Inject it
+directly into the protected environment without exposing it to terminal output,
+shell history, or a process argument:
+
+```sh
+op read -n 'op://Developer/opendart crates.io bootstrap/credential' \
+  | gh secret set CARGO_REGISTRY_TOKEN \
+      --repo cpaikr/opendart \
+      --env crates-io-opendart
+```
+
+Use `gh secret list --repo cpaikr/opendart --env crates-io-opendart` to verify
+only the stored secret's metadata. Never use `op read` without a pipe for this
+item. Revoke the crates.io token before deleting or archiving its 1Password
+item so the registry is the authority for invalidation.
+
 The prerelease still follows the full automated stage order; the one-time
 environment approval is the only step added to the normal Release Please PR
 review and merge. After the accepted prerelease passes registry, consumer, and
