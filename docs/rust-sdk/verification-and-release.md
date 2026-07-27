@@ -261,6 +261,10 @@ deployment. The repository guard separately restricts access to the canonical
 workflow. Do not store the token as a repository-wide secret or use it outside
 the publication job.
 
+The reusable workflow names `crates-io-opendart` literally on its publication
+job. Keep the environment and token out of the caller interface so the token can
+only enter through that protected job.
+
 The source copy is the `credential` field of API Credential item
 `opendart crates.io bootstrap` in the `Developer` 1Password vault. Inject it
 directly into the protected environment without exposing it to terminal output,

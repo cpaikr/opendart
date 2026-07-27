@@ -164,6 +164,11 @@ trusted publisher for the exact repository/workflow/environment, and land the
 OIDC-only follow-up before the next release. Do not retain an automatic fallback
 to a long-lived token.
 
+The reusable crate workflow binds its publish job to the literal
+`crates-io-opendart` environment. Do not parameterize that environment or add a
+`workflow_call` secret for the registry token; the protected environment is the
+only bootstrap credential source.
+
 Keep the bootstrap token's source copy in the `Developer` 1Password vault as
 API Credential item `opendart crates.io bootstrap`, secret field `credential`.
 Provision the GitHub environment secret without printing or exporting the

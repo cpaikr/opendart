@@ -493,7 +493,6 @@ jobs:
       package_path: sdk/rust/crates/opendart
       inventory_path: sdk/rust/package-files.txt
       vcs_path: sdk/rust/crates/opendart
-      environment: crates-io-opendart
       expected_owner: ${{ vars.OPENDART_CRATES_IO_OWNER }}
       version: ${{ needs.release-please.outputs.sdk_version }}
       tag_name: ${{ needs.release-please.outputs.sdk_tag_name }}

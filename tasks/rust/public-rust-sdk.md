@@ -69,10 +69,13 @@ generator model without depending on Rust source.
   `157d78aa62bace4b00df6677bc3372baf88b9281`. Release Please created the exact
   `opendart-v0.1.0-beta.1` draft, and the credential-free candidate passed, but
   publication stopped before `cargo publish` because the protected environment
-  secret resolved empty inside the reusable workflow. The environment secret
-  was removed, no crate or tag was published, and the matching draft remains
-  recoverable at the reviewed SHA. The first beta, trusted-publishing cutover,
-  and stable promotion remain.
+  secret resolved empty inside the reusable workflow. An optional caller-secret
+  declaration did not repair the dynamic environment binding; the recovery run
+  again failed closed with no crate or tag published. The matching draft remains
+  recoverable at the reviewed SHA, and a clean token is retained only in
+  1Password and the protected environment while the literal-environment repair
+  proceeds. The first beta, trusted-publishing cutover, and stable promotion
+  remain.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -365,13 +368,12 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Land the approved reusable-workflow secret-interface repair and its releaseguard
-coverage. Revoke the discarded crates.io bootstrap tokens, create one clean
-seven-day `publish-new` token for `opendart`, store its source copy at
-`op://Developer/opendart crates.io bootstrap/credential`, and inject it only
-into the `crates-io-opendart` environment. Recover the existing exact
-`0.1.0-beta.1` draft at `157d78aa62bace4b00df6677bc3372baf88b9281`;
-do not merge the duplicate proposal or change the candidate SHA.
+Land the approved literal `crates-io-opendart` publication binding and its
+releaseguard coverage. Recover the existing exact `0.1.0-beta.1` draft at
+`157d78aa62bace4b00df6677bc3372baf88b9281` with the clean protected token;
+do not merge the duplicate proposal or change the candidate SHA. After accepted
+artifact verification, revoke the token, remove its GitHub secret, archive its
+1Password item, and continue the trusted-publishing cutover.
 
 ## Progress log
 
