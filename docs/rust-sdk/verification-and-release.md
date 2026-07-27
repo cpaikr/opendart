@@ -109,7 +109,10 @@ components are rooted at `sdk/rust/crates/opendart` and
 `sdk/rust/crates/opendart-cli`; each owns its `Cargo.toml`, `CHANGELOG.md`,
 component-qualified tags, and matching workspace-lock entry. The SDK component
 also updates the CLI's marked exact local SDK pin without bumping the CLI
-version or changelog.
+version or changelog. The lockfile selectors use Release Please's tagged TOML
+scalar values (`name.value`) so array-of-table package matches update the
+intended entry instead of silently matching nothing; the release guard pins
+that behavior for both components.
 
 Before their first releases, both Rust paths are intentionally absent from
 `.release-please-manifest.json`. The repository guard admits an SDK manifest
@@ -124,11 +127,12 @@ outputs for one component never authorize another component's publication.
 
 ## Work 6: crates.io publication
 
-The current setup change implements publication automation as ordinary reviewed
-code; it does not merge a Rust Release Please PR or publish a crate. Before the
-flow becomes active, this change must land on `main`, branch protection and the
-protected bootstrap environment must be configured, and the exact SDK beta
-proposal must be separately reviewed and confirmed. The setup implements:
+Publication automation is active on `main` as ordinary reviewed code; landing
+the setup did not merge a Rust Release Please PR or publish a crate. Branch
+protection and the protected bootstrap environment are configured. The exact
+SDK beta proposal must still regenerate with a matching workspace lock, pass
+its exact-SHA gates, and be separately reviewed and confirmed. The setup
+implements:
 
 1. Separate Release Please PRs per manifest component. Set
    `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` to `false` for
@@ -239,12 +243,11 @@ owns the remaining work:
 ### First-release bootstrap and steady state
 
 crates.io trusted publishing cannot be configured until the first `opendart`
-version exists. Create the `crates-io-opendart` GitHub environment with a
-required reviewer, disallow protection-rule bypass, restrict deployments to
-`main`, set repository variable `OPENDART_CRATES_IO_OWNER` to the exact
-crates.io owner login, and place one short-lived API token capable of creating
-the new crate there as environment secret `CARGO_REGISTRY_TOKEN` for the
-prerelease bootstrap. Enable prevent-self-review when an
+version exists. The `crates-io-opendart` GitHub environment is configured with
+a required reviewer, no protection-rule bypass, `main`-only deployments, the
+exact `OPENDART_CRATES_IO_OWNER`, and one short-lived API token capable only of
+creating the new crate as environment secret `CARGO_REGISTRY_TOKEN`. Enable
+prevent-self-review when an
 independent maintainer is available; otherwise record that the same maintainer
 approved both the exact Release Please proposal and the one-time environment
 deployment. The repository guard separately restricts access to the canonical

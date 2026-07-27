@@ -32,9 +32,9 @@ generator model without depending on Rust source.
   retention, source provenance, exact archive contents, stable Rust, MSRV,
   all-features, and no-default-features behavior through offline gates.
 - The architecture and release policy recognize an independent Rust-aware
-  Release Please component. The current setup change implements the guarded SDK
-  publication workflow; it remains inactive until it lands on `main` and its
-  protected environment is configured.
+  Release Please component. The guarded SDK publication workflow is active on
+  `main`, and its protected bootstrap environment and short-lived secret are
+  configured. No crate has been published.
 - ADR 0003 selects `opendart-cli` as the first real SDK consumer. CLI works 1
   through 8 are complete, including the optional `serde-json` contract, typed
   consumer, package gates, cross-platform source installation, and dogfood
@@ -52,12 +52,13 @@ generator model without depending on Rust source.
   [RELEASING.md](../../RELEASING.md) and the SDK release guide. The setup change
   implements its exact-SHA dispatcher, permission split, token bootstrap path,
   accepted-artifact reconciliation, and draft finalizer.
-  [PR #62](https://github.com/cpaikr/opendart/pull/62) carries the setup. Its
-  main-only `crates-io-opendart` environment, `sjunepark` reviewer,
-  and owner variable are configured; the bootstrap secret, landing on `main`,
-  the first beta, trusted-publishing cutover, and stable promotion remain. No
-  SDK Release Please PR is mergeable until the setup is reviewed, validated,
-  and active on `main`.
+  [PR #62](https://github.com/cpaikr/opendart/pull/62) landed the setup with
+  preserved commits. Its main-only `crates-io-opendart` environment,
+  `sjunepark` reviewer, owner variable, and short-lived bootstrap secret are
+  configured. [SDK proposal #63](https://github.com/cpaikr/opendart/pull/63)
+  correctly targets `0.1.0-beta.1` but is blocked until the lockfile-selector
+  repair regenerates it and its exact-SHA checks pass. The first beta,
+  trusted-publishing cutover, and stable promotion remain.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -251,20 +252,19 @@ target constraints and acceptance details for their workstreams.
 
 ### 6. Publish and adopt — current
 
-- **Implemented in the current setup change:** PR #32 was closed without merge;
+- **Active on `main`:** PR #32 was closed without merge;
   separate component release PRs, the SDK's initial `beta` strategy, corrected
   Rust pre-1.0 SemVer, an exact-SHA actions-write dispatcher, the reusable crate
   flow, and exact least-privilege/recovery guard tests are present. Keep
   full-race release-only and require its automatic result through the release
-  runbook. The setup passed local validation and focused workflow/release-guard
-  review; [PR #62](https://github.com/cpaikr/opendart/pull/62) must still land on
-  `main`. `Verify / verify` is now required by branch protection.
+  runbook. [PR #62](https://github.com/cpaikr/opendart/pull/62) landed the
+  reviewed setup, and `Verify / verify` is required by branch protection.
 - The protected `crates-io-opendart` environment is restricted to `main`, with
   `sjunepark` as its required reviewer, and repository variable
-  `OPENDART_CRATES_IO_OWNER` is `sjunepark`. Add a short-lived API token capable
-  of creating the new crate only as environment secret `CARGO_REGISTRY_TOKEN`.
-  Keep it out of repository secrets and expose it only to the exact publication
-  job after the credential-free candidate has passed every gate.
+  `OPENDART_CRATES_IO_OWNER` is `sjunepark`. Its short-lived, crate-scoped API
+  token is stored only as environment secret `CARGO_REGISTRY_TOKEN`; keep it
+  out of repository secrets and expose it only to the exact publication job
+  after the credential-free candidate has passed every gate.
 - The release guard executes behavioral fixtures for fresh dual-component
   creation, dual-draft recovery, mixed complete/draft recovery, and stable
   `0.1.0` prerelease-state propagation in addition to digest-pinning the
@@ -351,12 +351,12 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Complete review and checks for
-[setup PR #62](https://github.com/cpaikr/opendart/pull/62), add environment
-secret `CARGO_REGISTRY_TOKEN` through a secure local channel, and land the setup
-on `main`. Then review the independent SDK beta proposal and explicitly confirm
-its exact version through `$release-please-release`. Do not merge, tag, publish,
-or finalize that proposal before those gates are complete.
+Land the reviewed Release Please lockfile-selector repair, then let Release
+Please regenerate [SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63)
+and require its exact-SHA Verify and full-race runs to pass. Review and
+explicitly confirm version `0.1.0-beta.1` through `$release-please-release`
+before merging the proposal. Do not tag, publish, or finalize the proposal
+before those gates are complete.
 
 ## Progress log
 

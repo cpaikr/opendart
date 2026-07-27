@@ -34,7 +34,7 @@
         {
           "type": "toml",
           "path": "/sdk/rust/Cargo.lock",
-          "jsonpath": "$.package[?(@.name == \"opendart\")].version"
+          "jsonpath": "$.package[?(@.name.value == \"opendart\")].version"
         },
         {
           "type": "generic",
@@ -58,7 +58,7 @@
         {
           "type": "toml",
           "path": "/sdk/rust/Cargo.lock",
-          "jsonpath": "$.package[?(@.name == \"opendart-cli\")].version"
+          "jsonpath": "$.package[?(@.name.value == \"opendart-cli\")].version"
         }
       ]
     }
