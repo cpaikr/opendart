@@ -305,35 +305,59 @@ func TestReleaseProposalStatusScript(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the reporter runs with bash on ubuntu-latest")
 	}
-	sdkFiles := `[[
+	sdkBranch := "release-please--branches--main--components--opendart"
+	specBranch := "release-please--branches--main--components--opendart-spec"
+	pendingLabels := `[{"name":"autorelease: pending"}]`
+	prObject := func(author, baseBranch, branch, state, labels string) string {
+		return fmt.Sprintf(
+			`{"author":{"login":%q},"baseRefName":%q,"baseRefOid":"756ad8294dc2beeee46112736b904591068cf2e8","headRefName":%q,"headRefOid":"4d368f361ea659806938765dbbcb0cdb6578c0c6","labels":%s,"state":%q}`,
+			author,
+			baseBranch,
+			branch,
+			labels,
+			state,
+		)
+	}
+	onePR := func(author, baseBranch, branch, state, labels string) string {
+		return "[" + prObject(author, baseBranch, branch, state, labels) + "]"
+	}
+	trustedPR := func(branch string) string {
+		return onePR("app/github-actions", "main", branch, "OPEN", pendingLabels)
+	}
+
+	sdkFiles := `[
 		{"filename":"sdk/rust/crates/opendart/Cargo.toml","status":"modified"},
 		{"filename":".release-please-manifest.json","status":"modified"},
 		{"filename":"sdk/rust/Cargo.lock","status":"modified"},
 		{"filename":"sdk/rust/crates/opendart/CHANGELOG.md","status":"modified"},
 		{"filename":"sdk/rust/compat/reqwest-feature-unification/Cargo.lock","status":"modified"},
 		{"filename":"sdk/rust/crates/opendart-cli/Cargo.toml","status":"modified"}
-	]]`
-	specFiles := `[[
+	]`
+	specFiles := `[
 		{"filename":"CHANGELOG.md","status":"modified"},
 		{"filename":".release-please-manifest.json","status":"modified"}
-	]]`
+	]`
 	tests := []struct {
 		name       string
 		branch     string
-		number     string
 		files      string
 		comparison string
+		prResults  string
 		conclusion string
-		author     string
 		wantState  string
 		wantOK     bool
 	}{
-		{name: "SDK success", branch: "release-please--branches--main--components--opendart", number: "63", files: sdkFiles, conclusion: "success", author: "app/github-actions", wantState: "success", wantOK: true},
-		{name: "spec failure", branch: "release-please--branches--main--components--opendart-spec", number: "16", files: specFiles, conclusion: "failure", author: "app/github-actions", wantState: "failure", wantOK: true},
-		{name: "untrusted proposal", branch: "release-please--branches--main--components--opendart", number: "63", files: sdkFiles, conclusion: "success", author: "other", wantOK: false},
-		{name: "stale proposal head", branch: "release-please--branches--main--components--opendart", number: "63", files: sdkFiles, comparison: `{"status":"diverged","behind_by":1,"merge_base_commit":{"sha":"older"}}`, conclusion: "success", author: "app/github-actions", wantOK: false},
-		{name: "unexpected workflow file", branch: "release-please--branches--main--components--opendart", number: "63", files: `[[{"filename":".github/workflows/verify.yml","status":"modified"}]]`, conclusion: "success", author: "app/github-actions", wantOK: false},
-		{name: "unknown conclusion", branch: "release-please--branches--main--components--opendart", number: "63", files: sdkFiles, conclusion: "unknown", author: "app/github-actions", wantOK: false},
+		{name: "SDK success", branch: sdkBranch, files: sdkFiles, prResults: trustedPR(sdkBranch), conclusion: "success", wantState: "success", wantOK: true},
+		{name: "spec failure", branch: specBranch, files: specFiles, prResults: trustedPR(specBranch), conclusion: "failure", wantState: "failure", wantOK: true},
+		{name: "untrusted proposal", branch: sdkBranch, files: sdkFiles, prResults: onePR("other", "main", sdkBranch, "OPEN", pendingLabels), conclusion: "success", wantOK: false},
+		{name: "closed proposal", branch: sdkBranch, files: sdkFiles, prResults: onePR("app/github-actions", "main", sdkBranch, "CLOSED", pendingLabels), conclusion: "success", wantOK: false},
+		{name: "wrong base branch", branch: sdkBranch, files: sdkFiles, prResults: onePR("app/github-actions", "other", sdkBranch, "OPEN", pendingLabels), conclusion: "success", wantOK: false},
+		{name: "missing pending label", branch: sdkBranch, files: sdkFiles, prResults: onePR("app/github-actions", "main", sdkBranch, "OPEN", `[]`), conclusion: "success", wantOK: false},
+		{name: "no proposal", branch: sdkBranch, files: sdkFiles, prResults: `[]`, conclusion: "success", wantOK: false},
+		{name: "multiple proposals", branch: sdkBranch, files: sdkFiles, prResults: "[" + prObject("app/github-actions", "main", sdkBranch, "OPEN", pendingLabels) + "," + prObject("app/github-actions", "main", sdkBranch, "OPEN", pendingLabels) + "]", conclusion: "success", wantOK: false},
+		{name: "stale proposal head", branch: sdkBranch, files: sdkFiles, comparison: fmt.Sprintf(`{"status":"diverged","behind_by":1,"merge_base_commit":{"sha":"older"},"files":%s}`, sdkFiles), prResults: trustedPR(sdkBranch), conclusion: "success", wantOK: false},
+		{name: "unexpected workflow file", branch: sdkBranch, files: `[{"filename":".github/workflows/verify.yml","status":"modified"}]`, prResults: trustedPR(sdkBranch), conclusion: "success", wantOK: false},
+		{name: "unknown conclusion", branch: sdkBranch, files: sdkFiles, prResults: trustedPR(sdkBranch), conclusion: "unknown", wantOK: false},
 	}
 
 	for _, test := range tests {
@@ -344,10 +368,7 @@ func TestReleaseProposalStatusScript(t *testing.T) {
 set -eu
 case "$1 $2" in
   "pr list")
-    printf '[{"author":{"login":"%s"},"baseRefName":"main","baseRefOid":"%s","headRefName":"%s","headRefOid":"%s","labels":[{"name":"autorelease: pending"}],"number":%s,"state":"OPEN"}]\n' "${MOCK_AUTHOR}" "${BASE_SHA}" "${HEAD_BRANCH}" "${HEAD_SHA}" "${MOCK_NUMBER}"
-    ;;
-  "api --paginate")
-    printf '%s\n' "${MOCK_FILES}"
+    printf '%s\n' "${MOCK_PR_RESULTS}"
     ;;
   "api repos/"*)
     printf '%s\n' "${MOCK_COMPARISON}"
@@ -369,7 +390,7 @@ esac
 			command := exec.CommandContext(t.Context(), "bash", "-e", "-o", "pipefail", "-c", releaseProposalStatusScript)
 			comparison := test.comparison
 			if comparison == "" {
-				comparison = `{"status":"ahead","behind_by":0,"merge_base_commit":{"sha":"756ad8294dc2beeee46112736b904591068cf2e8"}}`
+				comparison = fmt.Sprintf(`{"status":"ahead","behind_by":0,"merge_base_commit":{"sha":"756ad8294dc2beeee46112736b904591068cf2e8"},"files":%s}`, test.files)
 			}
 			command.Env = append(os.Environ(),
 				"BASE_SHA=756ad8294dc2beeee46112736b904591068cf2e8",
@@ -378,10 +399,8 @@ esac
 				"GITHUB_REPOSITORY=cpaikr/opendart",
 				"HEAD_BRANCH="+test.branch,
 				"HEAD_SHA=4d368f361ea659806938765dbbcb0cdb6578c0c6",
-				"MOCK_AUTHOR="+test.author,
 				"MOCK_COMPARISON="+comparison,
-				"MOCK_FILES="+test.files,
-				"MOCK_NUMBER="+test.number,
+				"MOCK_PR_RESULTS="+test.prResults,
 				"PATH="+root+string(os.PathListSeparator)+os.Getenv("PATH"),
 				"RUN_CONCLUSION="+test.conclusion,
 				"RUN_URL=https://github.com/cpaikr/opendart/actions/runs/1",

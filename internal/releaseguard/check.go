@@ -181,7 +181,7 @@ do
   esac
 done
 exit "${failed}"`
-	releaseProposalStatusScript = `detail="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state open --base main --head "${HEAD_BRANCH}" --json author,baseRefName,baseRefOid,headRefName,headRefOid,labels,number,state)"
+	releaseProposalStatusScript = `detail="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state open --base main --head "${HEAD_BRANCH}" --json author,baseRefName,baseRefOid,headRefName,headRefOid,labels,state)"
 jq -e --arg base "${BASE_SHA}" --arg branch "${HEAD_BRANCH}" --arg sha "${HEAD_SHA}" '
   length == 1 and
   .[0].state == "OPEN" and
@@ -193,7 +193,6 @@ jq -e --arg base "${BASE_SHA}" --arg branch "${HEAD_BRANCH}" --arg sha "${HEAD_S
   any(.[0].labels[]; .name == "autorelease: pending")
 ' <<<"${detail}" > /dev/null
 
-number="$(jq -er '.[0].number' <<<"${detail}")"
 comparison="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE_SHA}...${HEAD_SHA}")"
 jq -e --arg base "${BASE_SHA}" '
   .status == "ahead" and
@@ -220,11 +219,9 @@ case "${HEAD_BRANCH}" in
     ;;
   *) echo "unsupported Release Please branch: ${HEAD_BRANCH}" >&2; exit 1 ;;
 esac
-changed="$(
-  gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/pulls/${number}/files" |
-    jq -c '[.[][] | {filename, status}] | sort_by(.filename)'
-)"
-jq -e --argjson expected "${expected}" '. == $expected' <<<"${changed}" > /dev/null
+jq -e --argjson expected "${expected}" '
+  [.files[] | {filename, status}] | sort_by(.filename) == $expected
+' <<<"${comparison}" > /dev/null
 
 case "${RUN_CONCLUSION}" in
   success) state=success ;;
