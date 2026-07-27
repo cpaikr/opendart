@@ -4,6 +4,12 @@
 deterministic requests and preserves source-response evidence without taking
 ownership of retry, quota, collection, persistence, or domain policy.
 
+The crate is package-ready but not yet published. The guarded beta workflow
+authorizes publication only from `main` through its protected bootstrap
+environment. The crates.io dependency examples below apply after publication
+and public-artifact verification in
+[SDK work 6](../../../../tasks/rust/public-rust-sdk.md).
+
 The checked-in `operations` module is generator-owned but is supported public
 API. Its operation names and behavior participate in SemVer; its file layout
 does not. Other generated routing and wire metadata remain private.

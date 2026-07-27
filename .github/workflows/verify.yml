@@ -3,7 +3,17 @@ name: Verify
 on:
   pull_request:
   workflow_call:
+    inputs:
+      expected_sha:
+        description: Full revision expected for a release or dispatched check
+        required: false
+        type: string
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Full Release Please PR head revision
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
@@ -22,6 +32,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.expected_sha || github.sha }}
+
+      - name: Attest checked-out revision
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
+        run: |
+          test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
 
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
@@ -41,6 +59,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.expected_sha || github.sha }}
+
+      - name: Attest checked-out revision
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
+        run: |
+          test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
 
       - name: Run required Rust verification
         run: ./scripts/verify rust
@@ -54,6 +80,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.expected_sha || github.sha }}
+
+      - name: Attest checked-out revision
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
+        run: |
+          test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
 
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.97.1 --profile minimal
@@ -84,6 +118,15 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.expected_sha || github.sha }}
+
+      - name: Attest checked-out revision
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
+        run: |
+          test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
 
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.97.1 --profile minimal

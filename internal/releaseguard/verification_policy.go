@@ -147,8 +147,10 @@ func checkFullRaceWorkflow(fullRace workflow, source string) error {
 		{
 			name: "Check out repository",
 			uses: "actions/checkout",
-			with: map[string]any{"fetch-depth": 0, "persist-credentials": false},
+			with: map[string]any{"fetch-depth": 0, "persist-credentials": false, "ref": "${{ inputs.expected_sha || github.sha }}"},
 		},
+		{name: "Attest checked-out revision", run: `test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
+test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"`, env: map[string]string{"EXPECTED_SHA": "${{ inputs.expected_sha || github.sha }}"}},
 		{
 			name: "Set up Go",
 			uses: "actions/setup-go",
@@ -171,7 +173,7 @@ func checkFullRaceWorkflow(fullRace workflow, source string) error {
 		} else if !strings.HasPrefix(step.Uses, want.uses+"@") || !reflect.DeepEqual(step.With, want.with) {
 			return &Error{Artifact: fullRaceWorkflowArtifact, Invariant: "uses only the approved full-race actions", Detail: step.Name}
 		}
-		if !defaultStepExecution(step) || !defaultStepRunSettings(step) || len(step.Env) != 0 {
+		if !defaultStepExecution(step) || !defaultStepRunSettings(step) || !reflect.DeepEqual(step.Env, want.env) || step.Shell != want.shell {
 			return &Error{Artifact: fullRaceWorkflowArtifact, Invariant: "full-race steps use default execution controls", Detail: step.Name}
 		}
 	}

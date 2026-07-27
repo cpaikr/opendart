@@ -102,11 +102,21 @@ The SDK and CLI components update separate workspace-lock entries. SDK version
 proposals also update the CLI's exact local SDK pin for workspace resolution
 without changing the CLI version or changelog.
 
-Rust changes are excluded from root release eligibility. Both Rust components
-are configured for independent draft proposals, but remain absent from the
-released-version manifest until their guarded publication flows exist. This
-repository does not yet authorize `cargo publish`: SDK publication belongs to
-SDK work 6, after which CLI work 8 may publish the dependent source package.
+Rust changes are excluded from root release eligibility. The components have
+separate Release Please proposals; the SDK is configured for its first beta,
+while the CLI path is explicitly excluded until work 9. Both remain absent from
+the released-version manifest until their first authorized releases. The
+guarded SDK workflow authorizes publication only from `main` through its
+protected bootstrap environment. The flow makes a confirmed component Release
+Please PR merge the only routine human gate. Credential-free exact-SHA
+packaging precedes a component environment with crates.io authority; public
+artifact and docs.rs verification then precede a separate GitHub draft
+finalizer. A new crate uses a one-time bootstrap token and every later release
+uses short-lived OIDC trusted publishing. A separate actions-write dispatcher
+starts exact-SHA Verify and release-only full-race checks for bot-created
+proposals without sharing registry or release authority. Rust finalizers
+preserve beta/stable identity but
+never claim the repository-global Latest marker used by specification releases.
 
 ### Focused live probes
 
@@ -213,7 +223,9 @@ workflow has been dispatched and no schedule is enabled.
   HTTP runtime. No SDK path silently retries or exposes a credential-bearing
   URL through safe diagnostics.
 - Specification and crate versions, tags, changelogs, and release eligibility
-  are independent. No current workflow has crates.io publication authority.
+  are independent. The SDK publication authority is component-specific,
+  protected, and post-verification; it is absent from pull requests and generic
+  verification. The CLI has no publication path until work 9.
 - Non-default live workflow refs receive neither the protected API credential
   nor issue-writing authority. The notifier accepts only trusted default-branch
   producer metadata and never receives producer logs or arbitrary error text.

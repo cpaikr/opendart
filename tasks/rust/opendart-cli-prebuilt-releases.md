@@ -11,18 +11,23 @@ crates.io source package without weakening its release isolation.
 
 - ADR 0003 selects crates.io as the initial CLI distribution and deliberately
   defers prebuilt artifacts to this task.
-- The CLI is not implemented or published, so supported target demand and
-  installed-binary behavior are not yet evidenced.
-- The CLI implementation plan separately selects Linux, macOS, and Windows for
-  crates.io source-install support. Passing those native
-  `cargo install --locked` gates does not by itself promise a prebuilt target,
-  architecture, libc, minimum OS, or archive format.
+- The CLI is implemented and package-ready but not yet published. Its native
+  Linux, macOS, and Windows source-install gates pass, but no registry-installed
+  consumer evidence exists yet.
+- Source-install verification does not by itself promise a prebuilt target,
+  architecture, libc, minimum OS, or archive format; those choices still need
+  evidence from actual user and agent environments.
 - The SDK currently selects native TLS because the fixed OpenDART origin's
   compatibility requirements are not satisfied by the selected Rustls path.
   Prebuilt Linux portability therefore cannot be assumed from a successful
   GitHub-hosted build.
-- Existing Release Please policy prepares component releases but does not yet
-  authorize either Rust package publication or binary artifact upload.
+- The SDK source-package pipeline is implemented in its pending setup change.
+  CLI source publication and every binary artifact upload remain unauthorized.
+- The source-package plans now define an automated, component-isolated
+  publication and draft-finalization pattern. This task may reuse its exact
+  Release Please identity and interrupted-run invariants, but binary builders,
+  signing, provenance, and upload authority remain a separate workflow and
+  environment with no crates.io credential.
 
 ## Scope
 
@@ -40,8 +45,10 @@ crates.io source package without weakening its release isolation.
   least-privilege job that consumes verified outputs and supports interrupted
   release recovery without overwriting mismatched artifacts.
 - Verify each archive in a clean matching environment: unpack, inspect version,
-  run keyless discovery, validate dynamic-library requirements, and perform an
-  explicitly authorized smoke call where credentials are available.
+  run keyless discovery, and validate dynamic-library requirements. Keep any
+  explicitly authorized smoke call in a separate, non-blocking post-release
+  path so archive publication never receives the OpenDART credential or depends
+  on volatile upstream health.
 - Evaluate `cargo-binstall`, an installer, and package-manager metadata only
   after the direct archives have a stable naming and provenance contract.
 

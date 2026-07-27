@@ -3,6 +3,7 @@ package releaseguard
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go/parser"
@@ -258,6 +259,7 @@ func TestCheckRejectsFullRaceWorkflowMutations(t *testing.T) {
 		{name: "script entrypoint", old: "run: ./scripts/verify full-race", replacement: "run: go test ./...", invariant: "approved full-race steps"},
 		{name: "unpinned setup", old: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e", replacement: "actions/setup-go@v7", invariant: "third-party step action is pinned"},
 		{name: "checkout credentials", old: "persist-credentials: false", replacement: "persist-credentials: true", invariant: "approved full-race actions"},
+		{name: "trigger SHA binding", old: `test "${GITHUB_SHA}" = "${EXPECTED_SHA}"`, replacement: `test -n "${GITHUB_SHA}"`, invariant: "approved full-race steps"},
 		{name: "credential access", old: "run: ./scripts/verify full-race", replacement: "run: echo ${{ secrets.GITHUB_TOKEN }}", invariant: "excludes GitHub secrets"},
 	}
 	for _, test := range tests {
@@ -320,7 +322,11 @@ func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
 			}
 			err = Check(root)
 			var guardError *Error
-			if !errors.As(err, &guardError) || guardError.Artifact != manifestArtifact || !strings.Contains(guardError.Invariant, "only the published specification") {
+			expectedInvariant := "published SDK beta version"
+			if packagePath == rustCLIPackagePath {
+				expectedInvariant = "optionally published SDK component"
+			}
+			if !errors.As(err, &guardError) || guardError.Artifact != manifestArtifact || !strings.Contains(guardError.Invariant, expectedInvariant) {
 				t.Fatalf("Check() error = %#v", err)
 			}
 		})
@@ -358,7 +364,7 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 		{name: "Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart\"\nversion = \"0.1.0\"", replacement: "name = \"opendart\"\nversion = \"0.1.1\"", invariant: "matches the crate package version"},
 		{name: "CLI Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "name = \"opendart-cli\"\nversion = \"0.1.1\"", invariant: "matches the CLI crate package version"},
 		{name: "duplicate CLI Cargo lock package", artifact: rustLockArtifact, old: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"\n\n[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", invariant: "contains one opendart-cli package version"},
-		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "does not publish packages"},
+		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "keeps registry credentials out"},
 		{name: "registry publish in verify", artifact: verificationScriptArtifact, old: "go vet ./...", replacement: "cargo publish", invariant: "excludes package publication"},
 	}
 
@@ -585,7 +591,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "manifest component scope", artifact: manifestArtifact,
 			old: `"openapi/generated": "0.1.0"`, replacement: `"openapi/generated": "0.1.0", "extra": "0.1.0"`,
-			invariant: "contains only the published specification component",
+			invariant: "optionally published SDK component",
 		},
 		{
 			name: "manifest SemVer", artifact: manifestArtifact,
@@ -658,34 +664,24 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "root package force-tag-creation",
 		},
 		{
+			name: "separate component proposals", artifact: configArtifact,
+			old: "\"separate-pull-requests\": true", replacement: "\"separate-pull-requests\": false",
+			invariant: "isolates component release proposals",
+		},
+		{
+			name: "SDK beta release", artifact: configArtifact,
+			old: "\"release-as\": \"0.1.0-beta.1\"", replacement: "\"release-as\": \"0.1.0\"",
+			invariant: "Rust package release-as",
+		},
+		{
+			name: "CLI publication exclusion", artifact: configArtifact,
+			old: "\"exclude-paths\": [", replacement: "\"exclude-paths\": [\"other\",",
+			invariant: "CLI package remains excluded",
+		},
+		{
 			name: "main-only release", artifact: releaseWorkflowArtifact,
 			old: "      - main", replacement: "      - dev",
 			invariant: "runs only for pushes to main",
-		},
-		{
-			name: "release workflow name", artifact: releaseWorkflowArtifact,
-			old: "name: Release Please", replacement: "name: Other",
-			invariant: "has the expected workflow name",
-		},
-		{
-			name: "release unknown top-level field", artifact: releaseWorkflowArtifact,
-			old: "permissions: {}", replacement: "env:\n  SAFE: value\n\npermissions: {}",
-			invariant: "uses only supported YAML fields",
-		},
-		{
-			name: "no manual release", artifact: releaseWorkflowArtifact,
-			old: "permissions: {}", replacement: "  workflow_dispatch:\n\npermissions: {}",
-			invariant: "runs only for pushes to main",
-		},
-		{
-			name: "no scheduled release", artifact: releaseWorkflowArtifact,
-			old: "permissions: {}", replacement: "  schedule:\n    - cron: '0 0 * * *'\n\npermissions: {}",
-			invariant: "runs only for pushes to main",
-		},
-		{
-			name: "release concurrency", artifact: releaseWorkflowArtifact,
-			old: "group: release-please", replacement: "group: another-release",
-			invariant: "serializes release runs",
 		},
 		{
 			name: "release root permissions", artifact: releaseWorkflowArtifact,
@@ -693,230 +689,227 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "root permissions are empty",
 		},
 		{
-			name: "release extra job", artifact: releaseWorkflowArtifact,
-			old: "jobs:\n  verify:", replacement: "jobs:\n  extra:\n    permissions:\n      contents: write\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - name: Unexpected\n        run: echo unexpected\n\n  verify:",
-			invariant: "contains only the verify and release-please jobs",
-		},
-		{
 			name: "release workflow shell bypass", artifact: releaseWorkflowArtifact,
 			old: "permissions: {}", replacement: "defaults:\n  run:\n    shell: bash {0} || true\n\npermissions: {}",
 			invariant: "workflow uses default run settings",
 		},
 		{
-			name: "release workflow working-directory bypass", artifact: releaseWorkflowArtifact,
-			old: "permissions: {}", replacement: "defaults:\n  run:\n    working-directory: nested\n\npermissions: {}",
-			invariant: "workflow uses default run settings",
+			name: "release extra job", artifact: releaseWorkflowArtifact,
+			old: "jobs:\n  verify:", replacement: "jobs:\n  extra:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo unsafe\n\n  verify:",
+			invariant: "contains only approved release jobs",
 		},
 		{
-			name: "reusable verify", artifact: releaseWorkflowArtifact,
-			old: "uses: ./.github/workflows/verify.yml", replacement: "uses: ./.github/workflows/other.yml",
-			invariant: "has the reusable verify job",
+			name: "exact pushed verification", artifact: releaseWorkflowArtifact,
+			old: "expected_sha: ${{ github.sha }}", replacement: "expected_sha: main",
+			invariant: "verifies the exact pushed revision",
 		},
 		{
-			name: "release verify job condition bypass", artifact: releaseWorkflowArtifact,
-			old: "  verify:\n    permissions:", replacement: "  verify:\n    if: always()\n    permissions:",
-			invariant: "verify job uses default execution controls",
-		},
-		{
-			name: "release job continue-on-error bypass", artifact: releaseWorkflowArtifact,
+			name: "release job failure bypass", artifact: releaseWorkflowArtifact,
 			old: "  release-please:\n    needs: verify", replacement: "  release-please:\n    continue-on-error: true\n    needs: verify",
-			invariant: "release job uses default execution controls",
+			invariant: "release proposal and specification publication",
 		},
 		{
-			name: "release job unknown field", artifact: releaseWorkflowArtifact,
-			old: "    runs-on: blacksmith-2vcpu-ubuntu-2404", replacement: "    container: ubuntu:latest\n    runs-on: blacksmith-2vcpu-ubuntu-2404",
-			invariant: "uses only supported YAML fields",
-		},
-		{
-			name: "release runner", artifact: releaseWorkflowArtifact,
-			old: "runs-on: blacksmith-2vcpu-ubuntu-2404", replacement: "runs-on: ubuntu-latest",
-			invariant: "release job uses the approved runner and timeout",
-		},
-		{
-			name: "release timeout", artifact: releaseWorkflowArtifact,
-			old: "timeout-minutes: 20", replacement: "timeout-minutes: 60",
-			invariant: "release job uses the approved runner and timeout",
-		},
-		{
-			name: "release job shell bypass", artifact: releaseWorkflowArtifact,
-			old: "  release-please:\n    needs: verify", replacement: "  release-please:\n    defaults:\n      run:\n        shell: bash {0} || true\n    needs: verify",
-			invariant: "release job uses default run settings",
-		},
-		{
-			name: "release job working-directory bypass", artifact: releaseWorkflowArtifact,
-			old: "  release-please:\n    needs: verify", replacement: "  release-please:\n    defaults:\n      run:\n        working-directory: nested\n    needs: verify",
-			invariant: "release job uses default run settings",
-		},
-		{
-			name: "read-only release verify", artifact: releaseWorkflowArtifact,
-			old: "  verify:\n    permissions:\n      contents: read", replacement: "  verify:\n    permissions:\n      contents: write",
-			invariant: "verify job is read-only",
-		},
-		{
-			name: "release waits for verify", artifact: releaseWorkflowArtifact,
-			old: "needs: verify", replacement: "needs: build",
-			invariant: "release waits for verification",
-		},
-		{
-			name: "minimal release permissions", artifact: releaseWorkflowArtifact,
-			old: "      pull-requests: write", replacement: "      pull-requests: write\n      actions: write",
-			invariant: "release job has only required write permissions",
+			name: "release SDK SHA output", artifact: releaseWorkflowArtifact,
+			old: "sdk_sha: ${{ steps.component.outputs.sdk_sha }}", replacement: "sdk_sha: ${{ github.sha }}",
+			invariant: "release proposal and specification publication",
 		},
 		{
 			name: "pinned release action", artifact: releaseWorkflowArtifact,
 			old: "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7", replacement: "googleapis/release-please-action@v5",
+			invariant: "approved pinned Release Please action",
+		},
+		{
+			name: "tag-only recovery", artifact: releaseWorkflowArtifact,
+			old: "tag exists without a matching GitHub release", replacement: "ignoring tag-only state",
+			invariant: "component recovery fails closed",
+		},
+		{
+			name: "tag probe API failure classification", artifact: releaseWorkflowArtifact,
+			old: `if test "${http_status}" = 404`, replacement: `if test "${http_status}" = 403`,
+			invariant: "component recovery fails closed",
+		},
+		{
+			name: "SDK draft tag rejection", artifact: releaseWorkflowArtifact,
+			old: `if test "${component}" = sdk; then`, replacement: `if test "${component}" = other; then`,
+			invariant: "component recovery fails closed",
+		},
+		{
+			name: "proposal number normalization", artifact: releaseWorkflowArtifact,
+			old: "[.[].number]", replacement: "[.[]]",
+			invariant: "validated release proposal numbers",
+		},
+		{
+			name: "CLI release authorization", artifact: releaseWorkflowArtifact,
+			old: "CLI publication is not authorized", replacement: "CLI publication accepted",
+			invariant: "blocks CLI publication",
+		},
+		{
+			name: "specification checksum", artifact: releaseWorkflowArtifact,
+			old: "sha256sum openapi.bundle.yaml", replacement: "sha1sum openapi.bundle.yaml",
+			invariant: "publishes immutable specification assets",
+		},
+		{
+			name: "dispatcher bot identity", artifact: releaseWorkflowArtifact,
+			old: ".author.login == \"app/github-actions\"", replacement: ".author.login != \"app/github-actions\"",
+			invariant: "canonical Release Please PR head SHA",
+		},
+		{
+			name: "dispatcher exact branch", artifact: releaseWorkflowArtifact,
+			old: "--ref \"${branch}\"", replacement: "--ref main",
+			invariant: "canonical Release Please PR head SHA",
+		},
+		{
+			name: "dispatcher authority", artifact: releaseWorkflowArtifact,
+			old: "      actions: write", replacement: "      actions: read",
+			invariant: "isolates actions-write authority",
+		},
+		{
+			name: "fixed SDK environment", artifact: releaseWorkflowArtifact,
+			old: "environment: crates-io-opendart", replacement: "environment: unprotected",
+			invariant: "fixed component identity",
+		},
+		{
+			name: "release workflow registry credential", artifact: releaseWorkflowArtifact,
+			old: "      issues: write", replacement: "      issues: write\n      id-token: write",
+			invariant: "keeps registry credentials out and actions-write authority isolated",
+		},
+		{
+			name: "crate workflow callable only", artifact: rustCrateWorkflowArtifact,
+			old: "  workflow_call:", replacement: "  workflow_dispatch:",
+			invariant: "callable only",
+		},
+		{
+			name: "crate workflow extra job", artifact: rustCrateWorkflowArtifact,
+			old: "jobs:\n  candidate:", replacement: "jobs:\n  unsafe:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo unsafe\n\n  candidate:",
+			invariant: "contains only candidate",
+		},
+		{
+			name: "crate finalizer condition bypass", artifact: rustCrateWorkflowArtifact,
+			old: "  finalize:\n    needs: reconcile", replacement: "  finalize:\n    if: ${{ always() }}\n    needs: reconcile",
+			invariant: "matching GitHub draft",
+		},
+		{
+			name: "crate reconciliation step bypass", artifact: rustCrateWorkflowArtifact,
+			old: "      - name: Acquire and verify accepted crate", replacement: "      - name: Acquire and verify accepted crate\n        if: false",
+			invariant: "verifies the accepted crate",
+		},
+		{
+			name: "crate candidate exact identity", artifact: rustCrateWorkflowArtifact,
+			old: "test \"${PACKAGE}\" = opendart", replacement: "test -n \"${PACKAGE}\"",
+			invariant: "attests, verifies, packages",
+		},
+		{
+			name: "crate candidate checkout", artifact: rustCrateWorkflowArtifact,
+			old: "ref: ${{ inputs.candidate_sha }}", replacement: "ref: main",
+			invariant: "exact SDK candidate",
+		},
+		{
+			name: "crate protected environment", artifact: rustCrateWorkflowArtifact,
+			old: "environment: ${{ inputs.environment }}", replacement: "environment: unprotected",
+			invariant: "protected publication job",
+		},
+		{
+			name: "crate registry token boundary", artifact: rustCrateWorkflowArtifact,
+			old: "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}", replacement: "CARGO_REGISTRY_TOKEN: ${{ secrets.OTHER_TOKEN }}",
+			invariant: "publishes at most once",
+		},
+		{
+			name: "crate tokenless reconciliation", artifact: rustCrateWorkflowArtifact,
+			old: "if test \"${publish_required}\" = true; then\n            test -n \"${CARGO_REGISTRY_TOKEN}\"", replacement: "test -n \"${CARGO_REGISTRY_TOKEN}\"\n          if test \"${publish_required}\" = true; then",
+			invariant: "publishes at most once",
+		},
+		{
+			name: "crate artifact digest format", artifact: rustCrateWorkflowArtifact,
+			old: "grep -Eq '^[0-9a-f]{64}$'", replacement: "grep -Eq '^sha256:[0-9a-f]{64}$'",
+			invariant: "publishes at most once and reconciles registry acceptance and ownership",
+		},
+		{
+			name: "crate one-shot publish", artifact: rustCrateWorkflowArtifact,
+			old: "cargo +1.97.1 publish --locked --no-verify", replacement: "cargo +1.97.1 publish",
+			invariant: "publishes at most once",
+		},
+		{
+			name: "crate appended CLI publish", artifact: rustCrateWorkflowArtifact,
+			old: "cargo +1.97.1 publish --locked --no-verify --manifest-path \"${PACKAGE_PATH}/Cargo.toml\"", replacement: "cargo +1.97.1 publish --locked --no-verify --manifest-path \"${PACKAGE_PATH}/Cargo.toml\"\n            cargo +1.97.1 publish --locked --no-verify --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml",
+			invariant: "publishes at most once",
+		},
+		{
+			name: "crate accepted artifact verification", artifact: rustCrateWorkflowArtifact,
+			old: "go run ./cmd/opendart-tool verify-crate-artifact", replacement: "echo skip-verification",
+			invariant: "verifies the accepted crate",
+		},
+		{
+			name:     "crate placeholder accepted evidence",
+			artifact: rustCrateWorkflowArtifact,
+			old: `go run ./cmd/opendart-tool verify-crate-artifact \
+            --candidate candidate-evidence/candidate.crate \
+            --accepted accepted.crate \
+            --inventory candidate-evidence/inventory.txt \
+            --package "${PACKAGE}" \
+            --version "${VERSION}" \
+            --revision "${CANDIDATE_SHA}" \
+            --vcs-path "${VCS_PATH}" \
+            --registry-checksum "${registry_checksum}" \
+            > crate-verification.json`,
+			replacement: `if false; then
+            go run ./cmd/opendart-tool verify-crate-artifact \
+              --candidate candidate-evidence/candidate.crate \
+              --accepted accepted.crate \
+              --inventory candidate-evidence/inventory.txt \
+              --package "${PACKAGE}" \
+              --version "${VERSION}" \
+              --revision "${CANDIDATE_SHA}" \
+              --vcs-path "${VCS_PATH}" \
+              --registry-checksum "${registry_checksum}" \
+              > crate-verification.json
+          fi
+          printf '{}\n' > crate-verification.json`,
+			invariant: "verifies the accepted crate",
+		},
+		{
+			name: "crate clean consumer", artifact: rustCrateWorkflowArtifact,
+			old: "default-features = false", replacement: "default-features = true",
+			invariant: "verifies the accepted crate",
+		},
+		{
+			name: "crate clean consumer execution", artifact: rustCrateWorkflowArtifact,
+			old: "cargo +1.97.1 run --locked", replacement: "cargo +1.97.1 check --locked",
+			invariant: "verifies the accepted crate",
+		},
+		{
+			name: "crate docs readiness", artifact: rustCrateWorkflowArtifact,
+			old: "https://docs.rs/${PACKAGE}/${VERSION}/${PACKAGE}/", replacement: "https://example.com/",
+			invariant: "verifies the accepted crate",
+		},
+		{
+			name: "crate finalizer latest policy", artifact: rustCrateWorkflowArtifact,
+			old: "--latest=false", replacement: "--latest",
+			invariant: "matching GitHub draft",
+		},
+		{
+			name: "crate finalizer tag probe API failure classification", artifact: rustCrateWorkflowArtifact,
+			old: `if test "${http_status}" = 404`, replacement: `if test "${http_status}" = 403`,
+			invariant: "matching GitHub draft",
+		},
+		{
+			name: "crate finalizer published recovery", artifact: rustCrateWorkflowArtifact,
+			old: "false)\n              test \"$(gh api", replacement: "false)\n              exit 1\n              test \"$(gh api",
+			invariant: "matching GitHub draft",
+		},
+		{
+			name: "crate finalizer permission", artifact: rustCrateWorkflowArtifact,
+			old: "      contents: write", replacement: "      contents: read",
+			invariant: "matching GitHub draft",
+		},
+		{
+			name: "crate OIDC not yet authorized", artifact: rustCrateWorkflowArtifact,
+			old: "permissions: {}", replacement: "permissions:\n  id-token: write",
+			invariant: "starts without authority",
+		},
+		{
+			name: "crate pinned action", artifact: rustCrateWorkflowArtifact,
+			old: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", replacement: "actions/upload-artifact@v4",
 			invariant: "third-party step action is pinned",
-		},
-		{
-			name: "approved release action", artifact: releaseWorkflowArtifact,
-			old: "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7", replacement: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
-			invariant: "uses the approved pinned Release Please action",
-		},
-		{
-			name: "release action cannot run a script", artifact: releaseWorkflowArtifact,
-			old: "        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5", replacement: "        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5\n        run: echo unexpected",
-			invariant: "uses the approved pinned Release Please action",
-		},
-		{
-			name: "release checkout credentials", artifact: releaseWorkflowArtifact,
-			old: "persist-credentials: false", replacement: "persist-credentials: true",
-			invariant: "checkout disables persisted credentials",
-		},
-		{
-			name: "package publication", artifact: releaseWorkflowArtifact,
-			old: "mkdir release-assets", replacement: "npm publish\n          mkdir release-assets",
-			invariant: "does not publish packages, grant registry authority, or replace assets",
-		},
-		{
-			name: "draft detection", artifact: releaseWorkflowArtifact,
-			old: "gh release view", replacement: "gh release inspect",
-			invariant: "draft recovery uses the canonical script",
-		},
-		{
-			name: "draft recovery appended command", artifact: releaseWorkflowArtifact,
-			old: "          fi\n\n      - name: Run Release Please", replacement: "          fi\n          echo unexpected\n\n      - name: Run Release Please",
-			invariant: "draft recovery uses the canonical script",
-		},
-		{
-			name: "release recovery skip", artifact: releaseWorkflowArtifact,
-			old: "steps.draft.outputs.recovering != 'true'", replacement: "steps.draft.outputs.recovering == 'true'",
-			invariant: "Release Please is skipped during recovery",
-		},
-		{
-			name: "release recovery condition extra clause", artifact: releaseWorkflowArtifact,
-			old: "steps.draft.outputs.recovering != 'true' }}", replacement: "steps.draft.outputs.recovering != 'true' || always() }}",
-			invariant: "Release Please is skipped during recovery",
-		},
-		{
-			name: "release action continue-on-error bypass", artifact: releaseWorkflowArtifact,
-			old: "      - name: Run Release Please\n        if:", replacement: "      - name: Run Release Please\n        continue-on-error: true\n        if:",
-			invariant: "release step failures stop the job",
-		},
-		{
-			name: "draft detector condition bypass", artifact: releaseWorkflowArtifact,
-			old: "      - name: Detect interrupted draft release\n        id:", replacement: "      - name: Detect interrupted draft release\n        if: false\n        id:",
-			invariant: "draft detector uses default execution controls",
-		},
-		{
-			name: "release token", artifact: releaseWorkflowArtifact,
-			old: "token: ${{ secrets.GITHUB_TOKEN }}", replacement: "token: ${{ secrets.OTHER_TOKEN }}",
-			invariant: "Release Please uses GITHUB_TOKEN",
-		},
-		{
-			name: "release action extra input", artifact: releaseWorkflowArtifact,
-			old: "token: ${{ secrets.GITHUB_TOKEN }}", replacement: "token: ${{ secrets.GITHUB_TOKEN }}\n          fork: false",
-			invariant: "Release Please uses GITHUB_TOKEN as its only input",
-		},
-		{
-			name: "released commit checkout", artifact: releaseWorkflowArtifact,
-			old: "ref: ${{ steps.release.outputs['openapi/generated--sha'] || steps.draft.outputs.sha }}", replacement: "ref: main",
-			invariant: "released checkout uses the created or recovered SHA",
-		},
-		{
-			name: "generic release output", artifact: releaseWorkflowArtifact,
-			old: "steps.release.outputs['openapi/generated--release_created']", replacement: "steps.release.outputs.release_created",
-			invariant: "runs only for a created or recovered release",
-		},
-		{
-			name: "released commit uses checkout action", artifact: releaseWorkflowArtifact,
-			old:         "      - name: Check out released commit\n        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}\n        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
-			replacement: "      - name: Check out released commit\n        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}\n        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
-			invariant:   "released checkout uses the created or recovered SHA",
-		},
-		{
-			name: "release asset condition", artifact: releaseWorkflowArtifact,
-			old: "if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}", replacement: "if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' }}",
-			invariant: "runs only for a created or recovered release",
-		},
-		{
-			name: "release asset condition extra clause", artifact: releaseWorkflowArtifact,
-			old: "if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}", replacement: "if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' || always() }}",
-			invariant: "runs only for a created or recovered release",
-		},
-		{
-			name: "release asset continue-on-error bypass", artifact: releaseWorkflowArtifact,
-			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        continue-on-error: true\n        if:",
-			invariant: "release step failures stop the job",
-		},
-		{
-			name: "release extra step", artifact: releaseWorkflowArtifact,
-			old: "      - name: Publish immutable release", replacement: "      - name: Modify prepared assets\n        run: echo unsafe >> release-assets/openapi.bundle.yaml\n\n      - name: Publish immutable release",
-			invariant: "uses only the approved release steps in order",
-		},
-		{
-			name: "release step unknown field", artifact: releaseWorkflowArtifact,
-			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        timeout-minutes: 1\n        if:",
-			invariant: "uses only supported YAML fields",
-		},
-		{
-			name: "release step environment", artifact: releaseWorkflowArtifact,
-			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        env:\n          SAFE: value\n        if:",
-			invariant: "release steps use only approved environment variables",
-		},
-		{
-			name: "release step shell bypass", artifact: releaseWorkflowArtifact,
-			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        shell: bash {0} || true\n        if:",
-			invariant: "release steps use default run settings",
-		},
-		{
-			name: "release step working-directory bypass", artifact: releaseWorkflowArtifact,
-			old: "      - name: Prepare release assets\n        if:", replacement: "      - name: Prepare release assets\n        working-directory: nested\n        if:",
-			invariant: "release steps use default run settings",
-		},
-		{
-			name: "bundle checksum", artifact: releaseWorkflowArtifact,
-			old: "sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256", replacement: "sha1sum openapi.bundle.yaml > openapi.bundle.yaml.sha256",
-			invariant: "prepares the versioned bundle and SHA-256 checksum",
-		},
-		{
-			name: "bundle modified after checksum", artifact: releaseWorkflowArtifact,
-			old: "sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256", replacement: "sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256\n          echo unsafe >> openapi.bundle.yaml",
-			invariant: "prepares the versioned bundle and SHA-256 checksum",
-		},
-		{
-			name: "only versioned assets", artifact: releaseWorkflowArtifact,
-			old: "release-assets/openapi.bundle.yaml.sha256", replacement: "release-assets/CHANGELOG.md",
-			invariant: "uploads only the bundle and checksum",
-		},
-		{
-			name: "recovery compares assets", artifact: releaseWorkflowArtifact,
-			old: "cmp -s", replacement: "diff -q",
-			invariant: "asset upload preserves immutable recovery semantics",
-		},
-		{
-			name: "upload script appended command", artifact: releaseWorkflowArtifact,
-			old: "          done", replacement: "          done\n          echo unexpected",
-			invariant: "uploads only the bundle and checksum",
-		},
-		{
-			name: "publish immutable release", artifact: releaseWorkflowArtifact,
-			old: "--draft=false --latest", replacement: "--draft=false",
-			invariant: "publishes the draft only after assets are verified",
-		},
-		{
-			name: "publish failure bypass", artifact: releaseWorkflowArtifact,
-			old: "--draft=false --latest", replacement: "--draft=false --latest || true",
-			invariant: "publishes the draft only after assets are verified",
 		},
 		{
 			name: "verify workflow permissions", artifact: verifyWorkflowArtifact,
@@ -944,13 +937,18 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "workflow uses default run settings",
 		},
 		{
+			name: "verify trigger SHA binding", artifact: verifyWorkflowArtifact,
+			old: `test "${GITHUB_SHA}" = "${EXPECTED_SHA}"`, replacement: `test -n "${GITHUB_SHA}"`,
+			invariant: "approved verification steps",
+		},
+		{
 			name: "verify triggers", artifact: verifyWorkflowArtifact,
 			old: "  workflow_dispatch:", replacement: "  schedule:",
 			invariant: "supports workflow_dispatch",
 		},
 		{
 			name: "verify extra trigger", artifact: verifyWorkflowArtifact,
-			old: "  workflow_dispatch:\n\nconcurrency:", replacement: "  workflow_dispatch:\n  push:\n\nconcurrency:",
+			old: "  pull_request:", replacement: "  pull_request:\n  push:",
 			invariant: "supports only approved triggers",
 		},
 		{
@@ -1168,7 +1166,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "verify checkout ref", artifact: verifyWorkflowArtifact,
-			old: "persist-credentials: false", replacement: "persist-credentials: false\n          ref: main",
+			old: "ref: ${{ inputs.expected_sha || github.sha }}", replacement: "ref: main",
 			invariant: "uses only the approved verification actions",
 		},
 		{
@@ -1184,7 +1182,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "verify step environment", artifact: verifyWorkflowArtifact,
 			old: "      - name: Run required Go verification\n        run:", replacement: "      - name: Run required Go verification\n        env:\n          SAFE: value\n        run:",
-			invariant: "verification steps do not override the environment",
+			invariant: "approved environment and shell",
 		},
 		{
 			name: "verify secrets", artifact: verifyWorkflowArtifact,
@@ -1512,6 +1510,260 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 	}
 }
 
+func TestScriptDigestMismatchDetailReportsComputedDigest(t *testing.T) {
+	const script = "echo changed"
+	want := fmt.Sprintf("computed script SHA-256: %x", sha256.Sum256([]byte(script)))
+	if got := scriptDigestMismatchDetail(script, "different"); got != want {
+		t.Fatalf("script digest detail = %q, want %q", got, want)
+	}
+	if got := scriptDigestMismatchDetail(script, scriptDigest(script)); got != "" {
+		t.Fatalf("matching script digest detail = %q, want empty", got)
+	}
+}
+
+func TestReleaseComponentRecoveryScenarios(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the release workflow runs with a POSIX shell on ubuntu-latest")
+	}
+	for _, tool := range []string{"bash", "jq"} {
+		if _, err := exec.LookPath(tool); err != nil {
+			t.Skipf("release workflow fixture requires %s: %v", tool, err)
+		}
+	}
+
+	releaseSource, err := os.ReadFile(filepath.Join(repositoryRoot(t), filepath.FromSlash(releaseWorkflowArtifact)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var release workflow
+	if err := yaml.Unmarshal(releaseSource, &release); err != nil {
+		t.Fatal(err)
+	}
+	job := release.Jobs["release-please"]
+	_, recovery, err := stepByID(job.Steps, "recovery")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, component, err := stepByID(job.Steps, "component")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, releaseStep, err := stepByID(job.Steps, "release")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exactWorkflowExpression(releaseStep.If, "steps.recovery.outputs.components == '[]'") {
+		t.Fatalf("Release Please condition = %q", releaseStep.If)
+	}
+
+	const (
+		currentSHA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		sdkSHA     = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	)
+	draftSpec := fmt.Sprintf(`{"tag_name":"v0.1.0","draft":true,"prerelease":false,"target_commitish":%q}`, currentSHA)
+	draftBetaSDK := fmt.Sprintf(`{"tag_name":"opendart-v0.1.0-beta.1","draft":true,"prerelease":true,"target_commitish":%q}`, sdkSHA)
+	draftStableSDK := fmt.Sprintf(`{"tag_name":"opendart-v0.1.0","draft":true,"prerelease":false,"target_commitish":%q}`, sdkSHA)
+	completeSpec := fmt.Sprintf(`{"tag_name":"v0.1.0","draft":false,"prerelease":false,"target_commitish":%q}`, currentSHA)
+
+	tests := []struct {
+		name                   string
+		sdkVersion             string
+		releases               string
+		specCreated            string
+		sdkCreated             string
+		specTag                string
+		sdkTag                 string
+		specSHA                string
+		freshSDKVersion        string
+		freshSDKSHA            string
+		wantRunReleasePlease   bool
+		wantSpecCreated        string
+		wantSDKCreated         string
+		wantSDKPrerelease      string
+		wantSpecTag            string
+		wantSpecVersion        string
+		wantSpecSHA            string
+		wantSDKTag             string
+		wantSDKVersion         string
+		wantSDKSHA             string
+		wantRecoveryComponents int
+	}{
+		{
+			name: "fresh dual component beta", sdkVersion: "0.1.0-beta.1", releases: `[[]]`,
+			specCreated: "true", sdkCreated: "true", specTag: "v0.1.0", sdkTag: "opendart-v0.1.0-beta.1",
+			specSHA: currentSHA, freshSDKVersion: "0.1.0-beta.1", freshSDKSHA: sdkSHA,
+			wantRunReleasePlease: true, wantSpecCreated: "true", wantSDKCreated: "true", wantSDKPrerelease: "true",
+			wantSpecTag: "v0.1.0", wantSpecVersion: "0.1.0", wantSpecSHA: currentSHA,
+			wantSDKTag: "opendart-v0.1.0-beta.1", wantSDKVersion: "0.1.0-beta.1", wantSDKSHA: sdkSHA,
+		},
+		{
+			name: "dual draft recovery", sdkVersion: "0.1.0-beta.1", releases: `[[` + draftSpec + `,` + draftBetaSDK + `]]`,
+			wantSpecCreated: "true", wantSDKCreated: "true", wantSDKPrerelease: "true", wantRecoveryComponents: 2,
+			wantSpecTag: "v0.1.0", wantSpecVersion: "0.1.0", wantSpecSHA: currentSHA,
+			wantSDKTag: "opendart-v0.1.0-beta.1", wantSDKVersion: "0.1.0-beta.1", wantSDKSHA: sdkSHA,
+		},
+		{
+			name: "mixed complete and stable draft recovery", sdkVersion: "0.1.0", releases: `[[` + completeSpec + `,` + draftStableSDK + `]]`,
+			wantSpecCreated: "false", wantSDKCreated: "true", wantSDKPrerelease: "false", wantRecoveryComponents: 2,
+			wantSpecVersion: "0.1.0",
+			wantSDKTag:      "opendart-v0.1.0", wantSDKVersion: "0.1.0", wantSDKSHA: sdkSHA,
+		},
+		{
+			name: "fresh stable SDK", sdkVersion: "0.1.0", releases: `[[]]`,
+			sdkCreated: "true", sdkTag: "opendart-v0.1.0", freshSDKVersion: "0.1.0", freshSDKSHA: sdkSHA,
+			wantRunReleasePlease: true, wantSpecCreated: "false", wantSDKCreated: "true", wantSDKPrerelease: "false",
+			wantSpecVersion: "0.1.0",
+			wantSDKTag:      "opendart-v0.1.0", wantSDKVersion: "0.1.0", wantSDKSHA: sdkSHA,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			manifest := fmt.Sprintf("{\n  \"openapi/generated\": \"0.1.0\",\n  \"sdk/rust/crates/opendart\": %q\n}\n", test.sdkVersion)
+			if err := os.WriteFile(filepath.Join(root, manifestArtifact), []byte(manifest), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			mockPath := installReleaseWorkflowMocks(t, root)
+			recoveryOutput := runReleaseWorkflowScript(t, root, recovery.Run, map[string]string{
+				"GH_TOKEN":          "test-token",
+				"GITHUB_REPOSITORY": "cpaikr/opendart",
+				"GITHUB_SHA":        currentSHA,
+				"MOCK_RELEASES":     test.releases,
+				"MOCK_TAG_SHA":      currentSHA,
+				"PATH":              mockPath + string(os.PathListSeparator) + os.Getenv("PATH"),
+			})
+
+			var recovered []map[string]any
+			if err := json.Unmarshal([]byte(recoveryOutput["components"]), &recovered); err != nil {
+				t.Fatalf("recovery components = %q: %v", recoveryOutput["components"], err)
+			}
+			if len(recovered) != test.wantRecoveryComponents {
+				t.Fatalf("recovery component count = %d, want %d: %v", len(recovered), test.wantRecoveryComponents, recovered)
+			}
+			if got := recoveryOutput["components"] == "[]"; got != test.wantRunReleasePlease {
+				t.Fatalf("run Release Please = %t, want %t", got, test.wantRunReleasePlease)
+			}
+
+			componentOutput := runReleaseWorkflowScript(t, root, component.Run, map[string]string{
+				"CLI_CREATED":         "false",
+				"RECOVERY_COMPONENTS": recoveryOutput["components"],
+				"SDK_CREATED":         test.sdkCreated,
+				"SDK_SHA":             test.freshSDKSHA,
+				"SDK_TAG":             test.sdkTag,
+				"SDK_VERSION":         test.freshSDKVersion,
+				"SPEC_CREATED":        test.specCreated,
+				"SPEC_SHA":            test.specSHA,
+				"SPEC_TAG":            test.specTag,
+				"SPEC_VERSION":        "0.1.0",
+			})
+			for key, want := range map[string]string{
+				"spec_release_created": test.wantSpecCreated,
+				"spec_tag_name":        test.wantSpecTag,
+				"spec_version":         test.wantSpecVersion,
+				"spec_sha":             test.wantSpecSHA,
+				"sdk_release_created":  test.wantSDKCreated,
+				"sdk_tag_name":         test.wantSDKTag,
+				"sdk_version":          test.wantSDKVersion,
+				"sdk_sha":              test.wantSDKSHA,
+				"sdk_prerelease":       test.wantSDKPrerelease,
+			} {
+				if got := componentOutput[key]; got != want {
+					t.Errorf("%s = %q, want %q", key, got, want)
+				}
+			}
+		})
+	}
+}
+
+func installReleaseWorkflowMocks(t *testing.T, root string) string {
+	t.Helper()
+	bin := filepath.Join(root, "mock-bin")
+	if err := os.Mkdir(bin, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	gh := `#!/usr/bin/env bash
+set -e
+case "$1" in
+  api)
+    case "$2" in
+      --paginate)
+        printf '%s\n' "${MOCK_RELEASES}"
+        ;;
+      --include)
+        printf 'HTTP/2 404\n'
+        exit 1
+        ;;
+      repos/*/commits/*)
+        printf '%s\n' "${MOCK_TAG_SHA}"
+        ;;
+      *)
+        echo "unsupported gh api invocation: $*" >&2
+        exit 2
+        ;;
+    esac
+    ;;
+  *)
+    echo "unsupported gh invocation: $*" >&2
+    exit 2
+    ;;
+esac
+`
+	git := `#!/usr/bin/env bash
+set -e
+case "$1:$2" in
+  rev-parse:HEAD)
+    printf '%s\n' "${GITHUB_SHA}"
+    ;;
+  merge-base:--is-ancestor)
+    exit 0
+    ;;
+  *)
+    echo "unsupported git invocation: $*" >&2
+    exit 2
+    ;;
+esac
+`
+	for name, source := range map[string]string{"gh": gh, "git": git} {
+		if err := os.WriteFile(filepath.Join(bin, name), []byte(source), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return bin
+}
+
+func runReleaseWorkflowScript(t *testing.T, dir, script string, environment map[string]string) map[string]string {
+	t.Helper()
+	outputPath := filepath.Join(t.TempDir(), "github-output")
+	if err := os.WriteFile(outputPath, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "bash", "-e", "-o", "pipefail", "-c", script)
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GITHUB_OUTPUT="+outputPath)
+	for key, value := range environment {
+		cmd.Env = append(cmd.Env, key+"="+value)
+	}
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("workflow script failed: %v\n%s", err, output)
+	}
+	source, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := make(map[string]string)
+	for line := range strings.SplitSeq(strings.TrimSpace(string(source)), "\n") {
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			t.Fatalf("invalid workflow output line %q", line)
+		}
+		result[key] = value
+	}
+	return result
+}
+
 func TestCheckReturnsContextForMissingArtifact(t *testing.T) {
 	err := Check(t.TempDir())
 	var guardError *Error
@@ -1538,8 +1790,8 @@ func TestReleaseWorkflowOrderingFailsClosed(t *testing.T) {
 		first string
 		last  string
 	}{
-		{name: "draft after release", first: "Detect interrupted draft release", last: "Run Release Please"},
-		{name: "upload before prepare", first: "Prepare release assets", last: "Upload release assets"},
+		{name: "recovery after release", first: "Detect interrupted component release", last: "Run Release Please"},
+		{name: "upload before prepare", first: "Prepare specification release assets", last: "Upload specification release assets"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1558,8 +1810,8 @@ func TestReleaseWorkflowOrderingFailsClosed(t *testing.T) {
 			release.Jobs = cloneJobs(baselineRelease.Jobs)
 			release.Jobs["release-please"] = job
 
-			if err := checkReleaseWorkflow(release, string(releaseSource)); err == nil {
-				t.Fatal("checkReleaseWorkflow() error = nil")
+			if err := checkReleasePipelineWorkflow(release, string(releaseSource)); err == nil {
+				t.Fatal("checkReleasePipelineWorkflow() error = nil")
 			}
 		})
 	}
@@ -1597,6 +1849,7 @@ func (fixture releaseArtifactFixture) copy(t *testing.T) string {
 		rustCLIPackageListArtifact,
 		canonicalBundleArtifact,
 		releaseWorkflowArtifact,
+		rustCrateWorkflowArtifact,
 		verifyWorkflowArtifact,
 		fullRaceWorkflowArtifact,
 		verificationScriptArtifact,

@@ -18,35 +18,54 @@ import (
 )
 
 const (
-	releaseWorkflowArtifact    = ".github/workflows/release-please.yml"
-	verifyWorkflowArtifact     = ".github/workflows/verify.yml"
-	fullRaceWorkflowArtifact   = ".github/workflows/full-race.yml"
-	verificationScriptArtifact = "scripts/verify"
-	liveWorkflowArtifact       = ".github/workflows/live-conformance.yml"
-	notifyWorkflowArtifact     = ".github/workflows/live-conformance-notify.yml"
-	driftWorkflowArtifact      = ".github/workflows/guide-drift.yml"
-	driftNotifyArtifact        = ".github/workflows/guide-drift-notify.yml"
-	configArtifact             = "release-please-config.json"
-	manifestArtifact           = ".release-please-manifest.json"
-	specificationPackagePath   = "openapi/generated"
-	rustPackagePath            = "sdk/rust/crates/opendart"
-	rustCLIPackagePath         = "sdk/rust/crates/opendart-cli"
-	rustWorkspaceArtifact      = "sdk/rust/Cargo.toml"
-	rustCargoArtifact          = "sdk/rust/crates/opendart/Cargo.toml"
-	rustCLICargoArtifact       = "sdk/rust/crates/opendart-cli/Cargo.toml"
-	rustLockArtifact           = "sdk/rust/Cargo.lock"
-	rustProvenanceArtifact     = "sdk/rust/crates/opendart/src/provenance.rs"
-	rustSDKClientArtifact      = "sdk/rust/crates/opendart/src/client.rs"
-	rustCLIExecutionArtifact   = "sdk/rust/crates/opendart-cli/src/execution.rs"
-	rustPackageListArtifact    = "sdk/rust/package-files.txt"
-	rustCLIPackageListArtifact = "sdk/rust/opendart-cli-package-files.txt"
-	canonicalBundleArtifact    = "openapi/generated/openapi.bundle.yaml"
-	releasePleaseAction        = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
-	checkoutAction             = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
-	setupGoAction              = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
-	uploadArtifactAction       = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
-	downloadArtifactAction     = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
-	verifyConcurrencyGroup     = "${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}"
+	releaseWorkflowArtifact        = ".github/workflows/release-please.yml"
+	rustCrateWorkflowArtifact      = ".github/workflows/rust-crate-release.yml"
+	verifyWorkflowArtifact         = ".github/workflows/verify.yml"
+	fullRaceWorkflowArtifact       = ".github/workflows/full-race.yml"
+	verificationScriptArtifact     = "scripts/verify"
+	liveWorkflowArtifact           = ".github/workflows/live-conformance.yml"
+	notifyWorkflowArtifact         = ".github/workflows/live-conformance-notify.yml"
+	driftWorkflowArtifact          = ".github/workflows/guide-drift.yml"
+	driftNotifyArtifact            = ".github/workflows/guide-drift-notify.yml"
+	configArtifact                 = "release-please-config.json"
+	manifestArtifact               = ".release-please-manifest.json"
+	specificationPackagePath       = "openapi/generated"
+	rustPackagePath                = "sdk/rust/crates/opendart"
+	rustCLIPackagePath             = "sdk/rust/crates/opendart-cli"
+	rustWorkspaceArtifact          = "sdk/rust/Cargo.toml"
+	rustCargoArtifact              = "sdk/rust/crates/opendart/Cargo.toml"
+	rustCLICargoArtifact           = "sdk/rust/crates/opendart-cli/Cargo.toml"
+	rustLockArtifact               = "sdk/rust/Cargo.lock"
+	rustProvenanceArtifact         = "sdk/rust/crates/opendart/src/provenance.rs"
+	rustSDKClientArtifact          = "sdk/rust/crates/opendart/src/client.rs"
+	rustCLIExecutionArtifact       = "sdk/rust/crates/opendart-cli/src/execution.rs"
+	rustPackageListArtifact        = "sdk/rust/package-files.txt"
+	rustCLIPackageListArtifact     = "sdk/rust/opendart-cli-package-files.txt"
+	canonicalBundleArtifact        = "openapi/generated/openapi.bundle.yaml"
+	releasePleaseAction            = "googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7"
+	checkoutAction                 = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+	setupGoAction                  = "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
+	uploadArtifactAction           = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+	downloadArtifactAction         = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
+	verifyConcurrencyGroup         = "${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}"
+	recoveryScriptDigest           = "fbe90272400a6eb6065e457198a40efe6cd523ad0182f9ca9fa1fb3326d691fb"
+	proposalScriptDigest           = "996a55e656f9409c6f4a6ee882d9c23d73f070cead0d20d27000afea41723d9d"
+	componentScriptDigest          = "695c00a82d604738ac93fa794396acaf8f2d3e95d4f1b434721f727f10177fb8"
+	dispatchScriptDigest           = "3ccf493a455151c499a3c1df1dba8efff996ad73b7929579eb20988b54abd930"
+	candidateInputScriptDigest     = "0921d426a5a45712b84c13f3d835173d6d9401f48b3e006c2568b44a4cfa9008"
+	candidateAttestScriptDigest    = "4af1a683a5744824aab2210dc052ca88bcb49d76d6be5febbf216a21c21d4f99"
+	candidateToolchainScriptDigest = "f8f6aaff0f83fe81760c269bbea9a39bad1ff01de95d86816a485dd3b5c818a7"
+	candidateVerifyScriptDigest    = "a8443131373c7f10358fc257225b31994ed570059f55c64efa8519c5f32f1bbc"
+	candidatePackageScriptDigest   = "641a0815dfbf5a967ee18a386d68ae352bd0764241d5c01fdd2bb8fee59e3813"
+	candidateEvidenceScriptDigest  = "741c2079c9a6ba8469e9b66ff6baaa6b6199fe42a9985716273900a23909cf03"
+	publishInputScriptDigest       = "145c6249f03ffee066267c70f7fec7e1c173350b4c0c23f312af88b6fb2ea108"
+	publishEvidenceScriptDigest    = "7b13de5c812d460a59c5609365f19d2ae6d1643ba66c2355ea5460f2754673c8"
+	minimalToolchainScriptDigest   = "c77326a24c08ec5f7d261209b5acc436c1a8a7f550d711ff1507ae2578c60ed5"
+	publishScriptDigest            = "ccbc7055e7dc4e0b708ca469943021c693eeede20489a70242c2ce44b660f0e4"
+	reconcileCrateScriptDigest     = "e1ec7e345fe461414f38fb08dce44f776ea0aa94f2604c1908133deaa629a88d"
+	reconcileConsumerScriptDigest  = "aadfff67de44b6c0542080a5a5855d36357ecd1f3cdf6ba7a067041454b3d506"
+	reconcileReadinessScriptDigest = "0d25fae53a860c390e350414fb2bcc853444159b338e40f22d6cff3af8762ff9"
+	finalizeScriptDigest           = "679196ebf280c34d7829aa6d39d96a54b4405ecbfdd88fb5958eb00e066ecc10"
 
 	liveBuildScript = `mkdir -p .live-bin
 go build -o .live-bin/opendart-tool ./cmd/opendart-tool
@@ -76,16 +95,6 @@ cp "${live_smoke_executable}" .live-bin/live-smoke`
   --run-id "${NOTIFY_RUN_ID}" \
   --run-attempt "${NOTIFY_RUN_ATTEMPT}"`
 
-	draftRecoveryScript = `version="$(jq -r '.["openapi/generated"]' .release-please-manifest.json)"
-tag_name="v${version}"
-release="$(gh release view "${tag_name}" --json isDraft,targetCommitish 2>/dev/null || true)"
-if test -n "${release}" && test "$(jq -r .isDraft <<<"${release}")" = true; then
-  echo "recovering=true" >> "${GITHUB_OUTPUT}"
-  echo "tag_name=${tag_name}" >> "${GITHUB_OUTPUT}"
-  echo "sha=$(jq -r .targetCommitish <<<"${release}")" >> "${GITHUB_OUTPUT}"
-else
-  echo "recovering=false" >> "${GITHUB_OUTPUT}"
-fi`
 	prepareReleaseAssetsScript = `mkdir release-assets
 cp openapi/generated/openapi.bundle.yaml release-assets/openapi.bundle.yaml
 cd release-assets
@@ -106,7 +115,7 @@ do
     gh release upload "${TAG_NAME}" "${asset_path}"
   fi
 done`
-	publishReleaseScript        = `gh release edit "${TAG_NAME}" --draft=false --latest`
+	publishReleaseScript        = `gh release edit "${TAG_NAME}" --draft=false --prerelease=false --latest`
 	installRustToolchainsScript = `rustup toolchain install 1.97.1 --profile minimal --component clippy --component rustfmt
 rustup target add --toolchain 1.97.1 wasm32-unknown-unknown
 rustup toolchain install 1.85.0 --profile minimal`
@@ -306,6 +315,10 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
+	rustCrateSource, err := readArtifact(absoluteRoot, rustCrateWorkflowArtifact)
+	if err != nil {
+		return err
+	}
 	verifySource, err := readArtifact(absoluteRoot, verifyWorkflowArtifact)
 	if err != nil {
 		return err
@@ -340,7 +353,7 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
-	return checkWorkflows(releaseSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource)
+	return checkWorkflows(releaseSource, rustCrateSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource)
 }
 
 func checkSpecificationSourceRelease(repositoryRoot string, provenanceSource []byte) error {
@@ -603,6 +616,8 @@ type workflowJob struct {
 	TimeoutMinutes  int               `yaml:"timeout-minutes"`
 	Environment     string            `yaml:"environment"`
 	Uses            string            `yaml:"uses"`
+	With            map[string]any    `yaml:"with"`
+	Outputs         map[string]string `yaml:"outputs"`
 	Steps           []workflowStep    `yaml:"steps"`
 }
 
@@ -647,10 +662,21 @@ type workflowStep struct {
 }
 
 type workflowStepExpectation struct {
-	name string
-	run  string
-	uses string
-	with map[string]any
+	name  string
+	run   string
+	uses  string
+	with  map[string]any
+	env   map[string]string
+	shell string
+}
+
+type releaseStepExpectation struct {
+	name      string
+	id        string
+	runDigest string
+	uses      string
+	with      map[string]any
+	env       map[string]string
 }
 
 func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCargoSource, lockSource []byte) error {
@@ -659,7 +685,8 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 		return &Error{Artifact: configArtifact, Invariant: "valid JSON", Cause: err}
 	}
 	var config struct {
-		Packages map[string]map[string]any `json:"packages"`
+		SeparatePullRequests bool                      `json:"separate-pull-requests"`
+		Packages             map[string]map[string]any `json:"packages"`
 	}
 	if err := json.Unmarshal(configSource, &config); err != nil {
 		return &Error{Artifact: configArtifact, Invariant: "valid JSON", Cause: err}
@@ -670,8 +697,9 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 	}
 
 	manifestKeys := sortedKeys(manifest)
-	bootstrapManifest := reflect.DeepEqual(manifestKeys, []string{specificationPackagePath})
-	if err := require(manifestArtifact, "contains only the published specification component", bootstrapManifest, "unpublished Rust components must remain absent"); err != nil {
+	manifestScope := reflect.DeepEqual(manifestKeys, []string{specificationPackagePath}) ||
+		reflect.DeepEqual(manifestKeys, []string{specificationPackagePath, rustPackagePath})
+	if err := require(manifestArtifact, "contains only the specification and optionally published SDK component", manifestScope, "the unpublished CLI must remain absent"); err != nil {
 		return err
 	}
 	if err := require(manifestArtifact, "specification version is SemVer", semanticVersion.MatchString(manifest[specificationPackagePath]), ""); err != nil {
@@ -683,9 +711,12 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 	if err := require(
 		configArtifact,
 		"contains only supported top-level options",
-		reflect.DeepEqual(sortedKeys(configFields), []string{"$schema", "bootstrap-sha", "packages"}),
+		reflect.DeepEqual(sortedKeys(configFields), []string{"$schema", "bootstrap-sha", "packages", "separate-pull-requests"}),
 		"exact option allowlist is required",
 	); err != nil {
+		return err
+	}
+	if err := require(configArtifact, "isolates component release proposals", config.SeparatePullRequests, "separate-pull-requests must be true"); err != nil {
 		return err
 	}
 	root := config.Packages[specificationPackagePath]
@@ -745,7 +776,11 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 		"include-component-in-tag",
 		"include-v-in-release-name",
 		"include-v-in-tag",
+		"prerelease",
+		"prerelease-type",
+		"release-as",
 		"release-type",
+		"versioning",
 	}
 	if err := require(configArtifact, "Rust package contains only supported options", reflect.DeepEqual(sortedKeys(rustPackage), expectedRustKeys), "exact option allowlist is required"); err != nil {
 		return err
@@ -757,8 +792,12 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 		"include-v-in-tag":               true,
 		"include-v-in-release-name":      true,
 		"changelog-path":                 "CHANGELOG.md",
-		"bump-minor-pre-major":           true,
-		"bump-patch-for-minor-pre-major": true,
+		"bump-minor-pre-major":           false,
+		"bump-patch-for-minor-pre-major": false,
+		"versioning":                     "prerelease",
+		"prerelease":                     true,
+		"prerelease-type":                "beta",
+		"release-as":                     "0.1.0-beta.1",
 		"draft":                          true,
 		"force-tag-creation":             false,
 	}
@@ -783,7 +822,21 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 	}
 
 	cliPackage := config.Packages[rustCLIPackagePath]
-	if err := require(configArtifact, "CLI package contains only supported options", reflect.DeepEqual(sortedKeys(cliPackage), expectedRustKeys), "exact option allowlist is required"); err != nil {
+	expectedCLIKeys := []string{
+		"bump-minor-pre-major",
+		"bump-patch-for-minor-pre-major",
+		"changelog-path",
+		"component",
+		"draft",
+		"exclude-paths",
+		"extra-files",
+		"force-tag-creation",
+		"include-component-in-tag",
+		"include-v-in-release-name",
+		"include-v-in-tag",
+		"release-type",
+	}
+	if err := require(configArtifact, "CLI package contains only supported options", reflect.DeepEqual(sortedKeys(cliPackage), expectedCLIKeys), "exact option allowlist is required"); err != nil {
 		return err
 	}
 	expectedCLIValues := make(map[string]any, len(expectedRustValues))
@@ -791,6 +844,12 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 		expectedCLIValues[key] = value
 	}
 	expectedCLIValues["component"] = "opendart-cli"
+	expectedCLIValues["bump-minor-pre-major"] = false
+	expectedCLIValues["bump-patch-for-minor-pre-major"] = false
+	delete(expectedCLIValues, "versioning")
+	delete(expectedCLIValues, "prerelease")
+	delete(expectedCLIValues, "prerelease-type")
+	delete(expectedCLIValues, "release-as")
 	for key, value := range expectedCLIValues {
 		if !reflect.DeepEqual(cliPackage[key], value) {
 			return &Error{Artifact: configArtifact, Invariant: "CLI package " + key, Detail: fmt.Sprintf("want %v", value)}
@@ -804,6 +863,10 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 	if err := require(configArtifact, "CLI package updates its workspace lock version", reflect.DeepEqual(cliPackage["extra-files"], expectedCLIExtraFiles), "exact root-relative TOML updater is required"); err != nil {
 		return err
 	}
+	expectedCLIExclusions := []any{rustCLIPackagePath}
+	if err := require(configArtifact, "CLI package remains excluded until publication is authorized", reflect.DeepEqual(cliPackage["exclude-paths"], expectedCLIExclusions), "exact CLI path exclusion is required"); err != nil {
+		return err
+	}
 
 	cargoVersion, err := cargoPackageVersion(cargoSource)
 	if err != nil {
@@ -815,6 +878,12 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 	}
 	if err := require(rustLockArtifact, "matches the crate package version", cargoVersion == lockVersion, ""); err != nil {
 		return err
+	}
+	if manifestVersion, exists := manifest[rustPackagePath]; exists {
+		betaVersion := regexp.MustCompile(`^0\.1\.0-beta\.[1-9][0-9]*$`).MatchString(manifestVersion)
+		if err := require(manifestArtifact, "published SDK beta version matches the crate and lock", semanticVersion.MatchString(manifestVersion) && betaVersion && manifestVersion == cargoVersion, ""); err != nil {
+			return err
+		}
 	}
 	cliCargoVersion, err := cargoPackageVersion(cliCargoSource)
 	if err != nil {
@@ -906,8 +975,12 @@ func quotedTOMLValue(line string) (string, error) {
 	return value[1 : len(value)-1], nil
 }
 
-func checkWorkflows(releaseSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
+func checkWorkflows(releaseSource, rustCrateSource, verifySource, fullRaceSource, liveSource, notifySource, driftSource, driftNotifySource []byte) error {
 	release, err := decodeWorkflow(releaseWorkflowArtifact, releaseSource)
+	if err != nil {
+		return err
+	}
+	rustCrate, err := decodeWorkflow(rustCrateWorkflowArtifact, rustCrateSource)
 	if err != nil {
 		return err
 	}
@@ -936,7 +1009,10 @@ func checkWorkflows(releaseSource, verifySource, fullRaceSource, liveSource, not
 		return err
 	}
 
-	if err := checkReleaseWorkflow(release, string(releaseSource)); err != nil {
+	if err := checkReleasePipelineWorkflow(release, string(releaseSource)); err != nil {
+		return err
+	}
+	if err := checkRustCrateWorkflow(rustCrate, string(rustCrateSource)); err != nil {
 		return err
 	}
 	if err := checkVerifyWorkflow(verify, string(verifySource)); err != nil {
@@ -957,27 +1033,12 @@ func checkWorkflows(releaseSource, verifySource, fullRaceSource, liveSource, not
 	return checkDriftNotifyWorkflow(driftNotify, string(driftNotifySource))
 }
 
-func decodeWorkflow(artifact string, source []byte) (workflow, error) {
-	var result workflow
-	decoder := yaml.NewDecoder(bytes.NewReader(source))
-	decoder.KnownFields(true)
-	if err := decoder.Decode(&result); err != nil {
-		return workflow{}, &Error{Artifact: artifact, Invariant: "uses only supported YAML fields", Cause: err}
-	}
-	return result, nil
-}
-
-func checkReleaseWorkflow(release workflow, releaseSource string) error {
+func checkReleasePipelineWorkflow(release workflow, source string) error {
 	if err := require(releaseWorkflowArtifact, "has the expected workflow name", release.Name == "Release Please", ""); err != nil {
 		return err
 	}
 	push, ok := release.On["push"].(map[string]any)
-	if err := require(
-		releaseWorkflowArtifact,
-		"runs only for pushes to main",
-		reflect.DeepEqual(sortedKeys(release.On), []string{"push"}) && ok && reflect.DeepEqual(push["branches"], []any{"main"}),
-		"",
-	); err != nil {
+	if err := require(releaseWorkflowArtifact, "runs only for pushes to main", reflect.DeepEqual(sortedKeys(release.On), []string{"push"}) && ok && reflect.DeepEqual(push["branches"], []any{"main"}), ""); err != nil {
 		return err
 	}
 	if err := require(releaseWorkflowArtifact, "serializes release runs", release.Concurrency.Group == "release-please" && !release.Concurrency.CancelInProgress, ""); err != nil {
@@ -986,162 +1047,305 @@ func checkReleaseWorkflow(release workflow, releaseSource string) error {
 	if err := require(releaseWorkflowArtifact, "root permissions are empty", len(release.Permissions) == 0, ""); err != nil {
 		return err
 	}
-	if err := require(releaseWorkflowArtifact, "workflow uses default run settings", defaultRunSettings(release.Defaults), ""); err != nil {
-		return err
+	if !defaultRunSettings(release.Defaults) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "workflow uses default run settings"}
 	}
-	if err := require(
-		releaseWorkflowArtifact,
-		"contains only the verify and release-please jobs",
-		reflect.DeepEqual(sortedKeys(release.Jobs), []string{"release-please", "verify"}),
-		"",
-	); err != nil {
+	if strings.Contains(source, "cargo publish") || strings.Contains(source, "CARGO_REGISTRY_TOKEN") || strings.Contains(source, "id-token: write") || strings.Contains(source, "secrets: inherit") {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "keeps registry credentials out and actions-write authority isolated"}
+	}
+	if err := require(releaseWorkflowArtifact, "contains only approved release jobs", reflect.DeepEqual(sortedKeys(release.Jobs), []string{"dispatch-release-pr-checks", "release-please", "sdk-release", "verify"}), ""); err != nil {
 		return err
 	}
 
-	verifyCall, exists := release.Jobs["verify"]
-	if err := require(releaseWorkflowArtifact, "has the reusable verify job", exists && verifyCall.Uses == "./.github/workflows/verify.yml", ""); err != nil {
-		return err
+	verifyCall := release.Jobs["verify"]
+	expectedVerifyWith := map[string]any{"expected_sha": "${{ github.sha }}"}
+	if verifyCall.Uses != "./.github/workflows/verify.yml" || !reflect.DeepEqual(verifyCall.Permissions, map[string]string{"contents": "read"}) || !reflect.DeepEqual(verifyCall.With, expectedVerifyWith) || !workflowNeedsExactly(verifyCall.Needs) || !defaultJobExecution(verifyCall) || !defaultRunSettings(verifyCall.Defaults) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "verifies the exact pushed revision with read-only authority"}
 	}
-	if err := require(releaseWorkflowArtifact, "verify job uses default execution controls", defaultJobExecution(verifyCall), ""); err != nil {
-		return err
-	}
-	if err := require(releaseWorkflowArtifact, "verify job uses default run settings", defaultRunSettings(verifyCall.Defaults), ""); err != nil {
-		return err
-	}
-	if err := require(releaseWorkflowArtifact, "verify job uses reusable-workflow runtime settings", verifyCall.RunsOn == "" && verifyCall.TimeoutMinutes == 0, ""); err != nil {
-		return err
-	}
-	if err := require(releaseWorkflowArtifact, "verify job is read-only", reflect.DeepEqual(verifyCall.Permissions, map[string]string{"contents": "read"}), ""); err != nil {
-		return err
-	}
-	releaseJob, exists := release.Jobs["release-please"]
-	if err := require(releaseWorkflowArtifact, "has the release-please job", exists, ""); err != nil {
-		return err
-	}
-	if err := require(releaseWorkflowArtifact, "release job uses default execution controls", defaultJobExecution(releaseJob), ""); err != nil {
-		return err
-	}
-	if err := require(releaseWorkflowArtifact, "release job uses default run settings", defaultRunSettings(releaseJob.Defaults), ""); err != nil {
-		return err
-	}
-	if err := require(releaseWorkflowArtifact, "release job uses the approved runner and timeout", releaseJob.RunsOn == "blacksmith-2vcpu-ubuntu-2404" && releaseJob.TimeoutMinutes == 20, ""); err != nil {
-		return err
+
+	releaseJob := release.Jobs["release-please"]
+	expectedReleasePermissions := map[string]string{"contents": "write", "issues": "write", "pull-requests": "write"}
+	expectedReleaseOutputs := map[string]string{
+		"prs":                 "${{ steps.proposals.outputs.numbers }}",
+		"sdk_prerelease":      "${{ steps.component.outputs.sdk_prerelease }}",
+		"sdk_release_created": "${{ steps.component.outputs.sdk_release_created }}",
+		"sdk_sha":             "${{ steps.component.outputs.sdk_sha }}",
+		"sdk_tag_name":        "${{ steps.component.outputs.sdk_tag_name }}",
+		"sdk_version":         "${{ steps.component.outputs.sdk_version }}",
 	}
 	expectedReleaseSteps := []string{
 		"Check out repository",
-		"Detect interrupted draft release",
+		"Detect interrupted component release",
 		"Run Release Please",
-		"Check out released commit",
-		"Prepare release assets",
-		"Upload release assets",
-		"Publish immutable release",
+		"Normalize release proposal numbers",
+		"Normalize component release outputs",
+		"Check out specification release commit",
+		"Prepare specification release assets",
+		"Upload specification release assets",
+		"Publish immutable specification release",
 	}
-	if !reflect.DeepEqual(stepNames(releaseJob.Steps), expectedReleaseSteps) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uses only the approved release steps in order"}
+	if !workflowNeedsExactly(releaseJob.Needs, "verify") || !reflect.DeepEqual(releaseJob.Permissions, expectedReleasePermissions) || !reflect.DeepEqual(releaseJob.Outputs, expectedReleaseOutputs) || releaseJob.RunsOn != "blacksmith-2vcpu-ubuntu-2404" || releaseJob.TimeoutMinutes != 20 || !defaultJobExecution(releaseJob) || !defaultRunSettings(releaseJob.Defaults) || !reflect.DeepEqual(stepNames(releaseJob.Steps), expectedReleaseSteps) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release proposal and specification publication use the approved boundary"}
 	}
 	for _, step := range releaseJob.Steps {
-		if step.ContinueOnError {
-			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release step failures stop the job", Detail: "step " + step.Name}
-		}
-		if !defaultStepRunSettings(step) {
-			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release steps use default run settings", Detail: "step " + step.Name}
-		}
-		if !reflect.DeepEqual(step.Env, expectedReleaseStepEnv(step.Name)) {
-			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release steps use only approved environment variables", Detail: "step " + step.Name}
+		if step.ContinueOnError || !defaultStepRunSettings(step) {
+			return &Error{Artifact: releaseWorkflowArtifact, Invariant: "release steps fail closed with default run settings", Detail: step.Name}
 		}
 	}
-	if err := require(releaseWorkflowArtifact, "release waits for verification", workflowNeedsExactly(releaseJob.Needs, "verify"), ""); err != nil {
-		return err
+	releaseStepIndex, releaseStep, err := stepByID(releaseJob.Steps, "release")
+	if err != nil || releaseStep.Uses != releasePleaseAction || releaseStep.Run != "" || !exactWorkflowExpression(releaseStep.If, "steps.recovery.outputs.components == '[]'") || !reflect.DeepEqual(releaseStep.With, map[string]any{"token": "${{ secrets.GITHUB_TOKEN }}"}) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uses the approved pinned Release Please action only outside recovery", Cause: err}
 	}
-	expectedPermissions := map[string]string{"contents": "write", "issues": "write", "pull-requests": "write"}
-	if err := require(releaseWorkflowArtifact, "release job has only required write permissions", reflect.DeepEqual(releaseJob.Permissions, expectedPermissions), ""); err != nil {
-		return err
+	recoveryIndex, recovery, err := stepByID(releaseJob.Steps, "recovery")
+	recoveryDigestDetail := scriptDigestMismatchDetail(recovery.Run, recoveryScriptDigest)
+	if err != nil || recoveryIndex >= releaseStepIndex || !defaultStepExecution(recovery) || !hasScriptDigest(recovery.Run, recoveryScriptDigest) || !reflect.DeepEqual(recovery.Env, map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}"}) || !containsAll(recovery.Run,
+		"gh api --paginate --slurp", "tag exists without a matching GitHub release", "ambiguous component recovery state",
+		"git merge-base --is-ancestor", "probe_tag_ref()", "gh api --include", "if test \"${http_status}\" = 404",
+		"tag_ref_status=\"$(probe_tag_ref \"${tag_name}\")\"", "inspect_component specification openapi/generated v",
+		"inspect_component sdk sdk/rust/crates/opendart opendart-v",
+		"if test \"${component}\" = sdk;") {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "component recovery fails closed on ambiguous, tag-only, or non-ancestor state", Detail: recoveryDigestDetail, Cause: err}
+	}
+	_, proposals, err := stepByID(releaseJob.Steps, "proposals")
+	proposalDigestDetail := scriptDigestMismatchDetail(proposals.Run, proposalScriptDigest)
+	if err != nil || !defaultStepExecution(proposals) || !hasScriptDigest(proposals.Run, proposalScriptDigest) || !reflect.DeepEqual(proposals.Env, map[string]string{"RELEASE_PRS": "${{ steps.release.outputs.prs }}"}) || !containsAll(proposals.Run, "[.[].number]", "type == \"number\" and . > 0", "numbers=[]") {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "exposes only validated release proposal numbers", Detail: proposalDigestDetail, Cause: err}
+	}
+	_, component, err := stepByID(releaseJob.Steps, "component")
+	expectedComponentEnv := map[string]string{
+		"CLI_CREATED":         "${{ steps.release.outputs['sdk/rust/crates/opendart-cli--release_created'] }}",
+		"RECOVERY_COMPONENTS": "${{ steps.recovery.outputs.components }}",
+		"SDK_CREATED":         "${{ steps.release.outputs['sdk/rust/crates/opendart--release_created'] }}",
+		"SDK_SHA":             "${{ steps.release.outputs['sdk/rust/crates/opendart--sha'] }}",
+		"SDK_TAG":             "${{ steps.release.outputs['sdk/rust/crates/opendart--tag_name'] }}",
+		"SDK_VERSION":         "${{ steps.release.outputs['sdk/rust/crates/opendart--version'] }}",
+		"SPEC_CREATED":        "${{ steps.release.outputs['openapi/generated--release_created'] }}",
+		"SPEC_SHA":            "${{ steps.release.outputs['openapi/generated--sha'] }}",
+		"SPEC_TAG":            "${{ steps.release.outputs['openapi/generated--tag_name'] }}",
+		"SPEC_VERSION":        "${{ steps.release.outputs['openapi/generated--version'] }}",
+	}
+	componentDigestDetail := scriptDigestMismatchDetail(component.Run, componentScriptDigest)
+	if err != nil || !defaultStepExecution(component) || !hasScriptDigest(component.Run, componentScriptDigest) || !reflect.DeepEqual(component.Env, expectedComponentEnv) || !containsAll(component.Run, "CLI publication is not authorized", "RECOVERY_COMPONENTS", "^0\\.1\\.0-beta\\.[1-9][0-9]*$", "test \"${SDK_VERSION}\" = 0.1.0", "sdk_prerelease=${sdk_prerelease}") {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "normalizes authorized component releases and blocks CLI publication", Detail: componentDigestDetail, Cause: err}
+	}
+	specCheckoutIndex, specCheckout, err := stepByName(releaseJob.Steps, "Check out specification release commit")
+	prepareIndex, prepare, prepareErr := stepByName(releaseJob.Steps, "Prepare specification release assets")
+	uploadIndex, upload, uploadErr := stepByName(releaseJob.Steps, "Upload specification release assets")
+	publishIndex, publishSpec, publishErr := stepByName(releaseJob.Steps, "Publish immutable specification release")
+	specCondition := "steps.component.outputs.spec_release_created == 'true'"
+	if err != nil || prepareErr != nil || uploadErr != nil || publishErr != nil ||
+		!(releaseStepIndex < specCheckoutIndex && specCheckoutIndex < prepareIndex && prepareIndex < uploadIndex && uploadIndex < publishIndex) ||
+		!exactWorkflowExpression(specCheckout.If, specCondition) || !exactWorkflowExpression(prepare.If, specCondition) || !exactWorkflowExpression(upload.If, specCondition) || !exactWorkflowExpression(publishSpec.If, specCondition) ||
+		!isCheckoutAction(specCheckout.Uses) || specCheckout.With["ref"] != "${{ steps.component.outputs.spec_sha }}" || specCheckout.With["persist-credentials"] != false ||
+		len(specCheckout.Env) != 0 || len(prepare.Env) != 0 ||
+		!reflect.DeepEqual(upload.Env, map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}", "TAG_NAME": "${{ steps.component.outputs.spec_tag_name }}"}) ||
+		!reflect.DeepEqual(publishSpec.Env, map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}", "TAG_NAME": "${{ steps.component.outputs.spec_tag_name }}"}) ||
+		!exactScript(prepare.Run, prepareReleaseAssetsScript) || !exactScript(upload.Run, uploadReleaseAssetsScript) || !exactScript(publishSpec.Run, publishReleaseScript) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "publishes immutable specification assets only for the attested component SHA", Cause: errors.Join(err, prepareErr, uploadErr, publishErr)}
 	}
 
+	dispatch := release.Jobs["dispatch-release-pr-checks"]
+	expectedDispatchPermissions := map[string]string{"actions": "write", "contents": "read", "pull-requests": "read"}
+	if !workflowNeedsExactly(dispatch.Needs, "release-please") || !reflect.DeepEqual(dispatch.Permissions, expectedDispatchPermissions) || dispatch.RunsOn != "ubuntu-latest" || dispatch.TimeoutMinutes != 10 || !defaultRunSettings(dispatch.Defaults) || dispatch.ContinueOnError || !exactWorkflowExpression(dispatch.If, "needs.release-please.outputs.prs != '[]'") || !reflect.DeepEqual(stepNames(dispatch.Steps), []string{"Dispatch exact-SHA release proposal checks"}) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "isolates actions-write authority in the release proposal dispatcher"}
+	}
+	dispatchStep := dispatch.Steps[0]
+	dispatchRun := dispatchStep.Run
+	dispatchDigestDetail := scriptDigestMismatchDetail(dispatchRun, dispatchScriptDigest)
+	if !hasScriptDigest(dispatchRun, dispatchScriptDigest) || !reflect.DeepEqual(dispatchStep.Env, map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}", "RELEASE_PRS": "${{ needs.release-please.outputs.prs }}"}) || !defaultStepExecution(dispatchStep) || !containsAll(dispatchRun, "numbers=\"$(jq -er", ".author.login == \"app/github-actions\"", ".baseRefName == \"main\"", "autorelease: pending", ".headRefOid",
+		`gh workflow run verify.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"`,
+		`gh workflow run full-race.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"`) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "dispatches required checks for the canonical Release Please PR head SHA", Detail: dispatchDigestDetail}
+	}
+
+	sdk := release.Jobs["sdk-release"]
+	expectedSDKWith := map[string]any{
+		"candidate_sha":  "${{ needs.release-please.outputs.sdk_sha }}",
+		"environment":    "crates-io-opendart",
+		"expected_owner": "${{ vars.OPENDART_CRATES_IO_OWNER }}",
+		"inventory_path": "sdk/rust/package-files.txt",
+		"package":        "opendart",
+		"package_path":   "sdk/rust/crates/opendart",
+		"prerelease":     "${{ needs.release-please.outputs.sdk_prerelease == 'true' }}",
+		"tag_name":       "${{ needs.release-please.outputs.sdk_tag_name }}",
+		"vcs_path":       "sdk/rust/crates/opendart",
+		"version":        "${{ needs.release-please.outputs.sdk_version }}",
+	}
+	if sdk.Uses != "./.github/workflows/rust-crate-release.yml" || !workflowNeedsExactly(sdk.Needs, "release-please") || !reflect.DeepEqual(sdk.Permissions, map[string]string{"contents": "write"}) || sdk.ContinueOnError || !defaultRunSettings(sdk.Defaults) || !exactWorkflowExpression(sdk.If, "needs.release-please.outputs.sdk_release_created == 'true'") || !reflect.DeepEqual(sdk.With, expectedSDKWith) {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "calls only the protected SDK release workflow with fixed component identity"}
+	}
 	if err := checkActionPins(releaseWorkflowArtifact, release); err != nil {
 		return err
 	}
 	if err := checkCheckoutCredentials(releaseWorkflowArtifact, release); err != nil {
 		return err
 	}
-	if strings.Contains(releaseSource, "npm publish") || strings.Contains(releaseSource, "cargo publish") ||
-		strings.Contains(releaseSource, "CARGO_REGISTRY_TOKEN") || strings.Contains(releaseSource, "id-token: write") ||
-		strings.Contains(releaseSource, "--clobber") {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "does not publish packages, grant registry authority, or replace assets"}
-	}
-
-	draftIndex, draft, err := stepByID(releaseJob.Steps, "draft")
-	if err != nil {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "has one interrupted-draft detector", Cause: err}
-	}
-	if !defaultStepExecution(draft) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "draft detector uses default execution controls"}
-	}
-	releaseIndex, releaseStep, err := stepByID(releaseJob.Steps, "release")
-	if err != nil {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "has one Release Please action", Cause: err}
-	}
-	if err := require(releaseWorkflowArtifact, "detects drafts before Release Please", draftIndex < releaseIndex, ""); err != nil {
-		return err
-	}
-	if !exactScript(draft.Run, draftRecoveryScript) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "draft recovery uses the canonical script"}
-	}
-	if !exactWorkflowExpression(releaseStep.If, "steps.draft.outputs.recovering != 'true'") {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "Release Please is skipped during recovery"}
-	}
-	if releaseStep.Uses != releasePleaseAction || releaseStep.Run != "" {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uses the approved pinned Release Please action"}
-	}
-	if !reflect.DeepEqual(releaseStep.With, map[string]any{"token": "${{ secrets.GITHUB_TOKEN }}"}) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "Release Please uses GITHUB_TOKEN as its only input"}
-	}
-
-	releasedCheckoutIndex, releasedCheckout, err := stepByName(releaseJob.Steps, "Check out released commit")
-	if err != nil {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "checks out the released commit", Cause: err}
-	}
-	if releasedCheckoutIndex <= releaseIndex ||
-		!isCheckoutAction(releasedCheckout.Uses) ||
-		releasedCheckout.With["ref"] != "${{ steps.release.outputs['openapi/generated--sha'] || steps.draft.outputs.sha }}" {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "released checkout uses the created or recovered SHA"}
-	}
-
-	prepareIndex, prepare, err := stepByName(releaseJob.Steps, "Prepare release assets")
-	if err != nil {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "prepares release assets", Cause: err}
-	}
-	uploadIndex, upload, err := stepByName(releaseJob.Steps, "Upload release assets")
-	if err != nil {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uploads release assets", Cause: err}
-	}
-	publishIndex, publish, err := stepByName(releaseJob.Steps, "Publish immutable release")
-	if err != nil {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "publishes the immutable release", Cause: err}
-	}
-	if err := require(
-		releaseWorkflowArtifact,
-		"orders release, checkout, prepare, upload, then publish",
-		releaseIndex < releasedCheckoutIndex && releasedCheckoutIndex < prepareIndex && prepareIndex < uploadIndex && uploadIndex < publishIndex,
-		"",
-	); err != nil {
-		return err
-	}
-	for _, step := range []workflowStep{releasedCheckout, prepare, upload, publish} {
-		if !releaseOrRecovery(step.If) {
-			return &Error{Artifact: releaseWorkflowArtifact, Invariant: step.Name + " runs only for a created or recovered release"}
-		}
-	}
-	if !exactScript(prepare.Run, prepareReleaseAssetsScript) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "prepares the versioned bundle and SHA-256 checksum"}
-	}
-	if !exactScript(upload.Run, uploadReleaseAssetsScript) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uploads only the bundle and checksum; asset upload preserves immutable recovery semantics"}
-	}
-	if !exactScript(publish.Run, publishReleaseScript) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "publishes the draft only after assets are verified"}
+	if strings.Count(source, "actions: write") != 1 {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "keeps registry credentials out and actions-write authority isolated"}
 	}
 	return nil
+}
+
+func containsAll(source string, required ...string) bool {
+	for _, value := range required {
+		if !strings.Contains(source, value) {
+			return false
+		}
+	}
+	return true
+}
+
+func checkRustCrateWorkflow(release workflow, source string) error {
+	if release.Name != "Rust crate release" || !reflect.DeepEqual(sortedKeys(release.On), []string{"workflow_call"}) {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "is callable only as the protected Rust crate release workflow"}
+	}
+	if err := checkActionPins(rustCrateWorkflowArtifact, release); err != nil {
+		return err
+	}
+	workflowCall, ok := release.On["workflow_call"].(map[string]any)
+	inputs, inputsOK := workflowCall["inputs"].(map[string]any)
+	expectedInputs := []string{"candidate_sha", "environment", "expected_owner", "inventory_path", "package", "package_path", "prerelease", "tag_name", "vcs_path", "version"}
+	if !ok || !inputsOK || !reflect.DeepEqual(sortedKeys(inputs), expectedInputs) {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "accepts only the fixed release identity inputs"}
+	}
+	if len(release.Permissions) != 0 || release.Concurrency.Group != "rust-crate-${{ inputs.package }}-${{ inputs.version }}" || release.Concurrency.CancelInProgress {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "starts without authority and serializes an exact crate version"}
+	}
+	if !reflect.DeepEqual(sortedKeys(release.Jobs), []string{"candidate", "finalize", "publish", "reconcile"}) {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "contains only candidate, publish, reconcile, and finalize jobs"}
+	}
+
+	candidate := release.Jobs["candidate"]
+	expectedCandidateSteps := []string{"Validate SDK release inputs", "Check out candidate revision", "Attest candidate revision and package version", "Install pinned Rust toolchain", "Run credential-free Rust verification", "Package and dry-run without credentials", "Prepare immutable candidate evidence", "Upload candidate evidence"}
+	expectedCandidateOutputs := map[string]string{
+		"artifact_digest": "${{ steps.upload.outputs['artifact-digest'] }}",
+		"artifact_name":   "${{ steps.evidence.outputs.artifact_name }}",
+	}
+	if !workflowNeedsExactly(candidate.Needs) || !reflect.DeepEqual(candidate.Permissions, map[string]string{"contents": "read"}) || !reflect.DeepEqual(candidate.Outputs, expectedCandidateOutputs) || candidate.Environment != "" || candidate.RunsOn != "ubuntu-latest" || candidate.TimeoutMinutes != 35 || !defaultJobExecution(candidate) || !defaultRunSettings(candidate.Defaults) || !reflect.DeepEqual(stepNames(candidate.Steps), expectedCandidateSteps) {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "builds candidate evidence without publication authority"}
+	}
+	expectedCandidateCheckout := map[string]any{"fetch-depth": 0, "persist-credentials": false, "ref": "${{ inputs.candidate_sha }}"}
+	expectedCandidate := []releaseStepExpectation{
+		{name: "Validate SDK release inputs", runDigest: candidateInputScriptDigest, env: map[string]string{
+			"CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "ENVIRONMENT": "${{ inputs.environment }}", "INVENTORY_PATH": "${{ inputs.inventory_path }}", "PACKAGE": "${{ inputs.package }}",
+			"PACKAGE_PATH": "${{ inputs.package_path }}", "TAG_NAME": "${{ inputs.tag_name }}", "VCS_PATH": "${{ inputs.vcs_path }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Check out candidate revision", uses: checkoutAction, with: expectedCandidateCheckout},
+		{name: "Attest candidate revision and package version", runDigest: candidateAttestScriptDigest, env: map[string]string{
+			"CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "PACKAGE_PATH": "${{ inputs.package_path }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Install pinned Rust toolchain", runDigest: candidateToolchainScriptDigest},
+		{name: "Run credential-free Rust verification", runDigest: candidateVerifyScriptDigest},
+		{name: "Package and dry-run without credentials", runDigest: candidatePackageScriptDigest, env: map[string]string{
+			"INVENTORY_PATH": "${{ inputs.inventory_path }}", "PACKAGE": "${{ inputs.package }}", "PACKAGE_PATH": "${{ inputs.package_path }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Prepare immutable candidate evidence", id: "evidence", runDigest: candidateEvidenceScriptDigest, env: map[string]string{
+			"CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "INVENTORY_PATH": "${{ inputs.inventory_path }}", "PACKAGE": "${{ inputs.package }}", "TAG_NAME": "${{ inputs.tag_name }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Upload candidate evidence", id: "upload", uses: uploadArtifactAction, with: map[string]any{
+			"name": "${{ steps.evidence.outputs.artifact_name }}", "path": "candidate-evidence", "if-no-files-found": "error", "retention-days": 30,
+		}},
+	}
+	if ok, detail := exactReleaseSteps(candidate.Steps, expectedCandidate); !ok {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "attests, verifies, packages, and records the exact SDK candidate", Detail: detail}
+	}
+
+	publish := release.Jobs["publish"]
+	expectedPublishSteps := []string{"Validate publication identity", "Check out candidate revision", "Download candidate evidence", "Recheck candidate evidence", "Install pinned Rust toolchain", "Publish at most once and reconcile"}
+	if !workflowNeedsExactly(publish.Needs, "candidate") || !reflect.DeepEqual(publish.Permissions, map[string]string{"contents": "read"}) || publish.Environment != "${{ inputs.environment }}" || publish.RunsOn != "ubuntu-latest" || publish.TimeoutMinutes != 20 || !defaultJobExecution(publish) || !defaultRunSettings(publish.Defaults) || !reflect.DeepEqual(stepNames(publish.Steps), expectedPublishSteps) {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "isolates registry authority in the protected publication job"}
+	}
+	expectedPublishEnv := map[string]string{
+		"CARGO_REGISTRY_TOKEN": "${{ secrets.CARGO_REGISTRY_TOKEN }}",
+		"EXPECTED_OWNER":       "${{ inputs.expected_owner }}",
+		"PACKAGE":              "${{ inputs.package }}",
+		"PACKAGE_PATH":         "${{ inputs.package_path }}",
+		"VERSION":              "${{ inputs.version }}",
+	}
+	expectedPublish := []releaseStepExpectation{
+		{name: "Validate publication identity", runDigest: publishInputScriptDigest, env: map[string]string{
+			"EXPECTED_OWNER": "${{ inputs.expected_owner }}", "PACKAGE": "${{ inputs.package }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Check out candidate revision", uses: checkoutAction, with: expectedCandidateCheckout},
+		{name: "Download candidate evidence", uses: downloadArtifactAction, with: map[string]any{
+			"name": "${{ needs.candidate.outputs.artifact_name }}", "path": "candidate-evidence",
+		}},
+		{name: "Recheck candidate evidence", runDigest: publishEvidenceScriptDigest, env: map[string]string{
+			"ARTIFACT_DIGEST": "${{ needs.candidate.outputs.artifact_digest }}", "CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "PACKAGE": "${{ inputs.package }}", "TAG_NAME": "${{ inputs.tag_name }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Install pinned Rust toolchain", runDigest: minimalToolchainScriptDigest},
+		{name: "Publish at most once and reconcile", runDigest: publishScriptDigest, env: expectedPublishEnv},
+	}
+	if ok, detail := exactReleaseSteps(publish.Steps, expectedPublish); !ok {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "publishes at most once and reconciles registry acceptance and ownership", Detail: detail}
+	}
+
+	reconcile := release.Jobs["reconcile"]
+	expectedReconcileSteps := []string{"Check out candidate revision", "Download candidate evidence", "Set up Go", "Install pinned Rust toolchain", "Acquire and verify accepted crate", "Prove clean registry consumer", "Wait for public source and docs", "Upload accepted release evidence"}
+	if !workflowNeedsExactly(reconcile.Needs, "candidate", "publish") || !reflect.DeepEqual(reconcile.Permissions, map[string]string{"contents": "read"}) || reconcile.Environment != "" || reconcile.RunsOn != "ubuntu-latest" || reconcile.TimeoutMinutes != 60 || !defaultJobExecution(reconcile) || !defaultRunSettings(reconcile.Defaults) || !reflect.DeepEqual(stepNames(reconcile.Steps), expectedReconcileSteps) {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "reconciles accepted public artifacts without registry authority"}
+	}
+	expectedReconcile := []releaseStepExpectation{
+		{name: "Check out candidate revision", uses: checkoutAction, with: expectedCandidateCheckout},
+		{name: "Download candidate evidence", uses: downloadArtifactAction, with: map[string]any{
+			"name": "${{ needs.candidate.outputs.artifact_name }}", "path": "candidate-evidence",
+		}},
+		{name: "Set up Go", uses: setupGoAction, with: map[string]any{"go-version-file": "go.mod", "cache": true}},
+		{name: "Install pinned Rust toolchain", runDigest: minimalToolchainScriptDigest},
+		{name: "Acquire and verify accepted crate", runDigest: reconcileCrateScriptDigest, env: map[string]string{
+			"CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "PACKAGE": "${{ inputs.package }}", "VCS_PATH": "${{ inputs.vcs_path }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Prove clean registry consumer", runDigest: reconcileConsumerScriptDigest, env: map[string]string{
+			"PACKAGE": "${{ inputs.package }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Wait for public source and docs", runDigest: reconcileReadinessScriptDigest, env: map[string]string{
+			"PACKAGE": "${{ inputs.package }}", "VERSION": "${{ inputs.version }}",
+		}},
+		{name: "Upload accepted release evidence", uses: uploadArtifactAction, with: map[string]any{
+			"name":              "accepted-${{ needs.candidate.outputs.artifact_name }}",
+			"path":              "accepted.crate\ncrate-verification.json\nregistry-version.json\n",
+			"if-no-files-found": "error", "retention-days": 90,
+		}},
+	}
+	if ok, detail := exactReleaseSteps(reconcile.Steps, expectedReconcile); !ok {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "verifies the accepted crate, clean consumer, registry page, and docs", Detail: detail}
+	}
+
+	finalize := release.Jobs["finalize"]
+	expectedFinalizeEnv := map[string]string{"CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "EXPECTED_PRERELEASE": "${{ inputs.prerelease }}", "GH_TOKEN": "${{ github.token }}", "TAG_NAME": "${{ inputs.tag_name }}"}
+	expectedFinalize := []releaseStepExpectation{{name: "Validate and publish matching GitHub draft", runDigest: finalizeScriptDigest, env: expectedFinalizeEnv}}
+	finalizeStepsOK, finalizeDetail := exactReleaseSteps(finalize.Steps, expectedFinalize)
+	if !workflowNeedsExactly(finalize.Needs, "reconcile") || !reflect.DeepEqual(finalize.Permissions, map[string]string{"contents": "write"}) || finalize.Environment != "" || finalize.RunsOn != "ubuntu-latest" || finalize.TimeoutMinutes != 10 || !defaultJobExecution(finalize) || !defaultRunSettings(finalize.Defaults) || !finalizeStepsOK || !containsAll(finalize.Steps[0].Run, ".targetCommitish == $sha", "probe_tag_ref()", "gh api --include", "if test \"${http_status}\" = 404", "tag_ref_status=\"$(probe_tag_ref \"${TAG_NAME}\")\"", "case \"$(jq -r .isDraft", "true)", "false)\n    test \"$(gh api", "--draft=false", "--latest=false", "commits/${TAG_NAME}") {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "publishes only the matching GitHub draft after registry reconciliation", Detail: finalizeDetail}
+	}
+
+	if err := checkCheckoutCredentials(rustCrateWorkflowArtifact, release); err != nil {
+		return err
+	}
+	if strings.Contains(source, "id-token: write") || strings.Contains(source, "secrets: inherit") || strings.Count(source, "${{ secrets.CARGO_REGISTRY_TOKEN }}") != 1 || strings.Count(source, "cargo +1.97.1 publish --locked --no-verify") != 1 || strings.Count(source, "contents: write") != 1 {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "confines registry and GitHub publication authority to single exact boundaries"}
+	}
+	for jobName, job := range release.Jobs {
+		for _, step := range job.Steps {
+			if jobName != "publish" && strings.Contains(step.Run, "cargo +1.97.1 publish --locked --no-verify") {
+				return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "confines registry publication to the protected publication step"}
+			}
+			if !defaultStepExecution(step) || !defaultStepRunSettings(step) {
+				return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "release steps fail closed with default run settings", Detail: jobName + ": " + step.Name}
+			}
+		}
+	}
+	return nil
+}
+
+func decodeWorkflow(artifact string, source []byte) (workflow, error) {
+	var result workflow
+	decoder := yaml.NewDecoder(bytes.NewReader(source))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&result); err != nil {
+		return workflow{}, &Error{Artifact: artifact, Invariant: "uses only supported YAML fields", Cause: err}
+	}
+	return result, nil
 }
 
 func checkVerifyWorkflow(verify workflow, source string) error {
@@ -1196,15 +1400,19 @@ func checkVerifyWorkflow(verify workflow, source string) error {
 	checkout := workflowStepExpectation{
 		name: "Check out repository",
 		uses: "actions/checkout",
-		with: map[string]any{"fetch-depth": 0, "persist-credentials": false},
+		with: map[string]any{"fetch-depth": 0, "persist-credentials": false, "ref": "${{ inputs.expected_sha || github.sha }}"},
 	}
+	attest := workflowStepExpectation{name: "Attest checked-out revision", run: `test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
+test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"`, env: map[string]string{"EXPECTED_SHA": "${{ inputs.expected_sha || github.sha }}"}}
 	goSteps := []workflowStepExpectation{
 		checkout,
+		attest,
 		{name: "Set up Go", uses: "actions/setup-go", with: map[string]any{"go-version-file": "go.mod", "cache": true}},
 		{name: "Run required Go verification", run: "./scripts/verify go"},
 	}
 	rustSteps := []workflowStepExpectation{
 		checkout,
+		attest,
 		{name: "Run required Rust verification", run: "./scripts/verify rust"},
 	}
 	if err := checkVerificationJob("go", verify.Jobs["go"], goSteps); err != nil {
@@ -1256,8 +1464,8 @@ func checkVerificationJob(name string, job workflowJob, expected []workflowStepE
 		if !defaultStepRunSettings(step) {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use default run settings", Detail: name + ": " + step.Name}
 		}
-		if len(step.Env) != 0 {
-			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps do not override the environment", Detail: name + ": " + step.Name}
+		if !reflect.DeepEqual(step.Env, want.env) || step.Shell != want.shell {
+			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "verification steps use only the approved environment and shell", Detail: name + ": " + step.Name}
 		}
 	}
 	return nil
@@ -1307,25 +1515,24 @@ func checkNativeArtifactJob(name, runner string, job workflowJob) error {
 	if runner == "windows-latest" {
 		installScript = windowsSourceInstallScript
 	}
-	expected := []struct {
-		name string
-		run  string
-		uses string
-		with map[string]any
-		env  map[string]string
-	}{
-		{name: "Check out repository", uses: "actions/checkout", with: map[string]any{"fetch-depth": 0, "persist-credentials": false}},
+	expected := []workflowStepExpectation{
+		{name: "Check out repository", uses: "actions/checkout", with: map[string]any{"fetch-depth": 0, "persist-credentials": false, "ref": "${{ inputs.expected_sha || github.sha }}"}},
+		{name: "Attest checked-out revision", run: `test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
+test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"`, env: map[string]string{"EXPECTED_SHA": "${{ inputs.expected_sha || github.sha }}"}},
 		{name: "Install pinned Rust toolchain", run: "rustup toolchain install 1.97.1 --profile minimal"},
 		{name: "Fetch locked Rust dependencies", run: nativeArtifactFetchScript},
 		{name: "Verify native binary artifact behavior", run: nativeArtifactTestScript, env: map[string]string{"RUSTFLAGS": "--cfg opendart_compat"}},
 		{name: "Install CLI from reviewed source offline", run: installScript},
+	}
+	if runner == "windows-latest" {
+		expected[1].shell = "bash"
 	}
 	if len(job.Steps) != len(expected) {
 		return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved steps", Detail: name}
 	}
 	for index, want := range expected {
 		step := job.Steps[index]
-		if step.Name != want.name || !exactScript(step.Run, want.run) || !reflect.DeepEqual(step.Env, want.env) || !defaultStepExecution(step) || !defaultStepRunSettings(step) {
+		if step.Name != want.name || !exactScript(step.Run, want.run) || !reflect.DeepEqual(step.Env, want.env) || step.Shell != want.shell || !defaultStepExecution(step) || strings.TrimSpace(step.WorkingDirectory) != "" {
 			return &Error{Artifact: verifyWorkflowArtifact, Invariant: "native artifact jobs use only approved steps", Detail: name + ": " + step.Name}
 		}
 		if want.uses == "" {
@@ -1687,13 +1894,6 @@ func checkCheckoutCredentials(artifact string, workflow workflow) error {
 	return nil
 }
 
-func releaseOrRecovery(condition string) bool {
-	return exactWorkflowExpression(
-		condition,
-		"steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true'",
-	)
-}
-
 func exactWorkflowExpression(condition, expected string) bool {
 	condition = strings.TrimSpace(condition)
 	if strings.HasPrefix(condition, "${{") && strings.HasSuffix(condition, "}}") {
@@ -1755,25 +1955,55 @@ func stepNames(steps []workflowStep) []string {
 	return names
 }
 
-func expectedReleaseStepEnv(name string) map[string]string {
-	switch name {
-	case "Detect interrupted draft release":
-		return map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}"}
-	case "Upload release assets", "Publish immutable release":
-		return map[string]string{
-			"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}",
-			"TAG_NAME": "${{ steps.release.outputs['openapi/generated--tag_name'] || steps.draft.outputs.tag_name }}",
-		}
-	default:
-		return nil
-	}
-}
-
 func exactScript(actual, expected string) bool {
 	normalize := func(script string) string {
 		return strings.TrimSpace(strings.ReplaceAll(script, "\r\n", "\n"))
 	}
 	return normalize(actual) == normalize(expected)
+}
+
+func hasScriptDigest(script, expected string) bool {
+	return scriptDigest(script) == expected
+}
+
+func scriptDigest(script string) string {
+	normalized := strings.TrimSpace(strings.ReplaceAll(script, "\r\n", "\n"))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(normalized)))
+}
+
+func scriptDigestMismatchDetail(script, expected string) string {
+	actual := scriptDigest(script)
+	if actual == expected {
+		return ""
+	}
+	return "computed script SHA-256: " + actual
+}
+
+func exactReleaseSteps(actual []workflowStep, expected []releaseStepExpectation) (bool, string) {
+	if len(actual) != len(expected) {
+		return false, ""
+	}
+	for index, want := range expected {
+		step := actual[index]
+		if step.Name != want.name || step.ID != want.id || step.Uses != want.uses ||
+			!reflect.DeepEqual(step.With, want.with) || !reflect.DeepEqual(step.Env, want.env) ||
+			!defaultStepExecution(step) || !defaultStepRunSettings(step) {
+			return false, ""
+		}
+		if want.uses != "" {
+			if step.Run != "" || want.runDigest != "" {
+				return false, ""
+			}
+			continue
+		}
+		if step.Run == "" || want.runDigest == "" {
+			return false, ""
+		}
+		if !hasScriptDigest(step.Run, want.runDigest) {
+			return false, step.Name + ": " + scriptDigestMismatchDetail(step.Run, want.runDigest)
+		}
+	}
+	return true, ""
 }
 
 func isCheckoutAction(action string) bool {
