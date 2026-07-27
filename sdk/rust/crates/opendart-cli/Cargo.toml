@@ -22,7 +22,7 @@ cap-std.workspace = true
 clap.workspace = true
 futures-core.workspace = true
 getrandom.workspace = true
-opendart = { path = "../opendart", version = "=0.1.0", default-features = false, features = ["client-reqwest", "serde-json"] } # x-release-please-version
+opendart = { path = "../opendart", version = "=0.1.0-beta.1", default-features = false, features = ["client-reqwest", "serde-json"] } # x-release-please-version
 serde.workspace = true
 serde_json.workspace = true
 tokio = { workspace = true, features = ["net", "rt", "sync", "time"] }
