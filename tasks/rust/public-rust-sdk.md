@@ -54,19 +54,25 @@ generator model without depending on Rust source.
   accepted-artifact reconciliation, and draft finalizer.
   [PR #62](https://github.com/cpaikr/opendart/pull/62) landed the setup with
   preserved commits. Its main-only `crates-io-opendart` environment,
-  `sjunepark` reviewer, owner variable, and short-lived bootstrap secret are
-  configured. [SDK proposal #63](https://github.com/cpaikr/opendart/pull/63)
-  correctly targets `0.1.0-beta.1`; both generated lockfiles and the CLI's
-  exact SDK pin are aligned. PR #67 first added a default-branch
+  `sjunepark` reviewer, and owner variable are configured. The bootstrap secret
+  is intentionally absent while publication recovery is repaired.
+  [SDK proposal #63](https://github.com/cpaikr/opendart/pull/63) correctly
+  targeted `0.1.0-beta.1`; both generated lockfiles and the CLI's exact SDK pin
+  were aligned. PR #67 first added a default-branch
   `workflow_run` reporter, but live acceptance proved GitHub suppresses that
   event after a `GITHUB_TOKEN` dispatch. PR #68 moved status reporting into the
   trusted release orchestrator so it waits for the exact bot-created Verify and
   full-race runs and revalidates proposal identity, ancestry, and generated
   scope immediately before reporting their combined result. Live acceptance on
   SDK proposal #63 passed both exact-SHA workflows and posted the successful
-  combined `verify` status. The proposal remains open and no crate has been
-  published. The first beta, trusted-publishing cutover, and stable promotion
-  remain.
+  combined `verify` status. The explicitly confirmed proposal was merged as
+  `157d78aa62bace4b00df6677bc3372baf88b9281`. Release Please created the exact
+  `opendart-v0.1.0-beta.1` draft, and the credential-free candidate passed, but
+  publication stopped before `cargo publish` because the protected environment
+  secret resolved empty inside the reusable workflow. The environment secret
+  was removed, no crate or tag was published, and the matching draft remains
+  recoverable at the reviewed SHA. The first beta, trusted-publishing cutover,
+  and stable promotion remain.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -359,12 +365,13 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Review [SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63) and
-explicitly confirm `0.1.0-beta.1` through `$release-please-release` before
-merging the proposal. Its current head has a successful exact-SHA `verify`
-status covering both Verify and full-race; repeat that check if the proposal
-head changes. Do not tag, publish, or finalize the proposal without the exact
-version confirmation.
+Land the approved reusable-workflow secret-interface repair and its releaseguard
+coverage. Revoke the discarded crates.io bootstrap tokens, create one clean
+seven-day `publish-new` token for `opendart`, store its source copy at
+`op://Developer/opendart crates.io bootstrap/credential`, and inject it only
+into the `crates-io-opendart` environment. Recover the existing exact
+`0.1.0-beta.1` draft at `157d78aa62bace4b00df6677bc3372baf88b9281`;
+do not merge the duplicate proposal or change the candidate SHA.
 
 ## Progress log
 

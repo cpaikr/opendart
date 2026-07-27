@@ -2,6 +2,10 @@ name: Rust crate release
 
 on:
   workflow_call:
+    secrets:
+      CARGO_REGISTRY_TOKEN:
+        description: Short-lived crates.io bootstrap token supplied by the protected environment
+        required: false
     inputs:
       package:
         description: Cargo package identity

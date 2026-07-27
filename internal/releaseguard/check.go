@@ -1265,9 +1265,19 @@ func checkRustCrateWorkflow(release workflow, source string) error {
 	}
 	workflowCall, ok := release.On["workflow_call"].(map[string]any)
 	inputs, inputsOK := workflowCall["inputs"].(map[string]any)
+	secrets, secretsOK := workflowCall["secrets"].(map[string]any)
 	expectedInputs := []string{"candidate_sha", "environment", "expected_owner", "inventory_path", "package", "package_path", "prerelease", "tag_name", "vcs_path", "version"}
 	if !ok || !inputsOK || !reflect.DeepEqual(sortedKeys(inputs), expectedInputs) {
 		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "accepts only the fixed release identity inputs"}
+	}
+	expectedSecrets := map[string]any{
+		"CARGO_REGISTRY_TOKEN": map[string]any{
+			"description": "Short-lived crates.io bootstrap token supplied by the protected environment",
+			"required":    false,
+		},
+	}
+	if !secretsOK || !reflect.DeepEqual(secrets, expectedSecrets) {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "declares only the optional protected-environment bootstrap credential"}
 	}
 	if len(release.Permissions) != 0 || release.Concurrency.Group != "rust-crate-${{ inputs.package }}-${{ inputs.version }}" || release.Concurrency.CancelInProgress {
 		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "starts without authority and serializes an exact crate version"}

@@ -163,6 +163,25 @@ the accepted artifact is verified, configure the
 trusted publisher for the exact repository/workflow/environment, and land the
 OIDC-only follow-up before the next release. Do not retain an automatic fallback
 to a long-lived token.
+
+Keep the bootstrap token's source copy in the `Developer` 1Password vault as
+API Credential item `opendart crates.io bootstrap`, secret field `credential`.
+Provision the GitHub environment secret without printing or exporting the
+value:
+
+```sh
+op read -n 'op://Developer/opendart crates.io bootstrap/credential' \
+  | gh secret set CARGO_REGISTRY_TOKEN \
+      --repo cpaikr/opendart \
+      --env crates-io-opendart
+```
+
+Verify only the secret metadata with `gh secret list`; never echo, log, or
+place the token in a command argument. After the accepted crate is verified,
+delete the GitHub environment secret, revoke the crates.io token, and archive
+the 1Password item. The trusted-publishing cutover removes this token path from
+subsequent releases.
+
 The [crates.io trusted-publishing announcement](https://blog.rust-lang.org/2025/07/11/crates-io-development-update-2025-07/#trusted-publishing)
 documents this first-release boundary.
 
