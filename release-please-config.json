@@ -37,6 +37,11 @@
           "jsonpath": "$.package[?(@.name.value == \"opendart\")].version"
         },
         {
+          "type": "toml",
+          "path": "/sdk/rust/compat/reqwest-feature-unification/Cargo.lock",
+          "jsonpath": "$.package[?(@.name.value == \"opendart\")].version"
+        },
+        {
           "type": "generic",
           "path": "/sdk/rust/crates/opendart-cli/Cargo.toml"
         }
