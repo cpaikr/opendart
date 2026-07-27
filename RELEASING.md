@@ -186,30 +186,29 @@ Linux, macOS, and Windows.
 
 Release Please uses the repository `GITHUB_TOKEN`, so its pull-request event
 does not create a new `pull_request` workflow run under GitHub's token recursion
-policy. To supply those checks without a manual dispatch, the Rust publication
-setup uses a separate `actions: write` job to dispatch both `verify.yml` and
-`full-race.yml` for every managed component PR head SHA. Those workflows must
-check out and attest the expected SHA and be redispatched when that SHA changes.
-After a dispatched Verify run completes, the default-branch
-`release-proposal-status.yml` workflow revalidates the open GitHub Actions-owned
-Release Please PR, including current `main` ancestry and its exact
-generated-file scope, and reports that exact run's conclusion as the `verify`
-commit status. This bridges GitHub's token-recursion behavior to branch
-protection without giving the
-credential-free Verify workflow a token or requiring a manual approval of its
-suppressed `pull_request` run.
-Update the reporter's generated-file allowlist and releaseguard invariant before
-enabling another component or changing a component's Release Please outputs.
-Add the stable `Verify / verify` aggregate to `main` branch protection; retain
-`Full race verification / full-race` as an automatically produced release-only
-merge-readiness check rather than requiring the expensive sweep on every
-ordinary PR. The release skill and this runbook treat a missing, stale, skipped,
-or failed full-race dispatch as a merge blocker. See GitHub's
+policy. A `workflow_run` event from a `GITHUB_TOKEN`-dispatched workflow is also
+suppressed, so status reporting stays inside the trusted `main` orchestrator.
+An `actions: write` job dispatches both `verify.yml` and `full-race.yml` for
+every managed component PR head SHA and records the preceding run IDs. A
+separate `actions: read` and `statuses: write` job then waits for exactly one
+new GitHub Actions-created run of each workflow at that SHA. Before reporting,
+it revalidates the open GitHub Actions-owned proposal, current `main` ancestry,
+and exact generated-file scope. The `verify` commit status succeeds only when
+both exact-SHA runs succeed. This bridges GitHub's token-recursion behavior to
+branch protection without giving the credential-free verification workflows a
+token or requiring manual approval of the suppressed `pull_request` run.
+Update the reporter job's generated-file allowlist and releaseguard invariant
+before enabling another component or changing a component's Release Please
+outputs.
+Add the stable `Verify / verify` aggregate to `main` branch protection. The
+reported release-proposal `verify` status also covers the automatically
+produced, release-only full-race run without requiring the expensive sweep on
+every ordinary PR. The release skill and this runbook treat a missing, stale,
+skipped, or failed exact-SHA dispatch as a merge blocker. See GitHub's
 [token behavior](https://docs.github.com/en/actions/concepts/security/github_token).
 
-Until that dispatcher is on `main`, maintainers may use the following commands
-for an existing specification release proposal; they are a recovery path, not
-the target steady-state Rust process:
+For incident recovery only, maintainers may dispatch the workflows directly;
+these commands do not replace the orchestrator-owned required status:
 
 ```sh
 gh workflow run verify.yml --ref <release-please-branch> \

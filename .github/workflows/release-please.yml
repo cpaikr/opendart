@@ -303,13 +303,17 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      proposals: ${{ steps.dispatch.outputs.proposals }}
     steps:
       - name: Dispatch exact-SHA release proposal checks
+        id: dispatch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_PRS: ${{ needs.release-please.outputs.prs }}
         run: |
           numbers="$(jq -er 'if type == "array" and length > 0 and all(.[]; type == "number" and . > 0) then .[] else error("release proposal numbers are invalid") end' <<<"${RELEASE_PRS}")"
+          proposals='[]'
           while IFS= read -r number; do
             detail="$(gh pr view "${number}" --repo "${GITHUB_REPOSITORY}" --json author,baseRefName,headRefName,headRefOid,labels,state)"
             jq -e '
@@ -322,9 +326,145 @@ jobs:
             ' <<<"${detail}" > /dev/null
             branch="$(jq -r .headRefName <<<"${detail}")"
             sha="$(jq -r .headRefOid <<<"${detail}")"
+            verify_after_id="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs" -f event=workflow_dispatch -f per_page=1 --jq '.workflow_runs[0].id // 0')"
+            full_race_after_id="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/workflows/full-race.yml/runs" -f event=workflow_dispatch -f per_page=1 --jq '.workflow_runs[0].id // 0')"
             gh workflow run verify.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"
             gh workflow run full-race.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"
+            proposals="$(jq -c \
+              --argjson number "${number}" \
+              --arg branch "${branch}" \
+              --arg sha "${sha}" \
+              --argjson verify_after_id "${verify_after_id}" \
+              --argjson full_race_after_id "${full_race_after_id}" \
+              '. + [{number: $number, branch: $branch, sha: $sha, verify_after_id: $verify_after_id, full_race_after_id: $full_race_after_id}]' \
+              <<<"${proposals}")"
           done <<<"${numbers}"
+          echo "proposals=${proposals}" >> "${GITHUB_OUTPUT}"
+
+  report-release-pr-status:
+    needs: dispatch-release-pr-checks
+    if: ${{ needs.dispatch-release-pr-checks.outputs.proposals != '[]' }}
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+      statuses: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Report exact-SHA release proposal status
+        env:
+          BASE_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROPOSALS: ${{ needs.dispatch-release-pr-checks.outputs.proposals }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          find_run() {
+            workflow="$1"
+            sha="$2"
+            after_id="$3"
+            for _ in $(seq 1 240); do
+              matches="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/runs" -f event=workflow_dispatch -f per_page=100 | jq -c \
+                --arg sha "${sha}" \
+                --argjson after_id "${after_id}" '
+                  [.workflow_runs[] |
+                    select(
+                      .id > $after_id and
+                      .head_sha == $sha and
+                      .event == "workflow_dispatch" and
+                      .actor.login == "github-actions[bot]" and
+                      .triggering_actor.login == "github-actions[bot]" and
+                      .repository.full_name == env.GITHUB_REPOSITORY
+                    )
+                  ]
+                ')"
+              count="$(jq 'length' <<<"${matches}")"
+              if test "${count}" -gt 1; then
+                echo "multiple ${workflow} runs match ${sha}" >&2
+                return 1
+              fi
+              if test "${count}" = 1 && test "$(jq -r '.[0].status' <<<"${matches}")" = completed; then
+                jq -c '.[0]' <<<"${matches}"
+                return
+              fi
+              sleep 10
+            done
+            echo "timed out waiting for ${workflow} at ${sha}" >&2
+            return 1
+          }
+
+          validate_proposal() {
+            test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)" = "${BASE_SHA}"
+            detail="$(gh pr view "${number}" --repo "${GITHUB_REPOSITORY}" --json author,baseRefName,baseRefOid,headRefName,headRefOid,labels,state)"
+            jq -e --arg base "${BASE_SHA}" --arg branch "${branch}" --arg sha "${sha}" '
+              .state == "OPEN" and
+              .baseRefName == "main" and
+              .baseRefOid == $base and
+              .headRefName == $branch and
+              .headRefOid == $sha and
+              .author.login == "app/github-actions" and
+              any(.labels[]; .name == "autorelease: pending")
+            ' <<<"${detail}" > /dev/null
+
+            comparison="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE_SHA}...${sha}")"
+            jq -e --arg base "${BASE_SHA}" '
+              .status == "ahead" and
+              .behind_by == 0 and
+              .merge_base_commit.sha == $base
+            ' <<<"${comparison}" > /dev/null
+
+            case "${branch}" in
+              release-please--branches--main--components--opendart-spec)
+                expected='[
+                  {"filename":".release-please-manifest.json","status":"modified"},
+                  {"filename":"CHANGELOG.md","status":"modified"}
+                ]'
+                ;;
+              release-please--branches--main--components--opendart)
+                expected='[
+                  {"filename":".release-please-manifest.json","status":"modified"},
+                  {"filename":"sdk/rust/Cargo.lock","status":"modified"},
+                  {"filename":"sdk/rust/compat/reqwest-feature-unification/Cargo.lock","status":"modified"},
+                  {"filename":"sdk/rust/crates/opendart-cli/Cargo.toml","status":"modified"},
+                  {"filename":"sdk/rust/crates/opendart/CHANGELOG.md","status":"modified"},
+                  {"filename":"sdk/rust/crates/opendart/Cargo.toml","status":"modified"}
+                ]'
+                ;;
+              *) echo "unsupported Release Please branch: ${branch}" >&2; return 1 ;;
+            esac
+            jq -e --argjson expected "${expected}" '
+              [.files[] | {filename, status}] | sort_by(.filename) == $expected
+            ' <<<"${comparison}" > /dev/null
+          }
+
+          failed=0
+          while IFS= read -r proposal; do
+            number="$(jq -r .number <<<"${proposal}")"
+            branch="$(jq -r .branch <<<"${proposal}")"
+            sha="$(jq -r .sha <<<"${proposal}")"
+            verify_after_id="$(jq -r .verify_after_id <<<"${proposal}")"
+            full_race_after_id="$(jq -r .full_race_after_id <<<"${proposal}")"
+
+            validate_proposal
+            verify_run="$(find_run verify.yml "${sha}" "${verify_after_id}")"
+            full_race_run="$(find_run full-race.yml "${sha}" "${full_race_after_id}")"
+            validate_proposal
+            verify_conclusion="$(jq -r .conclusion <<<"${verify_run}")"
+            full_race_conclusion="$(jq -r .conclusion <<<"${full_race_run}")"
+            state=failure
+            if test "${verify_conclusion}" = success && test "${full_race_conclusion}" = success; then
+              state=success
+            else
+              failed=1
+            fi
+
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${sha}" \
+              -f state="${state}" \
+              -f context=verify \
+              -f description="Exact-SHA release proposal gates ${state}" \
+              -f target_url="${RUN_URL}" > /dev/null
+          done < <(jq -cer '.[]' <<<"${PROPOSALS}")
+          exit "${failed}"
 
   sdk-release:
     needs: release-please

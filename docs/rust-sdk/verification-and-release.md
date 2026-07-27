@@ -156,20 +156,20 @@ implements:
    `actions: write`, `contents: read`, and `pull-requests: read`. It dispatches
    Verify and full-race for every managed component PR's exact head SHA,
    requires each run to check out and attest that expected SHA, and
-   redispatches after each update. A default-branch `workflow_run` reporter
-   then revalidates the GitHub Actions-owned proposal, its current `main`
-   ancestry, and its exact generated-file scope before mapping the completed
-   exact-SHA Verify conclusion to the branch-protection `verify` commit status.
-   The reporter alone has `statuses: write`; Verify remains credential-free. This
-   supplies the otherwise-suppressed checks without a routine manual dispatch
-   or approval. Extend the reporter allowlist and releaseguard invariant before
-   enabling another component or changing the generated release-file set.
+   redispatches after each update. GitHub also suppresses `workflow_run` events
+   from these `GITHUB_TOKEN` dispatches, so a second trusted orchestrator job
+   uses only `actions: read`, `contents: read`, `pull-requests: read`, and
+   `statuses: write`. It waits for exactly one new GitHub Actions-created Verify
+   and full-race run at the proposal SHA, then revalidates the proposal, current
+   `main` ancestry, and exact generated-file scope. The required `verify` status
+   succeeds only when both runs succeed. Verify and full-race remain
+   credential-free. Extend the reporter job's allowlist and releaseguard
+   invariant before enabling another component or changing the generated
+   release-file set.
    After the setup reaches `main`, add the stable `Verify / verify` aggregate
    to branch protection. Keep
-   `Full race verification / full-race` release-only and make its exact-SHA
-   result a mandatory merge-readiness check in the release skill and operator
-   runbook; do not make every ordinary PR run the full sweep merely to obtain a
-   conditionally needed status.
+   full-race release-only; its exact-SHA result is folded into the proposal's
+   required `verify` status. Do not make every ordinary PR run the full sweep.
 3. The Release Please job consumes the exact
    `sdk/rust/crates/opendart--release_created`, `--tag_name`, `--version`, and
    `--sha` values. Before invoking Release Please, query the exact

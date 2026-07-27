@@ -305,6 +305,16 @@ func TestReleaseProposalStatusScript(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the reporter runs with bash on ubuntu-latest")
 	}
+	source, err := os.ReadFile(filepath.Join(repositoryRoot(t), filepath.FromSlash(releaseWorkflowArtifact)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow, err := decodeWorkflow(releaseWorkflowArtifact, source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reportScript := workflow.Jobs["report-release-pr-status"].Steps[0].Run
+
 	sdkBranch := "release-please--branches--main--components--opendart"
 	specBranch := "release-please--branches--main--components--opendart-spec"
 	pendingLabels := `[{"name":"autorelease: pending"}]`
@@ -318,11 +328,22 @@ func TestReleaseProposalStatusScript(t *testing.T) {
 			state,
 		)
 	}
-	onePR := func(author, baseBranch, branch, state, labels string) string {
-		return "[" + prObject(author, baseBranch, branch, state, labels) + "]"
-	}
 	trustedPR := func(branch string) string {
-		return onePR("app/github-actions", "main", branch, "OPEN", pendingLabels)
+		return prObject("app/github-actions", "main", branch, "OPEN", pendingLabels)
+	}
+	run := func(id int, conclusion string) string {
+		return fmt.Sprintf(
+			`{"id":%d,"head_sha":"4d368f361ea659806938765dbbcb0cdb6578c0c6","event":"workflow_dispatch","actor":{"login":"github-actions[bot]"},"triggering_actor":{"login":"github-actions[bot]"},"repository":{"full_name":"cpaikr/opendart"},"status":"completed","conclusion":%q}`,
+			id,
+			conclusion,
+		)
+	}
+	runs := func(id int, conclusion string, count int) string {
+		values := make([]string, count)
+		for index := range count {
+			values[index] = run(id+index, conclusion)
+		}
+		return `{"workflow_runs":[` + strings.Join(values, ",") + `]}`
 	}
 
 	sdkFiles := `[
@@ -338,78 +359,106 @@ func TestReleaseProposalStatusScript(t *testing.T) {
 		{"filename":".release-please-manifest.json","status":"modified"}
 	]`
 	tests := []struct {
-		name       string
-		branch     string
-		files      string
-		comparison string
-		prResults  string
-		conclusion string
-		wantState  string
-		wantOK     bool
+		name               string
+		branch             string
+		files              string
+		comparison         string
+		prResult           string
+		verifyConclusion   string
+		fullRaceConclusion string
+		verifyRunCount     int
+		secondBaseSHA      string
+		wantState          string
+		wantOK             bool
+		wantStatus         bool
 	}{
-		{name: "SDK success", branch: sdkBranch, files: sdkFiles, prResults: trustedPR(sdkBranch), conclusion: "success", wantState: "success", wantOK: true},
-		{name: "spec failure", branch: specBranch, files: specFiles, prResults: trustedPR(specBranch), conclusion: "failure", wantState: "failure", wantOK: true},
-		{name: "untrusted proposal", branch: sdkBranch, files: sdkFiles, prResults: onePR("other", "main", sdkBranch, "OPEN", pendingLabels), conclusion: "success", wantOK: false},
-		{name: "closed proposal", branch: sdkBranch, files: sdkFiles, prResults: onePR("app/github-actions", "main", sdkBranch, "CLOSED", pendingLabels), conclusion: "success", wantOK: false},
-		{name: "wrong base branch", branch: sdkBranch, files: sdkFiles, prResults: onePR("app/github-actions", "other", sdkBranch, "OPEN", pendingLabels), conclusion: "success", wantOK: false},
-		{name: "missing pending label", branch: sdkBranch, files: sdkFiles, prResults: onePR("app/github-actions", "main", sdkBranch, "OPEN", `[]`), conclusion: "success", wantOK: false},
-		{name: "no proposal", branch: sdkBranch, files: sdkFiles, prResults: `[]`, conclusion: "success", wantOK: false},
-		{name: "multiple proposals", branch: sdkBranch, files: sdkFiles, prResults: "[" + prObject("app/github-actions", "main", sdkBranch, "OPEN", pendingLabels) + "," + prObject("app/github-actions", "main", sdkBranch, "OPEN", pendingLabels) + "]", conclusion: "success", wantOK: false},
-		{name: "stale proposal head", branch: sdkBranch, files: sdkFiles, comparison: fmt.Sprintf(`{"status":"diverged","behind_by":1,"merge_base_commit":{"sha":"older"},"files":%s}`, sdkFiles), prResults: trustedPR(sdkBranch), conclusion: "success", wantOK: false},
-		{name: "unexpected workflow file", branch: sdkBranch, files: `[{"filename":".github/workflows/verify.yml","status":"modified"}]`, prResults: trustedPR(sdkBranch), conclusion: "success", wantOK: false},
-		{name: "unknown conclusion", branch: sdkBranch, files: sdkFiles, prResults: trustedPR(sdkBranch), conclusion: "unknown", wantOK: false},
+		{name: "SDK success", branch: sdkBranch, files: sdkFiles, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1, wantState: "success", wantOK: true, wantStatus: true},
+		{name: "spec Verify failure", branch: specBranch, files: specFiles, prResult: trustedPR(specBranch), verifyConclusion: "failure", fullRaceConclusion: "success", verifyRunCount: 1, wantState: "failure", wantStatus: true},
+		{name: "full race failure", branch: sdkBranch, files: sdkFiles, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "failure", verifyRunCount: 1, wantState: "failure", wantStatus: true},
+		{name: "untrusted proposal", branch: sdkBranch, files: sdkFiles, prResult: prObject("other", "main", sdkBranch, "OPEN", pendingLabels), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
+		{name: "closed proposal", branch: sdkBranch, files: sdkFiles, prResult: prObject("app/github-actions", "main", sdkBranch, "CLOSED", pendingLabels), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
+		{name: "wrong base branch", branch: sdkBranch, files: sdkFiles, prResult: prObject("app/github-actions", "other", sdkBranch, "OPEN", pendingLabels), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
+		{name: "missing pending label", branch: sdkBranch, files: sdkFiles, prResult: prObject("app/github-actions", "main", sdkBranch, "OPEN", `[]`), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
+		{name: "stale proposal head", branch: sdkBranch, files: sdkFiles, comparison: fmt.Sprintf(`{"status":"diverged","behind_by":1,"merge_base_commit":{"sha":"older"},"files":%s}`, sdkFiles), prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
+		{name: "unexpected workflow file", branch: sdkBranch, files: `[{"filename":".github/workflows/verify.yml","status":"modified"}]`, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
+		{name: "ambiguous Verify runs", branch: sdkBranch, files: sdkFiles, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 2},
+		{name: "main advances while waiting", branch: sdkBranch, files: sdkFiles, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1, secondBaseSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			root := t.TempDir()
+			baseCallCount := filepath.Join(root, "base-call-count")
 			callLog := filepath.Join(root, "gh-call.log")
 			mock := `#!/bin/sh
 set -eu
-case "$1 $2" in
-  "pr list")
-    printf '%s\n' "${MOCK_PR_RESULTS}"
-    ;;
-  "api repos/"*)
+if test "$1 $2" = "pr view"; then
+    printf '%s\n' "${MOCK_PR_RESULT}"
+elif test "$1 $2" = "api repos/cpaikr/opendart/commits/main"; then
+    count=0
+    if test -f "${GH_BASE_CALL_COUNT}"; then
+        read -r count < "${GH_BASE_CALL_COUNT}"
+    fi
+    count=$((count + 1))
+    printf '%s\n' "${count}" > "${GH_BASE_CALL_COUNT}"
+    if test "${count}" -gt 1 && test -n "${MOCK_SECOND_BASE_SHA}"; then
+        printf '%s\n' "${MOCK_SECOND_BASE_SHA}"
+    else
+        printf '%s\n' "756ad8294dc2beeee46112736b904591068cf2e8"
+    fi
+elif test "$1 $2" = "api repos/cpaikr/opendart/compare/756ad8294dc2beeee46112736b904591068cf2e8...4d368f361ea659806938765dbbcb0cdb6578c0c6"; then
     printf '%s\n' "${MOCK_COMPARISON}"
+elif test "$1 $2 $3" = "api --method GET"; then
+  case "$4" in
+  */verify.yml/runs)
+    printf '%s\n' "${MOCK_VERIFY_RUNS}"
     ;;
-  "api --method")
-    shift 2
-    printf '%s\n' "$@" > "${GH_CALL_LOG}"
+  */full-race.yml/runs)
+    printf '%s\n' "${MOCK_FULL_RACE_RUNS}"
     ;;
   *)
-    echo "unexpected gh invocation: $*" >&2
+    echo "unexpected workflow runs request: $*" >&2
     exit 1
     ;;
-esac
+  esac
+elif test "$1 $2 $3" = "api --method POST"; then
+  shift 3
+  printf '%s\n' "$@" > "${GH_CALL_LOG}"
+else
+  echo "unexpected gh invocation: $*" >&2
+  exit 1
+fi
 `
 			if err := os.WriteFile(filepath.Join(root, "gh"), []byte(mock), 0o700); err != nil {
 				t.Fatal(err)
 			}
 
-			command := exec.CommandContext(t.Context(), "bash", "-e", "-o", "pipefail", "-c", releaseProposalStatusScript)
+			command := exec.CommandContext(t.Context(), "bash", "-e", "-o", "pipefail", "-c", reportScript)
 			comparison := test.comparison
 			if comparison == "" {
 				comparison = fmt.Sprintf(`{"status":"ahead","behind_by":0,"merge_base_commit":{"sha":"756ad8294dc2beeee46112736b904591068cf2e8"},"files":%s}`, test.files)
 			}
+			proposals := fmt.Sprintf(`[{"number":63,"branch":%q,"sha":"4d368f361ea659806938765dbbcb0cdb6578c0c6","verify_after_id":100,"full_race_after_id":200}]`, test.branch)
 			command.Env = append(os.Environ(),
 				"BASE_SHA=756ad8294dc2beeee46112736b904591068cf2e8",
+				"GH_BASE_CALL_COUNT="+baseCallCount,
 				"GH_CALL_LOG="+callLog,
 				"GH_TOKEN=test-token",
 				"GITHUB_REPOSITORY=cpaikr/opendart",
-				"HEAD_BRANCH="+test.branch,
-				"HEAD_SHA=4d368f361ea659806938765dbbcb0cdb6578c0c6",
 				"MOCK_COMPARISON="+comparison,
-				"MOCK_PR_RESULTS="+test.prResults,
+				"MOCK_FULL_RACE_RUNS="+runs(201, test.fullRaceConclusion, 1),
+				"MOCK_PR_RESULT="+test.prResult,
+				"MOCK_SECOND_BASE_SHA="+test.secondBaseSHA,
+				"MOCK_VERIFY_RUNS="+runs(101, test.verifyConclusion, test.verifyRunCount),
 				"PATH="+root+string(os.PathListSeparator)+os.Getenv("PATH"),
-				"RUN_CONCLUSION="+test.conclusion,
+				"PROPOSALS="+proposals,
 				"RUN_URL=https://github.com/cpaikr/opendart/actions/runs/1",
 			)
 			err := command.Run()
 			if (err == nil) != test.wantOK {
 				t.Fatalf("reporter error = %v, want success %t", err, test.wantOK)
 			}
-			if !test.wantOK {
+			if !test.wantStatus {
 				if _, err := os.Stat(callLog); !errors.Is(err, os.ErrNotExist) {
 					t.Fatalf("status call log error = %v, want absent", err)
 				}
@@ -907,44 +956,49 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "root permissions are empty",
 		},
 		{
-			name: "proposal status trigger", artifact: releaseProposalStatusArtifact,
-			old: "      - Verify", replacement: "      - Other",
-			invariant: "runs only after completed Verify workflows",
-		},
-		{
-			name: "proposal status event", artifact: releaseProposalStatusArtifact,
-			old: "github.event.workflow_run.event == 'workflow_dispatch'", replacement: "github.event.workflow_run.event == 'pull_request'",
-			invariant: "reports only trusted dispatched Verify runs",
-		},
-		{
-			name: "proposal status permission", artifact: releaseProposalStatusArtifact,
+			name: "proposal status permission", artifact: releaseWorkflowArtifact,
 			old: "      statuses: write", replacement: "      statuses: read",
-			invariant: "isolates read-only proposal inspection and commit-status write authority",
+			invariant: "isolates exact-run inspection and commit-status authority in the trusted release orchestrator",
 		},
 		{
-			name: "proposal status ancestry", artifact: releaseProposalStatusArtifact,
+			name: "proposal status job timeout", artifact: releaseWorkflowArtifact,
+			old: "    timeout-minutes: 45", replacement: "    timeout-minutes: 15",
+			invariant: "isolates exact-run inspection and commit-status authority in the trusted release orchestrator",
+		},
+		{
+			name: "proposal status poll budget", artifact: releaseWorkflowArtifact,
+			old: "for _ in $(seq 1 240)", replacement: "for _ in $(seq 1 72)",
+			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
+		},
+		{
+			name: "proposal status final revalidation", artifact: releaseWorkflowArtifact,
+			old: "full_race_run=\"$(find_run full-race.yml \"${sha}\" \"${full_race_after_id}\")\"\n            validate_proposal", replacement: "full_race_run=\"$(find_run full-race.yml \"${sha}\" \"${full_race_after_id}\")\"",
+			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
+		},
+		{
+			name: "proposal status ancestry", artifact: releaseWorkflowArtifact,
 			old: `.merge_base_commit.sha == $base`, replacement: `.merge_base_commit.sha != $base`,
-			invariant: "validates the managed proposal before reporting its exact-SHA result",
+			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
 		},
 		{
-			name: "proposal status author", artifact: releaseProposalStatusArtifact,
-			old: `.author.login == "app/github-actions"`, replacement: `.author.login != "app/github-actions"`,
-			invariant: "validates the managed proposal before reporting its exact-SHA result",
+			name: "proposal status author", artifact: releaseWorkflowArtifact,
+			old: ".headRefOid == $sha and\n              .author.login == \"app/github-actions\"", replacement: ".headRefOid == $sha and\n              .author.login != \"app/github-actions\"",
+			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
 		},
 		{
-			name: "proposal status generated file scope", artifact: releaseProposalStatusArtifact,
+			name: "proposal status generated file scope", artifact: releaseWorkflowArtifact,
 			old: `{"filename":"sdk/rust/crates/opendart/Cargo.toml","status":"modified"}`, replacement: `{"filename":".github/workflows/verify.yml","status":"modified"}`,
-			invariant: "validates the managed proposal before reporting its exact-SHA result",
+			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
 		},
 		{
-			name: "proposal status context", artifact: releaseProposalStatusArtifact,
+			name: "proposal status context", artifact: releaseWorkflowArtifact,
 			old: "-f context=verify", replacement: "-f context=other",
-			invariant: "validates the managed proposal before reporting its exact-SHA result",
+			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
 		},
 		{
-			name: "proposal failure classification", artifact: releaseProposalStatusArtifact,
-			old: "failure|cancelled|timed_out|action_required|stale|neutral|skipped|startup_failure) state=failure", replacement: "failure|cancelled|timed_out|action_required|stale|neutral|skipped|startup_failure) state=success",
-			invariant: "validates the managed proposal before reporting its exact-SHA result",
+			name: "proposal full-race gate", artifact: releaseWorkflowArtifact,
+			old: `test "${verify_conclusion}" = success && test "${full_race_conclusion}" = success`, replacement: `test "${verify_conclusion}" = success`,
+			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
 		},
 		{
 			name: "release workflow shell bypass", artifact: releaseWorkflowArtifact,
@@ -2109,7 +2163,6 @@ func (fixture releaseArtifactFixture) copy(t *testing.T) string {
 	for _, artifact := range []string{
 		configArtifact,
 		manifestArtifact,
-		releaseProposalStatusArtifact,
 		rustCargoArtifact,
 		rustCLICargoArtifact,
 		rustWorkspaceArtifact,
