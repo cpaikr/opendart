@@ -36,6 +36,7 @@ const (
 	rustCargoArtifact              = "sdk/rust/crates/opendart/Cargo.toml"
 	rustCLICargoArtifact           = "sdk/rust/crates/opendart-cli/Cargo.toml"
 	rustLockArtifact               = "sdk/rust/Cargo.lock"
+	rustCompatibilityLockArtifact  = "sdk/rust/compat/reqwest-feature-unification/Cargo.lock"
 	rustProvenanceArtifact         = "sdk/rust/crates/opendart/src/provenance.rs"
 	rustSDKClientArtifact          = "sdk/rust/crates/opendart/src/client.rs"
 	rustCLIExecutionArtifact       = "sdk/rust/crates/opendart-cli/src/execution.rs"
@@ -263,6 +264,10 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
+	compatibilityLockSource, err := readArtifact(absoluteRoot, rustCompatibilityLockArtifact)
+	if err != nil {
+		return err
+	}
 	cliCargoSource, err := readArtifact(absoluteRoot, rustCLICargoArtifact)
 	if err != nil {
 		return err
@@ -271,7 +276,7 @@ func Check(repositoryRoot string) error {
 	if err != nil {
 		return err
 	}
-	if err := checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCargoSource, lockSource); err != nil {
+	if err := checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCargoSource, lockSource, compatibilityLockSource); err != nil {
 		return err
 	}
 	provenanceSource, err := readArtifact(absoluteRoot, rustProvenanceArtifact)
@@ -679,7 +684,7 @@ type releaseStepExpectation struct {
 	env       map[string]string
 }
 
-func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCargoSource, lockSource []byte) error {
+func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCargoSource, lockSource, compatibilityLockSource []byte) error {
 	var configFields map[string]json.RawMessage
 	if err := json.Unmarshal(configSource, &configFields); err != nil {
 		return &Error{Artifact: configArtifact, Invariant: "valid JSON", Cause: err}
@@ -813,11 +818,16 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 			"jsonpath": `$.package[?(@.name.value == "opendart")].version`,
 		},
 		map[string]any{
+			"type":     "toml",
+			"path":     "/sdk/rust/compat/reqwest-feature-unification/Cargo.lock",
+			"jsonpath": `$.package[?(@.name.value == "opendart")].version`,
+		},
+		map[string]any{
 			"type": "generic",
 			"path": "/sdk/rust/crates/opendart-cli/Cargo.toml",
 		},
 	}
-	if err := require(configArtifact, "Rust package updates the workspace lock and CLI SDK pin", reflect.DeepEqual(rustPackage["extra-files"], expectedExtraFiles), "exact root-relative updaters are required"); err != nil {
+	if err := require(configArtifact, "Rust package updates both SDK locks and CLI SDK pin", reflect.DeepEqual(rustPackage["extra-files"], expectedExtraFiles), "exact root-relative updaters are required"); err != nil {
 		return err
 	}
 
@@ -879,9 +889,16 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 	if err := require(rustLockArtifact, "matches the crate package version", cargoVersion == lockVersion, ""); err != nil {
 		return err
 	}
+	compatibilityLockVersion, err := cargoLockPackageVersion(compatibilityLockSource, "opendart")
+	if err != nil {
+		return &Error{Artifact: rustCompatibilityLockArtifact, Invariant: "contains one opendart package version", Cause: err}
+	}
+	if err := require(rustCompatibilityLockArtifact, "matches the crate package version", cargoVersion == compatibilityLockVersion, ""); err != nil {
+		return err
+	}
 	if manifestVersion, exists := manifest[rustPackagePath]; exists {
 		betaVersion := regexp.MustCompile(`^0\.1\.0-beta\.[1-9][0-9]*$`).MatchString(manifestVersion)
-		if err := require(manifestArtifact, "published SDK beta version matches the crate and lock", semanticVersion.MatchString(manifestVersion) && betaVersion && manifestVersion == cargoVersion, ""); err != nil {
+		if err := require(manifestArtifact, "published SDK beta version matches the crate and both locks", semanticVersion.MatchString(manifestVersion) && betaVersion && manifestVersion == cargoVersion, ""); err != nil {
 			return err
 		}
 	}

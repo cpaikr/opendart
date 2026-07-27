@@ -351,12 +351,12 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Land the reviewed Release Please lockfile-selector repair, then let Release
+Land the reviewed Release Please compatibility-lock repair, then let Release
 Please regenerate [SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63)
-and require its exact-SHA Verify and full-race runs to pass. Review and
-explicitly confirm version `0.1.0-beta.1` through `$release-please-release`
-before merging the proposal. Do not tag, publish, or finalize the proposal
-before those gates are complete.
+with both committed SDK locks aligned to `0.1.0-beta.1` and require its
+exact-SHA Verify and full-race runs to pass. Review and explicitly confirm that
+version through `$release-please-release` before merging the proposal. Do not
+tag, publish, or finalize the proposal before those gates are complete.
 
 ## Progress log
 

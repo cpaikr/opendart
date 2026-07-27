@@ -108,11 +108,12 @@ Rust commits cannot create a specification release. Separate Rust-aware
 components are rooted at `sdk/rust/crates/opendart` and
 `sdk/rust/crates/opendart-cli`; each owns its `Cargo.toml`, `CHANGELOG.md`,
 component-qualified tags, and matching workspace-lock entry. The SDK component
-also updates the CLI's marked exact local SDK pin without bumping the CLI
+also owns the matching `opendart` entry in the isolated reqwest compatibility
+lock and updates the CLI's marked exact local SDK pin without bumping the CLI
 version or changelog. The lockfile selectors use Release Please's tagged TOML
 scalar values (`name.value`) so array-of-table package matches update the
 intended entry instead of silently matching nothing; the release guard pins
-that behavior for both components.
+that behavior for both components and both SDK locks.
 
 Before their first releases, both Rust paths are intentionally absent from
 `.release-please-manifest.json`. The repository guard admits an SDK manifest
