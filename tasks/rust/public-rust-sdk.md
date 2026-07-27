@@ -59,11 +59,14 @@ generator model without depending on Rust source.
   correctly targets `0.1.0-beta.1`; both generated lockfiles and the CLI's
   exact SDK pin are aligned. PR #67 first added a default-branch
   `workflow_run` reporter, but live acceptance proved GitHub suppresses that
-  event after a `GITHUB_TOKEN` dispatch. The pending repair moves status
-  reporting into the trusted release orchestrator so it can wait for the exact
-  bot-created Verify and full-race runs and revalidate proposal identity,
-  ancestry, and generated scope immediately before reporting their combined
-  result. The first beta, trusted-publishing cutover, and stable promotion remain.
+  event after a `GITHUB_TOKEN` dispatch. PR #68 moved status reporting into the
+  trusted release orchestrator so it waits for the exact bot-created Verify and
+  full-race runs and revalidates proposal identity, ancestry, and generated
+  scope immediately before reporting their combined result. Live acceptance on
+  SDK proposal #63 passed both exact-SHA workflows and posted the successful
+  combined `verify` status. The proposal remains open and no crate has been
+  published. The first beta, trusted-publishing cutover, and stable promotion
+  remain.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -356,12 +359,12 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Land the trusted-orchestrator recursion repair, then confirm it reports a
-successful exact-SHA `verify` status for
-[SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63). That status
-covers both Verify and full-race. Then review and explicitly confirm
-`0.1.0-beta.1` through `$release-please-release` before merging the proposal.
-Do not tag, publish, or finalize the proposal before those gates are complete.
+Review [SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63) and
+explicitly confirm `0.1.0-beta.1` through `$release-please-release` before
+merging the proposal. Its current head has a successful exact-SHA `verify`
+status covering both Verify and full-race; repeat that check if the proposal
+head changes. Do not tag, publish, or finalize the proposal without the exact
+version confirmation.
 
 ## Progress log
 
