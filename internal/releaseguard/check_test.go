@@ -301,7 +301,78 @@ func TestSemanticVersionPolicy(t *testing.T) {
 	}
 }
 
-func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
+func TestCheckAcceptsRustReleaseManifestStates(t *testing.T) {
+	fixture := newReleaseArtifactFixture(t)
+	currentSDKVersion := fixture.packageVersion(t, rustCargoArtifact)
+	tests := []struct {
+		name       string
+		sdkVersion string
+		published  bool
+	}{
+		{name: "unpublished SDK", sdkVersion: "0.1.0"},
+		{name: "published SDK beta", sdkVersion: "0.1.0-beta.1", published: true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := fixture.copy(t)
+			if currentSDKVersion != test.sdkVersion {
+				mutations := []struct {
+					artifact    string
+					old         string
+					replacement string
+				}{
+					{rustCargoArtifact, fmt.Sprintf("version = %q", currentSDKVersion), fmt.Sprintf("version = %q", test.sdkVersion)},
+					{rustCLICargoArtifact, fmt.Sprintf("version = %q", "="+currentSDKVersion), fmt.Sprintf("version = %q", "="+test.sdkVersion)},
+					{rustLockArtifact, fmt.Sprintf("name = \"opendart\"\nversion = %q", currentSDKVersion), fmt.Sprintf("name = \"opendart\"\nversion = %q", test.sdkVersion)},
+					{rustCompatibilityLockArtifact, fmt.Sprintf("name = \"opendart\"\nversion = %q", currentSDKVersion), fmt.Sprintf("name = \"opendart\"\nversion = %q", test.sdkVersion)},
+				}
+				for _, mutation := range mutations {
+					path := filepath.Join(root, filepath.FromSlash(mutation.artifact))
+					source, err := os.ReadFile(path)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !strings.Contains(string(source), mutation.old) {
+						t.Fatalf("mutation source %q not found in %s", mutation.old, mutation.artifact)
+					}
+					updated := strings.Replace(string(source), mutation.old, mutation.replacement, 1)
+					if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+
+			path := filepath.Join(root, manifestArtifact)
+			source, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var manifest map[string]string
+			if err := json.Unmarshal(source, &manifest); err != nil {
+				t.Fatal(err)
+			}
+			if test.published {
+				manifest[rustPackagePath] = test.sdkVersion
+			} else {
+				delete(manifest, rustPackagePath)
+			}
+			updated, err := json.MarshalIndent(manifest, "", "  ")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, append(updated, '\n'), 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := Check(root); err != nil {
+				t.Fatalf("Check() error = %v", err)
+			}
+		})
+	}
+}
+
+func TestCheckRejectsInvalidRustReleaseManifestEntries(t *testing.T) {
 	fixture := newReleaseArtifactFixture(t)
 	for _, packagePath := range []string{rustPackagePath, rustCLIPackagePath} {
 		t.Run(packagePath, func(t *testing.T) {
@@ -311,13 +382,16 @@ func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			updated := strings.Replace(
-				string(source),
-				`"openapi/generated": "0.1.0"`,
-				`"openapi/generated": "0.1.0", "`+packagePath+`": "0.1.0"`,
-				1,
-			)
-			if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+			var manifest map[string]string
+			if err := json.Unmarshal(source, &manifest); err != nil {
+				t.Fatal(err)
+			}
+			manifest[packagePath] = "0.1.0"
+			updated, err := json.MarshalIndent(manifest, "", "  ")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, append(updated, '\n'), 0o600); err != nil {
 				t.Fatal(err)
 			}
 			err = Check(root)
@@ -335,6 +409,12 @@ func TestCheckRejectsUnpublishedRustReleaseManifestEntries(t *testing.T) {
 
 func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 	fixture := newReleaseArtifactFixture(t)
+	sdkVersion := fixture.packageVersion(t, rustCargoArtifact)
+	cliVersion := fixture.packageVersion(t, rustCLICargoArtifact)
+	sdkLockPackage := fmt.Sprintf("name = \"opendart\"\nversion = %q", sdkVersion)
+	mismatchedSDKLockPackage := fmt.Sprintf("name = \"opendart\"\nversion = %q", sdkVersion+"-mismatch")
+	cliLockPackage := fmt.Sprintf("[[package]]\nname = \"opendart-cli\"\nversion = %q", cliVersion)
+	mismatchedCLILockPackage := fmt.Sprintf("[[package]]\nname = \"opendart-cli\"\nversion = %q", cliVersion+"-mismatch")
 	tests := []struct {
 		name        string
 		artifact    string
@@ -365,10 +445,10 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
       "include-component-in-tag": true`, replacement: `"component": "opendart-cli",
       "include-component-in-tag": false`, invariant: "CLI package include-component-in-tag"},
 		{name: "CLI lock selector", artifact: configArtifact, old: `$.package[?(@.name.value == \"opendart-cli\")].version`, replacement: `$.package[?(@.name == \"opendart-cli\")].version`, invariant: "CLI package updates its workspace lock version"},
-		{name: "Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart\"\nversion = \"0.1.0\"", replacement: "name = \"opendart\"\nversion = \"0.1.1\"", invariant: "matches the crate package version"},
-		{name: "compatibility Cargo lock mismatch", artifact: rustCompatibilityLockArtifact, old: "name = \"opendart\"\nversion = \"0.1.0\"", replacement: "name = \"opendart\"\nversion = \"0.1.1\"", invariant: "matches the crate package version"},
-		{name: "CLI Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "name = \"opendart-cli\"\nversion = \"0.1.1\"", invariant: "matches the CLI crate package version"},
-		{name: "duplicate CLI Cargo lock package", artifact: rustLockArtifact, old: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"\n\n[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", invariant: "contains one opendart-cli package version"},
+		{name: "Cargo lock mismatch", artifact: rustLockArtifact, old: sdkLockPackage, replacement: mismatchedSDKLockPackage, invariant: "matches the crate package version"},
+		{name: "compatibility Cargo lock mismatch", artifact: rustCompatibilityLockArtifact, old: sdkLockPackage, replacement: mismatchedSDKLockPackage, invariant: "matches the crate package version"},
+		{name: "CLI Cargo lock mismatch", artifact: rustLockArtifact, old: cliLockPackage, replacement: mismatchedCLILockPackage, invariant: "matches the CLI crate package version"},
+		{name: "duplicate CLI Cargo lock package", artifact: rustLockArtifact, old: cliLockPackage, replacement: cliLockPackage + "\n\n" + cliLockPackage, invariant: "contains one opendart-cli package version"},
 		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "keeps registry credentials out"},
 		{name: "registry publish in verify", artifact: verificationScriptArtifact, old: "go vet ./...", replacement: "cargo publish", invariant: "excludes package publication"},
 	}
@@ -399,6 +479,7 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 
 func TestCheckRejectsRustPackageMutations(t *testing.T) {
 	fixture := newReleaseArtifactFixture(t)
+	sdkVersion := fixture.packageVersion(t, rustCargoArtifact)
 	tests := []struct {
 		name        string
 		artifact    string
@@ -469,7 +550,7 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 		},
 		{
 			name: "CLI SDK exact pin", artifact: rustCLICargoArtifact,
-			old: `version = "=0.1.0"`, replacement: `version = "0.1.0"`,
+			old: `version = "=` + sdkVersion + `"`, replacement: `version = "` + sdkVersion + `"`,
 			invariant: "exact-pins the workspace SDK version",
 		},
 		{
@@ -1835,6 +1916,19 @@ func newReleaseArtifactFixture(t *testing.T) releaseArtifactFixture {
 		t.Fatal(err)
 	}
 	return releaseArtifactFixture{sourceRoot: sourceRoot, packageNames: packageNames}
+}
+
+func (fixture releaseArtifactFixture) packageVersion(t *testing.T, artifact string) string {
+	t.Helper()
+	source, err := os.ReadFile(filepath.Join(fixture.sourceRoot, filepath.FromSlash(artifact)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	version, err := cargoPackageVersion(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return version
 }
 
 func (fixture releaseArtifactFixture) copy(t *testing.T) string {
