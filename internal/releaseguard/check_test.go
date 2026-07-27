@@ -363,7 +363,7 @@ func TestCheckRejectsRustReleaseOwnershipMutations(t *testing.T) {
 		{name: "Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart\"\nversion = \"0.1.0\"", replacement: "name = \"opendart\"\nversion = \"0.1.1\"", invariant: "matches the crate package version"},
 		{name: "CLI Cargo lock mismatch", artifact: rustLockArtifact, old: "name = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "name = \"opendart-cli\"\nversion = \"0.1.1\"", invariant: "matches the CLI crate package version"},
 		{name: "duplicate CLI Cargo lock package", artifact: rustLockArtifact, old: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", replacement: "[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"\n\n[[package]]\nname = \"opendart-cli\"\nversion = \"0.1.0\"", invariant: "contains one opendart-cli package version"},
-		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "publishes immutable specification assets"},
+		{name: "registry publish in release", artifact: releaseWorkflowArtifact, old: "mkdir release-assets", replacement: "cargo publish\n          mkdir release-assets", invariant: "keeps registry credentials out"},
 		{name: "registry publish in verify", artifact: verificationScriptArtifact, old: "go vet ./...", replacement: "cargo publish", invariant: "excludes package publication"},
 	}
 
@@ -769,8 +769,8 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "release workflow registry credential", artifact: releaseWorkflowArtifact,
-			old: "mkdir release-assets", replacement: "echo ${{ secrets.CARGO_REGISTRY_TOKEN }}\n          mkdir release-assets",
-			invariant: "publishes immutable specification assets",
+			old: "      issues: write", replacement: "      issues: write\n      id-token: write",
+			invariant: "keeps registry credentials out and actions-write authority isolated",
 		},
 		{
 			name: "crate workflow callable only", artifact: rustCrateWorkflowArtifact,
@@ -820,7 +820,7 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "crate artifact digest format", artifact: rustCrateWorkflowArtifact,
 			old: "grep -Eq '^[0-9a-f]{64}$'", replacement: "grep -Eq '^sha256:[0-9a-f]{64}$'",
-			invariant: "immutable candidate artifact digest",
+			invariant: "publishes at most once and reconciles registry acceptance and ownership",
 		},
 		{
 			name: "crate one-shot publish", artifact: rustCrateWorkflowArtifact,
@@ -1165,8 +1165,8 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		},
 		{
 			name: "verify checkout ref", artifact: verifyWorkflowArtifact,
-			old: "persist-credentials: false", replacement: "persist-credentials: false\n          ref: main",
-			invariant: "uses only supported YAML fields",
+			old: "ref: ${{ inputs.expected_sha || github.sha }}", replacement: "ref: main",
+			invariant: "uses only the approved verification actions",
 		},
 		{
 			name: "verify checkout repository", artifact: verifyWorkflowArtifact,
@@ -1506,6 +1506,17 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 				t.Fatalf("Check() invariant = %q, want substring %q", guardError.Invariant, test.invariant)
 			}
 		})
+	}
+}
+
+func TestScriptDigestMismatchDetailReportsComputedDigest(t *testing.T) {
+	const script = "echo changed"
+	want := fmt.Sprintf("computed script SHA-256: %x", sha256.Sum256([]byte(script)))
+	if got := scriptDigestMismatchDetail(script, "different"); got != want {
+		t.Fatalf("script digest detail = %q, want %q", got, want)
+	}
+	if got := scriptDigestMismatchDetail(script, scriptDigest(script)); got != "" {
+		t.Fatalf("matching script digest detail = %q, want empty", got)
 	}
 }
 

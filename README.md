@@ -257,9 +257,10 @@ tooling remains private. The guarded SDK pipeline authorizes publication only
 from `main` through the protected bootstrap environment. A confirmed component
 Release Please PR merge is the only routine manual gate; exact-SHA packaging,
 publication, accepted-artifact verification, docs.rs checks, and draft
-finalization run automatically afterward. Each new crate uses a one-time
-protected bootstrap token, then cuts over to crates.io trusted publishing
-without a retained token fallback. See
+finalization run automatically afterward, except that each crate's initial
+bootstrap pauses once for protected-environment reviewer approval. Each new
+crate uses a one-time protected bootstrap token, then cuts over to fully
+automatic crates.io OIDC releases without a retained token fallback. See
 [`RELEASING.md`](RELEASING.md#automation-contract) before starting release
 setup or reviewing a release proposal.
 

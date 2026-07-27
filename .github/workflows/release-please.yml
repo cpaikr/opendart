@@ -78,10 +78,18 @@ jobs:
             component="$1"
             manifest_path="$2"
             tag_prefix="$3"
-            expected_prerelease="$4"
             version="$(jq -r --arg path "${manifest_path}" '.[$path] // empty' .release-please-manifest.json)"
             if test -z "${version}"; then
               return
+            fi
+            expected_prerelease=false
+            if test "${component}" = sdk; then
+              if grep -Eq '^0\.1\.0-beta\.[1-9][0-9]*$' <<<"${version}"; then
+                expected_prerelease=true
+              elif test "${version}" != 0.1.0; then
+                echo "unsupported SDK release version: ${version}" >&2
+                exit 1
+              fi
             fi
             tag_name="${tag_prefix}${version}"
             matches="$(jq -c --arg tag "${tag_name}" '[.[][] | select(.tag_name == $tag)]' <<<"${releases}")"
@@ -135,28 +143,14 @@ jobs:
             fi
           }
 
-          inspect_component specification openapi/generated v false
-          inspect_component sdk sdk/rust/crates/opendart opendart-v true
+          inspect_component specification openapi/generated v
+          inspect_component sdk sdk/rust/crates/opendart opendart-v
 
-          candidate_count="$(wc -l < "${candidates}" | tr -d ' ')"
-          if test "${candidate_count}" -gt 1; then
-            echo "multiple component releases require recovery" >&2
-            exit 1
-          fi
-          if test "${candidate_count}" = 0; then
-            echo "state=none" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-          candidate="$(head -n 1 "${candidates}")"
-          echo "state=$(jq -r .state <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
-          echo "component=$(jq -r .component <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
-          echo "tag_name=$(jq -r .tag <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
-          echo "version=$(jq -r .version <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
-          echo "sha=$(jq -r .sha <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
-          echo "prerelease=$(jq -r .prerelease <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
+          components="$(jq -cs 'if length <= 2 and ([.[].component] | unique | length) == length then . else error("ambiguous component recovery state") end' "${candidates}")"
+          echo "components=${components}" >> "${GITHUB_OUTPUT}"
 
       - name: Run Release Please
-        if: ${{ steps.recovery.outputs.state == 'none' }}
+        if: ${{ steps.recovery.outputs.components == '[]' }}
         id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
         with:
@@ -178,12 +172,7 @@ jobs:
         id: component
         env:
           CLI_CREATED: ${{ steps.release.outputs['sdk/rust/crates/opendart-cli--release_created'] }}
-          RECOVERY_COMPONENT: ${{ steps.recovery.outputs.component }}
-          RECOVERY_PRERELEASE: ${{ steps.recovery.outputs.prerelease }}
-          RECOVERY_SHA: ${{ steps.recovery.outputs.sha }}
-          RECOVERY_STATE: ${{ steps.recovery.outputs.state }}
-          RECOVERY_TAG: ${{ steps.recovery.outputs.tag_name }}
-          RECOVERY_VERSION: ${{ steps.recovery.outputs.version }}
+          RECOVERY_COMPONENTS: ${{ steps.recovery.outputs.components }}
           SDK_CREATED: ${{ steps.release.outputs['sdk/rust/crates/opendart--release_created'] }}
           SDK_SHA: ${{ steps.release.outputs['sdk/rust/crates/opendart--sha'] }}
           SDK_TAG: ${{ steps.release.outputs['sdk/rust/crates/opendart--tag_name'] }}
@@ -197,39 +186,41 @@ jobs:
             echo "CLI publication is not authorized" >&2
             exit 1
           fi
-          created=0
-          test "${SPEC_CREATED}" = true && created=$((created + 1))
-          test "${SDK_CREATED}" = true && created=$((created + 1))
-          if test "${created}" -gt 1; then
-            echo "one push cannot authorize multiple component releases" >&2
-            exit 1
-          fi
-
           spec_created=false
           sdk_created=false
-          if test "${RECOVERY_STATE}" = draft; then
-            if test "${RECOVERY_COMPONENT}" = specification; then
+          if test "${SPEC_CREATED}" = true; then
+            spec_created=true
+          fi
+          if test "${SDK_CREATED}" = true; then
+            sdk_created=true
+          fi
+
+          jq -e 'type == "array" and length <= 2 and ([.[].component] | unique | length) == length' <<<"${RECOVERY_COMPONENTS}" > /dev/null
+          spec_recovery="$(jq -c '[.[] | select(.component == "specification")]' <<<"${RECOVERY_COMPONENTS}")"
+          if test "$(jq 'length' <<<"${spec_recovery}")" = 1; then
+            recovery="$(jq -c '.[0]' <<<"${spec_recovery}")"
+            if test "$(jq -r .state <<<"${recovery}")" = draft; then
               spec_created=true
-              SPEC_TAG="${RECOVERY_TAG}"
-              SPEC_VERSION="${RECOVERY_VERSION}"
-              SPEC_SHA="${RECOVERY_SHA}"
-            elif test "${RECOVERY_COMPONENT}" = sdk; then
-              sdk_created=true
-              SDK_TAG="${RECOVERY_TAG}"
-              SDK_VERSION="${RECOVERY_VERSION}"
-              SDK_SHA="${RECOVERY_SHA}"
-            else
-              echo "unknown recovery component" >&2
+              SPEC_TAG="$(jq -r .tag <<<"${recovery}")"
+              SPEC_VERSION="$(jq -r .version <<<"${recovery}")"
+              SPEC_SHA="$(jq -r .sha <<<"${recovery}")"
+            elif test "$(jq -r .state <<<"${recovery}")" != complete; then
+              echo "unknown specification recovery state" >&2
               exit 1
             fi
-          elif test "${RECOVERY_STATE}" = complete; then
-            echo "matching release is already complete"
-          elif test "${RECOVERY_STATE}" = none; then
-            test "${SPEC_CREATED}" = true && spec_created=true
-            test "${SDK_CREATED}" = true && sdk_created=true
-          else
-            echo "unknown recovery state" >&2
-            exit 1
+          fi
+          sdk_recovery="$(jq -c '[.[] | select(.component == "sdk")]' <<<"${RECOVERY_COMPONENTS}")"
+          if test "$(jq 'length' <<<"${sdk_recovery}")" = 1; then
+            recovery="$(jq -c '.[0]' <<<"${sdk_recovery}")"
+            if test "$(jq -r .state <<<"${recovery}")" = draft; then
+              sdk_created=true
+              SDK_TAG="$(jq -r .tag <<<"${recovery}")"
+              SDK_VERSION="$(jq -r .version <<<"${recovery}")"
+              SDK_SHA="$(jq -r .sha <<<"${recovery}")"
+            elif test "$(jq -r .state <<<"${recovery}")" != complete; then
+              echo "unknown SDK recovery state" >&2
+              exit 1
+            fi
           fi
 
           if test "${spec_created}" = true; then
@@ -237,8 +228,13 @@ jobs:
             test "${SPEC_TAG}" = "v${SPEC_VERSION}"
             grep -Eq '^[0-9a-f]{40}$' <<<"${SPEC_SHA}"
           fi
+          sdk_prerelease=false
           if test "${sdk_created}" = true; then
-            grep -Eq '^0\.1\.0-beta\.[1-9][0-9]*$' <<<"${SDK_VERSION}"
+            if grep -Eq '^0\.1\.0-beta\.[1-9][0-9]*$' <<<"${SDK_VERSION}"; then
+              sdk_prerelease=true
+            else
+              test "${SDK_VERSION}" = 0.1.0
+            fi
             test "${SDK_TAG}" = "opendart-v${SDK_VERSION}"
             grep -Eq '^[0-9a-f]{40}$' <<<"${SDK_SHA}"
           fi
@@ -251,7 +247,7 @@ jobs:
           echo "sdk_tag_name=${SDK_TAG}" >> "${GITHUB_OUTPUT}"
           echo "sdk_version=${SDK_VERSION}" >> "${GITHUB_OUTPUT}"
           echo "sdk_sha=${SDK_SHA}" >> "${GITHUB_OUTPUT}"
-          echo "sdk_prerelease=true" >> "${GITHUB_OUTPUT}"
+          echo "sdk_prerelease=${sdk_prerelease}" >> "${GITHUB_OUTPUT}"
 
       - name: Check out specification release commit
         if: ${{ steps.component.outputs.spec_release_created == 'true' }}
@@ -313,7 +309,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_PRS: ${{ needs.release-please.outputs.prs }}
         run: |
-          jq -e 'type == "array" and length > 0' <<<"${RELEASE_PRS}" > /dev/null
+          numbers="$(jq -er 'if type == "array" and length > 0 and all(.[]; type == "number" and . > 0) then .[] else error("release proposal numbers are invalid") end' <<<"${RELEASE_PRS}")"
           while IFS= read -r number; do
             detail="$(gh pr view "${number}" --repo "${GITHUB_REPOSITORY}" --json author,baseRefName,headRefName,headRefOid,labels,state)"
             jq -e '
@@ -328,7 +324,7 @@ jobs:
             sha="$(jq -r .headRefOid <<<"${detail}")"
             gh workflow run verify.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"
             gh workflow run full-race.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"
-          done < <(jq -r '.[].number' <<<"${RELEASE_PRS}")
+          done <<<"${numbers}"
 
   sdk-release:
     needs: release-please

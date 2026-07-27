@@ -114,12 +114,16 @@ Recovery starts from the component version in the manifest and the current
 interrupted draft has no Git tag yet. Resume it before running Release Please
 only when its exact tag name and full-SHA `targetCommitish` identify the reviewed
 candidate and that SHA is an ancestor of the current workflow revision; the
-candidate SHA remains fixed even when a newer repaired workflow resumes it. A
+candidate SHA remains fixed even when a newer repaired workflow resumes it.
+When both known components have valid interrupted states, recover each from its
+own path-qualified identity in the same run; neither component's state can
+authorize the other. A
 matching published tag at the current event SHA is reconciled as an idempotent
 completion. A matching published tag that is a verified ancestor is the normal
 previous release, so Release Please may process later component commits. A
-tag-only state, multiple matches, branch-shaped draft target, non-ancestor, or
-other version/tag/SHA mismatch stops without another release or publish attempt.
+tag-only state, duplicate tag matches, duplicate component recovery records, a
+branch-shaped draft target, non-ancestor, or other version/tag/SHA mismatch
+stops without another release or publish attempt.
 
 Keep authority split by job:
 

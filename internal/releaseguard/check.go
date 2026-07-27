@@ -48,10 +48,10 @@ const (
 	uploadArtifactAction           = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
 	downloadArtifactAction         = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
 	verifyConcurrencyGroup         = "${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}"
-	recoveryScriptDigest           = "ee3b43b84beac3db841cdc31d1d60c3624a003e994f180600175ef65363763a5"
+	recoveryScriptDigest           = "fbe90272400a6eb6065e457198a40efe6cd523ad0182f9ca9fa1fb3326d691fb"
 	proposalScriptDigest           = "996a55e656f9409c6f4a6ee882d9c23d73f070cead0d20d27000afea41723d9d"
-	componentScriptDigest          = "77c50f806a22acd9f210f69e48c3bb057bd8770c2d9c4491b913e484a5f32067"
-	dispatchScriptDigest           = "5c7dfde6e6c0351a0b063369a87988d2f8c94f1e8848e70dbe85eb6807b55287"
+	componentScriptDigest          = "695c00a82d604738ac93fa794396acaf8f2d3e95d4f1b434721f727f10177fb8"
+	dispatchScriptDigest           = "3ccf493a455151c499a3c1df1dba8efff996ad73b7929579eb20988b54abd930"
 	candidateInputScriptDigest     = "0921d426a5a45712b84c13f3d835173d6d9401f48b3e006c2568b44a4cfa9008"
 	candidateAttestScriptDigest    = "4af1a683a5744824aab2210dc052ca88bcb49d76d6be5febbf216a21c21d4f99"
 	candidateToolchainScriptDigest = "f8f6aaff0f83fe81760c269bbea9a39bad1ff01de95d86816a485dd3b5c818a7"
@@ -1050,6 +1050,9 @@ func checkReleasePipelineWorkflow(release workflow, source string) error {
 	if !defaultRunSettings(release.Defaults) {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "workflow uses default run settings"}
 	}
+	if strings.Contains(source, "cargo publish") || strings.Contains(source, "CARGO_REGISTRY_TOKEN") || strings.Contains(source, "id-token: write") || strings.Contains(source, "secrets: inherit") {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "keeps registry credentials out and actions-write authority isolated"}
+	}
 	if err := require(releaseWorkflowArtifact, "contains only approved release jobs", reflect.DeepEqual(sortedKeys(release.Jobs), []string{"dispatch-release-pr-checks", "release-please", "sdk-release", "verify"}), ""); err != nil {
 		return err
 	}
@@ -1090,31 +1093,28 @@ func checkReleasePipelineWorkflow(release workflow, source string) error {
 		}
 	}
 	releaseStepIndex, releaseStep, err := stepByID(releaseJob.Steps, "release")
-	if err != nil || releaseStep.Uses != releasePleaseAction || releaseStep.Run != "" || !exactWorkflowExpression(releaseStep.If, "steps.recovery.outputs.state == 'none'") || !reflect.DeepEqual(releaseStep.With, map[string]any{"token": "${{ secrets.GITHUB_TOKEN }}"}) {
+	if err != nil || releaseStep.Uses != releasePleaseAction || releaseStep.Run != "" || !exactWorkflowExpression(releaseStep.If, "steps.recovery.outputs.components == '[]'") || !reflect.DeepEqual(releaseStep.With, map[string]any{"token": "${{ secrets.GITHUB_TOKEN }}"}) {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "uses the approved pinned Release Please action only outside recovery", Cause: err}
 	}
 	recoveryIndex, recovery, err := stepByID(releaseJob.Steps, "recovery")
+	recoveryDigestDetail := scriptDigestMismatchDetail(recovery.Run, recoveryScriptDigest)
 	if err != nil || recoveryIndex >= releaseStepIndex || !defaultStepExecution(recovery) || !hasScriptDigest(recovery.Run, recoveryScriptDigest) || !reflect.DeepEqual(recovery.Env, map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}"}) || !containsAll(recovery.Run,
-		"gh api --paginate --slurp", "tag exists without a matching GitHub release", "multiple component releases require recovery",
+		"gh api --paginate --slurp", "tag exists without a matching GitHub release", "ambiguous component recovery state",
 		"git merge-base --is-ancestor", "probe_tag_ref()", "gh api --include", "if test \"${http_status}\" = 404",
-		"tag_ref_status=\"$(probe_tag_ref \"${tag_name}\")\"", "inspect_component specification openapi/generated v false",
-		"inspect_component sdk sdk/rust/crates/opendart opendart-v true",
+		"tag_ref_status=\"$(probe_tag_ref \"${tag_name}\")\"", "inspect_component specification openapi/generated v",
+		"inspect_component sdk sdk/rust/crates/opendart opendart-v",
 		"if test \"${component}\" = sdk;") {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "component recovery fails closed on ambiguous, tag-only, or non-ancestor state", Cause: err}
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "component recovery fails closed on ambiguous, tag-only, or non-ancestor state", Detail: recoveryDigestDetail, Cause: err}
 	}
 	_, proposals, err := stepByID(releaseJob.Steps, "proposals")
+	proposalDigestDetail := scriptDigestMismatchDetail(proposals.Run, proposalScriptDigest)
 	if err != nil || !defaultStepExecution(proposals) || !hasScriptDigest(proposals.Run, proposalScriptDigest) || !reflect.DeepEqual(proposals.Env, map[string]string{"RELEASE_PRS": "${{ steps.release.outputs.prs }}"}) || !containsAll(proposals.Run, "[.[].number]", "type == \"number\" and . > 0", "numbers=[]") {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "exposes only validated release proposal numbers", Cause: err}
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "exposes only validated release proposal numbers", Detail: proposalDigestDetail, Cause: err}
 	}
 	_, component, err := stepByID(releaseJob.Steps, "component")
 	expectedComponentEnv := map[string]string{
 		"CLI_CREATED":         "${{ steps.release.outputs['sdk/rust/crates/opendart-cli--release_created'] }}",
-		"RECOVERY_COMPONENT":  "${{ steps.recovery.outputs.component }}",
-		"RECOVERY_PRERELEASE": "${{ steps.recovery.outputs.prerelease }}",
-		"RECOVERY_SHA":        "${{ steps.recovery.outputs.sha }}",
-		"RECOVERY_STATE":      "${{ steps.recovery.outputs.state }}",
-		"RECOVERY_TAG":        "${{ steps.recovery.outputs.tag_name }}",
-		"RECOVERY_VERSION":    "${{ steps.recovery.outputs.version }}",
+		"RECOVERY_COMPONENTS": "${{ steps.recovery.outputs.components }}",
 		"SDK_CREATED":         "${{ steps.release.outputs['sdk/rust/crates/opendart--release_created'] }}",
 		"SDK_SHA":             "${{ steps.release.outputs['sdk/rust/crates/opendart--sha'] }}",
 		"SDK_TAG":             "${{ steps.release.outputs['sdk/rust/crates/opendart--tag_name'] }}",
@@ -1124,8 +1124,9 @@ func checkReleasePipelineWorkflow(release workflow, source string) error {
 		"SPEC_TAG":            "${{ steps.release.outputs['openapi/generated--tag_name'] }}",
 		"SPEC_VERSION":        "${{ steps.release.outputs['openapi/generated--version'] }}",
 	}
-	if err != nil || !defaultStepExecution(component) || !hasScriptDigest(component.Run, componentScriptDigest) || !reflect.DeepEqual(component.Env, expectedComponentEnv) || !containsAll(component.Run, "CLI publication is not authorized", "one push cannot authorize multiple component releases", "^0\\.1\\.0-beta\\.[1-9][0-9]*$", "sdk_prerelease=true") {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "normalizes one authorized component release and blocks CLI publication", Cause: err}
+	componentDigestDetail := scriptDigestMismatchDetail(component.Run, componentScriptDigest)
+	if err != nil || !defaultStepExecution(component) || !hasScriptDigest(component.Run, componentScriptDigest) || !reflect.DeepEqual(component.Env, expectedComponentEnv) || !containsAll(component.Run, "CLI publication is not authorized", "RECOVERY_COMPONENTS", "^0\\.1\\.0-beta\\.[1-9][0-9]*$", "test \"${SDK_VERSION}\" = 0.1.0", "sdk_prerelease=${sdk_prerelease}") {
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "normalizes authorized component releases and blocks CLI publication", Detail: componentDigestDetail, Cause: err}
 	}
 	specCheckoutIndex, specCheckout, err := stepByName(releaseJob.Steps, "Check out specification release commit")
 	prepareIndex, prepare, prepareErr := stepByName(releaseJob.Steps, "Prepare specification release assets")
@@ -1150,10 +1151,11 @@ func checkReleasePipelineWorkflow(release workflow, source string) error {
 	}
 	dispatchStep := dispatch.Steps[0]
 	dispatchRun := dispatchStep.Run
-	if !hasScriptDigest(dispatchRun, dispatchScriptDigest) || !reflect.DeepEqual(dispatchStep.Env, map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}", "RELEASE_PRS": "${{ needs.release-please.outputs.prs }}"}) || !defaultStepExecution(dispatchStep) || !containsAll(dispatchRun, ".author.login == \"app/github-actions\"", ".baseRefName == \"main\"", "autorelease: pending", ".headRefOid",
+	dispatchDigestDetail := scriptDigestMismatchDetail(dispatchRun, dispatchScriptDigest)
+	if !hasScriptDigest(dispatchRun, dispatchScriptDigest) || !reflect.DeepEqual(dispatchStep.Env, map[string]string{"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}", "RELEASE_PRS": "${{ needs.release-please.outputs.prs }}"}) || !defaultStepExecution(dispatchStep) || !containsAll(dispatchRun, "numbers=\"$(jq -er", ".author.login == \"app/github-actions\"", ".baseRefName == \"main\"", "autorelease: pending", ".headRefOid",
 		`gh workflow run verify.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"`,
 		`gh workflow run full-race.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"`) {
-		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "dispatches required checks for the canonical Release Please PR head SHA"}
+		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "dispatches required checks for the canonical Release Please PR head SHA", Detail: dispatchDigestDetail}
 	}
 
 	sdk := release.Jobs["sdk-release"]
@@ -1178,7 +1180,7 @@ func checkReleasePipelineWorkflow(release workflow, source string) error {
 	if err := checkCheckoutCredentials(releaseWorkflowArtifact, release); err != nil {
 		return err
 	}
-	if strings.Contains(source, "cargo publish") || strings.Contains(source, "CARGO_REGISTRY_TOKEN") || strings.Contains(source, "id-token: write") || strings.Contains(source, "secrets: inherit") || strings.Count(source, "actions: write") != 1 {
+	if strings.Count(source, "actions: write") != 1 {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "keeps registry credentials out and actions-write authority isolated"}
 	}
 	return nil
@@ -1244,8 +1246,8 @@ func checkRustCrateWorkflow(release workflow, source string) error {
 			"name": "${{ steps.evidence.outputs.artifact_name }}", "path": "candidate-evidence", "if-no-files-found": "error", "retention-days": 30,
 		}},
 	}
-	if !exactReleaseSteps(candidate.Steps, expectedCandidate) {
-		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "attests, verifies, packages, and records the exact SDK candidate"}
+	if ok, detail := exactReleaseSteps(candidate.Steps, expectedCandidate); !ok {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "attests, verifies, packages, and records the exact SDK candidate", Detail: detail}
 	}
 
 	publish := release.Jobs["publish"]
@@ -1253,16 +1255,12 @@ func checkRustCrateWorkflow(release workflow, source string) error {
 	if !workflowNeedsExactly(publish.Needs, "candidate") || !reflect.DeepEqual(publish.Permissions, map[string]string{"contents": "read"}) || publish.Environment != "${{ inputs.environment }}" || publish.RunsOn != "ubuntu-latest" || publish.TimeoutMinutes != 20 || !defaultJobExecution(publish) || !defaultRunSettings(publish.Defaults) || !reflect.DeepEqual(stepNames(publish.Steps), expectedPublishSteps) {
 		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "isolates registry authority in the protected publication job"}
 	}
-	publishStep := publish.Steps[5]
 	expectedPublishEnv := map[string]string{
 		"CARGO_REGISTRY_TOKEN": "${{ secrets.CARGO_REGISTRY_TOKEN }}",
 		"EXPECTED_OWNER":       "${{ inputs.expected_owner }}",
 		"PACKAGE":              "${{ inputs.package }}",
 		"PACKAGE_PATH":         "${{ inputs.package_path }}",
 		"VERSION":              "${{ inputs.version }}",
-	}
-	if !hasScriptDigest(publish.Steps[3].Run, publishEvidenceScriptDigest) {
-		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "validates the immutable candidate artifact digest and checksum"}
 	}
 	expectedPublish := []releaseStepExpectation{
 		{name: "Validate publication identity", runDigest: publishInputScriptDigest, env: map[string]string{
@@ -1278,13 +1276,13 @@ func checkRustCrateWorkflow(release workflow, source string) error {
 		{name: "Install pinned Rust toolchain", runDigest: minimalToolchainScriptDigest},
 		{name: "Publish at most once and reconcile", runDigest: publishScriptDigest, env: expectedPublishEnv},
 	}
-	if !exactReleaseSteps(publish.Steps, expectedPublish) || publishStep.Run == "" {
-		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "publishes at most once and reconciles registry acceptance and ownership"}
+	if ok, detail := exactReleaseSteps(publish.Steps, expectedPublish); !ok {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "publishes at most once and reconciles registry acceptance and ownership", Detail: detail}
 	}
 
 	reconcile := release.Jobs["reconcile"]
 	expectedReconcileSteps := []string{"Check out candidate revision", "Download candidate evidence", "Set up Go", "Install pinned Rust toolchain", "Acquire and verify accepted crate", "Prove clean registry consumer", "Wait for public source and docs", "Upload accepted release evidence"}
-	if !workflowNeedsExactly(reconcile.Needs, "candidate", "publish") || !reflect.DeepEqual(reconcile.Permissions, map[string]string{"contents": "read"}) || reconcile.Environment != "" || reconcile.RunsOn != "ubuntu-latest" || reconcile.TimeoutMinutes != 35 || !defaultJobExecution(reconcile) || !defaultRunSettings(reconcile.Defaults) || !reflect.DeepEqual(stepNames(reconcile.Steps), expectedReconcileSteps) {
+	if !workflowNeedsExactly(reconcile.Needs, "candidate", "publish") || !reflect.DeepEqual(reconcile.Permissions, map[string]string{"contents": "read"}) || reconcile.Environment != "" || reconcile.RunsOn != "ubuntu-latest" || reconcile.TimeoutMinutes != 60 || !defaultJobExecution(reconcile) || !defaultRunSettings(reconcile.Defaults) || !reflect.DeepEqual(stepNames(reconcile.Steps), expectedReconcileSteps) {
 		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "reconciles accepted public artifacts without registry authority"}
 	}
 	expectedReconcile := []releaseStepExpectation{
@@ -1309,15 +1307,16 @@ func checkRustCrateWorkflow(release workflow, source string) error {
 			"if-no-files-found": "error", "retention-days": 90,
 		}},
 	}
-	if !exactReleaseSteps(reconcile.Steps, expectedReconcile) {
-		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "verifies the accepted crate, clean consumer, registry page, and docs"}
+	if ok, detail := exactReleaseSteps(reconcile.Steps, expectedReconcile); !ok {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "verifies the accepted crate, clean consumer, registry page, and docs", Detail: detail}
 	}
 
 	finalize := release.Jobs["finalize"]
 	expectedFinalizeEnv := map[string]string{"CANDIDATE_SHA": "${{ inputs.candidate_sha }}", "EXPECTED_PRERELEASE": "${{ inputs.prerelease }}", "GH_TOKEN": "${{ github.token }}", "TAG_NAME": "${{ inputs.tag_name }}"}
 	expectedFinalize := []releaseStepExpectation{{name: "Validate and publish matching GitHub draft", runDigest: finalizeScriptDigest, env: expectedFinalizeEnv}}
-	if !workflowNeedsExactly(finalize.Needs, "reconcile") || !reflect.DeepEqual(finalize.Permissions, map[string]string{"contents": "write"}) || finalize.Environment != "" || finalize.RunsOn != "ubuntu-latest" || finalize.TimeoutMinutes != 10 || !defaultJobExecution(finalize) || !defaultRunSettings(finalize.Defaults) || !exactReleaseSteps(finalize.Steps, expectedFinalize) || !containsAll(finalize.Steps[0].Run, ".targetCommitish == $sha", "probe_tag_ref()", "gh api --include", "if test \"${http_status}\" = 404", "tag_ref_status=\"$(probe_tag_ref \"${TAG_NAME}\")\"", "case \"$(jq -r .isDraft", "true)", "false)\n    test \"$(gh api", "--draft=false", "--latest=false", "commits/${TAG_NAME}") {
-		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "publishes only the matching GitHub draft after registry reconciliation"}
+	finalizeStepsOK, finalizeDetail := exactReleaseSteps(finalize.Steps, expectedFinalize)
+	if !workflowNeedsExactly(finalize.Needs, "reconcile") || !reflect.DeepEqual(finalize.Permissions, map[string]string{"contents": "write"}) || finalize.Environment != "" || finalize.RunsOn != "ubuntu-latest" || finalize.TimeoutMinutes != 10 || !defaultJobExecution(finalize) || !defaultRunSettings(finalize.Defaults) || !finalizeStepsOK || !containsAll(finalize.Steps[0].Run, ".targetCommitish == $sha", "probe_tag_ref()", "gh api --include", "if test \"${http_status}\" = 404", "tag_ref_status=\"$(probe_tag_ref \"${TAG_NAME}\")\"", "case \"$(jq -r .isDraft", "true)", "false)\n    test \"$(gh api", "--draft=false", "--latest=false", "commits/${TAG_NAME}") {
+		return &Error{Artifact: rustCrateWorkflowArtifact, Invariant: "publishes only the matching GitHub draft after registry reconciliation", Detail: finalizeDetail}
 	}
 
 	if err := checkCheckoutCredentials(rustCrateWorkflowArtifact, release); err != nil {
@@ -1516,14 +1515,7 @@ func checkNativeArtifactJob(name, runner string, job workflowJob) error {
 	if runner == "windows-latest" {
 		installScript = windowsSourceInstallScript
 	}
-	expected := []struct {
-		name  string
-		run   string
-		uses  string
-		with  map[string]any
-		env   map[string]string
-		shell string
-	}{
+	expected := []workflowStepExpectation{
 		{name: "Check out repository", uses: "actions/checkout", with: map[string]any{"fetch-depth": 0, "persist-credentials": false, "ref": "${{ inputs.expected_sha || github.sha }}"}},
 		{name: "Attest checked-out revision", run: `test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
 test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"`, env: map[string]string{"EXPECTED_SHA": "${{ inputs.expected_sha || github.sha }}"}},
@@ -1971,32 +1963,47 @@ func exactScript(actual, expected string) bool {
 }
 
 func hasScriptDigest(script, expected string) bool {
-	normalized := strings.TrimSpace(strings.ReplaceAll(script, "\r\n", "\n"))
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(normalized))) == expected
+	return scriptDigest(script) == expected
 }
 
-func exactReleaseSteps(actual []workflowStep, expected []releaseStepExpectation) bool {
+func scriptDigest(script string) string {
+	normalized := strings.TrimSpace(strings.ReplaceAll(script, "\r\n", "\n"))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(normalized)))
+}
+
+func scriptDigestMismatchDetail(script, expected string) string {
+	actual := scriptDigest(script)
+	if actual == expected {
+		return ""
+	}
+	return "computed script SHA-256: " + actual
+}
+
+func exactReleaseSteps(actual []workflowStep, expected []releaseStepExpectation) (bool, string) {
 	if len(actual) != len(expected) {
-		return false
+		return false, ""
 	}
 	for index, want := range expected {
 		step := actual[index]
 		if step.Name != want.name || step.ID != want.id || step.Uses != want.uses ||
 			!reflect.DeepEqual(step.With, want.with) || !reflect.DeepEqual(step.Env, want.env) ||
 			!defaultStepExecution(step) || !defaultStepRunSettings(step) {
-			return false
+			return false, ""
 		}
 		if want.uses != "" {
 			if step.Run != "" || want.runDigest != "" {
-				return false
+				return false, ""
 			}
 			continue
 		}
-		if step.Run == "" || want.runDigest == "" || !hasScriptDigest(step.Run, want.runDigest) {
-			return false
+		if step.Run == "" || want.runDigest == "" {
+			return false, ""
+		}
+		if !hasScriptDigest(step.Run, want.runDigest) {
+			return false, step.Name + ": " + scriptDigestMismatchDetail(step.Run, want.runDigest)
 		}
 	}
-	return true
+	return true, ""
 }
 
 func isCheckoutAction(action string) bool {

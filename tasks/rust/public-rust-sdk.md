@@ -265,20 +265,30 @@ target constraints and acceptance details for their workstreams.
   of creating the new crate only as environment secret `CARGO_REGISTRY_TOKEN`.
   Keep it out of repository secrets and expose it only to the exact publication
   job after the credential-free candidate has passed every gate.
+- Before merging PR #62, decide whether the release guard should also gain a
+  behavioral fixture harness for fresh dual-component creation, dual-draft
+  recovery, mixed complete/draft recovery, and stable `0.1.0` prerelease-state
+  propagation. The current scripts pass manual matrix checks and are
+  digest-pinned, but fixtures would make later intentional workflow edits safer.
 - Review and merge only the independent SDK prerelease PR. Recover an
   already-existing draft only when its exact component tag name and full-SHA
   `targetCommitish` identify the reviewed candidate and that SHA is an ancestor
   of current `main`; no Git tag exists for that draft yet. Keep the candidate
   SHA fixed if a newer workflow repair resumes it. For a published release,
   reconcile an event-SHA match as complete and treat a verified ancestor as the
-  normal previous release. Stop on tag-only, multiple, branch-shaped,
-  non-ancestor, or otherwise mismatched identities.
+  normal previous release. Recover separate valid component records
+  independently; stop on tag-only state, duplicate tag matches, duplicate
+  component records, branch-shaped targets, non-ancestors, or otherwise
+  mismatched identities.
 - Let automation package, dry-run, publish once, reconcile the accepted crate,
   compare checksum/manifests/contents/provenance, build a clean exact-version
   consumer, verify docs.rs, and finalize the matching GitHub draft. Recheck
-  package name, owner, and exact-version state immediately before authority;
-  use `cargo +1.97.1 publish --locked --no-verify` so the credential-free
-  dry-run, not the token-bearing job, owns all build-script execution.
+  package name, owner, and exact-version state immediately before authority.
+  The credential-free candidate runs
+  `cargo +1.97.1 publish --locked --dry-run`; only after those gates pass does
+  the protected token-bearing job run the real
+  `cargo +1.97.1 publish --locked --no-verify`, so build scripts never inherit
+  registry authority.
 - Revoke and delete the bootstrap token, configure the crates.io trusted
   publisher for the exact repository/workflow/environment, and land the
   OIDC-only hardening change. Keep prerelease versioning but set
