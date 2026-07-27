@@ -207,8 +207,11 @@ every ordinary PR. The release skill and this runbook treat a missing, stale,
 skipped, or failed exact-SHA dispatch as a merge blocker. See GitHub's
 [token behavior](https://docs.github.com/en/actions/concepts/security/github_token).
 
-For incident recovery only, maintainers may dispatch the workflows directly;
-these commands do not replace the orchestrator-owned required status:
+For incident recovery only, maintainers may dispatch the workflows directly.
+Manual runs alone cannot complete recovery: verify that both exact-SHA runs
+succeed, then restore or rerun the trusted Release Please orchestrator until it
+posts the combined `verify` commit status. Do not treat the proposal as
+mergeable before that status exists.
 
 ```sh
 gh workflow run verify.yml --ref <release-please-branch> \

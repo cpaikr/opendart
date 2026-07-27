@@ -370,11 +370,10 @@ func TestReleaseProposalStatusScript(t *testing.T) {
 		secondBaseSHA      string
 		wantState          string
 		wantOK             bool
-		wantStatus         bool
 	}{
-		{name: "SDK success", branch: sdkBranch, files: sdkFiles, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1, wantState: "success", wantOK: true, wantStatus: true},
-		{name: "spec Verify failure", branch: specBranch, files: specFiles, prResult: trustedPR(specBranch), verifyConclusion: "failure", fullRaceConclusion: "success", verifyRunCount: 1, wantState: "failure", wantStatus: true},
-		{name: "full race failure", branch: sdkBranch, files: sdkFiles, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "failure", verifyRunCount: 1, wantState: "failure", wantStatus: true},
+		{name: "SDK success", branch: sdkBranch, files: sdkFiles, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1, wantState: "success", wantOK: true},
+		{name: "spec Verify failure", branch: specBranch, files: specFiles, prResult: trustedPR(specBranch), verifyConclusion: "failure", fullRaceConclusion: "success", verifyRunCount: 1, wantState: "failure"},
+		{name: "full race failure", branch: sdkBranch, files: sdkFiles, prResult: trustedPR(sdkBranch), verifyConclusion: "success", fullRaceConclusion: "failure", verifyRunCount: 1, wantState: "failure"},
 		{name: "untrusted proposal", branch: sdkBranch, files: sdkFiles, prResult: prObject("other", "main", sdkBranch, "OPEN", pendingLabels), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
 		{name: "closed proposal", branch: sdkBranch, files: sdkFiles, prResult: prObject("app/github-actions", "main", sdkBranch, "CLOSED", pendingLabels), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
 		{name: "wrong base branch", branch: sdkBranch, files: sdkFiles, prResult: prObject("app/github-actions", "other", sdkBranch, "OPEN", pendingLabels), verifyConclusion: "success", fullRaceConclusion: "success", verifyRunCount: 1},
@@ -438,7 +437,7 @@ fi
 			if comparison == "" {
 				comparison = fmt.Sprintf(`{"status":"ahead","behind_by":0,"merge_base_commit":{"sha":"756ad8294dc2beeee46112736b904591068cf2e8"},"files":%s}`, test.files)
 			}
-			proposals := fmt.Sprintf(`[{"number":63,"branch":%q,"sha":"4d368f361ea659806938765dbbcb0cdb6578c0c6","verify_after_id":100,"full_race_after_id":200}]`, test.branch)
+			proposal := fmt.Sprintf(`{"number":63,"branch":%q,"sha":"4d368f361ea659806938765dbbcb0cdb6578c0c6","verify_after_id":100,"full_race_after_id":200}`, test.branch)
 			command.Env = append(os.Environ(),
 				"BASE_SHA=756ad8294dc2beeee46112736b904591068cf2e8",
 				"GH_BASE_CALL_COUNT="+baseCallCount,
@@ -451,26 +450,24 @@ fi
 				"MOCK_SECOND_BASE_SHA="+test.secondBaseSHA,
 				"MOCK_VERIFY_RUNS="+runs(101, test.verifyConclusion, test.verifyRunCount),
 				"PATH="+root+string(os.PathListSeparator)+os.Getenv("PATH"),
-				"PROPOSALS="+proposals,
+				"PROPOSAL="+proposal,
 				"RUN_URL=https://github.com/cpaikr/opendart/actions/runs/1",
 			)
 			err := command.Run()
 			if (err == nil) != test.wantOK {
 				t.Fatalf("reporter error = %v, want success %t", err, test.wantOK)
 			}
-			if !test.wantStatus {
-				if _, err := os.Stat(callLog); !errors.Is(err, os.ErrNotExist) {
-					t.Fatalf("status call log error = %v, want absent", err)
-				}
-				return
-			}
 			call, err := os.ReadFile(callLog)
 			if err != nil {
 				t.Fatal(err)
 			}
+			wantState := test.wantState
+			if wantState == "" {
+				wantState = "failure"
+			}
 			for _, expected := range []string{
 				"repos/cpaikr/opendart/statuses/4d368f361ea659806938765dbbcb0cdb6578c0c6",
-				"state=" + test.wantState,
+				"state=" + wantState,
 				"context=verify",
 				"target_url=https://github.com/cpaikr/opendart/actions/runs/1",
 			} {
@@ -966,13 +963,23 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "isolates exact-run inspection and commit-status authority in the trusted release orchestrator",
 		},
 		{
+			name: "proposal status matrix fail fast", artifact: releaseWorkflowArtifact,
+			old: "      fail-fast: false", replacement: "      fail-fast: true",
+			invariant: "isolates exact-run inspection and commit-status authority in the trusted release orchestrator",
+		},
+		{
+			name: "proposal status matrix source", artifact: releaseWorkflowArtifact,
+			old: "proposal: ${{ fromJSON(needs.dispatch-release-pr-checks.outputs.proposals) }}", replacement: "proposal: ${{ fromJSON('[]') }}",
+			invariant: "isolates exact-run inspection and commit-status authority in the trusted release orchestrator",
+		},
+		{
 			name: "proposal status poll budget", artifact: releaseWorkflowArtifact,
 			old: "for _ in $(seq 1 240)", replacement: "for _ in $(seq 1 72)",
 			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
 		},
 		{
 			name: "proposal status final revalidation", artifact: releaseWorkflowArtifact,
-			old: "full_race_run=\"$(find_run full-race.yml \"${sha}\" \"${full_race_after_id}\")\"\n            validate_proposal", replacement: "full_race_run=\"$(find_run full-race.yml \"${sha}\" \"${full_race_after_id}\")\"",
+			old: "full_race_run=\"$(find_run full-race.yml \"${sha}\" \"${full_race_after_id}\")\" || fail_proposal\n          validate_proposal || fail_proposal", replacement: "full_race_run=\"$(find_run full-race.yml \"${sha}\" \"${full_race_after_id}\")\" || fail_proposal",
 			invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status",
 		},
 		{

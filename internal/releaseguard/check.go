@@ -53,7 +53,7 @@ const (
 	proposalScriptDigest           = "996a55e656f9409c6f4a6ee882d9c23d73f070cead0d20d27000afea41723d9d"
 	componentScriptDigest          = "695c00a82d604738ac93fa794396acaf8f2d3e95d4f1b434721f727f10177fb8"
 	dispatchScriptDigest           = "8e243fcb82c1d33d2fa3414d504f9f33e1a553c0ed488695b3fb8e18ee7fd0e3"
-	reportProposalScriptDigest     = "27af6e527ab6279b26fd07d312dbeb3e06b231c56394327c7d77a0dc86357aa8"
+	reportProposalScriptDigest     = "d4d4c4abf3621cc737a28de686982e419fc3028199da05f02c9dbd4a70755129"
 	candidateInputScriptDigest     = "0921d426a5a45712b84c13f3d835173d6d9401f48b3e006c2568b44a4cfa9008"
 	candidateAttestScriptDigest    = "4af1a683a5744824aab2210dc052ca88bcb49d76d6be5febbf216a21c21d4f99"
 	candidateToolchainScriptDigest = "f8f6aaff0f83fe81760c269bbea9a39bad1ff01de95d86816a485dd3b5c818a7"
@@ -618,6 +618,7 @@ type workflowJob struct {
 	ContinueOnError bool              `yaml:"continue-on-error"`
 	Defaults        workflowDefaults  `yaml:"defaults"`
 	Permissions     map[string]string `yaml:"permissions"`
+	Strategy        workflowStrategy  `yaml:"strategy"`
 	RunsOn          string            `yaml:"runs-on"`
 	TimeoutMinutes  int               `yaml:"timeout-minutes"`
 	Environment     string            `yaml:"environment"`
@@ -625,6 +626,11 @@ type workflowJob struct {
 	With            map[string]any    `yaml:"with"`
 	Outputs         map[string]string `yaml:"outputs"`
 	Steps           []workflowStep    `yaml:"steps"`
+}
+
+type workflowStrategy struct {
+	FailFast *bool             `yaml:"fail-fast"`
+	Matrix   map[string]string `yaml:"matrix"`
 }
 
 type workflowNeeds []string
@@ -1179,29 +1185,37 @@ func checkReleasePipelineWorkflow(release workflow, source string) error {
 
 	report := release.Jobs["report-release-pr-status"]
 	expectedReportPermissions := map[string]string{"actions": "read", "contents": "read", "pull-requests": "read", "statuses": "write"}
-	if !workflowNeedsExactly(report.Needs, "dispatch-release-pr-checks") || !reflect.DeepEqual(report.Permissions, expectedReportPermissions) || report.RunsOn != "ubuntu-latest" || report.TimeoutMinutes != 45 || !defaultRunSettings(report.Defaults) || report.ContinueOnError || !exactWorkflowExpression(report.If, "needs.dispatch-release-pr-checks.outputs.proposals != '[]'") || !reflect.DeepEqual(stepNames(report.Steps), []string{"Report exact-SHA release proposal status"}) {
+	expectedReportMatrix := map[string]string{"proposal": "${{ fromJSON(needs.dispatch-release-pr-checks.outputs.proposals) }}"}
+	if !workflowNeedsExactly(report.Needs, "dispatch-release-pr-checks") || !reflect.DeepEqual(report.Permissions, expectedReportPermissions) || report.Strategy.FailFast == nil || *report.Strategy.FailFast || !reflect.DeepEqual(report.Strategy.Matrix, expectedReportMatrix) || report.RunsOn != "ubuntu-latest" || report.TimeoutMinutes != 45 || !defaultRunSettings(report.Defaults) || report.ContinueOnError || !exactWorkflowExpression(report.If, "needs.dispatch-release-pr-checks.outputs.proposals != '[]'") || !reflect.DeepEqual(stepNames(report.Steps), []string{"Report exact-SHA release proposal status"}) {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "isolates exact-run inspection and commit-status authority in the trusted release orchestrator"}
 	}
 	reportStep := report.Steps[0]
 	reportRun := reportStep.Run
 	reportDigestDetail := scriptDigestMismatchDetail(reportRun, reportProposalScriptDigest)
-	finalValidation := strings.LastIndex(reportRun, "\n  validate_proposal\n")
+	validationPositions := make([]int, 0, 2)
+	offset := 0
+	for _, line := range strings.SplitAfter(reportRun, "\n") {
+		if strings.TrimSpace(line) == "validate_proposal || fail_proposal" {
+			validationPositions = append(validationPositions, offset)
+		}
+		offset += len(line)
+	}
 	fullRaceWait := strings.Index(reportRun, `full_race_run="$(find_run full-race.yml`)
 	conclusionRead := strings.Index(reportRun, `verify_conclusion="$(jq`)
-	revalidatesAfterWaiting := strings.Count(reportRun, "\n  validate_proposal\n") == 2 &&
-		fullRaceWait >= 0 && finalValidation > fullRaceWait &&
-		conclusionRead >= 0 && finalValidation < conclusionRead
+	revalidatesAfterWaiting := len(validationPositions) == 2 &&
+		fullRaceWait >= 0 && validationPositions[1] > fullRaceWait &&
+		conclusionRead >= 0 && validationPositions[1] < conclusionRead
 	expectedReportEnv := map[string]string{
-		"BASE_SHA":  "${{ github.sha }}",
-		"GH_TOKEN":  "${{ secrets.GITHUB_TOKEN }}",
-		"PROPOSALS": "${{ needs.dispatch-release-pr-checks.outputs.proposals }}",
-		"RUN_URL":   "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+		"BASE_SHA": "${{ github.sha }}",
+		"GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}",
+		"PROPOSAL": "${{ toJSON(matrix.proposal) }}",
+		"RUN_URL":  "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
 	}
 	if !hasScriptDigest(reportRun, reportProposalScriptDigest) || !revalidatesAfterWaiting || !reflect.DeepEqual(reportStep.Env, expectedReportEnv) || !defaultStepExecution(reportStep) || !containsAll(reportRun,
 		"find_run()", "for _ in $(seq 1 240)", ".id > $after_id", ".head_sha == $sha", `.actor.login == "github-actions[bot]"`, `.triggering_actor.login == "github-actions[bot]"`, ".repository.full_name == env.GITHUB_REPOSITORY", "multiple ${workflow} runs match ${sha}",
-		"validate_proposal()",
+		"validate_proposal()", "report_status()", "fail_proposal()", "report_status failure || true", "validate_proposal || fail_proposal",
 		`test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)" = "${BASE_SHA}"`, `.author.login == "app/github-actions"`, ".baseRefOid == $base", ".headRefOid == $sha", ".merge_base_commit.sha == $base", ".files[] | {filename, status}",
-		`verify_run="$(find_run verify.yml`, `full_race_run="$(find_run full-race.yml`, `test "${verify_conclusion}" = success && test "${full_race_conclusion}" = success`, `-f context=verify`, `exit "${failed}"`) {
+		`verify_run="$(find_run verify.yml`, `full_race_run="$(find_run full-race.yml`, `test "${verify_conclusion}" = success && test "${full_race_conclusion}" = success`, `-f context=verify`, "exit 1") {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "waits for trusted exact-SHA gates and reports only a revalidated proposal status", Detail: reportDigestDetail}
 	}
 

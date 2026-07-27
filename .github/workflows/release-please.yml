@@ -349,6 +349,10 @@ jobs:
       contents: read
       pull-requests: read
       statuses: write
+    strategy:
+      fail-fast: false
+      matrix:
+        proposal: ${{ fromJSON(needs.dispatch-release-pr-checks.outputs.proposals) }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -356,7 +360,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PROPOSALS: ${{ needs.dispatch-release-pr-checks.outputs.proposals }}
+          PROPOSAL: ${{ toJSON(matrix.proposal) }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           find_run() {
@@ -377,8 +381,8 @@ jobs:
                       .repository.full_name == env.GITHUB_REPOSITORY
                     )
                   ]
-                ')"
-              count="$(jq 'length' <<<"${matches}")"
+                ')" || return 1
+              count="$(jq 'length' <<<"${matches}")" || return 1
               if test "${count}" -gt 1; then
                 echo "multiple ${workflow} runs match ${sha}" >&2
                 return 1
@@ -387,15 +391,15 @@ jobs:
                 jq -c '.[0]' <<<"${matches}"
                 return
               fi
-              sleep 10
+              sleep 10 || return 1
             done
             echo "timed out waiting for ${workflow} at ${sha}" >&2
             return 1
           }
 
           validate_proposal() {
-            test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)" = "${BASE_SHA}"
-            detail="$(gh pr view "${number}" --repo "${GITHUB_REPOSITORY}" --json author,baseRefName,baseRefOid,headRefName,headRefOid,labels,state)"
+            test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)" = "${BASE_SHA}" || return 1
+            detail="$(gh pr view "${number}" --repo "${GITHUB_REPOSITORY}" --json author,baseRefName,baseRefOid,headRefName,headRefOid,labels,state)" || return 1
             jq -e --arg base "${BASE_SHA}" --arg branch "${branch}" --arg sha "${sha}" '
               .state == "OPEN" and
               .baseRefName == "main" and
@@ -404,14 +408,14 @@ jobs:
               .headRefOid == $sha and
               .author.login == "app/github-actions" and
               any(.labels[]; .name == "autorelease: pending")
-            ' <<<"${detail}" > /dev/null
+            ' <<<"${detail}" > /dev/null || return 1
 
-            comparison="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE_SHA}...${sha}")"
+            comparison="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE_SHA}...${sha}")" || return 1
             jq -e --arg base "${BASE_SHA}" '
               .status == "ahead" and
               .behind_by == 0 and
               .merge_base_commit.sha == $base
-            ' <<<"${comparison}" > /dev/null
+            ' <<<"${comparison}" > /dev/null || return 1
 
             case "${branch}" in
               release-please--branches--main--components--opendart-spec)
@@ -437,34 +441,46 @@ jobs:
             ' <<<"${comparison}" > /dev/null
           }
 
-          failed=0
-          while IFS= read -r proposal; do
-            number="$(jq -r .number <<<"${proposal}")"
-            branch="$(jq -r .branch <<<"${proposal}")"
-            sha="$(jq -r .sha <<<"${proposal}")"
-            verify_after_id="$(jq -r .verify_after_id <<<"${proposal}")"
-            full_race_after_id="$(jq -r .full_race_after_id <<<"${proposal}")"
+          proposal="$(jq -cer '
+            if type == "object" and
+              (.number | type == "number" and . > 0) and
+              (.branch | type == "string" and length > 0) and
+              (.sha | type == "string" and test("^[0-9a-f]{40}$")) and
+              (.verify_after_id | type == "number" and . >= 0) and
+              (.full_race_after_id | type == "number" and . >= 0)
+            then . else error("release proposal is invalid") end
+          ' <<<"${PROPOSAL}")"
+          number="$(jq -r .number <<<"${proposal}")"
+          branch="$(jq -r .branch <<<"${proposal}")"
+          sha="$(jq -r .sha <<<"${proposal}")"
+          verify_after_id="$(jq -r .verify_after_id <<<"${proposal}")"
+          full_race_after_id="$(jq -r .full_race_after_id <<<"${proposal}")"
 
-            validate_proposal
-            verify_run="$(find_run verify.yml "${sha}" "${verify_after_id}")"
-            full_race_run="$(find_run full-race.yml "${sha}" "${full_race_after_id}")"
-            validate_proposal
-            verify_conclusion="$(jq -r .conclusion <<<"${verify_run}")"
-            full_race_conclusion="$(jq -r .conclusion <<<"${full_race_run}")"
-            state=failure
-            if test "${verify_conclusion}" = success && test "${full_race_conclusion}" = success; then
-              state=success
-            else
-              failed=1
-            fi
-
+          report_status() {
+            state="$1"
             gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${sha}" \
               -f state="${state}" \
               -f context=verify \
               -f description="Exact-SHA release proposal gates ${state}" \
               -f target_url="${RUN_URL}" > /dev/null
-          done < <(jq -cer '.[]' <<<"${PROPOSALS}")
-          exit "${failed}"
+          }
+          fail_proposal() {
+            report_status failure || true
+            exit 1
+          }
+
+          validate_proposal || fail_proposal
+          verify_run="$(find_run verify.yml "${sha}" "${verify_after_id}")" || fail_proposal
+          full_race_run="$(find_run full-race.yml "${sha}" "${full_race_after_id}")" || fail_proposal
+          validate_proposal || fail_proposal
+          verify_conclusion="$(jq -r .conclusion <<<"${verify_run}")"
+          full_race_conclusion="$(jq -r .conclusion <<<"${full_race_run}")"
+          if test "${verify_conclusion}" = success && test "${full_race_conclusion}" = success; then
+            report_status success
+          else
+            report_status failure
+            exit 1
+          fi
 
   sdk-release:
     needs: release-please
