@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "bootstrap-sha": "6a00e5f9edad77be0a2f94b5d1f860be6c58ec7e",
+  "separate-pull-requests": true,
   "packages": {
     "openapi/generated": {
       "release-type": "simple",
@@ -21,8 +22,12 @@
       "include-v-in-tag": true,
       "include-v-in-release-name": true,
       "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
+      "bump-minor-pre-major": false,
+      "bump-patch-for-minor-pre-major": false,
+      "versioning": "prerelease",
+      "prerelease": true,
+      "prerelease-type": "beta",
+      "release-as": "0.1.0-beta.1",
       "draft": true,
       "force-tag-creation": false,
       "extra-files": [
@@ -44,8 +49,9 @@
       "include-v-in-tag": true,
       "include-v-in-release-name": true,
       "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
+      "bump-minor-pre-major": false,
+      "bump-patch-for-minor-pre-major": false,
+      "exclude-paths": ["sdk/rust/crates/opendart-cli"],
       "draft": true,
       "force-tag-creation": false,
       "extra-files": [

@@ -1,0 +1,471 @@
+name: Rust crate release
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: Cargo package identity
+        required: true
+        type: string
+      package_path:
+        description: Repository-relative crate directory
+        required: true
+        type: string
+      inventory_path:
+        description: Reviewed package inventory
+        required: true
+        type: string
+      vcs_path:
+        description: Expected Cargo VCS package path
+        required: true
+        type: string
+      environment:
+        description: GitHub publication environment
+        required: true
+        type: string
+      expected_owner:
+        description: Expected crates.io owner login
+        required: true
+        type: string
+      version:
+        description: Exact Release Please component version
+        required: true
+        type: string
+      tag_name:
+        description: Exact component GitHub release tag
+        required: true
+        type: string
+      candidate_sha:
+        description: Full reviewed release revision
+        required: true
+        type: string
+      prerelease:
+        description: Whether the GitHub release remains a prerelease
+        required: true
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: rust-crate-${{ inputs.package }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    outputs:
+      artifact_name: ${{ steps.evidence.outputs.artifact_name }}
+      artifact_digest: ${{ steps.upload.outputs['artifact-digest'] }}
+    steps:
+      - name: Validate SDK release inputs
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          INVENTORY_PATH: ${{ inputs.inventory_path }}
+          PACKAGE: ${{ inputs.package }}
+          PACKAGE_PATH: ${{ inputs.package_path }}
+          TAG_NAME: ${{ inputs.tag_name }}
+          VCS_PATH: ${{ inputs.vcs_path }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          test "${PACKAGE}" = opendart
+          test "${PACKAGE_PATH}" = sdk/rust/crates/opendart
+          test "${INVENTORY_PATH}" = sdk/rust/package-files.txt
+          test "${VCS_PATH}" = sdk/rust/crates/opendart
+          test "${ENVIRONMENT}" = crates-io-opendart
+          test "${TAG_NAME}" = "opendart-v${VERSION}"
+          grep -Eq '^0\.1\.0-beta\.[1-9][0-9]*$|^0\.1\.0$' <<<"${VERSION}"
+          grep -Eq '^[0-9a-f]{40}$' <<<"${CANDIDATE_SHA}"
+
+      - name: Check out candidate revision
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.candidate_sha }}
+
+      - name: Attest candidate revision and package version
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          PACKAGE_PATH: ${{ inputs.package_path }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          test "$(git rev-parse HEAD)" = "${CANDIDATE_SHA}"
+          actual_version="$(sed -n 's/^version = "\([^"]*\)"$/\1/p' "${PACKAGE_PATH}/Cargo.toml" | head -n 1)"
+          test "${actual_version}" = "${VERSION}"
+          test -z "$(git status --short)"
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal --component clippy --component rustfmt
+
+      - name: Run credential-free Rust verification
+        run: ./scripts/verify rust
+
+      - name: Package and dry-run without credentials
+        env:
+          INVENTORY_PATH: ${{ inputs.inventory_path }}
+          PACKAGE: ${{ inputs.package }}
+          PACKAGE_PATH: ${{ inputs.package_path }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          package_list="$(mktemp)"
+          cargo +1.97.1 package --locked --manifest-path "${PACKAGE_PATH}/Cargo.toml" --list > "${package_list}"
+          diff -u "${INVENTORY_PATH}" "${package_list}"
+          cargo +1.97.1 package --locked --manifest-path "${PACKAGE_PATH}/Cargo.toml"
+          user_agent='opendart-release-verifier/0.1 (https://github.com/cpaikr/opendart)'
+          version_metadata="$(mktemp)"
+          status="$(curl --silent --show-error --location --max-time 30 --user-agent "${user_agent}" --output "${version_metadata}" --write-out '%{http_code}' "https://crates.io/api/v1/crates/${PACKAGE}/${VERSION}")"
+          case "${status}" in
+            200)
+              jq -e --arg package "${PACKAGE}" --arg version "${VERSION}" '.version.crate == $package and .version.num == $version and (.version.checksum | test("^[0-9a-f]{64}$"))' "${version_metadata}" > /dev/null
+              ;;
+            404)
+              cargo +1.97.1 publish --locked --dry-run --manifest-path "${PACKAGE_PATH}/Cargo.toml"
+              ;;
+            *)
+              echo "unexpected crates.io version lookup status: ${status}" >&2
+              exit 1
+              ;;
+          esac
+          test -f "sdk/rust/target/package/${PACKAGE}-${VERSION}.crate"
+
+      - name: Prepare immutable candidate evidence
+        id: evidence
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          INVENTORY_PATH: ${{ inputs.inventory_path }}
+          PACKAGE: ${{ inputs.package }}
+          TAG_NAME: ${{ inputs.tag_name }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          artifact_name="${PACKAGE}-${VERSION}-${CANDIDATE_SHA}-${GITHUB_RUN_ATTEMPT}"
+          mkdir candidate-evidence
+          cp "sdk/rust/target/package/${PACKAGE}-${VERSION}.crate" candidate-evidence/candidate.crate
+          cp "${INVENTORY_PATH}" candidate-evidence/inventory.txt
+          candidate_checksum="$(sha256sum candidate-evidence/candidate.crate | awk '{print $1}')"
+          jq -n \
+            --arg package "${PACKAGE}" \
+            --arg version "${VERSION}" \
+            --arg tagName "${TAG_NAME}" \
+            --arg revision "${CANDIDATE_SHA}" \
+            --arg candidateChecksum "${candidate_checksum}" \
+            '{schemaVersion: 1, package: $package, version: $version, tagName: $tagName, revision: $revision, candidateChecksum: $candidateChecksum}' \
+            > candidate-evidence/metadata.json
+          echo "artifact_name=${artifact_name}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload candidate evidence
+        id: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.evidence.outputs.artifact_name }}
+          path: candidate-evidence
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: candidate
+    permissions:
+      contents: read
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Validate publication identity
+        env:
+          EXPECTED_OWNER: ${{ inputs.expected_owner }}
+          PACKAGE: ${{ inputs.package }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          test "${PACKAGE}" = opendart
+          test -n "${EXPECTED_OWNER}"
+          grep -Eq '^[A-Za-z0-9:_-]+$' <<<"${EXPECTED_OWNER}"
+          grep -Eq '^0\.1\.0-beta\.[1-9][0-9]*$|^0\.1\.0$' <<<"${VERSION}"
+
+      - name: Check out candidate revision
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.candidate_sha }}
+
+      - name: Download candidate evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.candidate.outputs.artifact_name }}
+          path: candidate-evidence
+
+      - name: Recheck candidate evidence
+        env:
+          ARTIFACT_DIGEST: ${{ needs.candidate.outputs.artifact_digest }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          PACKAGE: ${{ inputs.package }}
+          TAG_NAME: ${{ inputs.tag_name }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          test "$(git rev-parse HEAD)" = "${CANDIDATE_SHA}"
+          grep -Eq '^[0-9a-f]{64}$' <<<"${ARTIFACT_DIGEST}"
+          jq -e \
+            --arg package "${PACKAGE}" \
+            --arg version "${VERSION}" \
+            --arg tagName "${TAG_NAME}" \
+            --arg revision "${CANDIDATE_SHA}" \
+            '.schemaVersion == 1 and .package == $package and .version == $version and .tagName == $tagName and .revision == $revision' \
+            candidate-evidence/metadata.json > /dev/null
+          candidate_checksum="$(sha256sum candidate-evidence/candidate.crate | awk '{print $1}')"
+          test "${candidate_checksum}" = "$(jq -r .candidateChecksum candidate-evidence/metadata.json)"
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal
+
+      - name: Publish at most once and reconcile
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          EXPECTED_OWNER: ${{ inputs.expected_owner }}
+          PACKAGE: ${{ inputs.package }}
+          PACKAGE_PATH: ${{ inputs.package_path }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          user_agent='opendart-release-verifier/0.1 (https://github.com/cpaikr/opendart)'
+          crate_metadata="$(mktemp)"
+          status="$(curl --silent --show-error --location --max-time 30 --user-agent "${user_agent}" --output "${crate_metadata}" --write-out '%{http_code}' "https://crates.io/api/v1/crates/${PACKAGE}")"
+          publish_required=true
+          case "${status}" in
+            200)
+              owners="$(mktemp)"
+              curl --fail --silent --show-error --location --max-time 30 --user-agent "${user_agent}" "https://crates.io/api/v1/crates/${PACKAGE}/owners" > "${owners}"
+              jq -e --arg owner "${EXPECTED_OWNER}" '.users[] | select(.login == $owner)' "${owners}" > /dev/null
+              version_metadata="$(mktemp)"
+              version_status="$(curl --silent --show-error --location --max-time 30 --user-agent "${user_agent}" --output "${version_metadata}" --write-out '%{http_code}' "https://crates.io/api/v1/crates/${PACKAGE}/${VERSION}")"
+              case "${version_status}" in
+                200)
+                  jq -e --arg package "${PACKAGE}" --arg version "${VERSION}" '.version.crate == $package and .version.num == $version and (.version.checksum | test("^[0-9a-f]{64}$"))' "${version_metadata}" > /dev/null
+                  publish_required=false
+                  ;;
+                404) ;;
+                *)
+                  echo "unexpected crates.io version lookup status: ${version_status}" >&2
+                  exit 1
+                  ;;
+              esac
+              ;;
+            404) ;;
+            *)
+              echo "unexpected crates.io package lookup status: ${status}" >&2
+              exit 1
+              ;;
+          esac
+
+          publish_status=0
+          if test "${publish_required}" = true; then
+            test -n "${CARGO_REGISTRY_TOKEN}"
+            set +e
+            cargo +1.97.1 publish --locked --no-verify --manifest-path "${PACKAGE_PATH}/Cargo.toml"
+            publish_status=$?
+            set -e
+          fi
+
+          accepted=false
+          for _ in $(seq 1 20); do
+            version_metadata="$(mktemp)"
+            status="$(curl --silent --show-error --location --max-time 30 --user-agent "${user_agent}" --output "${version_metadata}" --write-out '%{http_code}' "https://crates.io/api/v1/crates/${PACKAGE}/${VERSION}")"
+            if test "${status}" = 200 && jq -e --arg package "${PACKAGE}" --arg version "${VERSION}" '.version.crate == $package and .version.num == $version and (.version.checksum | test("^[0-9a-f]{64}$"))' "${version_metadata}" > /dev/null; then
+              owners="$(mktemp)"
+              curl --fail --silent --show-error --location --max-time 30 --user-agent "${user_agent}" "https://crates.io/api/v1/crates/${PACKAGE}/owners" > "${owners}"
+              jq -e --arg owner "${EXPECTED_OWNER}" '.users[] | select(.login == $owner)' "${owners}" > /dev/null
+              accepted=true
+              break
+            fi
+            sleep 15
+          done
+          if test "${accepted}" != true; then
+            echo "crates.io did not accept ${PACKAGE} ${VERSION}; cargo status ${publish_status}" >&2
+            exit 1
+          fi
+
+  reconcile:
+    needs:
+      - candidate
+      - publish
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out candidate revision
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.candidate_sha }}
+
+      - name: Download candidate evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.candidate.outputs.artifact_name }}
+          path: candidate-evidence
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal
+
+      - name: Acquire and verify accepted crate
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          PACKAGE: ${{ inputs.package }}
+          VCS_PATH: ${{ inputs.vcs_path }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          test "$(git rev-parse HEAD)" = "${CANDIDATE_SHA}"
+          user_agent='opendart-release-verifier/0.1 (https://github.com/cpaikr/opendart)'
+          curl --fail --silent --show-error --location --max-time 30 --user-agent "${user_agent}" \
+            "https://crates.io/api/v1/crates/${PACKAGE}/${VERSION}" > registry-version.json
+          registry_checksum="$(jq -er --arg package "${PACKAGE}" --arg version "${VERSION}" 'select(.version.crate == $package and .version.num == $version) | .version.checksum | select(test("^[0-9a-f]{64}$"))' registry-version.json)"
+          download_path="$(jq -er --arg package "${PACKAGE}" --arg version "${VERSION}" 'select(.version.crate == $package and .version.num == $version) | .version.dl_path' registry-version.json)"
+          test "${download_path}" = "/api/v1/crates/${PACKAGE}/${VERSION}/download"
+          curl --fail --silent --show-error --location --max-time 120 --max-filesize 16777216 --user-agent "${user_agent}" \
+            "https://crates.io${download_path}" > accepted.crate
+          test "$(sha256sum accepted.crate | awk '{print $1}')" = "${registry_checksum}"
+          go run ./cmd/opendart-tool verify-crate-artifact \
+            --candidate candidate-evidence/candidate.crate \
+            --accepted accepted.crate \
+            --inventory candidate-evidence/inventory.txt \
+            --package "${PACKAGE}" \
+            --version "${VERSION}" \
+            --revision "${CANDIDATE_SHA}" \
+            --vcs-path "${VCS_PATH}" \
+            --registry-checksum "${registry_checksum}" \
+            > crate-verification.json
+
+      - name: Prove clean registry consumer
+        env:
+          PACKAGE: ${{ inputs.package }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          consumer="$(mktemp -d)"
+          mkdir "${consumer}/src"
+          cat > "${consumer}/Cargo.toml" <<EOF
+          [package]
+          name = "opendart-release-consumer"
+          version = "0.0.0"
+          edition = "2024"
+
+          [dependencies]
+          ${PACKAGE} = { version = "=${VERSION}", default-features = false }
+          EOF
+          cat > "${consumer}/src/main.rs" <<'EOF'
+          use opendart::operations::Company;
+
+          fn main() -> Result<(), Box<dyn std::error::Error>> {
+              let request = Company::new("00126380").prepare_json()?;
+              assert_eq!(request.relative_path(), "/api/company.json");
+              Ok(())
+          }
+          EOF
+          cargo +1.97.1 generate-lockfile --manifest-path "${consumer}/Cargo.toml"
+          cargo +1.97.1 run --locked --manifest-path "${consumer}/Cargo.toml"
+
+      - name: Wait for public source and docs
+        env:
+          PACKAGE: ${{ inputs.package }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          user_agent='opendart-release-verifier/0.1 (https://github.com/cpaikr/opendart)'
+          curl --fail --silent --show-error --location --max-time 30 --user-agent "${user_agent}" \
+            "https://crates.io/crates/${PACKAGE}/${VERSION}" > /dev/null
+          ready=false
+          for _ in $(seq 1 40); do
+            if curl --fail --silent --show-error --location --max-time 30 --user-agent "${user_agent}" \
+              "https://docs.rs/${PACKAGE}/${VERSION}/${PACKAGE}/" > /dev/null; then
+              ready=true
+              break
+            fi
+            sleep 30
+          done
+          test "${ready}" = true
+
+      - name: Upload accepted release evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: accepted-${{ needs.candidate.outputs.artifact_name }}
+          path: |
+            accepted.crate
+            crate-verification.json
+            registry-version.json
+          if-no-files-found: error
+          retention-days: 90
+
+  finalize:
+    needs: reconcile
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate and publish matching GitHub draft
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          EXPECTED_PRERELEASE: ${{ inputs.prerelease }}
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          probe_tag_ref() {
+            tag="$1"
+            response="$(mktemp)"
+            error="$(mktemp)"
+            if gh api --include "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" > "${response}" 2> "${error}"; then
+              rm -f "${response}" "${error}"
+              printf '%s\n' exists
+              return
+            else
+              api_status=$?
+            fi
+            http_status="$(sed -n 's/^HTTP\/[^ ]* \([0-9][0-9][0-9]\).*/\1/p' "${response}" | tail -n 1)"
+            if test "${http_status}" = 404; then
+              rm -f "${response}" "${error}"
+              printf '%s\n' absent
+              return
+            fi
+            cat "${error}" >&2
+            rm -f "${response}" "${error}"
+            echo "unable to verify tag ref ${tag}; GitHub API status ${http_status:-unknown}" >&2
+            return "${api_status}"
+          }
+
+          release="$(gh release view "${TAG_NAME}" --repo "${GITHUB_REPOSITORY}" --json isDraft,isPrerelease,tagName,targetCommitish)"
+          jq -e \
+            --arg tag "${TAG_NAME}" \
+            --arg sha "${CANDIDATE_SHA}" \
+            --argjson prerelease "${EXPECTED_PRERELEASE}" \
+            '.tagName == $tag and .targetCommitish == $sha and .isPrerelease == $prerelease' \
+            <<<"${release}" > /dev/null
+          case "$(jq -r .isDraft <<<"${release}")" in
+            true)
+              tag_ref_status="$(probe_tag_ref "${TAG_NAME}")"
+              if test "${tag_ref_status}" = exists; then
+                echo "SDK draft unexpectedly has a tag: ${TAG_NAME}" >&2
+                exit 1
+              fi
+              gh release edit "${TAG_NAME}" --repo "${GITHUB_REPOSITORY}" \
+                --draft=false --prerelease="${EXPECTED_PRERELEASE}" --latest=false
+              ;;
+            false)
+              test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/${TAG_NAME}" --jq .sha)" = "${CANDIDATE_SHA}"
+              ;;
+            *) exit 1 ;;
+          esac
+          published="$(gh release view "${TAG_NAME}" --repo "${GITHUB_REPOSITORY}" --json isDraft,isPrerelease,tagName,targetCommitish)"
+          jq -e \
+            --arg tag "${TAG_NAME}" \
+            --arg sha "${CANDIDATE_SHA}" \
+            --argjson prerelease "${EXPECTED_PRERELEASE}" \
+            '.isDraft == false and .tagName == $tag and .targetCommitish == $sha and .isPrerelease == $prerelease' \
+            <<<"${published}" > /dev/null
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/${TAG_NAME}" --jq .sha)" = "${CANDIDATE_SHA}"

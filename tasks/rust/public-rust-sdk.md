@@ -31,12 +31,31 @@ generator model without depending on Rust source.
 - Package verification proves generated coverage and routing, unknown-field
   retention, source provenance, exact archive contents, stable Rust, MSRV,
   all-features, and no-default-features behavior through offline gates.
-- The architecture and release policy now recognize an independent Rust-aware
-  Release Please component. No workflow yet has crates.io publication authority;
-  registry publication and consumer adoption remain work 6.
-- ADR 0003 selects the planned `opendart-cli` as the first real SDK consumer.
-  Its current plan owns the optional `serde-json` interface and local consumer
-  review that must finish before this task resumes registry publication.
+- The architecture and release policy recognize an independent Rust-aware
+  Release Please component. The current setup change implements the guarded SDK
+  publication workflow; it remains inactive until it lands on `main` and its
+  protected environment is configured.
+- ADR 0003 selects `opendart-cli` as the first real SDK consumer. CLI works 1
+  through 8 are complete, including the optional `serde-json` contract, typed
+  consumer, package gates, cross-platform source installation, and dogfood
+  review required before SDK publication.
+- Work 6 is current. Combined Release Please
+  [PR #32](https://github.com/cpaikr/opendart/pull/32) was closed without merge.
+  The setup uses separate proposals, an SDK `0.1.0-beta.1` bootstrap strategy,
+  documented Rust pre-1.0 SemVer, and an explicit CLI path exclusion until work
+  9. The CLI remains gated on the verified SDK artifact.
+- Current `main` protection requires conversation resolution and prevents admin
+  bypass, but it does not require a verification status. Work 6 must add the
+  stable `Verify / verify` aggregate as a required check; the automatically
+  dispatched `Full race verification / full-race` result remains an additional
+  release-only merge-readiness gate.
+- The automated release contract is specified in
+  [RELEASING.md](../../RELEASING.md) and the SDK release guide. The setup change
+  implements its exact-SHA dispatcher, permission split, token bootstrap path,
+  accepted-artifact reconciliation, and draft finalizer. Environment setup,
+  landing on `main`, the first beta, trusted-publishing cutover, and stable
+  promotion remain. No SDK Release Please PR is mergeable until the setup is
+  reviewed, validated, and active on `main`.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -69,6 +88,14 @@ generator model without depending on Rust source.
   release version. Every crate release records the exact Git revision,
   specification release when one exists, and bundle checksum for the reviewed
   source snapshot it implements.
+- Make the reviewed component Release Please PR merge the only routine manual
+  release action. Keep verification, packaging, publication, registry
+  reconciliation, docs.rs checks, and GitHub draft finalization automatic and
+  independently permissioned after that merge.
+- Bootstrap the first crate version through the same automated flow with a
+  short-lived environment-scoped token, then revoke it and require crates.io
+  trusted publishing for every later version. Never retain a long-lived token
+  fallback.
 - Commit generated Rust source and verify its freshness offline against a
   deterministic SDK projection of the canonical contract. Specification
   changes outside that projection do not rewrite or release the crate. Consumer
@@ -220,17 +247,54 @@ target constraints and acceptance details for their workstreams.
   crate a Rust-aware release component that owns its Cargo version and provides
   the only component identity a later crates.io publication job may trust.
 
-### 6. Publish and adopt
+### 6. Publish and adopt — current
 
-- Publish a prerelease crate, verify installation from crates.io in a clean
-  fixture, and inspect docs.rs output and package provenance.
-- Recover an already-existing draft for the exact Rust component tag and target
-  revision before relying on fresh path-qualified Release Please outputs.
+- **Implemented in the current setup change:** PR #32 was closed without merge;
+  separate component release PRs, the SDK's initial `beta` strategy, corrected
+  Rust pre-1.0 SemVer, an exact-SHA actions-write dispatcher, the reusable crate
+  flow, and exact least-privilege/recovery guard tests are present. Keep
+  full-race release-only and require its automatic result through the release
+  runbook. The setup passed local validation and focused workflow/release-guard
+  review; it must still land on `main`. Add `Verify / verify` to branch
+  protection only after that workflow identity exists there.
+- Create the protected `crates-io-opendart` environment and a short-lived
+  API token capable of creating the new crate. Set repository variable
+  `OPENDART_CRATES_IO_OWNER` to the exact crates.io owner login and store the
+  token only as environment secret `CARGO_REGISTRY_TOKEN`. Keep it out of
+  repository secrets and expose it only to the exact publication job after the
+  credential-free candidate has passed every gate.
+- Review and merge only the independent SDK prerelease PR. Recover an
+  already-existing draft only when its exact component tag name and full-SHA
+  `targetCommitish` identify the reviewed candidate and that SHA is an ancestor
+  of current `main`; no Git tag exists for that draft yet. Keep the candidate
+  SHA fixed if a newer workflow repair resumes it. For a published release,
+  reconcile an event-SHA match as complete and treat a verified ancestor as the
+  normal previous release. Stop on tag-only, multiple, branch-shaped,
+  non-ancestor, or otherwise mismatched identities.
+- Let automation package, dry-run, publish once, reconcile the accepted crate,
+  compare checksum/manifests/contents/provenance, build a clean exact-version
+  consumer, verify docs.rs, and finalize the matching GitHub draft. Recheck
+  package name, owner, and exact-version state immediately before authority;
+  use `cargo +1.97.1 publish --locked --no-verify` so the credential-free
+  dry-run, not the token-bearing job, owns all build-script execution.
+- Revoke and delete the bootstrap token, configure the crates.io trusted
+  publisher for the exact repository/workflow/environment, and land the
+  OIDC-only hardening change. Keep prerelease versioning but set
+  `prerelease: false` and update package-scoped `release-as` from
+  `0.1.0-beta.1` to `0.1.0` so Release Please has an explicit stable-promotion
+  version input. Include a reviewed, release-eligible Conventional Commit in
+  the SDK path that records the verified beta and stable support contract; the
+  out-of-path OIDC/config update alone cannot make Release Please propose the
+  component, and an empty bump commit is not acceptable. Prove recovery without
+  a registry write,
+  publish and verify stable through OIDC, then remove `release-as` and the
+  temporary prerelease fields.
 - Adopt only the prepared-request and wire-inspection layer in strict
   collectors. Keep their executor, persistence, and application policy local.
 - Publish the first non-prerelease SDK version only after the generated
   inventory and safe-default client acceptance suites pass and the public API
-  has been reviewed against a real consumer.
+  has been reviewed against a real consumer. The stable Release Please PR merge
+  is the only routine human action; every downstream stage remains automatic.
 
 ## Cross-plan constraints
 
@@ -245,10 +309,9 @@ target constraints and acceptance details for their workstreams.
   release checks to make room for Cargo.
 - A specification-only release and a Rust-crate release are independently
   classified and versioned even when one commit changes both products.
-- The CLI plan may add the selected optional `serde-json` interface before
-  publication. This task resumes work 6 only after its exact source-number
-  contract and typed CLI consumer pass compatibility review; the SDK must then
-  publish and verify before the dependent CLI package.
+- CLI works 1 through 8 established the selected `serde-json` interface, exact
+  source-number contract, and typed consumer. SDK work 6 may proceed, but the
+  SDK must publish and verify before dependent CLI work 9 begins.
 
 ## Overall acceptance criteria
 
@@ -277,10 +340,14 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-After the CLI plan proves the SDK `serde-json` interface against its real typed
-consumer, resume work 6 with a separate publication-authority change.
-Publish and verify `opendart` before authorizing `opendart-cli`; do not publish
-or adopt either package from the implementation worktree.
+Land the reviewed `opendart` release setup on `main`. After the workflow identity
+exists there, require `Verify / verify`, configure the protected
+`crates-io-opendart` environment, set repository variable
+`OPENDART_CRATES_IO_OWNER`, and add environment secret `CARGO_REGISTRY_TOKEN`
+only at that boundary. Then review the independent SDK beta proposal and
+explicitly confirm its exact version through
+`$release-please-release`. Do not merge, tag, publish, or finalize that proposal
+before those gates are complete.
 
 ## Progress log
 

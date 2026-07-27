@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Full Release Please PR head revision
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -22,6 +27,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.expected_sha || github.sha }}
+
+      - name: Attest checked-out revision
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
+        run: |
+          test "${GITHUB_SHA}" = "${EXPECTED_SHA}"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
 
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7

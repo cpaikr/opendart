@@ -112,38 +112,177 @@ also updates the CLI's marked exact local SDK pin without bumping the CLI
 version or changelog.
 
 Before their first releases, both Rust paths are intentionally absent from
-`.release-please-manifest.json`. The repository guard rejects either bootstrap
-until its complete publication and recovery flow exists. The SDK must complete
-work 6 first; only then may the CLI plan resume at work 8.
+`.release-please-manifest.json`. The repository guard admits an SDK manifest
+entry only for the aligned first beta and continues to reject the CLI entry
+until work 9 supplies its complete publication and recovery flow.
 
-The current Release Please workflow still finalizes only specification release
-assets. Rust components can prepare independent proposals, but no workflow has
-crates.io credentials or runs `cargo publish`. Path-qualified outputs for one
-component never authorize another component's publication.
+The setup workflow creates separate component proposals, finalizes
+specification assets, and connects only the SDK path to the protected reusable
+crate workflow. The CLI component remains configured for future ownership but
+its own path is excluded from proposal eligibility until work 9. Path-qualified
+outputs for one component never authorize another component's publication.
 
 ## Work 6: crates.io publication
 
-Publication is deliberately unimplemented. The later publication change must:
+The current setup change implements publication automation as ordinary reviewed
+code; it does not merge a Rust Release Please PR or publish a crate. Before the
+flow becomes active, this change must land on `main`, branch protection and the
+protected bootstrap environment must be configured, and the exact SDK beta
+proposal must be separately reviewed and confirmed. The setup implements:
 
-1. Consume the exact path-qualified Rust component release-created flag, tag,
-   version, and immutable target revision from the pinned Release Please action.
-   Before invoking Release Please, independently detect and resume an existing
-   draft for that exact `opendart-vX.Y.Z` component tag and immutable target
-   revision. A failed run may already have created the draft, so fresh action
-   outputs alone are not a sufficient recovery mechanism.
-2. Depend on the complete verification gate and reproduce the reviewed package
-   inventory from that revision.
-3. Run `cargo package --locked` and `cargo publish --locked --dry-run` before
-   obtaining publication authority.
-4. Use narrowly scoped crates.io trusted publishing when available, or a
-   dedicated least-privilege token confined to the publication job.
-5. Query crates.io before publishing and run `cargo publish --locked` only when
-   the version is absent.
-6. If the version already exists after an interrupted run, accept it only when
-   its checksum, provenance, normalized manifest, and unpacked contents exactly
-   match the reviewed candidate.
-7. Download and inspect the accepted registry artifact, verify docs.rs, and
-   finalize the matching GitHub component release only after those checks pass.
+1. Separate Release Please PRs per manifest component. Set
+   `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` to `false` for
+   both Rust components so their configured pre-1.0 behavior matches the
+   documented patch/minor/major policy; retain the specification's independent
+   settings. Configure only the SDK component with `versioning: prerelease`,
+   `prerelease: true`, `prerelease-type: beta`, and temporary package-scoped
+   `release-as: 0.1.0-beta.1`. The override prevents accumulated breaking
+   bootstrap commits from implying `1.0.0-beta`; it does not pre-seed the
+   released-version manifest. Combined PR #32 was closed without merging, so
+   the setup push can create or update independent proposals on `main`.
+   The release skill must still review and confirm the exact beta before merge.
+2. The release guard and mutation tests enforce an exact allowlist for the
+   orchestrator, reusable crate-release workflow,
+   component outputs, job order, permissions, environment, action pins,
+   commands, and recovery rules. Continue rejecting registry credentials in
+   pull requests, generic verification, other components, and untrusted refs.
+   Because a pull request created through `GITHUB_TOKEN` does not create a new
+   `pull_request` workflow run, a separate dispatcher job has only
+   `actions: write`, `contents: read`, and `pull-requests: read`. It dispatches
+   Verify and full-race for every managed component PR's exact head SHA,
+   requires each run to check out and attest that expected SHA, and
+   redispatches after each update. This supplies the otherwise-suppressed
+   checks without a routine manual dispatch.
+   After the setup reaches `main`, add the stable `Verify / verify` aggregate
+   to branch protection. Keep
+   `Full race verification / full-race` release-only and make its exact-SHA
+   result a mandatory merge-readiness check in the release skill and operator
+   runbook; do not make every ordinary PR run the full sweep merely to obtain a
+   conditionally needed status.
+3. The Release Please job consumes the exact
+   `sdk/rust/crates/opendart--release_created`, `--tag_name`, `--version`, and
+   `--sha` values. Before invoking Release Please, query the exact
+   `opendart-vX.Y.Z` release identity. With the configured draft release and no
+   forced tag creation, recover a draft only when its tag name and full-SHA
+   `targetCommitish` equal the expected identity and reviewed candidate SHA and
+   that SHA is an ancestor of current `main`. A recovered draft is equivalent
+   to matching action outputs and keeps its candidate SHA even when a newer
+   repaired workflow resumes it. For a published release, resolve the Git tag:
+   equality with the current event SHA is an idempotent completion, while a
+   verified ancestor is the normal previous release and permits Release Please
+   to process later commits. A branch-shaped draft target, tag-only state,
+   multiple match, non-ancestor, or other mismatch stops without side effects.
+4. A component-parameterized Rust crate workflow is called only for that exact SDK
+   output. The later CLI work may reuse the mechanics, but it must supply its
+   own path, tag, environment, package inventory, and consumer checks.
+
+### Automated stage order
+
+After the maintainer reviews and merges the SDK Release Please PR, the workflow
+owns the remaining work:
+
+1. **Verify candidate without credentials.** Check out the exact output or
+   recovered SHA with persisted credentials disabled, require the complete
+   repository verification gate, reproduce the tracked SDK inventory, run
+   `cargo package --locked` and `cargo publish --locked --dry-run`, and retain
+   the candidate `.crate`, checksum, version, tag, revision, and inventory as
+   immutable workflow evidence. Use attempt-qualified artifact names and record
+   the upload digest so a rerun cannot overwrite or silently substitute earlier
+   evidence.
+2. **Acquire publication authority narrowly.** Enter the component-specific
+   `crates-io-opendart` environment only after candidate verification. The job
+   receives repository read authority and exactly one crates.io authentication
+   path; it receives no GitHub release-write authority. Check out the same
+   immutable revision and verify the candidate evidence digest before invoking
+   Cargo. Recheck the package name, expected owner when one exists, and exact
+   version immediately before using authority. An unexpected owner or name
+   takeover stops for a product decision.
+3. **Publish at most once without exposing the token to build scripts.** If the
+   exact version is absent, run one
+   `cargo +1.97.1 publish --locked --no-verify` for `opendart` at the candidate
+   SHA. The earlier credential-free `cargo +1.97.1 publish --locked --dry-run`
+   is the build verification; `--no-verify` prevents Cargo from running that
+   build again after the registry credential is present. Treat a Cargo timeout
+   as indeterminate because index polling can time out after a successful
+   upload; continue to reconciliation instead of retrying blindly.
+4. **Reconcile the immutable registry result.** Poll with a bounded deadline,
+   acquire the accepted checksum and `.crate` through repository-owned network
+   logic, and invoke `opendart-tool verify-crate-artifact`. Require exact
+   checksum, provenance, normalized/original manifests, tar contents, and
+   reviewed inventory identity. If the version was already present, these same
+   checks decide whether the run may resume.
+5. **Prove the public consumer.** Build and test a clean temporary consumer
+   against the exact registry version, inspect the crates.io source view, and
+   wait for successful docs.rs output. Do not substitute the local path crate.
+6. **Finalize separately.** Give a finalizer GitHub contents-write authority but
+   no crates.io credential. It may publish only the matching draft whose tag,
+   target SHA, version, component identity, and expected prerelease flag match
+   the reviewed component outputs after every preceding stage has passed. The
+   beta finalizer preserves `prerelease=true`;
+   the stable finalizer requires `prerelease=false`. Both explicitly keep
+   `latest=false` because repository-global Latest belongs to the independent
+   specification convention. A mismatch or timeout leaves the draft unpublished
+   for investigation, and the release guard rejects the specification
+   finalizer's `--latest` command on a Rust path.
+
+   The reusable workflow admits exactly one of these finalization forms after
+   validating the component tag and all prior evidence:
+
+   ```sh
+   gh release edit "${tag}" --draft=false --prerelease=true --latest=false
+   gh release edit "${tag}" --draft=false --prerelease=false --latest=false
+   ```
+
+   The first form is beta-only and the second is stable-only; the guard rejects
+   either form when it disagrees with the reviewed Release Please proposal.
+
+### First-release bootstrap and steady state
+
+crates.io trusted publishing cannot be configured until the first `opendart`
+version exists. Create the `crates-io-opendart` GitHub environment with a
+required reviewer, disallow protection-rule bypass, restrict deployments to
+`main`, set repository variable `OPENDART_CRATES_IO_OWNER` to the exact
+crates.io owner login, and place one short-lived API token capable of creating
+the new crate there as environment secret `CARGO_REGISTRY_TOKEN` for the
+prerelease bootstrap. Enable prevent-self-review when an
+independent maintainer is available; otherwise record that the same maintainer
+approved both the exact Release Please proposal and the one-time environment
+deployment. The repository guard separately restricts access to the canonical
+workflow. Do not store the token as a repository-wide secret or use it outside
+the publication job.
+
+The prerelease still follows the full automated stage order; the one-time
+environment approval is the only step added to the normal Release Please PR
+review and merge. After the accepted prerelease passes registry, consumer, and
+docs.rs verification:
+
+1. delete the bootstrap secret and revoke its token;
+2. configure the crates.io trusted publisher for the exact repository,
+   workflow, and `crates-io-opendart` environment;
+3. replace the bootstrap authentication step with a commit-pinned
+   `rust-lang/crates-io-auth-action` step and grant only `contents: read` plus
+   `id-token: write` to the publication job;
+4. remove the environment reviewer so later publication is automatic after the
+   explicit Release Please PR merge, while retaining branch/workflow scoping;
+5. keep `versioning: prerelease` and `prerelease-type: beta`, set
+   `prerelease: false`, and change package-scoped `release-as` from
+   `0.1.0-beta.1` to `0.1.0` so Release Please has an explicit stable-promotion
+   version input. In the same reviewed delivery, add a release-eligible
+   Conventional Commit under `sdk/rust/crates/opendart` that records the
+   verified beta and stable support contract. Release Please skips a component
+   with no user-facing path-scoped commits, so an out-of-path
+   OIDC/configuration change alone cannot trigger the promotion; do not
+   substitute an empty version-bump commit; and
+6. rerun the no-side-effect configuration and recovery tests before allowing
+   that exact stable proposal. After the stable release succeeds, remove
+   `release-as`, `versioning`, `prerelease`, and `prerelease-type` so later
+   releases use the default strategy.
+
+Do not retain token fallback logic after OIDC is enabled. The two temporary
+package-scoped `release-as` values are the sole planned forced-version exception
+and must be removed after stable. The beta and stable versions must still be
+presented and explicitly confirmed under the repository release policy before
+their respective merges.
 
 Because crates.io versions are immutable and `cargo publish` cannot accept a
 prebuilt `.crate`, pre-publication review and post-publication verification are
@@ -159,4 +298,5 @@ exact-byte storage, attempt lifecycle, retry scheduling, quotas, collection
 closure, successful-empty classification, domain conversion, and persistence.
 
 Production adoption waits for a verified crates.io version. A local path
-dependency is suitable only for integration development before work 6.
+dependency is suitable only for integration development before that registry
+release.

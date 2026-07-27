@@ -43,10 +43,16 @@ matching workspace-lock entry. CLI-only changes do not belong to the root
 specification or `opendart` SDK components.
 
 The CLI and SDK entries remain absent from `.release-please-manifest.json`
-until their publication flows are authorized and recoverable. The current
-release workflow has no crates.io credential, trusted-publishing permission,
-or `cargo publish` command. A Release Please PR that tries to bootstrap either
-unpublished component therefore fails the repository guard and must not merge.
+until their first authorized releases. The guard now admits only the aligned
+SDK beta transition; it still rejects every CLI manifest entry and the CLI
+component excludes its own path from proposal eligibility until work 9.
+
+The setup enables separate Release Please PRs, so SDK and CLI approval cannot
+be coupled to each other or to a specification release. The CLI
+publication job may reuse the SDK crate-release workflow only after the SDK
+prerelease and non-prerelease paths have proved its component isolation and
+interrupted-run recovery. Reuse does not share component outputs, package
+evidence, environments, or credentials.
 
 ## Prepared artifact comparison
 
@@ -59,32 +65,72 @@ reviewed inventory.
 The verifier checks the accepted checksum, safe bounded gzip/tar structure,
 zero padding and tails, full expanded tar identity, exact files and contents,
 both Cargo manifests, and clean Cargo VCS metadata. Reports and failures omit
-local paths and file contents. Work 8 must acquire the accepted artifact and
+local paths and file contents. Work 9 must acquire the accepted artifact and
 checksum through separately authorized registry logic before invoking this
 command.
 
 ## Stop gate and interrupted-release recovery
 
-Work 7 ends before registry ownership checks or publication. Resume the public
+Work 8 ends before registry ownership checks or publication. Resume the public
 Rust SDK task at its crates.io publication work, publish and verify the exact
-`opendart` version, and only then return to CLI work 8. Reconfirm that the CLI's
+`opendart` version, and only then return to CLI work 9. Reconfirm that the CLI's
 already-reviewed exact SDK pin matches that immutable registry version.
 
-The later CLI publication change must recover conservatively:
+Work 9 must add the CLI path to the proven automated pipeline and recover
+conservatively:
 
-1. Detect an existing `opendart-cli-vX.Y.Z` draft before relying on fresh
-   Release Please outputs, and require its target to be the reviewed immutable
-   revision.
-2. Reproduce the source package and reviewed inventory without credentials.
-3. Recheck crates.io name and owner state immediately before explicit
-   authorization. A conflict stops for a product decision.
-4. If the version is absent, publish once through dedicated least privilege.
-   If it is present after interruption, do not republish.
-5. Download the accepted crate and checksum, run the prepared local verifier,
-   perform a clean registry install and keyless discovery, and inspect docs.rs.
-6. Finalize only the matching GitHub component draft after every immutable
-   registry check passes. A mismatch leaves the draft unpublished for manual
-   investigation; tags, assets, and registry versions are never replaced.
+1. Consume only the exact
+   `sdk/rust/crates/opendart-cli--release_created`, `--tag_name`, `--version`,
+   and `--sha` outputs, or an exactly matching interrupted
+   `opendart-cli-vX.Y.Z` draft detected before Release Please runs. Require its
+   target to be a full immutable candidate SHA that is an ancestor of current
+   `main`; keep that candidate fixed if a newer workflow repair resumes it.
+2. Confirm that the CLI's exact SDK dependency equals the already verified
+   non-prerelease registry version. Reproduce the CLI source package, lockfile,
+   and reviewed inventory without credentials; run locked package and publish
+   dry-runs before entering an authority-bearing job.
+3. Enter only the `crates-io-opendart-cli` environment and recheck name, owner,
+   and exact-version state immediately before publication. A name conflict or
+   unexpected owner stops for a product decision.
+4. If the version is absent, publish once with
+   `cargo +1.97.1 publish --locked --no-verify` at the exact candidate SHA. The
+   credential-free dry-run already performed the build, so `--no-verify` keeps
+   registry authority out of dependency and build scripts. If Cargo times out
+   or the version is already present after interruption, reconcile instead of
+   republishing.
+5. Download the accepted crate and registry checksum, run the prepared local
+   verifier, and require exact checksum, manifests, contents, inventory, and VCS
+   provenance. Then install the exact registry version with `--locked` in clean
+   Linux, macOS, and Windows roots, run keyless discovery, and wait for docs.rs.
+6. Give the finalizer GitHub contents-write authority but no crates.io
+   credential. Finalize only the matching component draft after every immutable
+   registry check passes and its beta/stable prerelease flag matches the
+   proposal. Explicitly keep `latest=false`; repository-global Latest belongs
+   to the independent specification convention. A mismatch leaves the draft
+   unpublished; tags, assets, and registry versions are never moved or replaced.
+
+A real OpenDART smoke call is optional post-release evidence, not a publication
+or finalization gate. Run it only through the separately authorized protected
+live path after the release succeeds. The crate pipeline never receives
+`OPENDART_API_KEY`, and volatile upstream service health cannot block or roll
+back an otherwise verified immutable release.
+
+The first `opendart-cli` version follows the same beta-to-stable bootstrap as the
+SDK. Work 9 temporarily configures `versioning: prerelease`, `prerelease: true`,
+`prerelease-type: beta`, and package-scoped `release-as: 0.1.0-beta.1`, then
+publishes the reviewed beta with a short-lived API token capable of creating the
+new crate in its protected component environment. After public verification,
+revoke the token, configure the trusted publisher for the exact
+repository/workflow/environment, and replace the token path with commit-pinned
+OIDC authentication. Keep prerelease versioning, set `prerelease: false`, and
+update `release-as` to `0.1.0` for the explicitly reviewed stable promotion.
+That delivery also needs a release-eligible Conventional Commit under
+`sdk/rust/crates/opendart-cli` recording the verified beta and stable support
+contract; out-of-path configuration alone does not make the component eligible
+for a Release Please proposal, and an empty bump commit is not acceptable.
+After stable succeeds, remove `release-as` and the three temporary prerelease
+fields. Do not retain a token fallback; Release Please PR review and merge
+remains the only routine human gate after bootstrap.
 
 Prebuilt binaries, installers, and package-manager releases remain outside this
 source-distribution flow.

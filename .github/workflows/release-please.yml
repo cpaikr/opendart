@@ -16,6 +16,8 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/verify.yml
+    with:
+      expected_sha: ${{ github.sha }}
 
   release-please:
     needs: verify
@@ -25,55 +27,252 @@ jobs:
       pull-requests: write
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 20
+    outputs:
+      prs: ${{ steps.proposals.outputs.numbers }}
+      sdk_release_created: ${{ steps.component.outputs.sdk_release_created }}
+      sdk_tag_name: ${{ steps.component.outputs.sdk_tag_name }}
+      sdk_version: ${{ steps.component.outputs.sdk_version }}
+      sdk_sha: ${{ steps.component.outputs.sdk_sha }}
+      sdk_prerelease: ${{ steps.component.outputs.sdk_prerelease }}
     steps:
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
+          fetch-depth: 0
           persist-credentials: false
+          ref: ${{ github.sha }}
 
-      - name: Detect interrupted draft release
-        id: draft
+      - name: Detect interrupted component release
+        id: recovery
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          version="$(jq -r '.["openapi/generated"]' .release-please-manifest.json)"
-          tag_name="v${version}"
-          release="$(gh release view "${tag_name}" --json isDraft,targetCommitish 2>/dev/null || true)"
-          if test -n "${release}" && test "$(jq -r .isDraft <<<"${release}")" = true; then
-            echo "recovering=true" >> "${GITHUB_OUTPUT}"
-            echo "tag_name=${tag_name}" >> "${GITHUB_OUTPUT}"
-            echo "sha=$(jq -r .targetCommitish <<<"${release}")" >> "${GITHUB_OUTPUT}"
-          else
-            echo "recovering=false" >> "${GITHUB_OUTPUT}"
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          releases="$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/releases?per_page=100")"
+          candidates="$(mktemp)"
+
+          probe_tag_ref() {
+            tag="$1"
+            response="$(mktemp)"
+            error="$(mktemp)"
+            if gh api --include "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" > "${response}" 2> "${error}"; then
+              rm -f "${response}" "${error}"
+              printf '%s\n' exists
+              return
+            else
+              api_status=$?
+            fi
+            http_status="$(sed -n 's/^HTTP\/[^ ]* \([0-9][0-9][0-9]\).*/\1/p' "${response}" | tail -n 1)"
+            if test "${http_status}" = 404; then
+              rm -f "${response}" "${error}"
+              printf '%s\n' absent
+              return
+            fi
+            cat "${error}" >&2
+            rm -f "${response}" "${error}"
+            echo "unable to verify tag ref ${tag}; GitHub API status ${http_status:-unknown}" >&2
+            return "${api_status}"
+          }
+
+          inspect_component() {
+            component="$1"
+            manifest_path="$2"
+            tag_prefix="$3"
+            expected_prerelease="$4"
+            version="$(jq -r --arg path "${manifest_path}" '.[$path] // empty' .release-please-manifest.json)"
+            if test -z "${version}"; then
+              return
+            fi
+            tag_name="${tag_prefix}${version}"
+            matches="$(jq -c --arg tag "${tag_name}" '[.[][] | select(.tag_name == $tag)]' <<<"${releases}")"
+            match_count="$(jq 'length' <<<"${matches}")"
+            if test "${match_count}" -gt 1; then
+              echo "multiple GitHub releases match ${tag_name}" >&2
+              exit 1
+            fi
+            if test "${match_count}" = 0; then
+              tag_ref_status="$(probe_tag_ref "${tag_name}")"
+              if test "${tag_ref_status}" = exists; then
+                echo "tag exists without a matching GitHub release: ${tag_name}" >&2
+                exit 1
+              fi
+              return
+            fi
+
+            release="$(jq -c '.[0]' <<<"${matches}")"
+            is_draft="$(jq -r .draft <<<"${release}")"
+            is_prerelease="$(jq -r .prerelease <<<"${release}")"
+            target="$(jq -r .target_commitish <<<"${release}")"
+            if test "${is_prerelease}" != "${expected_prerelease}"; then
+              echo "prerelease state mismatch for ${tag_name}" >&2
+              exit 1
+            fi
+            if test "${is_draft}" = true; then
+              grep -Eq '^[0-9a-f]{40}$' <<<"${target}"
+              git merge-base --is-ancestor "${target}" "${GITHUB_SHA}"
+              if test "${component}" = sdk; then
+                tag_ref_status="$(probe_tag_ref "${tag_name}")"
+                if test "${tag_ref_status}" = exists; then
+                  echo "SDK draft unexpectedly has a tag: ${tag_name}" >&2
+                  exit 1
+                fi
+              fi
+              jq -n --arg component "${component}" --arg tag "${tag_name}" --arg version "${version}" --arg sha "${target}" --argjson prerelease "${expected_prerelease}" \
+                '{state: "draft", component: $component, tag: $tag, version: $version, sha: $sha, prerelease: $prerelease}' >> "${candidates}"
+              return
+            fi
+
+            tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${tag_name}" --jq .sha)"
+            grep -Eq '^[0-9a-f]{40}$' <<<"${tag_sha}"
+            if test "${tag_sha}" = "${GITHUB_SHA}"; then
+              jq -n --arg component "${component}" --arg tag "${tag_name}" --arg version "${version}" --arg sha "${tag_sha}" --argjson prerelease "${expected_prerelease}" \
+                '{state: "complete", component: $component, tag: $tag, version: $version, sha: $sha, prerelease: $prerelease}' >> "${candidates}"
+              return
+            fi
+            if ! git merge-base --is-ancestor "${tag_sha}" "${GITHUB_SHA}"; then
+              echo "published tag is not an ancestor of the current release run: ${tag_name}" >&2
+              exit 1
+            fi
+          }
+
+          inspect_component specification openapi/generated v false
+          inspect_component sdk sdk/rust/crates/opendart opendart-v true
+
+          candidate_count="$(wc -l < "${candidates}" | tr -d ' ')"
+          if test "${candidate_count}" -gt 1; then
+            echo "multiple component releases require recovery" >&2
+            exit 1
           fi
+          if test "${candidate_count}" = 0; then
+            echo "state=none" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          candidate="$(head -n 1 "${candidates}")"
+          echo "state=$(jq -r .state <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
+          echo "component=$(jq -r .component <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
+          echo "tag_name=$(jq -r .tag <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
+          echo "version=$(jq -r .version <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
+          echo "sha=$(jq -r .sha <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
+          echo "prerelease=$(jq -r .prerelease <<<"${candidate}")" >> "${GITHUB_OUTPUT}"
 
       - name: Run Release Please
-        if: ${{ steps.draft.outputs.recovering != 'true' }}
+        if: ${{ steps.recovery.outputs.state == 'none' }}
         id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check out released commit
-        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}
+      - name: Normalize release proposal numbers
+        id: proposals
+        env:
+          RELEASE_PRS: ${{ steps.release.outputs.prs }}
+        run: |
+          if test -z "${RELEASE_PRS}"; then
+            echo 'numbers=[]' >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          numbers="$(jq -cer 'if type == "array" then [.[].number] else error("release PR output is not an array") end | if all(.[]; type == "number" and . > 0) then . else error("release PR number is invalid") end' <<<"${RELEASE_PRS}")"
+          echo "numbers=${numbers}" >> "${GITHUB_OUTPUT}"
+
+      - name: Normalize component release outputs
+        id: component
+        env:
+          CLI_CREATED: ${{ steps.release.outputs['sdk/rust/crates/opendart-cli--release_created'] }}
+          RECOVERY_COMPONENT: ${{ steps.recovery.outputs.component }}
+          RECOVERY_PRERELEASE: ${{ steps.recovery.outputs.prerelease }}
+          RECOVERY_SHA: ${{ steps.recovery.outputs.sha }}
+          RECOVERY_STATE: ${{ steps.recovery.outputs.state }}
+          RECOVERY_TAG: ${{ steps.recovery.outputs.tag_name }}
+          RECOVERY_VERSION: ${{ steps.recovery.outputs.version }}
+          SDK_CREATED: ${{ steps.release.outputs['sdk/rust/crates/opendart--release_created'] }}
+          SDK_SHA: ${{ steps.release.outputs['sdk/rust/crates/opendart--sha'] }}
+          SDK_TAG: ${{ steps.release.outputs['sdk/rust/crates/opendart--tag_name'] }}
+          SDK_VERSION: ${{ steps.release.outputs['sdk/rust/crates/opendart--version'] }}
+          SPEC_CREATED: ${{ steps.release.outputs['openapi/generated--release_created'] }}
+          SPEC_SHA: ${{ steps.release.outputs['openapi/generated--sha'] }}
+          SPEC_TAG: ${{ steps.release.outputs['openapi/generated--tag_name'] }}
+          SPEC_VERSION: ${{ steps.release.outputs['openapi/generated--version'] }}
+        run: |
+          if test "${CLI_CREATED}" = true; then
+            echo "CLI publication is not authorized" >&2
+            exit 1
+          fi
+          created=0
+          test "${SPEC_CREATED}" = true && created=$((created + 1))
+          test "${SDK_CREATED}" = true && created=$((created + 1))
+          if test "${created}" -gt 1; then
+            echo "one push cannot authorize multiple component releases" >&2
+            exit 1
+          fi
+
+          spec_created=false
+          sdk_created=false
+          if test "${RECOVERY_STATE}" = draft; then
+            if test "${RECOVERY_COMPONENT}" = specification; then
+              spec_created=true
+              SPEC_TAG="${RECOVERY_TAG}"
+              SPEC_VERSION="${RECOVERY_VERSION}"
+              SPEC_SHA="${RECOVERY_SHA}"
+            elif test "${RECOVERY_COMPONENT}" = sdk; then
+              sdk_created=true
+              SDK_TAG="${RECOVERY_TAG}"
+              SDK_VERSION="${RECOVERY_VERSION}"
+              SDK_SHA="${RECOVERY_SHA}"
+            else
+              echo "unknown recovery component" >&2
+              exit 1
+            fi
+          elif test "${RECOVERY_STATE}" = complete; then
+            echo "matching release is already complete"
+          elif test "${RECOVERY_STATE}" = none; then
+            test "${SPEC_CREATED}" = true && spec_created=true
+            test "${SDK_CREATED}" = true && sdk_created=true
+          else
+            echo "unknown recovery state" >&2
+            exit 1
+          fi
+
+          if test "${spec_created}" = true; then
+            grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' <<<"${SPEC_TAG}"
+            test "${SPEC_TAG}" = "v${SPEC_VERSION}"
+            grep -Eq '^[0-9a-f]{40}$' <<<"${SPEC_SHA}"
+          fi
+          if test "${sdk_created}" = true; then
+            grep -Eq '^0\.1\.0-beta\.[1-9][0-9]*$' <<<"${SDK_VERSION}"
+            test "${SDK_TAG}" = "opendart-v${SDK_VERSION}"
+            grep -Eq '^[0-9a-f]{40}$' <<<"${SDK_SHA}"
+          fi
+
+          echo "spec_release_created=${spec_created}" >> "${GITHUB_OUTPUT}"
+          echo "spec_tag_name=${SPEC_TAG}" >> "${GITHUB_OUTPUT}"
+          echo "spec_version=${SPEC_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "spec_sha=${SPEC_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "sdk_release_created=${sdk_created}" >> "${GITHUB_OUTPUT}"
+          echo "sdk_tag_name=${SDK_TAG}" >> "${GITHUB_OUTPUT}"
+          echo "sdk_version=${SDK_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "sdk_sha=${SDK_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "sdk_prerelease=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Check out specification release commit
+        if: ${{ steps.component.outputs.spec_release_created == 'true' }}
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
-          ref: ${{ steps.release.outputs['openapi/generated--sha'] || steps.draft.outputs.sha }}
+          ref: ${{ steps.component.outputs.spec_sha }}
           persist-credentials: false
 
-      - name: Prepare release assets
-        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}
+      - name: Prepare specification release assets
+        if: ${{ steps.component.outputs.spec_release_created == 'true' }}
         run: |
           mkdir release-assets
           cp openapi/generated/openapi.bundle.yaml release-assets/openapi.bundle.yaml
           cd release-assets
           sha256sum openapi.bundle.yaml > openapi.bundle.yaml.sha256
 
-      - name: Upload release assets
-        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}
+      - name: Upload specification release assets
+        if: ${{ steps.component.outputs.spec_release_created == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.release.outputs['openapi/generated--tag_name'] || steps.draft.outputs.tag_name }}
+          TAG_NAME: ${{ steps.component.outputs.spec_tag_name }}
         run: |
           for asset_path in \
             release-assets/openapi.bundle.yaml \
@@ -92,9 +291,59 @@ jobs:
             fi
           done
 
-      - name: Publish immutable release
-        if: ${{ steps.release.outputs['openapi/generated--release_created'] == 'true' || steps.draft.outputs.recovering == 'true' }}
+      - name: Publish immutable specification release
+        if: ${{ steps.component.outputs.spec_release_created == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.release.outputs['openapi/generated--tag_name'] || steps.draft.outputs.tag_name }}
-        run: gh release edit "${TAG_NAME}" --draft=false --latest
+          TAG_NAME: ${{ steps.component.outputs.spec_tag_name }}
+        run: gh release edit "${TAG_NAME}" --draft=false --prerelease=false --latest
+
+  dispatch-release-pr-checks:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.prs != '[]' }}
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Dispatch exact-SHA release proposal checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_PRS: ${{ needs.release-please.outputs.prs }}
+        run: |
+          jq -e 'type == "array" and length > 0' <<<"${RELEASE_PRS}" > /dev/null
+          while IFS= read -r number; do
+            detail="$(gh pr view "${number}" --repo "${GITHUB_REPOSITORY}" --json author,baseRefName,headRefName,headRefOid,labels,state)"
+            jq -e '
+              .state == "OPEN" and
+              .baseRefName == "main" and
+              .author.login == "app/github-actions" and
+              (.headRefName | startswith("release-please--branches--main")) and
+              any(.labels[]; .name == "autorelease: pending") and
+              (.headRefOid | test("^[0-9a-f]{40}$"))
+            ' <<<"${detail}" > /dev/null
+            branch="$(jq -r .headRefName <<<"${detail}")"
+            sha="$(jq -r .headRefOid <<<"${detail}")"
+            gh workflow run verify.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"
+            gh workflow run full-race.yml --repo "${GITHUB_REPOSITORY}" --ref "${branch}" -f expected_sha="${sha}"
+          done < <(jq -r '.[].number' <<<"${RELEASE_PRS}")
+
+  sdk-release:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.sdk_release_created == 'true' }}
+    permissions:
+      contents: write
+    uses: ./.github/workflows/rust-crate-release.yml
+    with:
+      package: opendart
+      package_path: sdk/rust/crates/opendart
+      inventory_path: sdk/rust/package-files.txt
+      vcs_path: sdk/rust/crates/opendart
+      environment: crates-io-opendart
+      expected_owner: ${{ vars.OPENDART_CRATES_IO_OWNER }}
+      version: ${{ needs.release-please.outputs.sdk_version }}
+      tag_name: ${{ needs.release-please.outputs.sdk_tag_name }}
+      candidate_sha: ${{ needs.release-please.outputs.sdk_sha }}
+      prerelease: ${{ needs.release-please.outputs.sdk_prerelease == 'true' }}
