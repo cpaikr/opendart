@@ -56,9 +56,12 @@ generator model without depending on Rust source.
   preserved commits. Its main-only `crates-io-opendart` environment,
   `sjunepark` reviewer, owner variable, and short-lived bootstrap secret are
   configured. [SDK proposal #63](https://github.com/cpaikr/opendart/pull/63)
-  correctly targets `0.1.0-beta.1` but is blocked until the lockfile-selector
-  repair regenerates it and its exact-SHA checks pass. The first beta,
-  trusted-publishing cutover, and stable promotion remain.
+  correctly targets `0.1.0-beta.1`; both generated lockfiles and the CLI's
+  exact SDK pin are aligned. Its exact-SHA Rust and artifact checks pass, but
+  the Go and full-race checks expose releaseguard tests that hard-code the
+  unreleased `0.1.0` fixture version. A version-aware test repair is the
+  remaining proposal gate. The first beta, trusted-publishing cutover, and
+  stable promotion remain.
 - Go is the private repository-tooling language. `cmd/opendart-tool` and
   `internal/openapi` already provide the trusted OpenAPI loading, validation,
   and deterministic-artifact boundary.
@@ -351,12 +354,12 @@ target constraints and acceptance details for their workstreams.
 
 ## Next action
 
-Land the reviewed Release Please compatibility-lock repair, then let Release
-Please regenerate [SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63)
-with both committed SDK locks aligned to `0.1.0-beta.1` and require its
-exact-SHA Verify and full-race runs to pass. Review and explicitly confirm that
-version through `$release-please-release` before merging the proposal. Do not
-tag, publish, or finalize the proposal before those gates are complete.
+Land the version-aware releaseguard test repair, then let Release Please
+regenerate [SDK beta proposal #63](https://github.com/cpaikr/opendart/pull/63)
+and require its exact-SHA Verify and full-race runs to pass. Review and
+explicitly confirm `0.1.0-beta.1` through `$release-please-release` before
+merging the proposal. Do not tag, publish, or finalize the proposal before
+those gates are complete.
 
 ## Progress log
 
