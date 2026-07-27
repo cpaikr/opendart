@@ -3,6 +3,7 @@ package releaseguard
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go/parser"
@@ -1518,6 +1519,249 @@ func TestScriptDigestMismatchDetailReportsComputedDigest(t *testing.T) {
 	if got := scriptDigestMismatchDetail(script, scriptDigest(script)); got != "" {
 		t.Fatalf("matching script digest detail = %q, want empty", got)
 	}
+}
+
+func TestReleaseComponentRecoveryScenarios(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the release workflow runs with a POSIX shell on ubuntu-latest")
+	}
+	for _, tool := range []string{"bash", "jq"} {
+		if _, err := exec.LookPath(tool); err != nil {
+			t.Skipf("release workflow fixture requires %s: %v", tool, err)
+		}
+	}
+
+	releaseSource, err := os.ReadFile(filepath.Join(repositoryRoot(t), filepath.FromSlash(releaseWorkflowArtifact)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var release workflow
+	if err := yaml.Unmarshal(releaseSource, &release); err != nil {
+		t.Fatal(err)
+	}
+	job := release.Jobs["release-please"]
+	_, recovery, err := stepByID(job.Steps, "recovery")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, component, err := stepByID(job.Steps, "component")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, releaseStep, err := stepByID(job.Steps, "release")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exactWorkflowExpression(releaseStep.If, "steps.recovery.outputs.components == '[]'") {
+		t.Fatalf("Release Please condition = %q", releaseStep.If)
+	}
+
+	const (
+		currentSHA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		sdkSHA     = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	)
+	draftSpec := fmt.Sprintf(`{"tag_name":"v0.1.0","draft":true,"prerelease":false,"target_commitish":%q}`, currentSHA)
+	draftBetaSDK := fmt.Sprintf(`{"tag_name":"opendart-v0.1.0-beta.1","draft":true,"prerelease":true,"target_commitish":%q}`, sdkSHA)
+	draftStableSDK := fmt.Sprintf(`{"tag_name":"opendart-v0.1.0","draft":true,"prerelease":false,"target_commitish":%q}`, sdkSHA)
+	completeSpec := fmt.Sprintf(`{"tag_name":"v0.1.0","draft":false,"prerelease":false,"target_commitish":%q}`, currentSHA)
+
+	tests := []struct {
+		name                   string
+		sdkVersion             string
+		releases               string
+		specCreated            string
+		sdkCreated             string
+		specTag                string
+		sdkTag                 string
+		specSHA                string
+		freshSDKVersion        string
+		freshSDKSHA            string
+		wantRunReleasePlease   bool
+		wantSpecCreated        string
+		wantSDKCreated         string
+		wantSDKPrerelease      string
+		wantSpecTag            string
+		wantSpecVersion        string
+		wantSpecSHA            string
+		wantSDKTag             string
+		wantSDKVersion         string
+		wantSDKSHA             string
+		wantRecoveryComponents int
+	}{
+		{
+			name: "fresh dual component beta", sdkVersion: "0.1.0-beta.1", releases: `[[]]`,
+			specCreated: "true", sdkCreated: "true", specTag: "v0.1.0", sdkTag: "opendart-v0.1.0-beta.1",
+			specSHA: currentSHA, freshSDKVersion: "0.1.0-beta.1", freshSDKSHA: sdkSHA,
+			wantRunReleasePlease: true, wantSpecCreated: "true", wantSDKCreated: "true", wantSDKPrerelease: "true",
+			wantSpecTag: "v0.1.0", wantSpecVersion: "0.1.0", wantSpecSHA: currentSHA,
+			wantSDKTag: "opendart-v0.1.0-beta.1", wantSDKVersion: "0.1.0-beta.1", wantSDKSHA: sdkSHA,
+		},
+		{
+			name: "dual draft recovery", sdkVersion: "0.1.0-beta.1", releases: `[[` + draftSpec + `,` + draftBetaSDK + `]]`,
+			wantSpecCreated: "true", wantSDKCreated: "true", wantSDKPrerelease: "true", wantRecoveryComponents: 2,
+			wantSpecTag: "v0.1.0", wantSpecVersion: "0.1.0", wantSpecSHA: currentSHA,
+			wantSDKTag: "opendart-v0.1.0-beta.1", wantSDKVersion: "0.1.0-beta.1", wantSDKSHA: sdkSHA,
+		},
+		{
+			name: "mixed complete and stable draft recovery", sdkVersion: "0.1.0", releases: `[[` + completeSpec + `,` + draftStableSDK + `]]`,
+			wantSpecCreated: "false", wantSDKCreated: "true", wantSDKPrerelease: "false", wantRecoveryComponents: 2,
+			wantSpecVersion: "0.1.0",
+			wantSDKTag:      "opendart-v0.1.0", wantSDKVersion: "0.1.0", wantSDKSHA: sdkSHA,
+		},
+		{
+			name: "fresh stable SDK", sdkVersion: "0.1.0", releases: `[[]]`,
+			sdkCreated: "true", sdkTag: "opendart-v0.1.0", freshSDKVersion: "0.1.0", freshSDKSHA: sdkSHA,
+			wantRunReleasePlease: true, wantSpecCreated: "false", wantSDKCreated: "true", wantSDKPrerelease: "false",
+			wantSpecVersion: "0.1.0",
+			wantSDKTag:      "opendart-v0.1.0", wantSDKVersion: "0.1.0", wantSDKSHA: sdkSHA,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			manifest := fmt.Sprintf("{\n  \"openapi/generated\": \"0.1.0\",\n  \"sdk/rust/crates/opendart\": %q\n}\n", test.sdkVersion)
+			if err := os.WriteFile(filepath.Join(root, manifestArtifact), []byte(manifest), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			mockPath := installReleaseWorkflowMocks(t, root)
+			recoveryOutput := runReleaseWorkflowScript(t, root, recovery.Run, map[string]string{
+				"GH_TOKEN":          "test-token",
+				"GITHUB_REPOSITORY": "cpaikr/opendart",
+				"GITHUB_SHA":        currentSHA,
+				"MOCK_RELEASES":     test.releases,
+				"MOCK_TAG_SHA":      currentSHA,
+				"PATH":              mockPath + string(os.PathListSeparator) + os.Getenv("PATH"),
+			})
+
+			var recovered []map[string]any
+			if err := json.Unmarshal([]byte(recoveryOutput["components"]), &recovered); err != nil {
+				t.Fatalf("recovery components = %q: %v", recoveryOutput["components"], err)
+			}
+			if len(recovered) != test.wantRecoveryComponents {
+				t.Fatalf("recovery component count = %d, want %d: %v", len(recovered), test.wantRecoveryComponents, recovered)
+			}
+			if got := recoveryOutput["components"] == "[]"; got != test.wantRunReleasePlease {
+				t.Fatalf("run Release Please = %t, want %t", got, test.wantRunReleasePlease)
+			}
+
+			componentOutput := runReleaseWorkflowScript(t, root, component.Run, map[string]string{
+				"CLI_CREATED":         "false",
+				"RECOVERY_COMPONENTS": recoveryOutput["components"],
+				"SDK_CREATED":         test.sdkCreated,
+				"SDK_SHA":             test.freshSDKSHA,
+				"SDK_TAG":             test.sdkTag,
+				"SDK_VERSION":         test.freshSDKVersion,
+				"SPEC_CREATED":        test.specCreated,
+				"SPEC_SHA":            test.specSHA,
+				"SPEC_TAG":            test.specTag,
+				"SPEC_VERSION":        "0.1.0",
+			})
+			for key, want := range map[string]string{
+				"spec_release_created": test.wantSpecCreated,
+				"spec_tag_name":        test.wantSpecTag,
+				"spec_version":         test.wantSpecVersion,
+				"spec_sha":             test.wantSpecSHA,
+				"sdk_release_created":  test.wantSDKCreated,
+				"sdk_tag_name":         test.wantSDKTag,
+				"sdk_version":          test.wantSDKVersion,
+				"sdk_sha":              test.wantSDKSHA,
+				"sdk_prerelease":       test.wantSDKPrerelease,
+			} {
+				if got := componentOutput[key]; got != want {
+					t.Errorf("%s = %q, want %q", key, got, want)
+				}
+			}
+		})
+	}
+}
+
+func installReleaseWorkflowMocks(t *testing.T, root string) string {
+	t.Helper()
+	bin := filepath.Join(root, "mock-bin")
+	if err := os.Mkdir(bin, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	gh := `#!/usr/bin/env bash
+set -e
+case "$1" in
+  api)
+    case "$2" in
+      --paginate)
+        printf '%s\n' "${MOCK_RELEASES}"
+        ;;
+      --include)
+        printf 'HTTP/2 404\n'
+        exit 1
+        ;;
+      repos/*/commits/*)
+        printf '%s\n' "${MOCK_TAG_SHA}"
+        ;;
+      *)
+        echo "unsupported gh api invocation: $*" >&2
+        exit 2
+        ;;
+    esac
+    ;;
+  *)
+    echo "unsupported gh invocation: $*" >&2
+    exit 2
+    ;;
+esac
+`
+	git := `#!/usr/bin/env bash
+set -e
+case "$1:$2" in
+  rev-parse:HEAD)
+    printf '%s\n' "${GITHUB_SHA}"
+    ;;
+  merge-base:--is-ancestor)
+    exit 0
+    ;;
+  *)
+    echo "unsupported git invocation: $*" >&2
+    exit 2
+    ;;
+esac
+`
+	for name, source := range map[string]string{"gh": gh, "git": git} {
+		if err := os.WriteFile(filepath.Join(bin, name), []byte(source), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return bin
+}
+
+func runReleaseWorkflowScript(t *testing.T, dir, script string, environment map[string]string) map[string]string {
+	t.Helper()
+	outputPath := filepath.Join(t.TempDir(), "github-output")
+	if err := os.WriteFile(outputPath, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "bash", "-e", "-o", "pipefail", "-c", script)
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GITHUB_OUTPUT="+outputPath)
+	for key, value := range environment {
+		cmd.Env = append(cmd.Env, key+"="+value)
+	}
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("workflow script failed: %v\n%s", err, output)
+	}
+	source, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := make(map[string]string)
+	for line := range strings.SplitSeq(strings.TrimSpace(string(source)), "\n") {
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			t.Fatalf("invalid workflow output line %q", line)
+		}
+		result[key] = value
+	}
+	return result
 }
 
 func TestCheckReturnsContextForMissingArtifact(t *testing.T) {

@@ -265,11 +265,10 @@ target constraints and acceptance details for their workstreams.
   of creating the new crate only as environment secret `CARGO_REGISTRY_TOKEN`.
   Keep it out of repository secrets and expose it only to the exact publication
   job after the credential-free candidate has passed every gate.
-- Before merging PR #62, decide whether the release guard should also gain a
-  behavioral fixture harness for fresh dual-component creation, dual-draft
-  recovery, mixed complete/draft recovery, and stable `0.1.0` prerelease-state
-  propagation. The current scripts pass manual matrix checks and are
-  digest-pinned, but fixtures would make later intentional workflow edits safer.
+- The release guard executes behavioral fixtures for fresh dual-component
+  creation, dual-draft recovery, mixed complete/draft recovery, and stable
+  `0.1.0` prerelease-state propagation in addition to digest-pinning the
+  workflow scripts.
 - Review and merge only the independent SDK prerelease PR. Recover an
   already-existing draft only when its exact component tag name and full-SHA
   `targetCommitish` identify the reviewed candidate and that SHA is an ancestor
