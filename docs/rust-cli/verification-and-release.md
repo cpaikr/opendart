@@ -2,10 +2,11 @@
 
 ## Source-package gate
 
-The supported pre-publication distribution is the reviewed source checkout at
+Before registry publication, the supported distribution is the reviewed source
+checkout at
 `sdk/rust/crates/opendart-cli`. Its manifest exact-pins the local `opendart`
 dependency and the workspace `serde_json` behavior, includes its own lockfile,
-and authorizes only crates.io as a future registry.
+and allows publication only to crates.io.
 
 Credential-free verification checks the exact package inventory, packages the
 SDK and CLI workspace together, and installs the CLI from source with
@@ -42,21 +43,33 @@ owns the CLI Cargo version, changelog, `opendart-cli-vX.Y.Z` tag identity, and
 matching workspace-lock entry. CLI-only changes do not belong to the root
 specification or `opendart` SDK components.
 
-The CLI and SDK entries remain absent from `.release-please-manifest.json`
-until their first authorized releases. The guard now admits only the aligned
-SDK beta transition; it still rejects every CLI manifest entry and the CLI
-component excludes its own path from proposal eligibility until work 9.
+`.release-please-manifest.json` already contains the SDK component; that does
+not open the CLI path. Until the
+[CLI plan](../../plans/rust/public-opendart-cli.md) deliberately opens it, the
+CLI manifest entry remains absent. The configured CLI component excludes its
+package path from proposal eligibility, and the guard rejects any CLI manifest
+entry or release output.
 
-The setup enables separate Release Please PRs, so SDK and CLI approval cannot
-be coupled to each other or to a specification release. The CLI
-publication job may reuse the SDK crate-release workflow only after the SDK
-prerelease and non-prerelease paths have proved its component isolation and
-interrupted-run recovery. Reuse does not share component outputs, package
-evidence, environments, or credentials.
+The CLI publication gate is stricter than Cargo's dependency syntax. A
+prerelease `opendart` artifact does not satisfy it. Before the CLI
+release-manifest entry, proposal eligibility, or authority-bearing publication
+job is enabled:
+
+- an exact non-prerelease `opendart` registry version must be published and
+  fully verified by the SDK source-package pipeline;
+- the SDK's trusted-publishing path, component isolation, and interrupted-run
+  recovery must have succeeded for that non-prerelease version; and
+- `sdk/rust/crates/opendart-cli/Cargo.toml` must exact-pin that verified
+  immutable version.
+
+Release Please keeps SDK and CLI approval separate from each other and from a
+specification release. The CLI path may reuse the proven crate-release workflow,
+but it must not share component outputs, package evidence, environments, or
+credentials.
 
 ## Prepared artifact comparison
 
-`opendart-tool verify-crate-artifact` is the local-only post-publication
+`opendart-tool verify-crate-artifact` is the local post-publication
 verification seam. It never downloads, queries, or publishes a package. Its
 caller must supply distinct local candidate and accepted `.crate` files, the
 accepted registry checksum, exact package metadata and revision, and the
@@ -65,19 +78,14 @@ reviewed inventory.
 The verifier checks the accepted checksum, safe bounded gzip/tar structure,
 zero padding and tails, full expanded tar identity, exact files and contents,
 both Cargo manifests, and clean Cargo VCS metadata. Reports and failures omit
-local paths and file contents. Work 9 must acquire the accepted artifact and
-checksum through separately authorized registry logic before invoking this
-command.
+local paths and file contents. The publication workflow must acquire the
+accepted artifact and checksum through separately authorized registry logic
+before invoking this command.
 
-## Stop gate and interrupted-release recovery
+## Publication and interrupted-release recovery
 
-Work 8 ends before registry ownership checks or publication. Resume the public
-Rust SDK task at its crates.io publication work, publish and verify the exact
-`opendart` version, and only then return to CLI work 9. Reconfirm that the CLI's
-already-reviewed exact SDK pin matches that immutable registry version.
-
-Work 9 must add the CLI path to the proven automated pipeline and recover
-conservatively:
+After the non-prerelease SDK gate is satisfied, add the CLI path to the proven
+automated pipeline and recover conservatively:
 
 1. Consume only the exact
    `sdk/rust/crates/opendart-cli--release_created`, `--tag_name`, `--version`,
@@ -109,16 +117,12 @@ conservatively:
    to the independent specification convention. A mismatch leaves the draft
    unpublished; tags, assets, and registry versions are never moved or replaced.
 
-A real OpenDART smoke call is optional post-release evidence, not a publication
-or finalization gate. Run it only through the separately authorized protected
-live path after the release succeeds. The crate pipeline never receives
-`OPENDART_API_KEY`, and volatile upstream service health cannot block or roll
-back an otherwise verified immutable release.
+## First-release bootstrap
 
 The first `opendart-cli` version follows the same beta-to-stable bootstrap as the
-SDK. Work 9 temporarily configures `versioning: prerelease`, `prerelease: true`,
+SDK. Temporarily configure `versioning: prerelease`, `prerelease: true`,
 `prerelease-type: beta`, and package-scoped `release-as: 0.1.0-beta.1`, then
-publishes the reviewed beta with a short-lived API token capable of creating the
+publish the reviewed beta with a short-lived API token capable of creating the
 new crate in its protected component environment. After public verification,
 revoke the token, configure the trusted publisher for the exact
 repository/workflow/environment, and replace the token path with commit-pinned
@@ -132,5 +136,14 @@ After stable succeeds, remove `release-as` and the three temporary prerelease
 fields. Do not retain a token fallback; Release Please PR review and merge
 remains the only routine human gate after bootstrap.
 
+## Release boundaries
+
+A real OpenDART smoke call is optional post-release evidence, not a publication
+or finalization gate. Run it only through the separately authorized protected
+live path after the release succeeds. The crate pipeline never receives
+`OPENDART_API_KEY`, and volatile upstream service health cannot block or roll
+back an otherwise verified immutable release.
+
 Prebuilt binaries, installers, and package-manager releases remain outside this
-source-distribution flow.
+source-distribution flow and belong to the
+[prebuilt-release task](../../tasks/rust/opendart-cli-prebuilt-releases.md).

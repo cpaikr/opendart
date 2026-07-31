@@ -1,324 +1,167 @@
-# Rust SDK Transport and Safety
-
-Planning source: [Public Rust SDK](../../tasks/rust/public-rust-sdk.md).
+# Rust SDK transport and safety
 
 ## Purpose
 
-Define the optional `reqwest` client's fixed safety behavior, supported
-configuration, exact-byte boundary, credential handling, and integration tests.
-The transport-independent request core remains usable without this client.
+This document defines the guarantees of the optional native `reqwest` client:
+one source interaction, fixed transport policy, bounded interpretation,
+credential-safe diagnostics, and exact binary entity bytes. The
+transport-independent prepared-request API remains available without the
+client.
 
-## Dependency baseline
+Delivery state belongs in the
+[Public Rust SDK task](../../tasks/rust/public-rust-sdk.md).
 
-At plan creation, `reqwest` 0.13.4 is the preferred compatibility-gate
-candidate. It exposes explicit retry policy, defaults to retrying selected
-low-level protocol NACKs, defaults to following redirects, and declares Rust
-1.85.0. `reqwest` 0.12.28 has the same relevant retry and redirect controls and
-a lower declared MSRV, but should be selected only if the repository adopts a
-lower MSRV deliberately.
+## Availability and construction
 
-Before committing the dependency:
+`client-reqwest` is a default feature backed by target-specific native
+dependencies. The client module is compiled only outside the WebAssembly target
+family. WebAssembly and no-default-features consumers use `PreparedRequest` or
+`PreparedBinaryRequest` with a caller-owned executor.
 
-- confirm the selected line against its versioned official documentation and
-  source;
-- record the crate MSRV and test it in CI;
-- inspect its default and optional Cargo features;
-- run the protocol-NACK, redirect, proxy, and compression compatibility
-  fixtures; and
-- pin the repository lockfile while keeping an appropriate published SemVer
-  requirement.
+The crate manifest selects `reqwest` with default features disabled and only
+the native TLS and streaming capabilities required by the SDK. The manifest
+and lockfile own the exact dependency version.
 
-No Cargo `retry` feature is required or available. Retry behavior is part of
-the client and must be disabled through `ClientBuilder`.
+Every official client is constructed by the single private factory behind
+`Client::builder`. Endpoint code cannot create another `reqwest::Client` or
+bypass the factory.
 
-References:
+## Fixed transport contract
 
-- [`reqwest` 0.13.4 retry module](https://docs.rs/reqwest/0.13.4/reqwest/retry/)
-- [`reqwest` 0.13.4 `ClientBuilder`](https://docs.rs/reqwest/0.13.4/reqwest/struct.ClientBuilder.html)
-- [`reqwest` 0.13.4 feature list](https://docs.rs/crate/reqwest/0.13.4/features)
-- [`reqwest` 0.12.28 `ClientBuilder`](https://docs.rs/reqwest/0.12.28/reqwest/struct.ClientBuilder.html)
+The official client always:
 
-## Cargo features
+- disables reqwest retries with `reqwest::retry::never()`;
+- disables redirects;
+- ignores ambient and system proxy configuration;
+- selects native TLS with a TLS 1.2 minimum;
+- selects the non-Hickory resolver even when Cargo features are unified;
+- disables gzip, Brotli, Zstandard, and deflate response decoding;
+- disables automatic `Referer` generation;
+- accepts only the production HTTPS origin;
+- stores no cookies or implicit authentication state; and
+- applies connect, per-read, and total request/body deadlines.
 
-Begin the compatibility gate with a minimal explicit dependency equivalent to:
+These are guarantees, not builder defaults. Public configuration cannot enable
+retries, redirects, proxies, alternate DNS or TLS backends, automatic content
+decoding, arbitrary origins, or an unbounded mode.
 
-```toml
-[dependencies.reqwest]
-version = "0.13.4"
-optional = true
-default-features = false
-features = ["native-tls", "stream"]
-```
+Cargo feature unification is part of this boundary. A separate compatibility
+package deliberately enables both TLS backends, Hickory DNS, HTTP/2, streaming,
+and every supported compression feature on the same `reqwest` dependency. Its
+tests prove that the official factory still uses system resolution, emits the
+required native TLS client handshake, and preserves the fixed runtime policy.
 
-Retain `stream` only if the public binary-body interface requires
-`bytes_stream`; `Response::chunk` may allow a smaller internal implementation.
-Do not enable `json` or `query` merely for convenience: request serialization
-and bounded source decoding belong to repository-owned code. Do not enable
-compression, cookies, system proxy, blocking, multipart, or additional HTTP
-versions without a demonstrated operation requirement.
+## Supported configuration
 
-`default-features = false` is necessary but insufficient as a runtime
-guarantee because Cargo features unify across a dependency graph. The client
-factory must explicitly disable proxy and decoding behavior even when another
-crate enables those `reqwest` features, and it must pin the intended TLS backend
-and DNS resolver. A dedicated integration-test package or dev-dependency must
-deliberately enable HTTP/2, `native-tls`, `hickory-dns`, and every compression
-feature on the same `reqwest` version to exercise that unification.
+`ClientBuilder` exposes only:
 
-## Mandatory client factory
+- a nonzero connection timeout;
+- a nonzero per-read timeout;
+- a nonzero total request and body deadline;
+- a nonzero inclusive JSON, XML, and alternate-envelope byte limit; and
+- a visible-ASCII application suffix for the SDK user agent.
 
-Construct every official convenience client through one private function. No
-endpoint may call `reqwest::Client::new()` or maintain a second builder path.
+Invalid or unrepresentable values fail during `build`, before network access.
+Representation selection belongs to the generated `prepare_json`,
+`prepare_xml`, or binary preparation method. Streaming storage and workflow
+budgets remain caller-owned.
 
-The target configuration is equivalent to:
-
-```rust
-let client = reqwest::Client::builder()
-    .retry(reqwest::retry::never())
-    .redirect(reqwest::redirect::Policy::none())
-    .no_proxy()
-    .tls_backend_native()
-    .tls_version_min(reqwest::tls::Version::TLS_1_2)
-    .no_hickory_dns()
-    .no_gzip()
-    .no_brotli()
-    .no_zstd()
-    .no_deflate()
-    .referer(false)
-    .https_only(true)
-    .connect_timeout(config.connect_timeout)
-    .read_timeout(config.read_timeout)
-    .timeout(config.total_timeout)
-    .user_agent(config.user_agent)
-    .build()?;
-```
-
-Exact method availability is verified against the selected dependency before
-implementation. The explicit TLS, DNS, proxy, and no-compression selections are
-intentional guards against Cargo feature unification changing runtime behavior.
-
-## Fixed invariants versus configuration
-
-### Fixed, not user-enableable
-
-- Retry policy is always `reqwest::retry::never()`.
-- Redirect policy is always `Policy::none()`.
-- Ambient system and environment proxy discovery is disabled.
-- The TLS backend is always native TLS with a TLS 1.2 minimum. This backend is
-  required for the fixed OpenDART origin's current
-  `TLS_RSA_WITH_AES_128_GCM_SHA256` compatibility requirement.
-- Cargo feature unification cannot switch the default resolver to Hickory DNS.
-- Gzip, Brotli, Zstandard, and deflate auto-decoding are disabled.
-- Automatic `Referer` generation is disabled.
-- The production client accepts only HTTPS OpenDART targets.
-- Cookie storage and implicit authentication state are absent.
-- Response bodies are never passed through `text()` or `json()` before an
-  explicit bounded interpretation step.
-- The SDK performs no application retry, backoff, quota wait, or status-based
-  repeat request.
-
-These are contract guarantees, not convenience defaults. A builder must not
-offer methods that turn them on.
-
-### Configurable while preserving invariants
-
-- Connect timeout.
-- Per-read timeout.
-- Total request/body deadline.
-- Maximum buffered JSON/XML or error-envelope bytes.
-- Maximum diagnostic preview, always sanitized.
-- User-agent application suffix after validation.
-- Representation choice where the operation supports it.
-- Streaming consumer budget or sink behavior outside the HTTP client.
-
-Provide safe nonzero defaults for ordinary callers. Validate contradictory or
-zero values before network access. Do not hide an unbounded mode behind
-`Option::None` in the safe-default client.
-
-An explicit proxy, custom connector, custom DNS, unrestricted origin, caller-
-built `reqwest::Client`, or different decoding policy belongs to a caller-owned
-executor using `PreparedRequest`. That path does not inherit the convenience
-client's transport guarantees. Add a typed, explicitly configured proxy option
-to the official client only after a real consumer proves it is needed and the
-credential-routing and one-interaction tests define its contract; never add an
-"use environment proxies" switch.
+Applications needing an explicit proxy, custom connector or resolver, different
+TLS or decoding policy, transport instrumentation, or a nonproduction origin
+use prepared requests with their own executor. That executor does not inherit
+the official client's guarantees.
 
 ## One-interaction contract
 
-One invocation of a high-level operation performs at most one source HTTP
-request. Redirect targets and protocol retries would be additional source
-requests and are therefore forbidden. DNS resolution and TCP/TLS connection
-attempts that fail before request headers are sent are transport activity, not
-additional OpenDART requests; tests count observed request headers or streams,
-not socket connections.
+One high-level execution performs at most one OpenDART HTTP request. The client
+does not repeat a request after:
 
-The SDK does not retry after:
+- connection, TLS, or protocol failure;
+- a retryable HTTP/2 event;
+- a redirect response;
+- timeout or incomplete body;
+- HTTP or OpenDART source status; or
+- malformed or unrecognized response syntax.
 
-- connection or TLS failure;
-- HTTP/2 or HTTP/3 protocol NACK;
-- redirect response;
-- timeout;
-- incomplete body;
-- HTTP status;
-- OpenDART source status; or
-- malformed representation.
+DNS lookups and failed connection establishment are transport activity, not
+additional source requests. Compatibility tests count observed HTTP request
+streams. A caller may make another explicit invocation, but the SDK neither
+automates nor labels that policy decision.
 
-A caller may schedule another operation invocation as its own new attempt. The
-SDK neither automates nor labels that decision.
+## Entity bytes and response metadata
 
-## Exact entity bytes
+The client never calls automatic text, JSON, or content-decoding helpers before
+bounded SDK inspection. Concatenating successful binary `BodyChunk` values
+yields the entity bytes delivered by the HTTP stack in order, without
+decompression or character conversion. HTTP framing is outside this contract.
 
-The low-level response path preserves:
+`ResponseMetadata` retains the HTTP status and version plus a conservative
+allowlist of delivery and representation headers. Header values fail closed if
+they contain the credential or an authenticated query, or if multi-stage
+percent decoding is malformed, ambiguous, or unsafe. Redirect targets, cookies,
+and extension headers never cross the public metadata boundary. Metadata
+remains available when structured decoding fails or when a returned binary
+stream later fails.
 
-- HTTP status and version;
-- response headers, including `Content-Encoding` and `Content-Length` when
-  supplied;
-- undecoded entity-body chunks in observed order; and
-- an explicit incomplete-body error if streaming fails.
+Structured JSON and XML responses are buffered only to the configured envelope
+limit. Binary responses remain fallible streams: timeout, incomplete delivery,
+or a body-read failure produces a sanitized terminal `BodyStreamError`, not
+clean end-of-stream.
 
-The ergonomic path exposes a sanitized metadata view with the same status and
-version plus all response headers whose values do not contain the credential or
-an authenticated URL. Unsafe values are removed rather than partially rendered.
-Metadata remains available when buffered decoding fails or a returned binary
-stream later terminates with an error.
+Strict collectors that need more HTTP evidence use the prepared-request seam
+and own raw header capture, exact-byte persistence, decoding, and artifact
+policy.
 
-HTTP framing bytes are outside the entity-body contract. Concatenating all
-successful body chunks yields the entity bytes delivered by the HTTP stack
-without content decoding or character conversion.
+## ZIP and XML discrimination
 
-The ergonomic JSON/XML path may buffer up to its configured limit and then
-inspect a derived byte view. Binary responses remain streaming. Strict callers
-can persist exact bytes before choosing any decompression or parsing step.
+Some operations normally return ZIP but may return a source status as XML.
+`Client::execute_binary` distinguishes:
 
-For ZIP-success/XML-error operations, classification reads a bounded prefix
-and, only for a plausible XML envelope, buffers up to the configured XML limit.
-Every byte read during classification is retained. A ZIP or unrecognized
-result exposes a replay stream consisting of the retained prefix followed by
-the untouched remainder. `Content-Type` may guide diagnostics but cannot by
-itself select success. Ambiguous, truncated, malformed, and oversized XML
-candidates return an unrecognized replay stream rather than losing bytes or
-being labeled archive success.
+- `BinaryReply::Archive` after a supported positive ZIP signature;
+- `BinaryReply::Status` after complete bounded XML-envelope validation; and
+- `BinaryReply::Unrecognized` for every other body.
 
-## Credentials and diagnostics
+Only a normal local-file header (`PK\x03\x04`) or the empty-archive
+end-of-central-directory signature (`PK\x05\x06`) is positive archive evidence.
+Split or spanned markers, ZIP64-only prefixes, self-extracting preambles,
+truncated signatures, and other binary prefixes remain unrecognized. This is
+representation classification, not archive validation or extraction.
 
-OpenDART uses a query credential, so raw URLs are secret-bearing after
-authorization. Enforce all of the following:
+Classification retains every consumed byte. Archive and unrecognized results
+return a replaying stream containing the inspected prefix followed by the
+untouched remainder. A plausible XML candidate is buffered only to the envelope
+limit; truncated, malformed, ambiguous, or oversized candidates become
+unrecognized replay streams. `Content-Type` is evidence and never the sole
+discriminator.
 
-- `ApiKey` redacts `Debug`, has no `Display` or serialization, and clears owned
-  memory where the selected secret type can provide that guarantee.
-- `PreparedRequest` contains no key.
-- `AuthorizedRequest` does not expose a safe printable URL and is consumed by
-  the adapter.
-- Public errors strip any URL retained by `reqwest::Error` and add only the
-  sanitized operation identity and failure class.
-- Logging occurs before authorization or uses an allowlisted structure. Never
-  log a request builder, raw URI, response body, or third-party error debug
-  representation without sanitization.
-- Tests use a sentinel key and scan errors, snapshots, logs, and debug output
-  for both the literal key and its percent-encoded form.
+## Credential and diagnostic boundary
 
-## Integration tests
+OpenDART authorization is a query credential, so the authorized URI is secret.
+The SDK enforces these boundaries:
 
-### Redirect
+- `ApiKey` owns secret memory, redacts `Debug`, and implements neither
+  `Display` nor serialization.
+- Prepared requests contain no credential.
+- `AuthorizedRequest` is non-cloneable and exposes its URI only by being
+  consumed inside an explicit adapter callback.
+- The public client uses that same authorization path and adds exactly one
+  `crtfc_key`.
+- Public errors retain only sanitized operation identity, failure class, and
+  safe response metadata. They never expose a raw `reqwest::Error` or URL.
+- No SDK error claims retryability or request-send certainty that the transport
+  cannot establish.
 
-Run two local listeners. The first records one request and returns a redirect
-to the second. Assert that one client call records exactly one request at the
-first listener, zero at the target, and returns the un-followed response or its
-documented sanitized classification.
+The test suite uses sentinel credentials and rejects literal, form-encoded, or
+percent-encoded disclosure through errors, metadata, debug output, and
+repository-owned logs.
 
-Use local TLS with a test-only trust root, or a private test-origin seam that
-cannot be constructed through the packaged public API. Do not add a public
-arbitrary-base-URL option merely to simplify tests, because an authenticated
-request to an untrusted origin would disclose the query credential.
+## Verification evidence
 
-### Protocol retry
+Loopback tests exercise the fixed contract rather than inspecting configuration
+alone. They cover retryable protocol events, redirects, ambient proxy variables,
+feature-unified compression, TLS and DNS selection, deadlines, incomplete
+bodies, metadata sanitization, authorization, and ZIP/XML replay.
 
-Use a deterministic local HTTP/2 fixture and a test package that enables
-`reqwest`'s HTTP/2 feature on the unified dependency. Record request streams and
-return a retryable protocol NACK such as `REFUSED_STREAM`. Assert exactly one
-observed request stream and one terminal client result. This test must fail
-against an otherwise equivalent client using `reqwest` defaults, proving that
-the fixture exercises retry behavior rather than only inspecting configuration.
-
-If the selected `reqwest` version changes its default classifier, update the
-fixture to a documented safe-to-retry protocol event before upgrading.
-
-### Ambient proxy
-
-Run the test in an isolated subprocess with HTTP and HTTPS proxy environment
-variables pointing to a counting listener. Call a local trusted test target and
-assert zero proxy observations and exactly one target request. Do not mutate
-process-global proxy variables in parallel test threads.
-
-### Content decoding
-
-Use a test package or dev-dependency that enables gzip, Brotli, Zstandard, and
-deflate on the unified `reqwest` dependency; enabling only the `opendart`
-crate's features is not sufficient. Return known compressed payloads for every
-codec. Assert that the observed bytes remain compressed and that encoding
-headers are retained. This proves the explicit `no_*` calls survive Cargo
-feature unification.
-
-### TLS and DNS feature unification
-
-Use a test package or dev-dependency that enables both `native-tls` and `rustls`
-plus `hickory-dns` on the unified `reqwest` dependency. Assert through
-observable local TLS and name-resolution fixtures that the official client
-still uses native TLS, offers cipher suite `0x009c`, enforces a TLS 1.2 floor,
-and uses the non-Hickory resolver. Feature inspection alone is insufficient.
-
-### Timeout and incomplete body
-
-Exercise connect, stalled-read, total-deadline, and mid-body termination paths
-with generous deterministic bounds. Assert one request at most, bounded
-completion, preserved response metadata when available, no complete-body
-claim, and sanitized errors. For a returned binary stream, assert that read and
-total timeouts remain active while polling, a partial body ends in a fallible
-stream item rather than clean EOF, and caller-owned storage budgets are not
-silently enforced by the HTTP client.
-
-### Credential redaction
-
-Trigger construction, DNS/connect, TLS, redirect, timeout, status-envelope,
-body-limit, and malformed-body errors with a sentinel credential. Scan all
-public formatting and captured logs for the literal and encoded credential and
-authenticated query key.
-
-### Request construction
-
-Assert that authorization adds exactly one `crtfc_key`, preserves the prepared
-query encoding, rejects duplicate authorization, and does not change operation
-identity or representation metadata.
-
-### ZIP/XML discrimination
-
-Return a successful ZIP body in irregular chunk boundaries and assert that the
-archive stream reproduces it byte for byte. Separately cover a recognized XML
-source error, the normal local-file and empty-archive ZIP signatures,
-split/spanned and ZIP64-only prefixes, a self-extracting preamble, misleading
-ZIP and XML content types, a truncated classification prefix, malformed XML,
-and an XML candidate beyond the inspection bound. Assert that only a supported
-positive ZIP signature becomes archive, only the recognized bounded envelope
-becomes source status, and every other case returns a replay stream containing
-all bytes consumed by the classifier. Malformed XML coverage includes document
-grammar, declaration, processing-instruction, comment, DTD/entity, root, and
-character-data failures rather than only truncated markup.
-
-## Acceptance criteria
-
-- The SDK-owned client has exactly one construction path with explicit retry,
-  redirect, proxy, TLS backend, DNS resolver, decoding, timeout, and HTTPS
-  policy.
-- Redirect and retryable protocol failures produce no second observed request.
-- Ambient proxy variables cannot change the official client's route.
-- All supported content encodings remain undecoded under all-features tests.
-- Exact body chunks and headers are available without text conversion.
-- The ergonomic client preserves sanitized response metadata for ordinary
-  caller policy, including after buffered or streaming failures.
-- ZIP/XML discrimination preserves every consumed byte for archive and
-  unrecognized outcomes, requires positive supported ZIP evidence for archive,
-  and never treats an alternate XML error as another callable operation.
-- Credentials and authenticated URLs are absent from every public diagnostic
-  and captured log path.
-- Callers needing different transport behavior can use the prepared-request
-  core without patching or forking generated request code.
+The canonical command is the Rust verification mode documented in the
+[workspace README](../../sdk/rust/README.md). It is credential-free and makes
+no live OpenDART request.

@@ -84,7 +84,7 @@ not become serializable merely because the feature is enabled.
 
 ### Handwritten CLI runtime
 
-The published package is a binary product, not a public Rust library. A thin
+The `opendart-cli` crate is a binary product, not a public Rust library. A thin
 `main` delegates to internal modules with these responsibilities:
 
 - build and strictly parse the generated `clap` command tree;
@@ -194,7 +194,7 @@ uses the opposite acknowledged transition: once publication begins,
 cancellation can no longer claim success and the CLI waits for the commit
 outcome.
 
-## Target code map
+## Code map
 
 - `internal/sdkgen/model` — shared normalized input and collision validation.
 - `internal/sdkgen/rust` — orchestration and product-specific Rust renderers.

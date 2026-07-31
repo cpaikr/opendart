@@ -1,8 +1,8 @@
 # OpenDART CLI public contract
 
-This document defines the approved shell, output, credential, and compatibility
-interface for the implemented, unpublished `opendart` binary. See the
-[implementation plan](../../plans/rust/public-opendart-cli.md) for status.
+This document defines the supported shell, output, credential, and compatibility
+interface for the `opendart` binary. See the
+[delivery plan](../../plans/rust/public-opendart-cli.md) for current status.
 
 ## Command grammar
 
@@ -40,7 +40,7 @@ raw paths, arbitrary query parameters, or physical endpoint URLs.
 
 ## Agent discovery
 
-These commands require no credential and perform no I/O beyond stdout:
+These commands require no credential and do not contact OpenDART:
 
 ```text
 opendart
@@ -57,10 +57,12 @@ an authenticated endpoint or print the full operation inventory. Agents spawn
 `executable.path` directly and append an `argv` array; they never have to parse
 a shell command string or expand `~`.
 
-The display path collapses only a component-wise home prefix. On Unix, home is
-a nonempty absolute `HOME`; on Windows it is a nonempty absolute `USERPROFILE`,
-falling back to `HOMEDRIVE` plus `HOMEPATH`. The display path remains absolute
-when neither platform candidate resolves to a nonempty absolute path. The exact
+The home invocation resolves the running executable and reads only platform
+home-directory process metadata to construct those path fields. The display
+path collapses only a component-wise home prefix. On Unix, home is a nonempty
+absolute `HOME`; on Windows it is a nonempty absolute `USERPROFILE`, falling
+back to `HOMEDRIVE` plus `HOMEPATH`. The display path remains absolute when
+neither platform candidate resolves to a nonempty absolute path. The exact
 executable path is never collapsed or inferred from the display value.
 
 ```json
@@ -146,7 +148,7 @@ Each representation has `name`, `physical_id`, `response_type`,
 selection is required and is empty when the operation has one implicit
 representation. Structured output is `{"kind":"stdout"}`. ZIP output is
 `{"kind":"artifact","argument_argv":["--output","<path>"],"required":true,"existing_destination":"reject"}`.
-The artifact record will also expose `limit_argument_argv` as
+The artifact record also exposes `limit_argument_argv` as
 `["--artifact-limit-bytes","<positive-integer>"]`, `limit_required: false`,
 and `default_limit_bytes: 536870912`.
 
@@ -285,8 +287,8 @@ remains silent and exits `1` so partial output cannot become two documents.
 
 The CLI does not truncate fields, select a default subset, calculate aggregates,
 or reinterpret source pagination. An agent that needs less data uses the
-operation's source parameters; an agent that needs an artifact redirects
-stdout explicitly.
+operation's source parameters. A binary operation requires `--output <path>`;
+its compact JSON result may be redirected independently.
 
 ## Source statuses and errors
 

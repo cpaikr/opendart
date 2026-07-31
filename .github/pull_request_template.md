@@ -4,20 +4,23 @@
 
 ## Release impact
 
-Select exactly one classification and provide evidence when the OpenAPI bundle
-changes.
+Classify each public component independently as `None`, `Compatible fix`,
+`Compatible addition`, or `Breaking`. Use the latest component-specific tag and
+summarize the contract diff; write `Unreleased` when no component tag exists,
+and do not infer one component's impact from another.
 
-- [ ] None — no material change to the public bundle
-- [ ] Compatible fix — patch at any version
-- [ ] Compatible addition — patch below `1.0.0`, minor afterward
-- [ ] Breaking — minor below `1.0.0`, major afterward
+| Component | Classification | Latest tag | Contract-diff evidence |
+| --- | --- | --- | --- |
+| OpenAPI bundle |  |  |  |
+| `opendart` SDK |  |  |  |
+| `opendart-cli` CLI |  |  |  |
 
-Latest release tag:
-
-Bundle-diff summary:
+## Release input
 
 Intended Conventional Commit message:
 
-- [ ] The committed bundle matches a fresh build
+## Review checklist
+
+- [ ] Each component classification follows [`RELEASING.md`](../RELEASING.md)
+- [ ] Any changed generated artifact matches a fresh build
 - [ ] Any breaking change includes a concise `BREAKING CHANGE:` migration note
-- [ ] The classification follows [`RELEASING.md`](../RELEASING.md)

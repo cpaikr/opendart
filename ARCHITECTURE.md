@@ -2,10 +2,10 @@
 
 ## Product boundary
 
-This repository maintains three public products derived from one source-backed
+This repository maintains public products derived from one source-backed
 OpenDART contract:
 
-- the portable OpenAPI bundle; and
+- the portable OpenAPI bundle;
 - the `opendart` Rust protocol SDK; and
 - the `opendart` command-line client.
 
@@ -36,6 +36,7 @@ OpenDART API + local API key
 
 OpenDART API + protected environment key
     -> manual trusted-main live conformance
+       + audited Rust CLI smoke
     -> bounded sanitized report artifact
     -> isolated default-branch notifier
     -> one persistent GitHub issue
@@ -62,7 +63,8 @@ response validation, and the repository-owned SDK input projection.
 
 `opendart-tool generate-sdk` passes the canonical contract through one
 `internal/sdkgen/model` build and the Rust artifact renderer. It stages and
-validates independently owned SDK and CLI trees before publishing either.
+validates independently owned SDK and CLI trees before replacing either
+accepted tree.
 Generated source is reviewed and committed beneath each crate's `src/generated`
 directory; consumer builds do not run Go or parse OpenAPI.
 
@@ -79,12 +81,12 @@ discovery, typed SDK input construction, and exhaustive preparation dispatch.
 
 ### Verify and package
 
-`.github/workflows/verify.yml` runs read-only Go and Cargo gates. Dependency
-fetching is explicit; compilation, tests, documentation, generation checks,
-and package inspection then run offline. The verifier requires exact generated
-operation coverage, complete live-case coverage and request budgets, a tracked
-crate inventory, matching Cargo versions, source provenance, and approved
-workflow and release configuration.
+`.github/workflows/verify.yml` runs read-only Go and Cargo gates. The Rust gate
+fetches locked dependencies explicitly, then runs compilation, tests,
+documentation, compatibility checks, and package inspection offline. The
+verifier requires exact generated operation coverage, complete live-case
+coverage and request budgets, a tracked crate inventory, matching Cargo
+versions, source provenance, and approved workflow and release configuration.
 
 Cargo records the exact packaged source revision in `.cargo_vcs_info.json`.
 The crate's `source_provenance()` additionally records the canonical bundle,
@@ -102,21 +104,24 @@ The SDK and CLI components update separate workspace-lock entries. SDK version
 proposals also update the CLI's exact local SDK pin for workspace resolution
 without changing the CLI version or changelog.
 
-Rust changes are excluded from root release eligibility. The components have
-separate Release Please proposals; the SDK is configured for its first beta,
-while the CLI path is explicitly excluded until work 9. Both remain absent from
-the released-version manifest until their first authorized releases. The
-guarded SDK workflow authorizes publication only from `main` through its
-protected bootstrap environment. The flow makes a confirmed component Release
-Please PR merge the only routine human gate. Credential-free exact-SHA
-packaging precedes a component environment with crates.io authority; public
-artifact and docs.rs verification then precede a separate GitHub draft
-finalizer. A new crate uses a one-time bootstrap token and every later release
-uses short-lived OIDC trusted publishing. A separate actions-write dispatcher
-starts exact-SHA Verify and release-only full-race checks for bot-created
-proposals without sharing registry or release authority. Rust finalizers
-preserve beta/stable identity but
-never claim the repository-global Latest marker used by specification releases.
+Rust changes are excluded from root release eligibility, and each Rust
+component receives a separate Release Please proposal. A component entry in
+`.release-please-manifest.json` records Release Please version state; it does
+not prove that a crate, tag, or final GitHub release exists. The CLI component
+remains excluded from release eligibility until its publication plan activates
+and verifies an isolated path.
+
+The guarded SDK workflow accepts only a confirmed component revision on `main`.
+Credential-free exact-SHA packaging precedes the protected environment with
+crates.io authority; accepted-artifact and docs.rs verification precede a
+separate GitHub draft finalizer. The selected steady state uses a one-time
+bootstrap token for a new crate and short-lived OIDC trusted publishing
+thereafter. A separate actions-write dispatcher starts exact-SHA Verify and
+release-only full-race checks for bot-created proposals without sharing
+registry or release authority. Rust finalizers preserve beta or stable identity
+without claiming the repository-global Latest marker used by specification
+releases. [`RELEASING.md`](RELEASING.md) owns the operational policy, while the
+Rust roadmap and linked work items own delivery state.
 
 ### Focused live probes
 
@@ -137,9 +142,10 @@ operation once. JSON, XML, and ZIP bodies are bounded, validated, semantically
 checked, and discarded; only the strict versioned report remains.
 
 `.github/workflows/live-conformance.yml` is manual-only, requires the canonical
-repository's `main` ref, grants read-only repository access, exposes
-`OPENDART_API_KEY` only to the live command inside the declared protected
-environment, and uploads only the report file. The separate
+repository's `main` ref, and grants read-only repository access. Inside its
+declared protected environment, one audited step exposes `OPENDART_API_KEY` to
+the Go conformance runner and the Rust CLI smoke executable; only the
+conformance report is uploaded. The separate
 `.github/workflows/live-conformance-notify.yml` runs from the trusted
 default-branch workflow definition after a producer completes. It checks out
 the exact trusted producer revision, has no environment or OpenDART secret,
@@ -147,8 +153,7 @@ and gives issue-write permission only to the isolated notifier. The notifier
 strictly decodes the bounded report; missing, malformed, or inconsistent
 artifacts become a fixed failure derived only from Actions metadata. Failures
 update one marker-owned issue, recovery is recorded once, and automation never
-closes the issue. The protected environment and credential remain
-unconfigured, and the workflow has not been dispatched or scheduled.
+closes the issue.
 
 `internal/liveprobe` confines the one-attempt HTTP policy shared by credentialed
 repository tools. Its dated TLS compatibility exception lacks forward secrecy
@@ -174,8 +179,7 @@ the only job with issue-write authority. Missing, oversized, malformed, or
 conclusion-inconsistent artifacts become fixed failure state derived from
 trusted Actions metadata. Changed and error outcomes update one drift issue;
 only validated unchanged state records recovery once, and automation never
-closes the issue. Offline release guards enforce these boundaries. Neither
-workflow has been dispatched and no schedule is enabled.
+closes the issue. Offline release guards enforce these boundaries.
 
 ## Code map
 
@@ -204,10 +208,10 @@ workflow has been dispatched and no schedule is enabled.
   failure fallback, issue deduplication, and recovery recording.
 - `.github/workflows/verify.yml` is the credential-free repository gate.
   Release Please configuration and `.github/workflows/release-please.yml` own
-  component release preparation and specification asset publication. The two
-  guide-drift workflows are the credential-free producer and isolated
-  notifier; the two live-conformance workflows are the protected producer and
-  isolated notifier.
+  component release preparation and specification asset publication.
+  `.github/workflows/guide-drift.yml` and its notifier form the credential-free
+  drift path; `.github/workflows/live-conformance.yml` and its notifier form
+  the protected live path.
 
 ## Invariants
 
@@ -225,7 +229,8 @@ workflow has been dispatched and no schedule is enabled.
 - Specification and crate versions, tags, changelogs, and release eligibility
   are independent. The SDK publication authority is component-specific,
   protected, and post-verification; it is absent from pull requests and generic
-  verification. The CLI has no publication path until work 9.
+  verification. The CLI has no publication path while release configuration
+  excludes its component.
 - Non-default live workflow refs receive neither the protected API credential
   nor issue-writing authority. The notifier accepts only trusted default-branch
   producer metadata and never receives producer logs or arbitrary error text.
@@ -236,21 +241,15 @@ workflow has been dispatched and no schedule is enabled.
 
 [ADR 0001](docs/decisions/0001-go-repository-tooling.md) records the completed
 migration to private Go repository tooling. [ADR 0002](docs/decisions/0002-public-rust-sdk.md)
-accepts the first-party Rust SDK boundary. Current packaging and the remaining
-publication/adoption work are tracked in the [public Rust SDK task](tasks/rust/public-rust-sdk.md).
+accepts the first-party Rust SDK boundary.
 
 [ADR 0003](docs/decisions/0003-agent-first-opendart-cli.md) accepts the
 agent-first public CLI that consumes the SDK through generated typed dispatch.
 Its [architecture](docs/rust-cli/architecture.md),
 [public contract](docs/rust-cli/public-contract.md), and
-[implementation plan](plans/rust/public-opendart-cli.md) record the implemented
-source-distribution boundary and the remaining publication decision.
+[verification guide](docs/rust-cli/verification-and-release.md) record the
+implemented source-distribution boundary and durable publication contract.
 
-[guide drift](tasks/main/guide-drift.md) owns credential-free acquisition and
-semantic-comparison work. Drift-safe acquisition, the bounded command and
-report, the manual producer, and the isolated notifier are implemented.
-Supervised execution and scheduling remain authorization-gated. The
-[live-conformance](tasks/main/live-conformance.md) task defers protected
-environment setup, supervised execution, and weekly scheduling pending
-explicit authorization; the runner, protected workflow definition, and
-isolated notifier are implemented.
+[`ROADMAP.md`](ROADMAP.md) and [`ROADMAP_RUST.md`](ROADMAP_RUST.md) own delivery
+priority. Their linked plans and tasks own implementation status, blockers, and
+next actions; architecture does not duplicate those mutable records.
