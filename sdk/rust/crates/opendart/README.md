@@ -125,18 +125,29 @@ authorized.with_exposed_relative_uri(|relative_uri| {
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
-After a bounded caller-owned read, `WireInspector` classifies JSON or XML while
-retaining unknown status strings, fields, and scalar forms:
+After a bounded caller-owned read, the prepared request interprets the complete
+HTTP outcome through the same contract as the official client:
 
 ```rust
-use opendart::{SourceReply, WireInspector};
+use opendart::{operations::Company, SourceReply, WireInspector};
 
 let inspector = WireInspector::new(64 * 1024).expect("nonzero limit");
-let reply = inspector.inspect_json(br#"{"status":"013","message":"no data"}"#)?;
+let prepared = Company::new("00126380").prepare_json()?;
+let reply = prepared.interpret_response(
+    &inspector,
+    200,
+    br#"{"status":"013","message":"no data"}"#,
+)?;
 assert!(matches!(reply, SourceReply::Status(_)));
 
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
+
+Every non-2xx status returns `ResponseInterpretError::HttpStatus`, with
+normalized bounded body evidence when it can be recognized safely. A
+success-shaped body under HTTP 500 is never decoded into the generated success
+type. Callers remain responsible for bounding body collection before passing
+the slice to this defensive interpreter.
 
 The official client never retries, follows redirects, uses ambient proxies, or
 automatically decodes response content. Callers requiring different transport

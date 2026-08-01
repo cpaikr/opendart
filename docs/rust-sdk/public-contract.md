@@ -47,8 +47,9 @@ file and private module layout are not.
 ## Prepared requests and authorization
 
 `PreparedRequest<T>` is immutable, performs no I/O, and contains no credential.
-Its private decoder binds the chosen representation to generated success type
-`T`. Narrow getters expose:
+Its private response contract binds the chosen representation, XML root, and
+generated success type `T`. `interpret_response` is the common pure seam for
+the official client and caller-owned transports. Narrow getters expose:
 
 - method and trusted relative path;
 - deterministic non-secret query encoding;
@@ -100,7 +101,9 @@ do not close the set.
 
 Status `013` remains source evidence. The SDK does not declare it a successful
 empty collection, retryable failure, or terminal collection result. It also
-does not infer those policies from HTTP status or `Content-Type`.
+does not infer those policies from `Content-Type`. HTTP status is handled
+separately: every non-2xx result is an explicit typed failure, optionally
+carrying normalized bounded body evidence.
 
 `StatusEnvelope` retains the exact source code, optional opaque message, and
 complete normalized evidence. `SourceValue` preserves null, Boolean, number,
@@ -144,7 +147,9 @@ handwritten execution path over the same prepared requests:
 - `Client::execute_binary` handles fixed ZIP operations with alternate XML
   status envelopes.
 
-The client returns `SourceResponse` so sanitized HTTP metadata remains available
+Only 2xx responses can return `SourceResponse`; non-2xx responses return
+`ClientError::HttpStatus` with sanitized metadata and safely recognized body
+evidence. The client returns `SourceResponse` so sanitized HTTP metadata remains available
 beside the source reply and after supported failure paths. It performs at most
 one OpenDART request and implements no retry, redirect follow, quota wait,
 success-empty classification, or persistence behavior.

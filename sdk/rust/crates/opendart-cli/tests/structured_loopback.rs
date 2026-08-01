@@ -57,8 +57,17 @@ fn with_response(response: Vec<u8>, arguments: &[String]) -> Output {
 }
 
 fn http_response(content_type: &str, body: &[u8], extra_headers: &[(&str, &str)]) -> Vec<u8> {
+    http_status_response("200 OK", content_type, body, extra_headers)
+}
+
+fn http_status_response(
+    status: &str,
+    content_type: &str,
+    body: &[u8],
+    extra_headers: &[(&str, &str)],
+) -> Vec<u8> {
     let mut response = format!(
-        "HTTP/1.1 200 OK\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\n",
+        "HTTP/1.1 {status}\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\n",
         body.len()
     );
     for (name, value) in extra_headers {
@@ -71,6 +80,40 @@ fn http_response(content_type: &str, body: &[u8], extra_headers: &[(&str, &str)]
     let mut bytes = response.into_bytes();
     bytes.extend_from_slice(body);
     bytes
+}
+
+#[test]
+fn non_success_http_status_is_an_error_with_bounded_evidence() {
+    let body = br#"{"status":"000","corp_name":"contradictory success"}"#;
+    let output = with_response(
+        http_status_response("500 Internal Server Error", "application/json", body, &[]),
+        &company_arguments("json"),
+    );
+    let error = json(&output, 1);
+    assert_eq!(error["kind"], "error");
+    assert_eq!(error["error"]["code"], "http_status");
+    assert_eq!(error["metadata"]["status"], 500);
+    assert_eq!(
+        error["evidence"]["value"]["corp_name"],
+        "contradictory success"
+    );
+}
+
+#[test]
+fn non_success_http_status_omits_credential_echo_evidence() {
+    let body = format!(r#"{{"status":"500","crtfc_key":"{SYNTHETIC_KEY}"}}"#);
+    let output = with_response(
+        http_status_response(
+            "500 Internal Server Error",
+            "application/json",
+            body.as_bytes(),
+            &[],
+        ),
+        &company_arguments("json"),
+    );
+    let error = json(&output, 1);
+    assert_eq!(error["error"]["code"], "http_status");
+    assert!(error.get("evidence").is_none());
 }
 
 fn assert_valid_request(stream: &mut TcpStream) {

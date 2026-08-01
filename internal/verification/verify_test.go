@@ -45,6 +45,10 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseBundleFreshness+":"+filepath.Base(source)+":"+filepath.Base(bundle))
 			return nil
 		},
+		checkFixtures: func(root string) error {
+			calls = append(calls, phaseContractFixtures+":"+filepath.Base(root))
+			return nil
+		},
 		checkLive: func(root string) error {
 			calls = append(calls, phaseLiveConformance+":"+filepath.Base(root))
 			return nil
@@ -72,6 +76,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 	wantCalls := []string{
 		"catalog:openapi.yaml",
 		"lint:openapi.yaml",
+		"contract-fixtures:repository",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
 		"rust-sdk-freshness:openapi.yaml:opendart:opendart-cli",
@@ -139,15 +144,15 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 	}{
 		{name: "catalog", fail: phaseCatalog, wantPhase: "catalog/references", wantArtifact: "fragment.yaml", wantRule: "reference-escape", wantCallCount: 1},
 		{name: "source lint diagnostic", fail: phaseSourceLint, wantPhase: phaseSourceLint, wantArtifact: "source.yaml", wantRule: "operation-summary", wantOperation: "getCompany", wantLocation: "#/paths/~1company/get", wantCallCount: 2},
-		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 4},
-		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 3},
-		{name: "Rust SDK freshness", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 5},
-		{name: "Rust CLI freshness artifact", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantArtifactParent: "opendart-cli", wantRule: "generated-missing", rustCLIArtifact: true, wantCallCount: 5},
-		{name: "Rust SDK model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 5},
-		{name: "Rust SDK normalized model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "rust-name-collision", wantOperation: "get_company_json", wantLocation: "/logicalOperations/0", rustError: &model.Error{Rule: "rust-name-collision", Operation: "get_company_json", Location: "/logicalOperations/0", Detail: "collision"}, wantCallCount: 5},
-		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 6},
-		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 7},
-		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 8},
+		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 5},
+		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 4},
+		{name: "Rust SDK freshness", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 6},
+		{name: "Rust CLI freshness artifact", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantArtifactParent: "opendart-cli", wantRule: "generated-missing", rustCLIArtifact: true, wantCallCount: 6},
+		{name: "Rust SDK model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "openapi.yaml", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 6},
+		{name: "Rust SDK normalized model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "openapi.yaml", wantRule: "rust-name-collision", wantOperation: "get_company_json", wantLocation: "/logicalOperations/0", rustError: &model.Error{Rule: "rust-name-collision", Operation: "get_company_json", Location: "/logicalOperations/0", Detail: "collision"}, wantCallCount: 6},
+		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 7},
+		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 8},
+		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 9},
 	}
 
 	for _, test := range tests {
@@ -178,6 +183,10 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					if test.fail == phaseBundleFreshness {
 						return fmt.Errorf("%w: unsafe detail", openapispec.ErrBundleStale)
 					}
+					return nil
+				},
+				checkFixtures: func(string) error {
+					calls++
 					return nil
 				},
 				checkLive: func(string) error {
@@ -277,6 +286,7 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 			return nil, nil
 		},
 		checkFresh:    func(string, string) error { return openapispec.ErrBundleMissing },
+		checkFixtures: func(string) error { return nil },
 		checkLive:     func(string) error { return nil },
 		checkEvidence: func(string) error { return nil },
 		checkRelease:  func(string) error { return nil },

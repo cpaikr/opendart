@@ -701,10 +701,10 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 			invariant: "excludes repository-private inputs",
 		},
 		{
-			name: "CLI SDK timeout mirror", artifact: rustCLIExecutionArtifact,
-			old:         `const SDK_DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs(60);`,
-			replacement: `const SDK_DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs(61);`,
-			invariant:   "mirrors the published SDK total timeout default",
+			name: "CLI SDK timeout ownership", artifact: rustCLIExecutionArtifact,
+			old:         `let total_timeout = client.total_timeout();`,
+			replacement: `let total_timeout = Duration::from_secs(60);`,
+			invariant:   "reads total timeout policy from the constructed SDK client",
 		},
 		{
 			name: "CLI registry scope", artifact: rustCLICargoArtifact,
@@ -933,9 +933,9 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "isolates component release proposals",
 		},
 		{
-			name: "SDK beta release", artifact: configArtifact,
-			old: "\"release-as\": \"0.1.0-beta.1\"", replacement: "\"release-as\": \"0.1.0\"",
-			invariant: "Rust package release-as",
+			name: "SDK stale release override", artifact: configArtifact,
+			old: "\"prerelease-type\": \"beta\",", replacement: "\"prerelease-type\": \"beta\",\n      \"release-as\": \"0.1.0-beta.1\",",
+			invariant: "Rust package contains only supported options",
 		},
 		{
 			name: "CLI publication exclusion", artifact: configArtifact,
@@ -1301,6 +1301,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
+			name: "repository contract corpus test", artifact: verificationScriptArtifact,
+			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --test public_contract repository_contract_corpus_crosses_the_public_interpreter", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --test public_contract",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
 			name: "structured CLI loopback tests", artifact: verificationScriptArtifact,
 			old: "RUSTFLAGS=\"--cfg opendart_compat\" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback", replacement: "cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback",
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
@@ -1326,8 +1331,8 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
-			name: "workspace package dry run", artifact: verificationScriptArtifact,
-			old: "cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml", replacement: "cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart/Cargo.toml",
+			name: "isolated workspace package dry run", artifact: verificationScriptArtifact,
+			old: `CARGO_TARGET_DIR="${verification_tmp}/package-target" cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml`, replacement: "cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml",
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
@@ -1883,9 +1888,11 @@ func TestReleaseComponentRecoveryScenarios(t *testing.T) {
 	const (
 		currentSHA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 		sdkSHA     = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+		beta1SHA   = "157d78aa62bace4b00df6677bc3372baf88b9281"
 	)
 	draftSpec := fmt.Sprintf(`{"tag_name":"v0.1.0","draft":true,"prerelease":false,"target_commitish":%q}`, currentSHA)
-	draftBetaSDK := fmt.Sprintf(`{"tag_name":"opendart-v0.1.0-beta.1","draft":true,"prerelease":true,"target_commitish":%q}`, sdkSHA)
+	draftBetaSDK := fmt.Sprintf(`{"tag_name":"opendart-v0.1.0-beta.1","draft":true,"prerelease":true,"target_commitish":%q}`, beta1SHA)
+	draftBeta2SDK := fmt.Sprintf(`{"tag_name":"opendart-v0.1.0-beta.2","draft":true,"prerelease":true,"target_commitish":%q}`, sdkSHA)
 	draftStableSDK := fmt.Sprintf(`{"tag_name":"opendart-v0.1.0","draft":true,"prerelease":false,"target_commitish":%q}`, sdkSHA)
 	completeSpec := fmt.Sprintf(`{"tag_name":"v0.1.0","draft":false,"prerelease":false,"target_commitish":%q}`, currentSHA)
 
@@ -1921,10 +1928,15 @@ func TestReleaseComponentRecoveryScenarios(t *testing.T) {
 			wantSDKTag: "opendart-v0.1.0-beta.1", wantSDKVersion: "0.1.0-beta.1", wantSDKSHA: sdkSHA,
 		},
 		{
-			name: "dual draft recovery", sdkVersion: "0.1.0-beta.1", releases: `[[` + draftSpec + `,` + draftBetaSDK + `]]`,
-			wantSpecCreated: "true", wantSDKCreated: "true", wantSDKPrerelease: "true", wantRecoveryComponents: 2,
+			name: "superseded beta ignored while specification recovers", sdkVersion: "0.1.0-beta.1", releases: `[[` + draftSpec + `,` + draftBetaSDK + `]]`,
+			wantSpecCreated: "true", wantSDKCreated: "false", wantSDKPrerelease: "false", wantRecoveryComponents: 1,
 			wantSpecTag: "v0.1.0", wantSpecVersion: "0.1.0", wantSpecSHA: currentSHA,
-			wantSDKTag: "opendart-v0.1.0-beta.1", wantSDKVersion: "0.1.0-beta.1", wantSDKSHA: sdkSHA,
+		},
+		{
+			name: "next beta remains recoverable", sdkVersion: "0.1.0-beta.2", releases: `[[` + draftBeta2SDK + `]]`,
+			wantSpecCreated: "false", wantSDKCreated: "true", wantSDKPrerelease: "true", wantRecoveryComponents: 1,
+			wantSpecVersion: "0.1.0",
+			wantSDKTag:      "opendart-v0.1.0-beta.2", wantSDKVersion: "0.1.0-beta.2", wantSDKSHA: sdkSHA,
 		},
 		{
 			name: "mixed complete and stable draft recovery", sdkVersion: "0.1.0", releases: `[[` + completeSpec + `,` + draftStableSDK + `]]`,

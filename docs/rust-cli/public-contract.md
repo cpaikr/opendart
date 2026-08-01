@@ -322,7 +322,12 @@ Failures that do not produce a typed source reply use a CLI error envelope:
 `help` is omitted when no safe deterministic next action exists. Optional error
 response `operation` identifies a parsed call before credentials, network I/O,
 or artifact work; `metadata` appears beside `error` only when the SDK observed
-it. Stable optional error details include `reason`, `argument`, `allowed`,
+it. Code `http_status` always exits `1` and may also include normalized bounded
+`evidence` beside `metadata`; a contradictory success-shaped body remains raw
+evidence and is never emitted as a normal response. Evidence is omitted when a
+normalized field name or value contains the active credential, an encoded form
+of it, or `crtfc_key`. Stable optional error
+details include `reason`, `argument`, `allowed`,
 `minimum`, `maximum`, `format`, and `path`. Except for `path`, which deliberately
 echoes the caller-owned `--output` spelling, this context uses repository-owned
 values only. Raw rejected values and raw `clap`, `reqwest`, filesystem, or

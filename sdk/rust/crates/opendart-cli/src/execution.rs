@@ -11,9 +11,6 @@ use crate::artifact::ArtifactTarget;
 use crate::error::ErrorEnvelope;
 
 const USER_AGENT_SUFFIX: &str = concat!("opendart-cli/", env!("CARGO_PKG_VERSION"));
-// The CLI package must compile against the already-published SDK at its exact
-// version, so it cannot query a new SDK accessor until the next version exists.
-const SDK_DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Clone, Copy, Eq, PartialEq, Serialize)]
 pub(crate) struct OperationContext {
@@ -78,10 +75,6 @@ impl Executor {
         overrides: ClientOverrides,
         operation: OperationContext,
     ) -> Result<Self, ErrorEnvelope> {
-        let total_timeout = overrides
-            .total_timeout_ms
-            .map(Duration::from_millis)
-            .unwrap_or(SDK_DEFAULT_TOTAL_TIMEOUT);
         let mut builder = Client::builder(key).user_agent_suffix(USER_AGENT_SUFFIX);
         if let Some(value) = overrides.connect_timeout_ms {
             builder = builder.connect_timeout(Duration::from_millis(value));
@@ -102,6 +95,7 @@ impl Executor {
         let client = builder
             .build()
             .map_err(|error| ErrorEnvelope::client_build(operation, error))?;
+        let total_timeout = client.total_timeout();
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()

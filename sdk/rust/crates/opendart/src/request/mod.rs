@@ -1,12 +1,13 @@
 use std::fmt;
-#[cfg(not(all(feature = "client-reqwest", not(target_family = "wasm"))))]
-use std::marker::PhantomData;
 
 use form_urlencoded::{Serializer, byte_serialize};
 use secrecy::{ExposeSecret, SecretString};
 use zeroize::Zeroizing;
 
-use crate::{AuthorizationError, ResponseDecodeError, SourceValue};
+use crate::{
+    AuthorizationError, BodyLimitError, EnvelopeError, ResponseDecodeError, SourceReply,
+    SourceValue, WireInspectError, WireInspector,
+};
 
 /// Stable physical and logical identities for one callable OpenDART operation.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -69,6 +70,12 @@ pub enum Authentication {
 
 pub(crate) type ResponseDecoder<T> = fn(SourceValue) -> Result<T, ResponseDecodeError>;
 
+#[derive(Clone, Copy)]
+enum StructuredResponseContract {
+    Json,
+    Xml { expected_root: &'static str },
+}
+
 /// Shared immutable request facts hidden behind typed structured and binary plans.
 pub(crate) struct RequestParts {
     method: RequestMethod,
@@ -77,7 +84,6 @@ pub(crate) struct RequestParts {
     authentication: Authentication,
     identity: OperationIdentity,
     expected_representations: &'static [Representation],
-    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     expected_xml_root: Option<&'static str>,
     generator_schema: u32,
     projection_identity: &'static str,
@@ -86,10 +92,48 @@ pub(crate) struct RequestParts {
 /// An immutable structured request bound to its generated success payload.
 pub struct PreparedRequest<T> {
     parts: RequestParts,
-    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
+    contract: StructuredResponseContract,
     decoder: ResponseDecoder<T>,
-    #[cfg(not(all(feature = "client-reqwest", not(target_family = "wasm"))))]
-    _response: PhantomData<fn() -> T>,
+}
+
+/// A transport-independent failure while interpreting one prepared HTTP response.
+#[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
+pub enum ResponseInterpretError {
+    /// The HTTP response status was outside the successful 2xx range.
+    #[error("{operation} received a non-success HTTP status {status}")]
+    HttpStatus {
+        /// The prepared operation.
+        operation: OperationIdentity,
+        /// The numeric HTTP response status.
+        status: u16,
+        /// Normalized bounded body evidence, when the body was safely recognizable.
+        evidence: Option<SourceReply<SourceValue>>,
+    },
+    /// The response body exceeded the configured bound.
+    #[error("{operation}: {source}")]
+    BodyLimit {
+        /// The prepared operation.
+        operation: OperationIdentity,
+        /// The bounded-body failure.
+        source: BodyLimitError,
+    },
+    /// The bounded response body was malformed.
+    #[error("{operation}: {source}")]
+    Envelope {
+        /// The prepared operation.
+        operation: OperationIdentity,
+        /// The sanitized envelope failure.
+        source: EnvelopeError,
+    },
+    /// The response violated the selected generated response shape.
+    #[error("{operation}: {source}")]
+    Decode {
+        /// The prepared operation.
+        operation: OperationIdentity,
+        /// The sanitized generated-shape failure.
+        source: ResponseDecodeError,
+    },
 }
 
 /// An immutable ZIP request whose successful body remains a replaying stream.
@@ -140,8 +184,6 @@ impl RequestParts {
             })
             .collect::<Vec<_>>()
             .join("&");
-        #[cfg(not(all(feature = "client-reqwest", not(target_family = "wasm"))))]
-        let _ = expected_xml_root;
         Self {
             method: RequestMethod::Get,
             relative_path,
@@ -149,7 +191,6 @@ impl RequestParts {
             authentication: Authentication::ApiKeyQuery,
             identity,
             expected_representations,
-            #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
             expected_xml_root,
             generator_schema,
             projection_identity,
@@ -201,22 +242,25 @@ impl RequestParts {
 }
 
 impl<T> PreparedRequest<T> {
-    pub(crate) const fn new(parts: RequestParts, decoder: ResponseDecoder<T>) -> Self {
-        #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
-        {
-            Self { parts, decoder }
-        }
-        #[cfg(not(all(feature = "client-reqwest", not(target_family = "wasm"))))]
-        {
-            let _ = decoder;
-            Self {
-                parts,
-                _response: PhantomData,
+    pub(crate) fn new(parts: RequestParts, decoder: ResponseDecoder<T>) -> Self {
+        let contract = if parts.expected_representations == [Representation::Json] {
+            StructuredResponseContract::Json
+        } else if parts.expected_representations == [Representation::Xml] {
+            StructuredResponseContract::Xml {
+                expected_root: parts
+                    .expected_xml_root
+                    .expect("generated XML requests carry their expected root"),
             }
+        } else {
+            unreachable!("generated typed requests are JSON or XML")
+        };
+        Self {
+            parts,
+            contract,
+            decoder,
         }
     }
 
-    #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     pub(crate) fn decode(&self, value: SourceValue) -> Result<T, ResponseDecodeError> {
         (self.decoder)(value)
     }
@@ -224,6 +268,84 @@ impl<T> PreparedRequest<T> {
     #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
     pub(crate) const fn parts(&self) -> &RequestParts {
         &self.parts
+    }
+
+    /// Interprets one bounded HTTP response using this generated operation contract.
+    ///
+    /// The caller owns HTTP execution and must bound body collection while reading.
+    /// This method defensively rechecks the supplied bytes, selects JSON or XML from
+    /// generated facts, validates XML roots, preserves provider-status evidence, and
+    /// decodes successful payloads without depending on an HTTP client or async runtime.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ResponseInterpretError::HttpStatus`] for every non-2xx status,
+    /// retaining normalized body evidence when safe. Successful HTTP responses can
+    /// instead fail body bounds, envelope validation, XML-root validation, or typed
+    /// generated decoding.
+    pub fn interpret_response(
+        &self,
+        inspector: &WireInspector,
+        http_status: u16,
+        body: &[u8],
+    ) -> Result<SourceReply<T>, ResponseInterpretError> {
+        let raw = self.inspect_response(inspector, http_status, body)?;
+        match raw {
+            SourceReply::Success(value) => {
+                self.decode(value)
+                    .map(SourceReply::Success)
+                    .map_err(|source| ResponseInterpretError::Decode {
+                        operation: self.identity(),
+                        source,
+                    })
+            }
+            SourceReply::Status(status) => Ok(SourceReply::Status(status)),
+        }
+    }
+
+    pub(crate) fn inspect_response(
+        &self,
+        inspector: &WireInspector,
+        http_status: u16,
+        body: &[u8],
+    ) -> Result<SourceReply<SourceValue>, ResponseInterpretError> {
+        let inspected = self.inspect_body(inspector, body);
+        if !(200..=299).contains(&http_status) {
+            return Err(ResponseInterpretError::HttpStatus {
+                operation: self.identity(),
+                status: http_status,
+                evidence: inspected.ok(),
+            });
+        }
+        inspected
+    }
+
+    fn inspect_body(
+        &self,
+        inspector: &WireInspector,
+        body: &[u8],
+    ) -> Result<SourceReply<SourceValue>, ResponseInterpretError> {
+        let operation = self.identity();
+        let inspected = match self.contract {
+            StructuredResponseContract::Json => inspector
+                .inspect_json(body)
+                .map_err(|error| map_wire_error(operation, error))?,
+            StructuredResponseContract::Xml { expected_root } => {
+                let (root, reply) = inspector
+                    .inspect_xml_with_root(body)
+                    .map_err(|error| map_wire_error(operation, error))?;
+                if root != expected_root {
+                    return Err(ResponseInterpretError::Decode {
+                        operation,
+                        source: ResponseDecodeError::UnexpectedXmlRoot {
+                            expected: expected_root,
+                        },
+                    });
+                }
+                reply
+            }
+        };
+        Ok(inspected)
     }
 
     /// Returns the HTTP method.
@@ -278,6 +400,17 @@ impl<T> PreparedRequest<T> {
     #[must_use]
     pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
         self.parts.authorize(api_key)
+    }
+}
+
+fn map_wire_error(operation: OperationIdentity, error: WireInspectError) -> ResponseInterpretError {
+    match error {
+        WireInspectError::BodyLimit(source) => {
+            ResponseInterpretError::BodyLimit { operation, source }
+        }
+        WireInspectError::Envelope(source) => {
+            ResponseInterpretError::Envelope { operation, source }
+        }
     }
 }
 

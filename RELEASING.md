@@ -6,7 +6,7 @@ at different publication states:
 | Component | Release identity | Current state |
 | --- | --- | --- |
 | Canonical OpenAPI bundle | root changelog and `vX.Y.Z` | Public release path is active. |
-| `opendart` Rust crate | `sdk/rust/crates/opendart` and `opendart-vX.Y.Z` | Release automation is connected. The manifest and crate record the merged `0.1.0-beta.1` proposal, but no public crate, component tag, or finalized GitHub release has been verified. |
+| `opendart` Rust crate | `sdk/rust/crates/opendart` and `opendart-vX.Y.Z` | Release automation is connected. The unpublished `0.1.0-beta.1` candidate is superseded and guarded as a recovery tombstone while a replacement beta awaits review. |
 | `opendart-cli` Rust crate | `sdk/rust/crates/opendart-cli` and `opendart-cli-vX.Y.Z` | Independent ownership is configured for future use, but release eligibility and publication are disabled. |
 
 The [Rust roadmap](ROADMAP_RUST.md) and

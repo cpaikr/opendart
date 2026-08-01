@@ -32,7 +32,7 @@ pub use client::{
 pub use error::{AuthorizationError, InvalidSourceNumberError, PrepareError};
 pub use request::{
     ApiKey, Authentication, AuthorizedRequest, OperationIdentity, PreparedBinaryRequest,
-    PreparedRequest, Representation, RequestMethod,
+    PreparedRequest, Representation, RequestMethod, ResponseInterpretError,
 };
 pub use wire::{
     BodyLimitError, EnvelopeError, EnvelopeFormat, HttpVersion, ResponseDecodeError,

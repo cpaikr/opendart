@@ -14,9 +14,9 @@ contract.
 | Area | State |
 | --- | --- |
 | Product design | Accepted in [ADR 0002](../../docs/decisions/0002-public-rust-sdk.md) |
-| Implementation | Package-ready; generation, transport, and verification are implemented |
-| Delivery | The beta candidate was verified, but publication stopped before `cargo publish` |
-| Public availability | No accepted registry artifact, SDK tag, or published SDK release was verified on 2026-07-31 |
+| Implementation | The transport-independent response contract is being revised before a new candidate |
+| Delivery | `0.1.0-beta.1` is superseded; its publication stopped before `cargo publish` |
+| Public availability | No accepted registry artifact, SDK tag, or published SDK release has been verified |
 | Scheduling | Release recovery is deferred by [the Rust roadmap](../../ROADMAP_RUST.md) |
 
 The merged Release Please proposal advanced the SDK manifest, changelog, lock
@@ -25,9 +25,10 @@ proposal state, not evidence that the crate was published.
 
 The interrupted draft targets candidate commit
 `157d78aa62bace4b00df6677bc3372baf88b9281`. Candidate verification passed,
-then the publication job observed an empty registry token and stopped before
-publishing. Static environment binding has since landed, but no successful
-registry reconciliation has established publication.
+then publication stopped before the registry accepted an artifact. That exact
+candidate is now a fail-closed recovery tombstone: automation verifies that it
+remains an untagged draft at the recorded commit and does not recover it. A new
+Release Please proposal must produce the replacement beta candidate.
 
 Draft releases, duplicate proposals, environment configuration, and secret
 availability are external and volatile. Revalidate all of them before acting;
@@ -45,11 +46,10 @@ do not infer current release state from this dated record.
 
 ## Remaining delivery work
 
-1. Resolve the mismatch between roadmap deferral and the main-push workflow,
-   which can still inspect and recover the interrupted SDK draft.
-2. If recovery is explicitly resumed, revalidate the exact draft, version,
-   candidate commit, environment, registry, and tag state. Stop on any
-   mismatch.
+1. Complete and review the breaking response-contract refactor, then let
+   Release Please propose a new beta candidate.
+2. Revalidate the new draft, version, candidate commit, environment, registry,
+   and tag state. Stop on any mismatch.
 3. Verify the accepted beta artifact, revoke bootstrap authority, and complete
    the selected trusted-publishing cutover.
 4. Publish and verify a non-prerelease `0.1.0` through a reviewed,
@@ -59,17 +59,9 @@ do not infer current release state from this dated record.
 
 ## Next action
 
-Take no registry or release action while this task is deferred. Before the
-next delivery to `main`, maintainers must choose one of two implementation
-paths:
-
-- keep recovery deferred and remove or disable the workflow authority that can
-  resume it; or
-- explicitly resume recovery of the exact verified candidate under the
-  repository release procedure.
-
-That operational choice requires a non-documentation change and is not resolved
-by roadmap wording alone.
+Take no registry or release action while this task is deferred. Complete the
+replacement contract and review the resulting Release Please beta proposal;
+the superseded beta.1 draft is not an authorized recovery source.
 
 ## Canonical references
 

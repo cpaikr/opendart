@@ -20,10 +20,10 @@ _None. Rust delivery is deferred._
    enabling delivery item, but its release recovery is also deferred.
 
 The list expresses product priority, not executable dependency order. The SDK
-must be published and verified before CLI publication can start. The existing
-SDK release workflow remains technically capable of inspecting an interrupted
-release on a `main` push; roadmap deferral alone does not disable it. Resolve
-that operational mismatch before the next `main` delivery.
+must be published and verified before CLI publication can start. The
+interrupted beta.1 candidate is now a fail-closed tombstone and cannot be
+recovered by the SDK workflow. Delivery remains deferred until the replacement
+contract and a new Release Please proposal are reviewed.
 
 ## Tasks
 

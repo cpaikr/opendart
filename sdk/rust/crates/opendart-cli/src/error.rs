@@ -1,5 +1,6 @@
 use opendart::{
-    ClientBuildError, ClientError, PrepareError, ResponseMetadata, TransportFailureKind,
+    ClientBuildError, ClientError, PrepareError, ResponseMetadata, SourceReply, SourceValue,
+    TransportFailureKind,
 };
 use serde::Serialize;
 
@@ -14,6 +15,8 @@ pub(crate) struct ErrorEnvelope {
     operation: Option<OperationContext>,
     #[serde(skip_serializing_if = "Option::is_none")]
     metadata: Option<Box<ResponseMetadata>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    evidence: Option<Box<SourceReply<SourceValue>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     cleanup: Option<Box<CleanupContext>>,
     error: Box<ErrorBody>,
@@ -111,6 +114,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: None,
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_invocation",
@@ -132,6 +136,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: None,
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_invocation",
@@ -236,6 +241,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_request",
@@ -259,6 +265,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "missing_api_key",
@@ -280,6 +287,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_invocation",
@@ -304,6 +312,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "invalid_client_configuration",
@@ -325,6 +334,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: None,
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "executable_resolution",
@@ -371,8 +381,16 @@ impl ErrorEnvelope {
 
     pub(crate) fn client(operation: OperationContext, error: ClientError) -> Self {
         let metadata = error.metadata().cloned().map(Box::new);
+        let mut evidence = None;
         let (code, message) = match error {
             ClientError::Transport(error) => transport_fields(error.kind()),
+            ClientError::HttpStatus { evidence: body, .. } => {
+                evidence = body.map(Box::new);
+                (
+                    "http_status",
+                    "the OpenDART server returned a non-success HTTP status",
+                )
+            }
             ClientError::BodyLimit { .. } => (
                 "body_limit",
                 "the OpenDART response exceeded the configured envelope limit",
@@ -394,7 +412,9 @@ impl ErrorEnvelope {
                 "the prepared SDK request does not match generated CLI discovery",
             ),
         };
-        Self::execution(operation, metadata, code, message)
+        let mut envelope = Self::execution(operation, metadata, code, message);
+        envelope.evidence = evidence;
+        envelope
     }
 
     pub(crate) fn body_stream(
@@ -462,6 +482,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: None,
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "output_encode",
@@ -495,6 +516,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation,
             metadata: None,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code: "sdk_contract_mismatch",
@@ -526,6 +548,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code,
@@ -555,6 +578,7 @@ impl ErrorEnvelope {
             kind: "error",
             operation: Some(operation),
             metadata,
+            evidence: None,
             cleanup: None,
             error: Box::new(ErrorBody {
                 code,
