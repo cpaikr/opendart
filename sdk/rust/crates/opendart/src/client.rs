@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::VecDeque,
     fmt,
     future::{Future, poll_fn},
@@ -14,10 +13,10 @@ use zeroize::Zeroizing;
 
 use crate::request::RequestParts;
 use crate::{
-    ApiKey, BodyLimitError, EnvelopeError, EnvelopeFormat, HttpVersion, OperationIdentity,
-    PreparedBinaryRequest, PreparedRequest, Representation, RequestMethod, ResponseDecodeError,
-    ResponseHeader, ResponseMetadata, SourceReply, SourceResponse, SourceValue, StatusEnvelope,
-    WireInspectError, WireInspector,
+    ApiKey, BodyLimitError, EnvelopeError, HttpVersion, OperationIdentity, PreparedBinaryRequest,
+    PreparedRequest, Representation, RequestMethod, ResponseDecodeError, ResponseHeader,
+    ResponseInterpretError, ResponseMetadata, SourceReply, SourceResponse, SourceValue,
+    StatusEnvelope, WireInspector,
 };
 
 const DEFAULT_CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -42,6 +41,12 @@ impl Client {
         ClientBuilder::new(api_key)
     }
 
+    /// Returns the total request and response-body deadline owned by this client.
+    #[must_use]
+    pub const fn total_timeout(&self) -> Duration {
+        self.total_timeout
+    }
+
     /// Executes a prepared JSON or XML request and inspects its bounded envelope.
     ///
     /// # Errors
@@ -54,21 +59,10 @@ impl Client {
         &self,
         prepared: &PreparedRequest<T>,
     ) -> Result<SourceResponse<SourceReply<T>>, ClientError> {
-        let raw = self.execute_raw(prepared).await?;
-        let metadata = raw.metadata;
-        let operation = prepared.identity();
-        let reply = match raw.reply {
-            SourceReply::Success(value) => {
-                SourceReply::Success(prepared.decode(value).map_err(|source| {
-                    ClientError::ResponseDecode {
-                        operation,
-                        metadata: metadata.clone(),
-                        source,
-                    }
-                })?)
-            }
-            SourceReply::Status(status) => SourceReply::Status(status),
-        };
+        let (metadata, body) = self.receive_structured(prepared).await?;
+        let reply = prepared
+            .interpret_response(&self.inspector, &self.api_key, metadata.status(), &body)
+            .map_err(|error| map_interpret_error(metadata.clone(), error))?;
         Ok(SourceResponse { metadata, reply })
     }
 
@@ -84,7 +78,17 @@ impl Client {
         &self,
         prepared: &PreparedRequest<T>,
     ) -> Result<SourceResponse<SourceReply<SourceValue>>, ClientError> {
-        let format = structured_format(prepared)?;
+        let (metadata, body) = self.receive_structured(prepared).await?;
+        let reply = prepared
+            .inspect_response(&self.inspector, &self.api_key, metadata.status(), &body)
+            .map_err(|error| map_interpret_error(metadata.clone(), error))?;
+        Ok(SourceResponse { metadata, reply })
+    }
+
+    async fn receive_structured<T>(
+        &self,
+        prepared: &PreparedRequest<T>,
+    ) -> Result<(ResponseMetadata, Vec<u8>), ClientError> {
         let operation = prepared.identity();
         let sent = self.send(prepared.parts()).await?;
         let deadline = sent.deadline;
@@ -93,12 +97,24 @@ impl Client {
         let mut body = Vec::new();
 
         loop {
-            let chunk = tokio::time::timeout_at(deadline, response.chunk())
-                .await
-                .map_err(|_| timeout_error(operation, Some(metadata.clone())))?
-                .map_err(|error| transport_error(operation, Some(metadata.clone()), &error))?;
+            let chunk = match tokio::time::timeout_at(deadline, response.chunk()).await {
+                Ok(Ok(chunk)) => chunk,
+                Ok(Err(_)) if !successful_status(metadata.status()) => {
+                    return Err(http_status_error(operation, metadata, None));
+                }
+                Err(_) if !successful_status(metadata.status()) => {
+                    return Err(http_status_error(operation, metadata, None));
+                }
+                Ok(Err(error)) => {
+                    return Err(transport_error(operation, Some(metadata), &error));
+                }
+                Err(_) => return Err(timeout_error(operation, Some(metadata))),
+            };
             let Some(chunk) = chunk else { break };
             if body.len().saturating_add(chunk.len()) > self.inspector.max_envelope_bytes() {
+                if !successful_status(metadata.status()) {
+                    return Err(http_status_error(operation, metadata, None));
+                }
                 return Err(ClientError::BodyLimit {
                     operation,
                     metadata,
@@ -107,32 +123,7 @@ impl Client {
             }
             body.extend_from_slice(&chunk);
         }
-
-        let reply = match format {
-            EnvelopeFormat::Json => self
-                .inspector
-                .inspect_json(&body)
-                .map_err(|error| map_inspect_error(operation, metadata.clone(), error))?,
-            EnvelopeFormat::Xml => {
-                let (root, reply) = self
-                    .inspector
-                    .inspect_xml_with_root(&body)
-                    .map_err(|error| map_inspect_error(operation, metadata.clone(), error))?;
-                let expected = prepared
-                    .parts()
-                    .expected_xml_root()
-                    .unwrap_or("<generated>");
-                if root != expected {
-                    return Err(ClientError::ResponseDecode {
-                        operation,
-                        metadata,
-                        source: ResponseDecodeError::UnexpectedXmlRoot { expected },
-                    });
-                }
-                reply
-            }
-        };
-        Ok(SourceResponse { metadata, reply })
+        Ok((metadata, body))
     }
 
     /// Executes a prepared ZIP-with-XML-error request without losing consumed bytes.
@@ -168,6 +159,14 @@ impl Client {
         let raw: RawStream = Box::pin(stream);
         let reply =
             classify_binary(raw, self.inspector, prepared.parts().expected_xml_root()).await;
+        if !successful_status(metadata.status()) {
+            let evidence = match reply {
+                BinaryReply::Status(status) => Some(SourceReply::Status(status)),
+                BinaryReply::Archive(_) | BinaryReply::Unrecognized(_) => None,
+            }
+            .filter(|evidence| self.api_key.response_evidence_is_safe(evidence));
+            return Err(http_status_error(operation, metadata, evidence));
+        }
         Ok(SourceResponse {
             metadata,
             reply: reply.map_err_operation(operation),
@@ -474,6 +473,16 @@ pub enum ClientError {
     /// The HTTP adapter failed without exposing its credential-bearing URL.
     #[error(transparent)]
     Transport(#[from] TransportError),
+    /// The server returned a non-success HTTP status.
+    #[error("{operation} received a non-success HTTP status {}", metadata.status())]
+    HttpStatus {
+        /// The prepared operation.
+        operation: OperationIdentity,
+        /// Sanitized metadata containing the observed HTTP status.
+        metadata: ResponseMetadata,
+        /// Normalized bounded body evidence, when safely recognizable.
+        evidence: Option<SourceReply<SourceValue>>,
+    },
     /// A structured body exceeded the configured bound.
     #[error("{operation}: {source}")]
     BodyLimit {
@@ -513,10 +522,55 @@ impl ClientError {
         match self {
             Self::Representation { .. } => None,
             Self::Transport(error) => error.metadata(),
-            Self::BodyLimit { metadata, .. }
+            Self::HttpStatus { metadata, .. }
+            | Self::BodyLimit { metadata, .. }
             | Self::Envelope { metadata, .. }
             | Self::ResponseDecode { metadata, .. } => Some(metadata),
         }
+    }
+}
+
+fn successful_status(status: u16) -> bool {
+    (200..=299).contains(&status)
+}
+
+fn http_status_error(
+    operation: OperationIdentity,
+    metadata: ResponseMetadata,
+    evidence: Option<SourceReply<SourceValue>>,
+) -> ClientError {
+    ClientError::HttpStatus {
+        operation,
+        metadata,
+        evidence,
+    }
+}
+
+fn map_interpret_error(metadata: ResponseMetadata, error: ResponseInterpretError) -> ClientError {
+    match error {
+        ResponseInterpretError::HttpStatus {
+            operation,
+            status,
+            evidence,
+        } => {
+            debug_assert_eq!(status, metadata.status());
+            http_status_error(operation, metadata, evidence)
+        }
+        ResponseInterpretError::BodyLimit { operation, source } => ClientError::BodyLimit {
+            operation,
+            metadata,
+            source,
+        },
+        ResponseInterpretError::Envelope { operation, source } => ClientError::Envelope {
+            operation,
+            metadata,
+            source,
+        },
+        ResponseInterpretError::Decode { operation, source } => ClientError::ResponseDecode {
+            operation,
+            metadata,
+            source,
+        },
     }
 }
 
@@ -562,39 +616,6 @@ fn timeout_configuration_error(operation: OperationIdentity) -> ClientError {
     .into()
 }
 
-fn map_inspect_error(
-    operation: OperationIdentity,
-    metadata: ResponseMetadata,
-    error: WireInspectError,
-) -> ClientError {
-    match error {
-        WireInspectError::BodyLimit(source) => ClientError::BodyLimit {
-            operation,
-            metadata,
-            source,
-        },
-        WireInspectError::Envelope(source) => ClientError::Envelope {
-            operation,
-            metadata,
-            source,
-        },
-    }
-}
-
-fn structured_format<T>(prepared: &PreparedRequest<T>) -> Result<EnvelopeFormat, ClientError> {
-    let representations = prepared.expected_representations();
-    if representations.contains(&Representation::Json) {
-        Ok(EnvelopeFormat::Json)
-    } else if representations == [Representation::Xml] {
-        Ok(EnvelopeFormat::Xml)
-    } else {
-        Err(ClientError::Representation {
-            operation: prepared.identity(),
-            expected: "a bounded JSON or XML execution",
-        })
-    }
-}
-
 fn response_metadata(response: &reqwest::Response, api_key: &ApiKey) -> ResponseMetadata {
     let status = response.status().as_u16();
     let version = match response.version() {
@@ -605,163 +626,19 @@ fn response_metadata(response: &reqwest::Response, api_key: &ApiKey) -> Response
         reqwest::Version::HTTP_3 => HttpVersion::Http3,
         other => HttpVersion::Other(format!("{other:?}")),
     };
-    let headers = api_key.with_exposed_secret(|secret| {
-        let form_encoded = form_urlencoded::byte_serialize(secret.as_bytes()).collect::<String>();
-        let percent_encoded = percent_encode(secret.as_bytes());
-        response
-            .headers()
-            .iter()
-            .filter_map(|(name, value)| {
-                let bytes = value.as_bytes();
-                if !safe_response_header(name.as_str())
-                    || !header_value_is_safe(
-                        bytes,
-                        secret.as_bytes(),
-                        form_encoded.as_bytes(),
-                        percent_encoded.as_bytes(),
-                    )
-                {
-                    None
-                } else {
-                    Some(ResponseHeader::new(name.as_str(), bytes))
-                }
-            })
-            .collect()
-    });
-    ResponseMetadata::new(status, version, headers)
-}
-
-const MAX_HEADER_PERCENT_DECODING_PASSES: usize = 3;
-
-fn header_value_is_safe(
-    value: &[u8],
-    secret: &[u8],
-    form_encoded_secret: &[u8],
-    percent_encoded_secret: &[u8],
-) -> bool {
-    let mut stage = Cow::Borrowed(value);
-    if header_stage_contains_sensitive_value(
-        stage.as_ref(),
-        secret,
-        form_encoded_secret,
-        percent_encoded_secret,
-    ) {
-        return false;
-    }
-
-    for _ in 0..MAX_HEADER_PERCENT_DECODING_PASSES {
-        let Some(decoded) = (match percent_decode_header_value(stage.as_ref()) {
-            Ok(decoded) => decoded,
-            Err(()) => return false,
-        }) else {
-            return true;
-        };
-        let Ok(text) = std::str::from_utf8(&decoded) else {
-            return false;
-        };
-        if text.chars().any(char::is_control)
-            || header_stage_contains_sensitive_value(
-                &decoded,
-                secret,
-                form_encoded_secret,
-                percent_encoded_secret,
-            )
-        {
-            return false;
-        }
-        stage = Cow::Owned(decoded);
-    }
-
-    !stage.contains(&b'%')
-}
-
-fn header_stage_contains_sensitive_value(
-    value: &[u8],
-    secret: &[u8],
-    form_encoded_secret: &[u8],
-    percent_encoded_secret: &[u8],
-) -> bool {
-    contains_bytes(value, secret)
-        || contains_secret_after_partial_form_decoding(value, secret)
-        || contains_ascii_case_insensitive(value, form_encoded_secret)
-        || contains_ascii_case_insensitive(value, percent_encoded_secret)
-        || contains_ascii_case_insensitive(value, b"crtfc_key")
-}
-
-/// Matches form-space separators after percent decoding has made literal and
-/// separator `+` bytes indistinguishable.
-fn contains_secret_after_partial_form_decoding(value: &[u8], secret: &[u8]) -> bool {
-    !secret.is_empty()
-        && value.windows(secret.len()).any(|window| {
-            window
-                .iter()
-                .zip(secret)
-                .all(|(value, secret)| value == secret || (*value == b'+' && *secret == b' '))
+    let headers = response
+        .headers()
+        .iter()
+        .filter_map(|(name, value)| {
+            let bytes = value.as_bytes();
+            if !safe_response_header(name.as_str()) || !api_key.response_bytes_are_safe(bytes) {
+                None
+            } else {
+                Some(ResponseHeader::new(name.as_str(), bytes))
+            }
         })
-}
-
-fn percent_decode_header_value(value: &[u8]) -> Result<Option<Vec<u8>>, ()> {
-    let Some(first_escape) = value.iter().position(|byte| *byte == b'%') else {
-        return Ok(None);
-    };
-
-    let mut decoded = Vec::with_capacity(value.len());
-    decoded.extend_from_slice(&value[..first_escape]);
-    let mut index = first_escape;
-    while index < value.len() {
-        if value[index] != b'%' {
-            decoded.push(value[index]);
-            index += 1;
-            continue;
-        }
-
-        let high = value.get(index + 1).and_then(|byte| hex_value(*byte));
-        let low = value.get(index + 2).and_then(|byte| hex_value(*byte));
-        let (Some(high), Some(low)) = (high, low) else {
-            return Err(());
-        };
-        decoded.push((high << 4) | low);
-        index += 3;
-    }
-    Ok(Some(decoded))
-}
-
-fn hex_value(value: u8) -> Option<u8> {
-    match value {
-        b'0'..=b'9' => Some(value - b'0'),
-        b'a'..=b'f' => Some(value - b'a' + 10),
-        b'A'..=b'F' => Some(value - b'A' + 10),
-        _ => None,
-    }
-}
-
-fn percent_encode(value: &[u8]) -> String {
-    const HEX: &[u8; 16] = b"0123456789ABCDEF";
-    let mut encoded = String::with_capacity(value.len().saturating_mul(3));
-    for byte in value {
-        if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~') {
-            encoded.push(char::from(*byte));
-        } else {
-            encoded.push('%');
-            encoded.push(char::from(HEX[usize::from(byte >> 4)]));
-            encoded.push(char::from(HEX[usize::from(byte & 0x0f)]));
-        }
-    }
-    encoded
-}
-
-fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
-    !needle.is_empty()
-        && haystack
-            .windows(needle.len())
-            .any(|window| window == needle)
-}
-
-fn contains_ascii_case_insensitive(haystack: &[u8], needle: &[u8]) -> bool {
-    !needle.is_empty()
-        && haystack
-            .windows(needle.len())
-            .any(|window| window.eq_ignore_ascii_case(needle))
+        .collect();
+    ResponseMetadata::new(status, version, headers)
 }
 
 fn safe_response_header(name: &str) -> bool {
@@ -1157,7 +1034,11 @@ mod tests {
     }
 
     fn response(headers: &[(&str, &str)], body: &[u8]) -> Vec<u8> {
-        let mut response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n", body.len());
+        status_response("200 OK", headers, body)
+    }
+
+    fn status_response(status: &str, headers: &[(&str, &str)], body: &[u8]) -> Vec<u8> {
+        let mut response = format!("HTTP/1.1 {status}\r\nContent-Length: {}\r\n", body.len());
         for (name, value) in headers {
             response.push_str(name);
             response.push_str(": ");
@@ -1478,9 +1359,7 @@ mod tests {
 
     #[test]
     fn response_header_safety_fails_closed_across_percent_decoding_stages() {
-        let secret = b"secret /+ credential";
-        let form_encoded = b"secret+%2F%2B+credential";
-        let percent_encoded = b"secret%20%2F%2B%20credential";
+        let api_key = ApiKey::new("secret /+ credential").unwrap();
 
         for unsafe_value in [
             b"secret /+ credential".as_slice(),
@@ -1501,18 +1380,14 @@ mod tests {
                 .as_slice(),
         ] {
             assert!(
-                !header_value_is_safe(unsafe_value, secret, form_encoded, percent_encoded),
+                !api_key.response_bytes_are_safe(unsafe_value),
                 "unsafe header value survived: {}",
                 String::from_utf8_lossy(unsafe_value)
             );
         }
 
-        assert!(!header_value_is_safe(
-            b"secret+/+credential",
-            b"secret / credential",
-            b"secret+%2F+credential",
-            b"secret%20%2F%20credential",
-        ));
+        let slash_key = ApiKey::new("secret / credential").unwrap();
+        assert!(!slash_key.response_bytes_are_safe(b"secret+/+credential"));
 
         for safe_value in [
             b"application/json".as_slice(),
@@ -1523,7 +1398,7 @@ mod tests {
             b"opaque\x80value".as_slice(),
         ] {
             assert!(
-                header_value_is_safe(safe_value, secret, form_encoded, percent_encoded),
+                api_key.response_bytes_are_safe(safe_value),
                 "safe header value was omitted: {}",
                 String::from_utf8_lossy(safe_value)
             );
@@ -1691,6 +1566,89 @@ mod tests {
                 .and_then(SourceValue::as_bool),
             Some(true)
         );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn non_success_http_status_retains_bounded_evidence_without_typed_success() {
+        let body = br#"{"status":"000","corp_name":"contradictory success"}"#;
+        let (origin, server) = serve_once(status_response(
+            "500 Internal Server Error",
+            &[("content-type", "application/json")],
+            body,
+        ))
+        .await;
+        let client = Client::builder(ApiKey::new("key").unwrap())
+            .test_origin(origin)
+            .build()
+            .unwrap();
+
+        let error = client.execute(&company_request()).await.unwrap_err();
+        assert!(error.to_string().contains("500"));
+        let ClientError::HttpStatus {
+            metadata,
+            evidence: Some(SourceReply::Success(value)),
+            ..
+        } = error
+        else {
+            panic!("HTTP failure should retain normalized evidence");
+        };
+        assert_eq!(metadata.status(), 500);
+        assert_eq!(
+            value.get("corp_name").and_then(SourceValue::as_str),
+            Some("contradictory success")
+        );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn non_success_http_status_omits_credential_echo_evidence() {
+        let body = br#"{"status":"500","crtfc_key":"key"}"#;
+        let (origin, server) = serve_once(status_response(
+            "500 Internal Server Error",
+            &[("content-type", "application/json")],
+            body,
+        ))
+        .await;
+        let client = Client::builder(ApiKey::new("key").unwrap())
+            .test_origin(origin)
+            .build()
+            .unwrap();
+
+        let error = client.execute(&company_request()).await.unwrap_err();
+        assert!(matches!(
+            &error,
+            ClientError::HttpStatus { evidence: None, .. }
+        ));
+        assert!(!format!("{error:?}").contains("crtfc_key"));
+        assert!(!format!("{error:?}").contains("\"key\""));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn non_success_binary_status_never_returns_an_artifact_stream() {
+        let body = br#"<result><status>010</status><message>not available</message></result>"#;
+        let (origin, server) = serve_once(status_response(
+            "503 Service Unavailable",
+            &[("content-type", "application/xml")],
+            body,
+        ))
+        .await;
+        let client = Client::builder(ApiKey::new("key").unwrap())
+            .test_origin(origin)
+            .build()
+            .unwrap();
+        let prepared = CorpCode::new().prepare_zip().unwrap();
+
+        let error = client.execute_binary(&prepared).await.unwrap_err();
+        assert!(matches!(
+            error,
+            ClientError::HttpStatus {
+                metadata,
+                evidence: Some(SourceReply::Status(_)),
+                ..
+            } if metadata.status() == 503
+        ));
         server.await.unwrap();
     }
 

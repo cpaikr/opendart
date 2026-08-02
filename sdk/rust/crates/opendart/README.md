@@ -4,17 +4,16 @@
 deterministic requests and preserves source-response evidence without taking
 ownership of retry, quota, collection, persistence, or domain policy.
 
-The crate is package-ready but not yet published. The guarded beta workflow
-authorizes publication only from `main` through its protected bootstrap
-environment. The crates.io dependency examples below apply after publication
-and public-artifact verification in
-[SDK work 6](../../../../tasks/rust/public-rust-sdk.md).
+Current crates.io availability is tracked in the
+[Public Rust SDK task](https://github.com/cpaikr/opendart/blob/main/tasks/rust/public-rust-sdk.md). Use a registry
+dependency only after the intended version and its public artifacts have been
+verified. The dependency examples below describe the stable `0.1` line.
 
-The checked-in `operations` module is generator-owned but is supported public
-API. Its operation names and behavior participate in SemVer; its file layout
-does not. Other generated routing and wire metadata remain private.
+The checked-in `operations` module is generator-owned but supported public API.
+Operation names and behavior participate in SemVer; generated file layout does
+not.
 
-## Ordinary client
+## Ordinary native client
 
 Default features include the native `client-reqwest` adapter:
 
@@ -22,11 +21,6 @@ Default features include the native `client-reqwest` adapter:
 [dependencies]
 opendart = "0.1"
 ```
-
-On WebAssembly, `client-reqwest` is accepted but inert: it does not export the
-native `Client` types or activate their transport/runtime dependencies. The
-transport-independent prepared-request API remains available so callers can
-authorize and execute requests through their own WebAssembly adapter.
 
 ```no_run
 use std::time::Duration;
@@ -54,23 +48,35 @@ match client.execute(&request).await?.reply {
 # }
 ```
 
-`Client::execute` handles bounded JSON or XML envelopes. It returns every
-recognized status envelope—including `000`, `013`, documented error values,
-and unknown future strings—as `SourceReply::Status`. The SDK does not decide
-that `013` is an empty success and does not mark any source status retryable.
-An XML reply becomes authoritative only after complete bounded UTF-8 XML 1.0
-validation. DTDs and custom entities are rejected; valid declarations,
-comments, processing instructions, namespaces, and references remain
-supported within the SDK's depth and per-element attribute bounds. Literal XML
-line endings are normalized according to XML 1.0 while numeric character
-references retain their referenced character.
-Each `prepare_json` or `prepare_xml` call binds its representation-specific
-generated success type. Use `Client::execute_raw(&request)` when you need the
-complete normalized `SourceValue` envelope instead.
+Preparation performs no I/O. It validates required and non-empty inputs plus
+canonical string lengths, supported formats, allowed values, decimal ranges,
+list cardinality, and query serialization. Rules that exist only in narrative
+prose are not inferred.
+
+Each `prepare_json` or `prepare_xml` call binds its
+representation-specific generated success type. `Client::execute` returns
+recognized status-only envelopes—including `000`, `013`, documented errors,
+and unknown future strings—as `SourceReply::Status`. The SDK does not classify
+`013` as successful empty data or mark any source status retryable.
+
+Use `Client::execute_raw(&request)` when you need the complete normalized
+`SourceValue` success envelope instead of the generated success type.
+
+XML evidence becomes authoritative only after complete bounded UTF-8 XML 1.0
+validation. DTDs, custom entities, and external resolution are rejected. Valid
+declarations, comments, processing instructions, namespaces, mixed content,
+CDATA, and character references remain supported within the SDK's depth and
+per-element attribute bounds. Literal XML line endings normalize according to
+XML 1.0, while numeric character references retain their referenced character.
 
 ZIP operations use `Client::execute_binary`. The result distinguishes a
-positive ZIP signature, a bounded alternate XML status envelope, and an
-unrecognized replaying byte stream without losing inspected prefix bytes.
+supported positive ZIP signature, a completely validated bounded XML status
+envelope, and an unrecognized replaying byte stream. Classification never
+discards inspected prefix bytes.
+
+On WebAssembly, `client-reqwest` is accepted but inert: native `Client` types
+and their transport/runtime dependencies are absent. Prepared requests and wire
+inspection remain available for a caller-owned WebAssembly adapter.
 
 ## Optional JSON serialization
 
@@ -83,15 +89,17 @@ opendart = { version = "0.1", features = ["serde-json"] }
 serde_json = "1"
 ```
 
-Generated response objects and the shared response, status, metadata, and
+Generated response objects and shared response, status, metadata, and
 `SourceValue` types then implement `serde::Serialize`. Source numbers are
-validated when constructed and direct `serde_json` text encoding preserves
+validated on construction, and direct `serde_json` text encoding preserves
 their exact lexemes, including arbitrary-size integers, decimals, and
-exponents. Do not pass them through `serde_json::Value` or another numeric
-model first. Credentials, prepared and authorized requests, clients, and body
-streams deliberately remain non-serializable.
+exponents. Passing them through `serde_json::Value` or another numeric model
+first is outside that guarantee.
 
-## Advanced transport ownership
+Credentials, prepared and authorized requests, clients, and body streams remain
+non-serializable.
+
+## Caller-owned transport
 
 Disable default features when the application owns HTTP execution:
 
@@ -117,22 +125,43 @@ authorized.with_exposed_relative_uri(|relative_uri| {
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
-After the caller's bounded read, `WireInspector::inspect_json` and
-`WireInspector::inspect_xml` classify source envelopes while retaining unknown
-fields and scalar forms:
+After a bounded caller-owned read, the prepared request interprets the complete
+HTTP outcome through the same contract as the official client:
 
 ```rust
-use opendart::{SourceReply, WireInspector};
+use opendart::{operations::Company, SourceReply, WireInspector};
 
 let inspector = WireInspector::new(64 * 1024).expect("nonzero limit");
-let reply = inspector.inspect_json(br#"{"status":"013","message":"no data"}"#)?;
+let api_key = opendart::ApiKey::new("example-key")?;
+let prepared = Company::new("00126380").prepare_json()?;
+let reply = prepared.interpret_response(
+    &inspector,
+    &api_key,
+    200,
+    br#"{"status":"013","message":"no data"}"#,
+)?;
 assert!(matches!(reply, SourceReply::Status(_)));
 
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
-The SDK never retries, follows redirects, reads ambient proxies, or
-automatically decodes response content. `source_provenance()` separately
-identifies the reviewed semantic specification sources and exact generated
-bundle artifact; packaged archives also include Cargo's `.cargo_vcs_info.json`
-for the exact source revision.
+Every non-2xx status returns `ResponseInterpretError::HttpStatus`, with
+normalized bounded body evidence when it can be recognized safely and does not
+contain the active credential or its encoded forms. A
+success-shaped body under HTTP 500 is never decoded into the generated success
+type. Callers remain responsible for bounding body collection before passing
+the slice to this defensive interpreter.
+
+The official client never retries, follows redirects, uses ambient proxies, or
+automatically decodes response content. Callers requiring different transport
+policy use prepared requests rather than injecting an arbitrary client.
+
+`source_provenance()` identifies the selected semantic specification source,
+canonical bundle checksum, generator schema, and SDK projection checksum.
+Packaged archives also contain Cargo's `.cargo_vcs_info.json` for the exact Git
+revision.
+
+The complete supported behavior is documented in the
+[public contract](https://github.com/cpaikr/opendart/blob/main/docs/rust-sdk/public-contract.md) and
+[transport and safety](https://github.com/cpaikr/opendart/blob/main/docs/rust-sdk/transport-and-safety.md)
+guides.

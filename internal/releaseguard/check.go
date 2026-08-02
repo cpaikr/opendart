@@ -49,7 +49,7 @@ const (
 	uploadArtifactAction           = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
 	downloadArtifactAction         = "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c"
 	verifyConcurrencyGroup         = "${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}"
-	recoveryScriptDigest           = "fbe90272400a6eb6065e457198a40efe6cd523ad0182f9ca9fa1fb3326d691fb"
+	recoveryScriptDigest           = "e89afe63da8e3ea1e7358ca85dff550e8337fc027fc204e9fcd1d4dad5e615ba"
 	proposalScriptDigest           = "996a55e656f9409c6f4a6ee882d9c23d73f070cead0d20d27000afea41723d9d"
 	componentScriptDigest          = "695c00a82d604738ac93fa794396acaf8f2d3e95d4f1b434721f727f10177fb8"
 	dispatchScriptDigest           = "8e243fcb82c1d33d2fa3414d504f9f33e1a553c0ed488695b3fb8e18ee7fd0e3"
@@ -127,6 +127,7 @@ cargo +1.97.1 fetch --locked --manifest-path sdk/rust/compat/reqwest-feature-uni
 cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-targets --all-features -- -D warnings
 cargo +1.97.1 clippy --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --all-targets --no-default-features -- -D warnings
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml --workspace --all-features
+RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --test public_contract repository_contract_corpus_crosses_the_public_interpreter
 RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test structured_loopback
 RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart-cli --test binary_loopback
 cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --no-default-features
@@ -160,7 +161,7 @@ cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendar
 diff -u sdk/rust/package-files.txt "${sdk_package_files}"
 cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
 diff -u sdk/rust/opendart-cli-package-files.txt "${cli_package_files}"
-cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml`
+CARGO_TARGET_DIR="${verification_tmp}/package-target" cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml`
 	sourceInstallScript = `install_workspace="$(mktemp -d)"
 CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"
 "${install_workspace}/root/bin/opendart" --version
@@ -211,7 +212,6 @@ var (
 	rustBundleSHA   = regexp.MustCompile(`(?m)^const CANONICAL_BUNDLE_SHA256: &str =\s*"([0-9a-f]{64})";$`)
 	rustSourceTag   = regexp.MustCompile(`(?m)^const SPECIFICATION_SOURCE_RELEASE: Option<&str> = Some\("(v[0-9]+\.[0-9]+\.[0-9]+)"\);$`)
 	rustSDKTimeout  = regexp.MustCompile(`(?m)^const DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs\(([0-9]+)\);$`)
-	rustCLITimeout  = regexp.MustCompile(`(?m)^const SDK_DEFAULT_TOTAL_TIMEOUT: Duration = Duration::from_secs\(([0-9]+)\);$`)
 )
 
 // Error identifies the repository artifact and invariant that failed without
@@ -520,11 +520,11 @@ func checkRustCLITimeoutMirror(sdkClientSource, cliExecutionSource []byte) error
 			Invariant: "defines one SDK total timeout default",
 		}
 	}
-	cliMatches := rustCLITimeout.FindAllSubmatch(cliExecutionSource, -1)
-	if len(cliMatches) != 1 || !bytes.Equal(cliMatches[0][1], sdkMatches[0][1]) {
+	if bytes.Contains(cliExecutionSource, []byte("SDK_DEFAULT_TOTAL_TIMEOUT")) ||
+		bytes.Count(cliExecutionSource, []byte("let total_timeout = client.total_timeout();")) != 1 {
 		return &Error{
 			Artifact:  rustCLIExecutionArtifact,
-			Invariant: "mirrors the published SDK total timeout default",
+			Invariant: "reads total timeout policy from the constructed SDK client",
 		}
 	}
 	return nil
@@ -790,7 +790,6 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 		"include-v-in-tag",
 		"prerelease",
 		"prerelease-type",
-		"release-as",
 		"release-type",
 		"versioning",
 	}
@@ -809,7 +808,6 @@ func checkReleaseConfiguration(configSource, manifestSource, cargoSource, cliCar
 		"versioning":                     "prerelease",
 		"prerelease":                     true,
 		"prerelease-type":                "beta",
-		"release-as":                     "0.1.0-beta.1",
 		"draft":                          true,
 		"force-tag-creation":             false,
 	}
@@ -1127,7 +1125,8 @@ func checkReleasePipelineWorkflow(release workflow, source string) error {
 		"git merge-base --is-ancestor", "probe_tag_ref()", "gh api --include", "if test \"${http_status}\" = 404",
 		"tag_ref_status=\"$(probe_tag_ref \"${tag_name}\")\"", "inspect_component specification openapi/generated v",
 		"inspect_component sdk sdk/rust/crates/opendart opendart-v",
-		"if test \"${component}\" = sdk;") {
+		"if test \"${component}\" = sdk;", "test \"${version}\" = 0.1.0-beta.1",
+		"157d78aa62bace4b00df6677bc3372baf88b9281", "superseded SDK candidate state mismatch") {
 		return &Error{Artifact: releaseWorkflowArtifact, Invariant: "component recovery fails closed on ambiguous, tag-only, or non-ancestor state", Detail: recoveryDigestDetail, Cause: err}
 	}
 	_, proposals, err := stepByID(releaseJob.Steps, "proposals")

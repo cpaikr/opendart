@@ -2,10 +2,19 @@
 
 use std::{cell::Cell, fmt::Display};
 
+#[cfg(opendart_compat)]
+use std::path::Path;
+
+#[cfg(opendart_compat)]
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpListener,
+};
+
 use opendart::{
     ApiKey, Authentication, AuthorizedRequest, EnvelopeFormat, OperationIdentity, PrepareError,
-    PreparedBinaryRequest, PreparedRequest, Representation, RequestMethod, ResponseMetadata,
-    SourceReply, SourceValue, SourceValueKind, WireInspectError, WireInspector,
+    PreparedBinaryRequest, PreparedRequest, Representation, RequestMethod, ResponseInterpretError,
+    ResponseMetadata, SourceReply, SourceValue, SourceValueKind, WireInspectError, WireInspector,
     operations::{
         AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttCmpnyIndx, FnlttMultiAcnt, List,
     },
@@ -13,6 +22,11 @@ use opendart::{
     source_provenance,
 };
 use static_assertions::assert_not_impl_any;
+
+#[cfg(opendart_compat)]
+use opendart::{BinaryReply, Client};
+#[cfg(opendart_compat)]
+use serde_json::Value as JsonValue;
 
 #[cfg(feature = "serde-json")]
 use opendart::SourceResponse;
@@ -93,6 +107,230 @@ fn representation_selection_changes_only_the_physical_contract() {
     assert_eq!(json.identity().logical(), xml.identity().logical());
     assert_eq!(json.expected_representations(), &[Representation::Json]);
     assert_eq!(xml.expected_representations(), &[Representation::Xml]);
+}
+
+#[test]
+fn prepared_request_interprets_typed_responses_without_an_http_client() {
+    let prepared = Company::new("00126380").prepare_json().unwrap();
+    let inspector = WireInspector::new(1024).unwrap();
+    let api_key = ApiKey::new("example-key").unwrap();
+    let reply = prepared
+        .interpret_response(
+            &inspector,
+            &api_key,
+            200,
+            br#"{"status":"000","corp_name":"Example Corp"}"#,
+        )
+        .unwrap();
+
+    let SourceReply::Success(company) = reply else {
+        panic!("a success envelope should use the generated response decoder");
+    };
+    assert_eq!(
+        company.corp_name.as_ref().and_then(SourceValue::as_str),
+        Some("Example Corp")
+    );
+}
+
+#[test]
+fn prepared_request_makes_non_success_http_status_explicit() {
+    let prepared = Company::new("00126380").prepare_json().unwrap();
+    let inspector = WireInspector::new(1024).unwrap();
+    let api_key = ApiKey::new("example-key").unwrap();
+    let error = prepared
+        .interpret_response(
+            &inspector,
+            &api_key,
+            500,
+            br#"{"status":"000","corp_name":"contradictory success"}"#,
+        )
+        .unwrap_err();
+
+    let ResponseInterpretError::HttpStatus {
+        status,
+        evidence: Some(SourceReply::Success(value)),
+        ..
+    } = error
+    else {
+        panic!("valid bounded evidence should survive the HTTP failure");
+    };
+    assert_eq!(status, 500);
+    assert_eq!(
+        value.get("corp_name").and_then(SourceValue::as_str),
+        Some("contradictory success")
+    );
+}
+
+#[test]
+fn caller_owned_interpreter_omits_credential_evidence() {
+    let prepared = Company::new("00126380").prepare_json().unwrap();
+    let inspector = WireInspector::new(1024).unwrap();
+    let api_key = ApiKey::new("secret value").unwrap();
+    for body in [
+        br#"{"status":"999","message":"secret value"}"#.as_slice(),
+        br#"{"status":"999","message":"secret+value"}"#.as_slice(),
+        br#"{"status":"999","message":"secret%20value"}"#.as_slice(),
+        br#"{"status":"999","crtfc_key":"reflected"}"#.as_slice(),
+    ] {
+        let error = prepared
+            .interpret_response(&inspector, &api_key, 500, body)
+            .unwrap_err();
+        assert!(matches!(
+            error,
+            ResponseInterpretError::HttpStatus { evidence: None, .. }
+        ));
+    }
+}
+
+#[cfg(opendart_compat)]
+#[tokio::test]
+async fn repository_contract_corpus_crosses_the_public_interpreter() {
+    let inspector = WireInspector::new(64 * 1024).unwrap();
+    let api_key = ApiKey::new("fixture-key").unwrap();
+    let json = Company::new("00126380").prepare_json().unwrap();
+    let xml = Company::new("00126380").prepare_xml().unwrap();
+    let binary = CorpCode::new().prepare_zip().unwrap();
+
+    let manifest: JsonValue = serde_json::from_slice(&contract_fixture("manifest.json"))
+        .expect("contract fixture manifest is valid JSON");
+    for case in manifest["requestCases"]
+        .as_array()
+        .expect("requestCases is an array")
+    {
+        let physical = case["physicalOperation"]
+            .as_str()
+            .expect("physical operation is a string");
+        let logical = case["logicalOperation"]
+            .as_str()
+            .expect("logical operation is a string");
+        let path = case["path"].as_str().expect("request path is a string");
+        let representation = case["representation"]
+            .as_str()
+            .expect("representation is a string");
+        let (identity, method, actual_path, authentication, representations) = match physical {
+            "get_company_json" => (
+                json.identity(),
+                json.method(),
+                json.relative_path(),
+                json.authentication(),
+                json.expected_representations(),
+            ),
+            "get_corpCode_xml" => (
+                binary.identity(),
+                binary.method(),
+                binary.relative_path(),
+                binary.authentication(),
+                binary.expected_representations(),
+            ),
+            other => panic!("unhandled request fixture operation {other}"),
+        };
+        assert_eq!(identity.physical(), physical);
+        assert_eq!(identity.logical(), logical);
+        assert_eq!(method, RequestMethod::Get);
+        assert_eq!(case["method"].as_str(), Some("GET"));
+        assert_eq!(actual_path, path);
+        assert_eq!(authentication, Authentication::ApiKeyQuery);
+        let expected = match representation {
+            "json" => Representation::Json,
+            "zip" => Representation::Zip,
+            other => panic!("unhandled request fixture representation {other}"),
+        };
+        assert!(representations.contains(&expected));
+    }
+    for case in manifest["responseCases"]
+        .as_array()
+        .expect("responseCases is an array")
+    {
+        let physical = case["physicalOperation"]
+            .as_str()
+            .expect("physical operation is a string");
+        let body = contract_fixture(case["file"].as_str().expect("fixture file is a string"));
+        match physical {
+            "get_company_json" => assert_structured_case(&json, &inspector, &api_key, case, &body),
+            "get_company_xml" => assert_structured_case(&xml, &inspector, &api_key, case, &body),
+            "get_corpCode_xml" => {
+                assert_eq!(case["httpStatus"].as_u64(), Some(200));
+                assert_eq!(case["outcome"].as_str(), Some("source-status"));
+                let origin = serve_once(&body).await;
+                let client = Client::builder(ApiKey::new("fixture-key").unwrap())
+                    .__compatibility_origin(origin)
+                    .build()
+                    .unwrap();
+                let response = client.execute_binary(&binary).await.unwrap();
+                assert!(matches!(response.reply, BinaryReply::Status(_)));
+            }
+            other => panic!("unhandled fixture operation {other}"),
+        }
+    }
+}
+
+#[cfg(opendart_compat)]
+async fn serve_once(body: &[u8]) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let response = format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: application/xml\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    );
+    let body = body.to_vec();
+    tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = Vec::new();
+        let mut buffer = [0; 1024];
+        while !request.windows(4).any(|window| window == b"\r\n\r\n") {
+            let read = socket.read(&mut buffer).await.unwrap();
+            if read == 0 {
+                break;
+            }
+            request.extend_from_slice(&buffer[..read]);
+        }
+        socket.write_all(response.as_bytes()).await.unwrap();
+        socket.write_all(&body).await.unwrap();
+    });
+    format!("http://{address}")
+}
+
+#[cfg(opendart_compat)]
+fn assert_structured_case<T>(
+    prepared: &PreparedRequest<T>,
+    inspector: &WireInspector,
+    api_key: &ApiKey,
+    case: &JsonValue,
+    body: &[u8],
+) {
+    let id = case["id"].as_str().expect("fixture ID is a string");
+    let status = u16::try_from(
+        case["httpStatus"]
+            .as_u64()
+            .expect("HTTP status is an integer"),
+    )
+    .expect("HTTP status fits u16");
+    let outcome = case["outcome"].as_str().expect("outcome is a string");
+    let result = prepared.interpret_response(inspector, api_key, status, body);
+    let matches = match (outcome, result) {
+        ("typed-success", Ok(SourceReply::Success(_)))
+        | ("source-status", Ok(SourceReply::Status(_)))
+        | ("decode-failure", Err(ResponseInterpretError::Decode { .. }))
+        | ("envelope-failure", Err(ResponseInterpretError::Envelope { .. }))
+        | (
+            "http-status-failure",
+            Err(ResponseInterpretError::HttpStatus {
+                evidence: Some(_), ..
+            }),
+        ) => true,
+        _ => false,
+    };
+    assert!(matches, "fixture {id} did not produce {outcome}");
+}
+
+#[cfg(opendart_compat)]
+fn contract_fixture(name: &str) -> Vec<u8> {
+    std::fs::read(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../../openapi/fixtures/v1")
+            .join(name),
+    )
+    .expect("repository contract fixture is readable")
 }
 
 #[test]

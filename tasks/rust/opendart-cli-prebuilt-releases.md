@@ -21,8 +21,9 @@ crates.io source package without weakening its release isolation.
   compatibility requirements are not satisfied by the selected Rustls path.
   Prebuilt Linux portability therefore cannot be assumed from a successful
   GitHub-hosted build.
-- The SDK source-package pipeline is implemented in its pending setup change.
-  CLI source publication and every binary artifact upload remain unauthorized.
+- The SDK source-package pipeline and its Release Please manifest entry are
+  implemented. CLI source publication and every binary artifact upload remain
+  unauthorized.
 - The source-package plans now define an automated, component-isolated
   publication and draft-finalization pattern. This task may reuse its exact
   Release Please identity and interrupted-run invariants, but binary builders,

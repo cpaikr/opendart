@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cpaikr/opendart/internal/auditorprobe"
+	"github.com/cpaikr/opendart/internal/contractfixtures"
 	"github.com/cpaikr/opendart/internal/guide"
 	"github.com/cpaikr/opendart/internal/liveconformance"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
@@ -17,6 +18,7 @@ import (
 const (
 	phaseCatalog          = "catalog"
 	phaseSourceLint       = "source-lint"
+	phaseContractFixtures = "contract-fixtures"
 	phaseBundleLint       = "bundle-lint"
 	phaseBundleFreshness  = "bundle-freshness"
 	phaseRustSDKFreshness = "rust-sdk-freshness"
@@ -28,6 +30,7 @@ const (
 var passedPhases = []string{
 	phaseCatalog,
 	phaseSourceLint,
+	phaseContractFixtures,
 	phaseBundleFreshness,
 	phaseBundleLint,
 	phaseRustSDKFreshness,
@@ -90,6 +93,7 @@ type dependencies struct {
 	validateCatalog func(guide.CatalogOptions) (guide.CatalogReport, error)
 	lint            func(string) ([]openapispec.LintDiagnostic, error)
 	checkFresh      func(string, string) error
+	checkFixtures   func(string) error
 	checkLive       func(string) error
 	checkEvidence   func(string) error
 	checkRelease    func(string) error
@@ -103,6 +107,7 @@ func Verify(repositoryRoot string) (Report, error) {
 		validateCatalog: guide.ValidateCatalog,
 		lint:            openapispec.Lint,
 		checkFresh:      openapispec.CheckBundleFresh,
+		checkFixtures:   contractfixtures.Check,
 		checkLive: func(root string) error {
 			_, err := liveconformance.PreflightRepository(root)
 			return err
@@ -133,6 +138,9 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	}
 	if err := lintArtifact(deps, phaseSourceLint, source); err != nil {
 		return Report{}, err
+	}
+	if err := deps.checkFixtures(absoluteRoot); err != nil {
+		return Report{}, failure(phaseContractFixtures, filepath.Join(absoluteRoot, "openapi", "fixtures", "v1", "manifest.json"), "fixture-corpus", err)
 	}
 	if err := deps.checkFresh(source, bundle); err != nil {
 		rule := "bundle-generation"
@@ -167,10 +175,12 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 		}
 		var modelError *model.Error
 		if errors.As(err, &modelError) {
+			artifact = source
 			rule, operation, location = modelError.Rule, modelError.Operation, modelError.Location
 		}
 		var surfaceError *openapispec.SDKSurfaceError
 		if errors.As(err, &surfaceError) {
+			artifact = source
 			rule, operation, location = surfaceError.Rule, surfaceError.Operation, surfaceError.Location
 		}
 		return Report{}, contextualFailure(phaseRustSDKFreshness, artifact, rule, operation, location, err)

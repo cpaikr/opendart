@@ -1,8 +1,8 @@
 # OpenDART CLI public contract
 
-This document defines the approved shell, output, credential, and compatibility
-interface for the implemented, unpublished `opendart` binary. See the
-[implementation plan](../../plans/rust/public-opendart-cli.md) for status.
+This document defines the supported shell, output, credential, and compatibility
+interface for the `opendart` binary. See the
+[delivery plan](../../plans/rust/public-opendart-cli.md) for current status.
 
 ## Command grammar
 
@@ -40,7 +40,7 @@ raw paths, arbitrary query parameters, or physical endpoint URLs.
 
 ## Agent discovery
 
-These commands require no credential and perform no I/O beyond stdout:
+These commands require no credential and do not contact OpenDART:
 
 ```text
 opendart
@@ -57,10 +57,12 @@ an authenticated endpoint or print the full operation inventory. Agents spawn
 `executable.path` directly and append an `argv` array; they never have to parse
 a shell command string or expand `~`.
 
-The display path collapses only a component-wise home prefix. On Unix, home is
-a nonempty absolute `HOME`; on Windows it is a nonempty absolute `USERPROFILE`,
-falling back to `HOMEDRIVE` plus `HOMEPATH`. The display path remains absolute
-when neither platform candidate resolves to a nonempty absolute path. The exact
+The home invocation resolves the running executable and reads only platform
+home-directory process metadata to construct those path fields. The display
+path collapses only a component-wise home prefix. On Unix, home is a nonempty
+absolute `HOME`; on Windows it is a nonempty absolute `USERPROFILE`, falling
+back to `HOMEDRIVE` plus `HOMEPATH`. The display path remains absolute when
+neither platform candidate resolves to a nonempty absolute path. The exact
 executable path is never collapsed or inferred from the display value.
 
 ```json
@@ -146,7 +148,7 @@ Each representation has `name`, `physical_id`, `response_type`,
 selection is required and is empty when the operation has one implicit
 representation. Structured output is `{"kind":"stdout"}`. ZIP output is
 `{"kind":"artifact","argument_argv":["--output","<path>"],"required":true,"existing_destination":"reject"}`.
-The artifact record will also expose `limit_argument_argv` as
+The artifact record also exposes `limit_argument_argv` as
 `["--artifact-limit-bytes","<positive-integer>"]`, `limit_required: false`,
 and `default_limit_bytes: 536870912`.
 
@@ -285,8 +287,8 @@ remains silent and exits `1` so partial output cannot become two documents.
 
 The CLI does not truncate fields, select a default subset, calculate aggregates,
 or reinterpret source pagination. An agent that needs less data uses the
-operation's source parameters; an agent that needs an artifact redirects
-stdout explicitly.
+operation's source parameters. A binary operation requires `--output <path>`;
+its compact JSON result may be redirected independently.
 
 ## Source statuses and errors
 
@@ -320,7 +322,12 @@ Failures that do not produce a typed source reply use a CLI error envelope:
 `help` is omitted when no safe deterministic next action exists. Optional error
 response `operation` identifies a parsed call before credentials, network I/O,
 or artifact work; `metadata` appears beside `error` only when the SDK observed
-it. Stable optional error details include `reason`, `argument`, `allowed`,
+it. Code `http_status` always exits `1` and may also include normalized bounded
+`evidence` beside `metadata`; a contradictory success-shaped body remains raw
+evidence and is never emitted as a normal response. Evidence is omitted when a
+normalized field name or value contains the active credential, an encoded form
+of it, or `crtfc_key`. Stable optional error
+details include `reason`, `argument`, `allowed`,
 `minimum`, `maximum`, `format`, and `path`. Except for `path`, which deliberately
 echoes the caller-owned `--output` spelling, this context uses repository-owned
 values only. Raw rejected values and raw `clap`, `reqwest`, filesystem, or
@@ -346,7 +353,8 @@ The initial stable error-code inventory is:
   `invalid_client_configuration`, `client_initialization`;
 - transport: `transport_timeout`, `transport_connection`, `transport_body`,
   `transport_protocol`, `transport_other`;
-- structured response: `body_limit`, `malformed_envelope`, `response_decode`;
+- structured response: `http_status`, `body_limit`, `malformed_envelope`,
+  `response_decode`;
   and
 - local output and invariants: `executable_resolution`, `output_encode`,
   `destination_exists`, `artifact_limit`, `artifact_io`,

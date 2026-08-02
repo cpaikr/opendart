@@ -1,10 +1,10 @@
-# OpenDART API Specification and Rust SDK
+# OpenDART API Specification, Rust SDK, and CLI
 
 This unofficial, community-maintained repository provides a source-backed
 OpenAPI 3.2 description of the operations published in the official OpenDART
-development guide and a first-party Rust protocol SDK derived from that
-contract. It is not affiliated with or endorsed by the Financial Supervisory
-Service or OpenDART.
+development guide, a first-party Rust protocol SDK derived from that contract,
+and an agent-first command-line client built on the SDK. It is not affiliated
+with or endorsed by the Financial Supervisory Service or OpenDART.
 
 ## Use the specification
 
@@ -81,7 +81,6 @@ and one-attempt structured or binary execution through the typed SDK. Its public
 behavior is documented in the
 [CLI contract](docs/rust-cli/public-contract.md), and source-package and release
 boundaries are in the [CLI verification guide](docs/rust-cli/verification-and-release.md).
-The CLI is package-ready but not published.
 
 From the repository root, install and inspect one operation with:
 
@@ -104,7 +103,8 @@ repository's local environment wrapper:
 
 ## Refresh and verify
 
-The repository tooling requires only the Go version declared in `go.mod`:
+Specification tooling uses the Go version declared in `go.mod`; Rust
+verification uses the pinned toolchains documented in the SDK workspace guide:
 
 ```sh
 go run ./cmd/opendart-tool sync --checked-at YYYY-MM-DD
@@ -134,30 +134,11 @@ Rust install gate. `exhaustive` adds `go test -race ./...`. Credentialed live
 conformance is deliberately outside all three tiers and still runs only
 through `scripts/with-opendart-env`.
 
-CI runs the Go and Rust gates independently while native artifact behavior runs
-on macOS and Windows. The stable aggregate `verify` job depends on all four and
-succeeds only when every required job succeeds. The Go job runs normal tests
-plus targeted race coverage; the Rust job consumes the Rust portion of the same
-repository-owned `pre-push` contract. Native macOS and Windows artifact checks
-remain CI-owned because they require their respective runners.
-
-The every-PR race set covers `internal/guide` for its acquisition worker pool
-and shared request budget, `internal/sdkgen` and `internal/sdkgen/model` for
-their package-level immutable fixture caches, and `internal/driftnotifier` and
-`internal/livenotifier` for their server-goroutine fixture boundaries.
-Representative regressions are
-[`TestAcquireUsesCompleteInventoryAndBoundedConcurrency`](internal/guide/acquire_test.go),
-[`TestGenerateRustIsDeterministicAndFresh`](internal/sdkgen/generate_test.go),
-[`TestCanonicalSurfaceFixtureClonesNestedState`](internal/sdkgen/model/model_test.go),
-and `TestGitHubClientDoesNotFollowRedirectsWithJobToken` plus
-`TestNotifyNeverChangesIssueState` in
-[`internal/driftnotifier/notifier_test.go`](internal/driftnotifier/notifier_test.go)
-and [`internal/livenotifier/notifier_test.go`](internal/livenotifier/notifier_test.go).
-Releaseguard derives direct concurrency-bearing packages from Go
-syntax—goroutines, channels, synchronization imports, parallel tests, and test
-servers—and rejects an unaudited change to that set. Separate explicit
-classifications keep cancellation-only packages and packages with reviewed
-read-only globals visible to the same audit.
+CI runs the Go and Rust contracts independently and adds native CLI artifact
+checks on macOS and Windows. The stable aggregate `verify` job succeeds only
+when every required job succeeds. The repository-owned verification script and
+release guard are the source of truth for the exact package, race, compatibility,
+and artifact gates.
 
 `.github/workflows/full-race.yml` runs the exhaustive Go race sweep weekly on
 the default branch and supports manual candidate-branch runs. A scheduled
@@ -171,17 +152,12 @@ the extractor or its normalization rules and regenerate them. OpenAPI 3.2 is
 canonical. If a consumer requires OpenAPI 3.1, create a separate compatibility
 artifact rather than changing the source contract.
 
-`opendart-tool guide-drift` compares the current public guide with the
-committed contract without modifying either. The manual-only trusted-main
-workflow uploads its bounded report; an isolated default-branch notifier owns
-the persistent drift issue and validates every artifact before use. The
-workflow remains undispatched and unscheduled pending the supervised check in
-the [guide-drift task](tasks/main/guide-drift.md).
-
-CI also runs the pinned stable and MSRV Rust gates, all-features and
-no-default-features tests, documentation, compatibility fixtures, generated
-coverage checks, and exact crate-package inventory inspection. The complete
-local commands are in [`sdk/rust/README.md`](sdk/rust/README.md).
+`opendart-tool guide-drift` compares the current public guide with the committed
+contract without modifying either. Its trusted producer emits a bounded report,
+and an isolated notifier validates that report before updating the persistent
+drift issue. The [guide-drift task](tasks/main/guide-drift.md) owns delivery
+status. Complete Rust verification commands live in
+[`sdk/rust/README.md`](sdk/rust/README.md).
 
 ## Credentialed probe
 
@@ -220,15 +196,11 @@ sanitized [auditor evidence manifest](docs/api/evidence/auditor-2026-07-18.json)
 
 The full runner covers every canonical physical operation, emits only its
 strict versioned report, and stops on the first discovery or primary-case
-failure. `.github/workflows/live-conformance.yml` is a manual-only producer
-that is constrained to trusted `main` code and declares the protected
-`opendart-live-conformance` environment. A separate `workflow_run` notifier
-validates the report or substitutes a fixed workflow-failure envelope before
-updating one persistent issue; it has no access to the OpenDART credential and
-never closes the issue. The environment and key are intentionally not
-configured yet, and no workflow has been dispatched. Protected setup, the
-first supervised run, and later scheduling remain tracked in the
-[live-conformance task](tasks/main/live-conformance.md).
+failure. The protected workflow runs that conformance pass and an audited Rust
+CLI smoke test; its isolated notifier has no access to the OpenDART credential
+and accepts only the sanitized report. The
+[live-conformance task](tasks/main/live-conformance.md) owns environment,
+execution, and scheduling status.
 
 ## Releases
 
@@ -241,7 +213,7 @@ marked exact local SDK pin without changing the CLI version or changelog; this
 does not constitute a CLI release.
 [`RELEASING.md`](RELEASING.md) is the maintainer policy and review checklist.
 
-Each release contains `openapi.bundle.yaml` and
+Each specification release contains `openapi.bundle.yaml` and
 `openapi.bundle.yaml.sha256`. Consumers can verify GitHub's signed release
 attestation and, after downloading an asset, its origin:
 
@@ -250,35 +222,29 @@ gh release verify vX.Y.Z --repo cpaikr/opendart
 gh release verify-asset vX.Y.Z openapi.bundle.yaml --repo cpaikr/opendart
 ```
 
-Both crates are package-ready but are not yet published to crates.io. Publish
-and verify the SDK first through [SDK work 6](tasks/rust/public-rust-sdk.md),
-then return to [CLI work 9](plans/rust/public-opendart-cli.md). Repository Go
-tooling remains private. The guarded SDK pipeline authorizes publication only
-from `main` through the protected bootstrap environment. A confirmed component
-Release Please PR merge is the only routine manual gate; exact-SHA packaging,
-publication, accepted-artifact verification, docs.rs checks, and draft
-finalization run automatically afterward, except that each crate's initial
-bootstrap pauses once for protected-environment reviewer approval. Each new
-crate uses a one-time protected bootstrap token, then cuts over to fully
-automatic crates.io OIDC releases without a retained token fallback. See
-[`RELEASING.md`](RELEASING.md#automation-contract) before starting release
-setup or reviewing a release proposal.
+Repository Go tooling remains private. Rust crate publication is independently
+authorized and must preserve the SDK-before-CLI dependency recorded in
+[ADR 0003](docs/decisions/0003-agent-first-opendart-cli.md). See the
+[Rust roadmap](ROADMAP_RUST.md) for delivery priority and
+[`RELEASING.md`](RELEASING.md#rust-crate-releases) for the release contract.
 
 ## Repository documentation
 
-- [`ROADMAP.md`](ROADMAP.md) is the source of truth for current, scheduled,
-  and unscheduled project work.
+- [`ROADMAP.md`](ROADMAP.md) owns non-Rust delivery priority, while
+  [`ROADMAP_RUST.md`](ROADMAP_RUST.md) owns Rust product priority and
+  scheduling. Their linked work items own implementation status, blockers, and
+  next actions.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) maps repository boundaries, runtime flow,
   and security invariants.
 - The [Go tooling ADR](docs/decisions/0001-go-repository-tooling.md) records the
-  accepted direction; the
-  [migration history](plans/main/go-tooling-migration.md)
-  records the completed repository-tooling migration.
+  accepted private-tooling boundary and migration rationale.
 - The [guide-drift task](tasks/main/guide-drift.md) and
   [live-conformance task](tasks/main/live-conformance.md) track remaining
   maintenance and empirical work.
 - The [external-auditor retrieval guide](docs/api/auditor.md) separates the
   canonical endpoint contracts from a layered, empirically informed lookup
   strategy.
-- The [Rust SDK task](tasks/rust/public-rust-sdk.md) records the implemented
-  crate and the remaining publication and adoption work.
+- The [Rust SDK decision](docs/decisions/0002-public-rust-sdk.md) and
+  [CLI decision](docs/decisions/0003-agent-first-opendart-cli.md) record the
+  accepted public-product boundaries; their guides document the implemented
+  contracts.

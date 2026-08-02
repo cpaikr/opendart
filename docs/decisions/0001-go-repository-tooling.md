@@ -5,17 +5,18 @@
 
 ## Context
 
-The current Node.js and Redocly toolchain owns guide acquisition, HTML parsing,
-normalization, OpenAPI generation, filesystem publication, validation, bundling,
-focused live requests, and reporting. Adding semantic guide-drift detection and
-complete live conformance would enlarge that toolchain and duplicate more
-OpenAPI behavior.
+At the time of this decision, the Node.js and Redocly toolchain owned guide
+acquisition, HTML parsing, normalization, OpenAPI generation, filesystem
+publication, validation, bundling, focused live requests, and reporting. Adding
+semantic guide-drift detection and complete live conformance would have enlarged
+that toolchain and duplicated more OpenAPI behavior.
 
-The repository's product is its OpenAPI specification and portable release
-bundle. Its tooling is private repository infrastructure, so the language choice
-should optimize OpenAPI fidelity, robustness, and long-term maintainability
-rather than public package ergonomics or preservation of the current
-implementation.
+The public product boundary then consisted of the OpenAPI specification and
+portable release bundle. Repository tooling was private infrastructure, so the
+language choice needed to optimize OpenAPI fidelity, robustness, and long-term
+maintainability rather than public package ergonomics or preservation of the
+existing implementation. Later product-boundary decisions do not make the Go
+tooling a supported consumer API.
 
 ## Decision
 
@@ -53,10 +54,10 @@ Within OpenAPI, guide-supported facts remain distinguishable from explicitly
 labeled empirical observations. Live-test scenarios remain separate typed
 repository policy and never modify the released contract implicitly.
 
-The future Go CLI does not mutate GitHub issues. Scheduled observation workflows
-keep read-only production work separate from any narrowly privileged
-notification step. Credential, report, and notification details belong to the
-corresponding implementation plans.
+The Go CLI does not mutate GitHub issues. Scheduled observation workflows keep
+read-only production work separate from any narrowly privileged notification
+step. Credential, report, and notification details belong to the corresponding
+implementation plans.
 
 ## Compatibility gate
 
@@ -69,11 +70,11 @@ comparison. The selected components passed the repository's multi-file OpenAPI
 requires replacement; an isolated capability gap may use a narrow adapter only
 when coverage remains equal or stronger.
 
-Node.js and Redocly remain authoritative for each command until its Go
-replacement passes parity and cuts over. The migration may make one reviewed
-formatting-only bundle cutover after semantic equivalence is demonstrated; that
-output then becomes the new byte-for-byte freshness baseline. CI never updates
-the baseline itself.
+During migration, Node.js and Redocly remained authoritative for each command
+until its Go replacement passed parity and cut over. The migration permitted one
+reviewed formatting-only bundle cutover after semantic equivalence was
+demonstrated; that output became the new byte-for-byte freshness baseline. CI
+never updates the baseline itself.
 
 ## Consequences
 
@@ -90,7 +91,7 @@ the baseline itself.
 
 ## Alternatives considered
 
-- Extending the current Node.js scripts would avoid a migration but retain the
+- Extending the Node.js scripts would have avoided a migration but retained the
   growing concentration of extraction, OpenAPI, filesystem, and live-test
   responsibilities.
 - Python, TypeScript, Rust, and Elixir were considered. None offered enough
@@ -100,6 +101,5 @@ the baseline itself.
 ## Related work
 
 - [Repository architecture](../../ARCHITECTURE.md)
-- [Go tooling migration](../../plans/main/go-tooling-migration.md)
 - [Public-guide drift detection](../../tasks/main/guide-drift.md)
 - [Credentialed live conformance](../../tasks/main/live-conformance.md)

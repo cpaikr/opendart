@@ -111,6 +111,18 @@ jobs:
             is_draft="$(jq -r .draft <<<"${release}")"
             is_prerelease="$(jq -r .prerelease <<<"${release}")"
             target="$(jq -r .target_commitish <<<"${release}")"
+            if test "${component}" = sdk && test "${version}" = 0.1.0-beta.1; then
+              if test "${is_draft}" != true || test "${is_prerelease}" != true || test "${target}" != 157d78aa62bace4b00df6677bc3372baf88b9281; then
+                echo "superseded SDK candidate state mismatch for ${tag_name}" >&2
+                exit 1
+              fi
+              tag_ref_status="$(probe_tag_ref "${tag_name}")"
+              if test "${tag_ref_status}" = exists; then
+                echo "superseded SDK candidate unexpectedly has a tag: ${tag_name}" >&2
+                exit 1
+              fi
+              return
+            fi
             if test "${is_prerelease}" != "${expected_prerelease}"; then
               echo "prerelease state mismatch for ${tag_name}" >&2
               exit 1

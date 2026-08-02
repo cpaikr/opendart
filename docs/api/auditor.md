@@ -104,13 +104,15 @@ These are bounded observations of the live service, not completeness guarantees
 or additions to the guide-derived contract. The request coordinates, response
 hashes, allowlisted filing rows, and bounded document-member assertions are in
 the dated [sanitized evidence manifest](evidence/auditor-2026-07-18.json).
+See the [evidence-manifest policy](evidence/README.md) for its trust boundary
+and regeneration procedure.
 
 ### 누가의료기
 
 For corporation code `00571818`, the structured auditor-opinion operation
-returned status `013` for sampled annual-report coordinates in 2015, 2020, and
-2024. The audit-engagement and non-audit-service operations also returned `013`
-for the sampled 2024 annual-report coordinate.
+returned status `013` for sampled annual reports from 2015, 2020, and 2024. The
+audit-engagement and non-audit-service operations also returned `013` for the
+sampled 2024 annual-report coordinate.
 
 Disclosure search instead found standalone audit filings across report periods
 from 2013 through 2025. The submitter history included 다산회계법인,

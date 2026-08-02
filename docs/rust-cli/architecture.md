@@ -84,7 +84,7 @@ not become serializable merely because the feature is enabled.
 
 ### Handwritten CLI runtime
 
-The published package is a binary product, not a public Rust library. A thin
+The `opendart-cli` crate is a binary product, not a public Rust library. A thin
 `main` delegates to internal modules with these responsibilities:
 
 - build and strictly parse the generated `clap` command tree;
@@ -123,7 +123,8 @@ second public model.
    surfacing SDK-backed input violations as usage failures.
 3. Read and validate `OPENDART_API_KEY`; apply client overrides and build the SDK
    client, which validates their representable range.
-4. Execute once through `Client::execute`.
+4. Execute once through `Client::execute`; non-2xx becomes a sanitized
+   `http_status` error with bounded evidence when safely recognizable.
 5. Pair operation identity with the complete typed response and encode it once.
 6. Exit from the reply class without changing its contents.
 
@@ -194,7 +195,7 @@ uses the opposite acknowledged transition: once publication begins,
 cancellation can no longer claim success and the CLI waits for the commit
 outcome.
 
-## Target code map
+## Code map
 
 - `internal/sdkgen/model` — shared normalized input and collision validation.
 - `internal/sdkgen/rust` — orchestration and product-specific Rust renderers.

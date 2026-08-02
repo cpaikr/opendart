@@ -59,9 +59,10 @@ The initial dependency and repository policy is:
   pins stable Rust 1.97.1 initially and runs a separate MSRV job.
 - HTTP: `reqwest` 0.13.4 with default features disabled and only `native-tls` and
   `stream` enabled by the crate. `stream` is retained for the required fallible,
-  byte-replaying binary response interface. Native TLS is required because the
-  fixed OpenDART origin currently requires the TLS 1.2 static-RSA suite
-  `TLS_RSA_WITH_AES_128_GCM_SHA256`, which Rustls intentionally does not offer.
+  byte-replaying binary response interface. At the compatibility gate, the fixed
+  OpenDART origin required the TLS 1.2 static-RSA suite
+  `TLS_RSA_WITH_AES_128_GCM_SHA256`, which the selected Rustls path did not
+  offer; the dated transport evidence must be renewed before changing backends.
 - Wire parsing: `serde_json` 1.0 for JSON; `roxmltree` 0.21 as the strict,
   safe-Rust XML 1.0 document authority; and `quick-xml` 0.41 for source-faithful
   XML event conversion. Both XML passes consume the same bounded UTF-8 bytes.
@@ -95,13 +96,13 @@ Hickory graph requires Rust 1.88, so it runs on pinned stable outside the main
 workspace; the published crate does not enable Hickory, and the main workspace's
 all-target default and no-default graphs form the MSRV contract.
 
-`internal/openapi.InspectSDKSurface` now proves that the existing private
-OpenAPI model exposes every canonical physical operation, stable logical
-identity, source provenance, request serialization fact, security scheme, and
-response representation through repository-owned values. Its test compares
+`internal/openapi.InspectSDKSurface` proves that the private OpenAPI boundary
+exposes every canonical physical operation, stable logical identity, source
+provenance, request serialization fact, security scheme, and response
+representation through repository-owned values. `internal/sdkgen/model` builds
+the normalized SDK and CLI projections from that surface. Tests compare
 physical and logical coverage with the canonical catalog without embedding an
-endpoint total. The final normalized model may deepen or replace this probe,
-but it may not expose libopenapi types.
+endpoint total, and no layer exposes libopenapi types.
 
 ## Consequences
 
