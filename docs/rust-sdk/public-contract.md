@@ -49,7 +49,9 @@ file and private module layout are not.
 `PreparedRequest<T>` is immutable, performs no I/O, and contains no credential.
 Its private response contract binds the chosen representation, XML root, and
 generated success type `T`. `interpret_response` is the common pure seam for
-the official client and caller-owned transports. Narrow getters expose:
+the official client and caller-owned transports; it receives the authorization
+key separately so reflected credential evidence can be removed. Narrow getters
+expose:
 
 - method and trusted relative path;
 - deterministic non-secret query encoding;
@@ -215,6 +217,8 @@ Public errors are focused and sanitized:
   `SourceValue` exists.
 - `ResponseDecodeError` identifies the generated field path that violated an
   established source shape.
+- Caller-owned response interpretation returns `ResponseInterpretError`; its
+  `HttpStatus` variant retains only bounded, credential-safe evidence.
 - Native `ClientBuildError`, `ClientError`, `TransportError`, and
   `BodyStreamError` retain only sanitized operation, failure, and metadata
   context.

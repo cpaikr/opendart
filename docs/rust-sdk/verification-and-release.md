@@ -28,8 +28,8 @@ From the repository root:
 
 `scripts/verify` is the command source shared by local development and Linux
 GitHub Actions. The Rust mode may fetch locked registry dependencies first;
-generation, formatting, compilation, tests, documentation, and packaging then
-run offline. Native macOS and Windows artifact checks remain CI-owned.
+formatting, compilation, tests, documentation, and packaging then run offline.
+Native macOS and Windows artifact checks remain CI-owned.
 
 ### Repository verification
 

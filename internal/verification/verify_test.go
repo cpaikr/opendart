@@ -144,6 +144,7 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 	}{
 		{name: "catalog", fail: phaseCatalog, wantPhase: "catalog/references", wantArtifact: "fragment.yaml", wantRule: "reference-escape", wantCallCount: 1},
 		{name: "source lint diagnostic", fail: phaseSourceLint, wantPhase: phaseSourceLint, wantArtifact: "source.yaml", wantRule: "operation-summary", wantOperation: "getCompany", wantLocation: "#/paths/~1company/get", wantCallCount: 2},
+		{name: "contract fixtures", fail: phaseContractFixtures, wantPhase: phaseContractFixtures, wantArtifact: "manifest.json", wantRule: "fixture-corpus", wantCallCount: 3},
 		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 5},
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 4},
 		{name: "Rust SDK freshness", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 6},
@@ -187,6 +188,9 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 				},
 				checkFixtures: func(string) error {
 					calls++
+					if test.fail == phaseContractFixtures {
+						return cause
+					}
 					return nil
 				},
 				checkLive: func(string) error {

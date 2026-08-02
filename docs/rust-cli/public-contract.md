@@ -353,7 +353,8 @@ The initial stable error-code inventory is:
   `invalid_client_configuration`, `client_initialization`;
 - transport: `transport_timeout`, `transport_connection`, `transport_body`,
   `transport_protocol`, `transport_other`;
-- structured response: `body_limit`, `malformed_envelope`, `response_decode`;
+- structured response: `http_status`, `body_limit`, `malformed_envelope`,
+  `response_decode`;
   and
 - local output and invariants: `executable_resolution`, `output_encode`,
   `destination_exists`, `artifact_limit`, `artifact_io`,

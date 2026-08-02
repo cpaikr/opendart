@@ -111,8 +111,9 @@ may retain a complete XML status envelope, but a non-2xx response never returns
 an archive stream. The client does not use `error_for_status` and never retains
 raw error bodies. It also omits normalized error evidence when any field name or
 value contains the active credential, an encoded form of it, or `crtfc_key`.
-Caller-owned transports using the pure prepared-request interpreter own the
-equivalent redaction boundary because the interpreter never receives a key.
+Caller-owned transports pass the same `ApiKey` to the prepared-request
+interpreter, which applies the identical redaction boundary before returning
+normalized error evidence.
 
 Structured JSON and XML responses are buffered only to the configured envelope
 limit. Binary responses remain fallible streams: timeout, incomplete delivery,

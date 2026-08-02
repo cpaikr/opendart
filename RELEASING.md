@@ -183,7 +183,8 @@ After a component-specific proposal is confirmed and merged:
 1. Accept only that component's path-qualified Release Please version, tag, and
    candidate SHA, or an exactly matching interrupted draft recovered by the
    orchestrator. A generic push, another component, or a manually supplied
-   version grants no publication authority.
+   version grants no publication authority. Fail-closed recovery tombstones are
+   never eligible, including the superseded `0.1.0-beta.1` SDK candidate.
 2. Check out and attest the immutable candidate, run credential-free
    verification, package and dry-run without registry authority, and upload
    immutable candidate evidence.
@@ -209,7 +210,9 @@ Authority remains split:
 | Finalize GitHub draft | Repository contents write; no crates.io credential |
 
 On interruption, resume only the same component, version, tag, and candidate
-SHA. Query crates.io before deciding that publication is still necessary.
+SHA when it is not a fail-closed recovery tombstone. The superseded
+`0.1.0-beta.1` SDK candidate cannot be resumed. Query crates.io before deciding
+that publication is still necessary.
 Never create a replacement tag, republish an existing version, or treat a
 draft as permission to bypass the pipeline. The accepted registry artifact,
 verification report, docs.rs result, and finalized release are the completion

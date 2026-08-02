@@ -65,11 +65,14 @@ type responseCase struct {
 func Check(repositoryRoot string) error {
 	root := filepath.Join(repositoryRoot, "openapi", "fixtures", "v1")
 	manifestPath := filepath.Join(root, "manifest.json")
+	// #nosec G304 -- the verifier owns this fixed path below the supplied repository root.
 	file, err := os.Open(manifestPath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	decoder := json.NewDecoder(io.LimitReader(file, maxBodyBytes))
 	decoder.DisallowUnknownFields()
 	var value corpus
@@ -93,7 +96,7 @@ func Check(repositoryRoot string) error {
 		if err := uniqueID(seen, item.ID); err != nil {
 			return err
 		}
-		if item.Provenance.Kind != "empirical-summary" || len(item.Provenance.SampledPhysicalOperations) == 0 || item.Provenance.SourceCommit == "" || item.Provenance.RequestCondition == "" || item.Provenance.HTTPStatus == 0 || item.Provenance.ContentTypeHeader == "" || item.Provenance.APIStatus == "" {
+		if !completeObservationProvenance(item.Provenance) {
 			return fmt.Errorf("observation %s has incomplete provenance", item.ID)
 		}
 		operations := make(map[string]struct{})
@@ -118,6 +121,7 @@ func Check(repositoryRoot string) error {
 			return fmt.Errorf("request case %s does not match the canonical operation inventory", item.ID)
 		}
 	}
+	referencedBodies := make(map[string]struct{}, len(value.ResponseCases))
 	for _, item := range value.ResponseCases {
 		if err := uniqueID(seen, item.ID); err != nil {
 			return err
@@ -141,11 +145,26 @@ func Check(repositoryRoot string) error {
 		if err := verifyBody(root, item); err != nil {
 			return err
 		}
+		referencedBodies[item.File] = struct{}{}
+	}
+	if err := verifyBodyInventory(root, referencedBodies); err != nil {
+		return err
 	}
 	if err := checkCoverage(value); err != nil {
 		return err
 	}
 	return nil
+}
+
+func completeObservationProvenance(value provenance) bool {
+	return value.Kind == "empirical-summary" &&
+		value.ObservedAt != "" &&
+		len(value.SampledPhysicalOperations) > 0 &&
+		value.SourceCommit != "" &&
+		value.RequestCondition != "" &&
+		value.HTTPStatus != 0 &&
+		value.ContentTypeHeader != "" &&
+		value.APIStatus != ""
 }
 
 func checkCoverage(value corpus) error {
@@ -219,6 +238,7 @@ func loadPathSources(root string) (map[string]string, error) {
 		if entry.IsDir() || filepath.Ext(path) != ".yaml" {
 			return nil
 		}
+		// #nosec G304 -- WalkDir roots paths below openapi/paths and rejects symlinks.
 		body, err := os.ReadFile(path)
 		if err != nil {
 			return err
@@ -267,6 +287,7 @@ func verifyBody(root string, item responseCase) error {
 	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || info.Size() > maxBodyBytes {
 		return fmt.Errorf("response case %s body is not a bounded regular file", item.ID)
 	}
+	// #nosec G304 -- the normalized relative path was lstat-checked as a bounded regular file.
 	body, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -277,6 +298,45 @@ func verifyBody(root string, item responseCase) error {
 	digest := sha256.Sum256(body)
 	if hex.EncodeToString(digest[:]) != item.SHA256 {
 		return fmt.Errorf("response case %s body digest mismatch", item.ID)
+	}
+	return nil
+}
+
+func verifyBodyInventory(root string, referenced map[string]struct{}) error {
+	remaining := make(map[string]struct{}, len(referenced))
+	for path := range referenced {
+		remaining[path] = struct{}{}
+	}
+	bodiesRoot := filepath.Join(root, "bodies")
+	err := filepath.WalkDir(bodiesRoot, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.Type()&os.ModeSymlink != 0 {
+			return errors.New("contract fixture body inventory encountered a symlink")
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		if !entry.Type().IsRegular() {
+			return errors.New("contract fixture body inventory contains a non-regular file")
+		}
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		manifestPath := filepath.ToSlash(relative)
+		if _, ok := remaining[manifestPath]; !ok {
+			return fmt.Errorf("fixture body %s is absent from the manifest", manifestPath)
+		}
+		delete(remaining, manifestPath)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	for path := range remaining {
+		return fmt.Errorf("manifest body %s is outside the body inventory", path)
 	}
 	return nil
 }

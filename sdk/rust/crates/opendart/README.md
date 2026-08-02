@@ -5,7 +5,7 @@ deterministic requests and preserves source-response evidence without taking
 ownership of retry, quota, collection, persistence, or domain policy.
 
 Current crates.io availability is tracked in the
-[Public Rust SDK task](../../../../tasks/rust/public-rust-sdk.md). Use a registry
+[Public Rust SDK task](https://github.com/cpaikr/opendart/blob/main/tasks/rust/public-rust-sdk.md). Use a registry
 dependency only after the intended version and its public artifacts have been
 verified. The dependency examples below describe the stable `0.1` line.
 
@@ -132,9 +132,11 @@ HTTP outcome through the same contract as the official client:
 use opendart::{operations::Company, SourceReply, WireInspector};
 
 let inspector = WireInspector::new(64 * 1024).expect("nonzero limit");
+let api_key = opendart::ApiKey::new("example-key")?;
 let prepared = Company::new("00126380").prepare_json()?;
 let reply = prepared.interpret_response(
     &inspector,
+    &api_key,
     200,
     br#"{"status":"013","message":"no data"}"#,
 )?;
@@ -144,7 +146,8 @@ assert!(matches!(reply, SourceReply::Status(_)));
 ```
 
 Every non-2xx status returns `ResponseInterpretError::HttpStatus`, with
-normalized bounded body evidence when it can be recognized safely. A
+normalized bounded body evidence when it can be recognized safely and does not
+contain the active credential or its encoded forms. A
 success-shaped body under HTTP 500 is never decoded into the generated success
 type. Callers remain responsible for bounding body collection before passing
 the slice to this defensive interpreter.
@@ -159,6 +162,6 @@ Packaged archives also contain Cargo's `.cargo_vcs_info.json` for the exact Git
 revision.
 
 The complete supported behavior is documented in the
-[public contract](../../../../docs/rust-sdk/public-contract.md) and
-[transport and safety](../../../../docs/rust-sdk/transport-and-safety.md)
+[public contract](https://github.com/cpaikr/opendart/blob/main/docs/rust-sdk/public-contract.md) and
+[transport and safety](https://github.com/cpaikr/opendart/blob/main/docs/rust-sdk/transport-and-safety.md)
 guides.

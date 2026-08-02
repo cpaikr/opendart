@@ -5,6 +5,12 @@ use std::{cell::Cell, fmt::Display};
 #[cfg(opendart_compat)]
 use std::path::Path;
 
+#[cfg(opendart_compat)]
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpListener,
+};
+
 use opendart::{
     ApiKey, Authentication, AuthorizedRequest, EnvelopeFormat, OperationIdentity, PrepareError,
     PreparedBinaryRequest, PreparedRequest, Representation, RequestMethod, ResponseInterpretError,
@@ -17,6 +23,8 @@ use opendart::{
 };
 use static_assertions::assert_not_impl_any;
 
+#[cfg(opendart_compat)]
+use opendart::{BinaryReply, Client};
 #[cfg(opendart_compat)]
 use serde_json::Value as JsonValue;
 
@@ -105,9 +113,11 @@ fn representation_selection_changes_only_the_physical_contract() {
 fn prepared_request_interprets_typed_responses_without_an_http_client() {
     let prepared = Company::new("00126380").prepare_json().unwrap();
     let inspector = WireInspector::new(1024).unwrap();
+    let api_key = ApiKey::new("example-key").unwrap();
     let reply = prepared
         .interpret_response(
             &inspector,
+            &api_key,
             200,
             br#"{"status":"000","corp_name":"Example Corp"}"#,
         )
@@ -126,9 +136,11 @@ fn prepared_request_interprets_typed_responses_without_an_http_client() {
 fn prepared_request_makes_non_success_http_status_explicit() {
     let prepared = Company::new("00126380").prepare_json().unwrap();
     let inspector = WireInspector::new(1024).unwrap();
+    let api_key = ApiKey::new("example-key").unwrap();
     let error = prepared
         .interpret_response(
             &inspector,
+            &api_key,
             500,
             br#"{"status":"000","corp_name":"contradictory success"}"#,
         )
@@ -149,10 +161,32 @@ fn prepared_request_makes_non_success_http_status_explicit() {
     );
 }
 
-#[cfg(opendart_compat)]
 #[test]
-fn repository_contract_corpus_crosses_the_public_interpreter() {
+fn caller_owned_interpreter_omits_credential_evidence() {
+    let prepared = Company::new("00126380").prepare_json().unwrap();
+    let inspector = WireInspector::new(1024).unwrap();
+    let api_key = ApiKey::new("secret value").unwrap();
+    for body in [
+        br#"{"status":"999","message":"secret value"}"#.as_slice(),
+        br#"{"status":"999","message":"secret+value"}"#.as_slice(),
+        br#"{"status":"999","message":"secret%20value"}"#.as_slice(),
+        br#"{"status":"999","crtfc_key":"reflected"}"#.as_slice(),
+    ] {
+        let error = prepared
+            .interpret_response(&inspector, &api_key, 500, body)
+            .unwrap_err();
+        assert!(matches!(
+            error,
+            ResponseInterpretError::HttpStatus { evidence: None, .. }
+        ));
+    }
+}
+
+#[cfg(opendart_compat)]
+#[tokio::test]
+async fn repository_contract_corpus_crosses_the_public_interpreter() {
     let inspector = WireInspector::new(64 * 1024).unwrap();
+    let api_key = ApiKey::new("fixture-key").unwrap();
     let json = Company::new("00126380").prepare_json().unwrap();
     let xml = Company::new("00126380").prepare_xml().unwrap();
     let binary = CorpCode::new().prepare_zip().unwrap();
@@ -212,15 +246,18 @@ fn repository_contract_corpus_crosses_the_public_interpreter() {
             .expect("physical operation is a string");
         let body = contract_fixture(case["file"].as_str().expect("fixture file is a string"));
         match physical {
-            "get_company_json" => assert_structured_case(&json, &inspector, case, &body),
-            "get_company_xml" => assert_structured_case(&xml, &inspector, case, &body),
+            "get_company_json" => assert_structured_case(&json, &inspector, &api_key, case, &body),
+            "get_company_xml" => assert_structured_case(&xml, &inspector, &api_key, case, &body),
             "get_corpCode_xml" => {
                 assert_eq!(case["httpStatus"].as_u64(), Some(200));
                 assert_eq!(case["outcome"].as_str(), Some("source-status"));
-                assert!(matches!(
-                    inspector.inspect_xml(&body),
-                    Ok(SourceReply::Status(_))
-                ));
+                let origin = serve_once(&body).await;
+                let client = Client::builder(ApiKey::new("fixture-key").unwrap())
+                    .__compatibility_origin(origin)
+                    .build()
+                    .unwrap();
+                let response = client.execute_binary(&binary).await.unwrap();
+                assert!(matches!(response.reply, BinaryReply::Status(_)));
             }
             other => panic!("unhandled fixture operation {other}"),
         }
@@ -228,9 +265,36 @@ fn repository_contract_corpus_crosses_the_public_interpreter() {
 }
 
 #[cfg(opendart_compat)]
+async fn serve_once(body: &[u8]) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let response = format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: application/xml\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    );
+    let body = body.to_vec();
+    tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = Vec::new();
+        let mut buffer = [0; 1024];
+        while !request.windows(4).any(|window| window == b"\r\n\r\n") {
+            let read = socket.read(&mut buffer).await.unwrap();
+            if read == 0 {
+                break;
+            }
+            request.extend_from_slice(&buffer[..read]);
+        }
+        socket.write_all(response.as_bytes()).await.unwrap();
+        socket.write_all(&body).await.unwrap();
+    });
+    format!("http://{address}")
+}
+
+#[cfg(opendart_compat)]
 fn assert_structured_case<T>(
     prepared: &PreparedRequest<T>,
     inspector: &WireInspector,
+    api_key: &ApiKey,
     case: &JsonValue,
     body: &[u8],
 ) {
@@ -242,7 +306,7 @@ fn assert_structured_case<T>(
     )
     .expect("HTTP status fits u16");
     let outcome = case["outcome"].as_str().expect("outcome is a string");
-    let result = prepared.interpret_response(inspector, status, body);
+    let result = prepared.interpret_response(inspector, api_key, status, body);
     let matches = match (outcome, result) {
         ("typed-success", Ok(SourceReply::Success(_)))
         | ("source-status", Ok(SourceReply::Status(_)))

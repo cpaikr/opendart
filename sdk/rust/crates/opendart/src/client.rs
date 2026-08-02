@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::VecDeque,
     fmt,
     future::{Future, poll_fn},
@@ -62,8 +61,8 @@ impl Client {
     ) -> Result<SourceResponse<SourceReply<T>>, ClientError> {
         let (metadata, body) = self.receive_structured(prepared).await?;
         let reply = prepared
-            .interpret_response(&self.inspector, metadata.status(), &body)
-            .map_err(|error| map_interpret_error(metadata.clone(), error, &self.api_key))?;
+            .interpret_response(&self.inspector, &self.api_key, metadata.status(), &body)
+            .map_err(|error| map_interpret_error(metadata.clone(), error))?;
         Ok(SourceResponse { metadata, reply })
     }
 
@@ -81,8 +80,8 @@ impl Client {
     ) -> Result<SourceResponse<SourceReply<SourceValue>>, ClientError> {
         let (metadata, body) = self.receive_structured(prepared).await?;
         let reply = prepared
-            .inspect_response(&self.inspector, metadata.status(), &body)
-            .map_err(|error| map_interpret_error(metadata.clone(), error, &self.api_key))?;
+            .inspect_response(&self.inspector, &self.api_key, metadata.status(), &body)
+            .map_err(|error| map_interpret_error(metadata.clone(), error))?;
         Ok(SourceResponse { metadata, reply })
     }
 
@@ -165,7 +164,7 @@ impl Client {
                 BinaryReply::Status(status) => Some(SourceReply::Status(status)),
                 BinaryReply::Archive(_) | BinaryReply::Unrecognized(_) => None,
             }
-            .filter(|evidence| response_evidence_is_safe(evidence, &self.api_key));
+            .filter(|evidence| self.api_key.response_evidence_is_safe(evidence));
             return Err(http_status_error(operation, metadata, evidence));
         }
         Ok(SourceResponse {
@@ -475,7 +474,7 @@ pub enum ClientError {
     #[error(transparent)]
     Transport(#[from] TransportError),
     /// The server returned a non-success HTTP status.
-    #[error("{operation} received a non-success HTTP status")]
+    #[error("{operation} received a non-success HTTP status {}", metadata.status())]
     HttpStatus {
         /// The prepared operation.
         operation: OperationIdentity,
@@ -547,11 +546,7 @@ fn http_status_error(
     }
 }
 
-fn map_interpret_error(
-    metadata: ResponseMetadata,
-    error: ResponseInterpretError,
-    api_key: &ApiKey,
-) -> ClientError {
+fn map_interpret_error(metadata: ResponseMetadata, error: ResponseInterpretError) -> ClientError {
     match error {
         ResponseInterpretError::HttpStatus {
             operation,
@@ -559,7 +554,6 @@ fn map_interpret_error(
             evidence,
         } => {
             debug_assert_eq!(status, metadata.status());
-            let evidence = evidence.filter(|evidence| response_evidence_is_safe(evidence, api_key));
             http_status_error(operation, metadata, evidence)
         }
         ResponseInterpretError::BodyLimit { operation, source } => ClientError::BodyLimit {
@@ -578,55 +572,6 @@ fn map_interpret_error(
             source,
         },
     }
-}
-
-fn response_evidence_is_safe(evidence: &SourceReply<SourceValue>, api_key: &ApiKey) -> bool {
-    let value = match evidence {
-        SourceReply::Success(value) => value,
-        SourceReply::Status(status) => &status.evidence,
-    };
-    api_key.with_exposed_secret(|secret| {
-        let form_encoded = form_urlencoded::byte_serialize(secret.as_bytes()).collect::<String>();
-        let percent_encoded = percent_encode(secret.as_bytes());
-        source_value_is_safe(
-            value,
-            secret.as_bytes(),
-            form_encoded.as_bytes(),
-            percent_encoded.as_bytes(),
-        )
-    })
-}
-
-fn source_value_is_safe(
-    value: &SourceValue,
-    secret: &[u8],
-    form_encoded_secret: &[u8],
-    percent_encoded_secret: &[u8],
-) -> bool {
-    let safe = |value: &[u8]| {
-        header_value_is_safe(value, secret, form_encoded_secret, percent_encoded_secret)
-    };
-    if let Some(value) = value.as_str() {
-        if !safe(value.as_bytes()) {
-            return false;
-        }
-    }
-    if let Some(value) = value.as_number_str() {
-        if !safe(value.as_bytes()) {
-            return false;
-        }
-    }
-    if let Some(values) = value.as_array() {
-        if !values.iter().all(|value| {
-            source_value_is_safe(value, secret, form_encoded_secret, percent_encoded_secret)
-        }) {
-            return false;
-        }
-    }
-    value.fields().all(|(name, value)| {
-        safe(name.as_bytes())
-            && source_value_is_safe(value, secret, form_encoded_secret, percent_encoded_secret)
-    })
 }
 
 fn transport_error(
@@ -681,163 +626,19 @@ fn response_metadata(response: &reqwest::Response, api_key: &ApiKey) -> Response
         reqwest::Version::HTTP_3 => HttpVersion::Http3,
         other => HttpVersion::Other(format!("{other:?}")),
     };
-    let headers = api_key.with_exposed_secret(|secret| {
-        let form_encoded = form_urlencoded::byte_serialize(secret.as_bytes()).collect::<String>();
-        let percent_encoded = percent_encode(secret.as_bytes());
-        response
-            .headers()
-            .iter()
-            .filter_map(|(name, value)| {
-                let bytes = value.as_bytes();
-                if !safe_response_header(name.as_str())
-                    || !header_value_is_safe(
-                        bytes,
-                        secret.as_bytes(),
-                        form_encoded.as_bytes(),
-                        percent_encoded.as_bytes(),
-                    )
-                {
-                    None
-                } else {
-                    Some(ResponseHeader::new(name.as_str(), bytes))
-                }
-            })
-            .collect()
-    });
-    ResponseMetadata::new(status, version, headers)
-}
-
-const MAX_HEADER_PERCENT_DECODING_PASSES: usize = 3;
-
-fn header_value_is_safe(
-    value: &[u8],
-    secret: &[u8],
-    form_encoded_secret: &[u8],
-    percent_encoded_secret: &[u8],
-) -> bool {
-    let mut stage = Cow::Borrowed(value);
-    if header_stage_contains_sensitive_value(
-        stage.as_ref(),
-        secret,
-        form_encoded_secret,
-        percent_encoded_secret,
-    ) {
-        return false;
-    }
-
-    for _ in 0..MAX_HEADER_PERCENT_DECODING_PASSES {
-        let Some(decoded) = (match percent_decode_header_value(stage.as_ref()) {
-            Ok(decoded) => decoded,
-            Err(()) => return false,
-        }) else {
-            return true;
-        };
-        let Ok(text) = std::str::from_utf8(&decoded) else {
-            return false;
-        };
-        if text.chars().any(char::is_control)
-            || header_stage_contains_sensitive_value(
-                &decoded,
-                secret,
-                form_encoded_secret,
-                percent_encoded_secret,
-            )
-        {
-            return false;
-        }
-        stage = Cow::Owned(decoded);
-    }
-
-    !stage.contains(&b'%')
-}
-
-fn header_stage_contains_sensitive_value(
-    value: &[u8],
-    secret: &[u8],
-    form_encoded_secret: &[u8],
-    percent_encoded_secret: &[u8],
-) -> bool {
-    contains_bytes(value, secret)
-        || contains_secret_after_partial_form_decoding(value, secret)
-        || contains_ascii_case_insensitive(value, form_encoded_secret)
-        || contains_ascii_case_insensitive(value, percent_encoded_secret)
-        || contains_ascii_case_insensitive(value, b"crtfc_key")
-}
-
-/// Matches form-space separators after percent decoding has made literal and
-/// separator `+` bytes indistinguishable.
-fn contains_secret_after_partial_form_decoding(value: &[u8], secret: &[u8]) -> bool {
-    !secret.is_empty()
-        && value.windows(secret.len()).any(|window| {
-            window
-                .iter()
-                .zip(secret)
-                .all(|(value, secret)| value == secret || (*value == b'+' && *secret == b' '))
+    let headers = response
+        .headers()
+        .iter()
+        .filter_map(|(name, value)| {
+            let bytes = value.as_bytes();
+            if !safe_response_header(name.as_str()) || !api_key.response_bytes_are_safe(bytes) {
+                None
+            } else {
+                Some(ResponseHeader::new(name.as_str(), bytes))
+            }
         })
-}
-
-fn percent_decode_header_value(value: &[u8]) -> Result<Option<Vec<u8>>, ()> {
-    let Some(first_escape) = value.iter().position(|byte| *byte == b'%') else {
-        return Ok(None);
-    };
-
-    let mut decoded = Vec::with_capacity(value.len());
-    decoded.extend_from_slice(&value[..first_escape]);
-    let mut index = first_escape;
-    while index < value.len() {
-        if value[index] != b'%' {
-            decoded.push(value[index]);
-            index += 1;
-            continue;
-        }
-
-        let high = value.get(index + 1).and_then(|byte| hex_value(*byte));
-        let low = value.get(index + 2).and_then(|byte| hex_value(*byte));
-        let (Some(high), Some(low)) = (high, low) else {
-            return Err(());
-        };
-        decoded.push((high << 4) | low);
-        index += 3;
-    }
-    Ok(Some(decoded))
-}
-
-fn hex_value(value: u8) -> Option<u8> {
-    match value {
-        b'0'..=b'9' => Some(value - b'0'),
-        b'a'..=b'f' => Some(value - b'a' + 10),
-        b'A'..=b'F' => Some(value - b'A' + 10),
-        _ => None,
-    }
-}
-
-fn percent_encode(value: &[u8]) -> String {
-    const HEX: &[u8; 16] = b"0123456789ABCDEF";
-    let mut encoded = String::with_capacity(value.len().saturating_mul(3));
-    for byte in value {
-        if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~') {
-            encoded.push(char::from(*byte));
-        } else {
-            encoded.push('%');
-            encoded.push(char::from(HEX[usize::from(byte >> 4)]));
-            encoded.push(char::from(HEX[usize::from(byte & 0x0f)]));
-        }
-    }
-    encoded
-}
-
-fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
-    !needle.is_empty()
-        && haystack
-            .windows(needle.len())
-            .any(|window| window == needle)
-}
-
-fn contains_ascii_case_insensitive(haystack: &[u8], needle: &[u8]) -> bool {
-    !needle.is_empty()
-        && haystack
-            .windows(needle.len())
-            .any(|window| window.eq_ignore_ascii_case(needle))
+        .collect();
+    ResponseMetadata::new(status, version, headers)
 }
 
 fn safe_response_header(name: &str) -> bool {
@@ -1558,9 +1359,7 @@ mod tests {
 
     #[test]
     fn response_header_safety_fails_closed_across_percent_decoding_stages() {
-        let secret = b"secret /+ credential";
-        let form_encoded = b"secret+%2F%2B+credential";
-        let percent_encoded = b"secret%20%2F%2B%20credential";
+        let api_key = ApiKey::new("secret /+ credential").unwrap();
 
         for unsafe_value in [
             b"secret /+ credential".as_slice(),
@@ -1581,18 +1380,14 @@ mod tests {
                 .as_slice(),
         ] {
             assert!(
-                !header_value_is_safe(unsafe_value, secret, form_encoded, percent_encoded),
+                !api_key.response_bytes_are_safe(unsafe_value),
                 "unsafe header value survived: {}",
                 String::from_utf8_lossy(unsafe_value)
             );
         }
 
-        assert!(!header_value_is_safe(
-            b"secret+/+credential",
-            b"secret / credential",
-            b"secret+%2F+credential",
-            b"secret%20%2F%20credential",
-        ));
+        let slash_key = ApiKey::new("secret / credential").unwrap();
+        assert!(!slash_key.response_bytes_are_safe(b"secret+/+credential"));
 
         for safe_value in [
             b"application/json".as_slice(),
@@ -1603,7 +1398,7 @@ mod tests {
             b"opaque\x80value".as_slice(),
         ] {
             assert!(
-                header_value_is_safe(safe_value, secret, form_encoded, percent_encoded),
+                api_key.response_bytes_are_safe(safe_value),
                 "safe header value was omitted: {}",
                 String::from_utf8_lossy(safe_value)
             );
@@ -1789,6 +1584,7 @@ mod tests {
             .unwrap();
 
         let error = client.execute(&company_request()).await.unwrap_err();
+        assert!(error.to_string().contains("500"));
         let ClientError::HttpStatus {
             metadata,
             evidence: Some(SourceReply::Success(value)),
