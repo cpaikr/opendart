@@ -34,12 +34,12 @@ _None._
 
 CLI-owned grammar, discovery, and isolated private dispatch. The result is
 active from merge commit `d071546`; implementation and independent review are
-complete, while clean-tree qualification and PR delivery remain pending.
+complete, and clean-tree offline qualification passes. PR delivery remains
+pending.
 
 ### Next in-scope action
 
-Commit the reviewed CLI projection slice, run its complete clean-tree offline
-Rust qualification, then create, review, and merge its PR before starting the
+Create, review, and merge the qualified CLI projection PR before starting the
 handwritten conformer result.
 
 ### Evidence and blockers
@@ -59,5 +59,6 @@ handwritten conformer result.
   missing/orphan mapping diagnostics were tightened.
 - Result-two validation: repository verification, all Go tests, Rust formatting,
   strict Clippy, CLI unit and discovery tests, compatibility loopbacks, and the
-  dirty-tree package inventory pass. The full Rust gate reached packaging and
-  requires the planned clean commit because Cargo rejects dirty packages.
+  complete clean-tree `./scripts/verify pre-push` gate pass, including package
+  verification, clean release installation, MSRV, WASM, reqwest compatibility,
+  rustdoc, and doctests.
