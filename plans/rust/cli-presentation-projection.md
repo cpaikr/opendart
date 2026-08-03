@@ -1,5 +1,7 @@
 # Decouple the CLI presentation projection from Rust SDK symbols
 
+Status: implementation and independent review complete; PR delivery pending
+
 ## Outcome
 
 The `opendart` CLI exposes the reviewed CLI-owned command grammar and discovery
@@ -109,7 +111,6 @@ cutover.
 
 ## Next action
 
-After the contract plan completes, derive the CLI projection from the approved
-DS001 manifest, prove that its public grammar and discovery contain no Rust
-symbols, then extend the same checks through DS006 while keeping private
-dispatch generated-SDK-backed.
+Commit the reviewed slice, run the clean-tree full offline Rust package and
+install gate, then finish PR review and merge into `rust`. Do not begin the
+handwritten conformer implementation before this result's delivery completes.

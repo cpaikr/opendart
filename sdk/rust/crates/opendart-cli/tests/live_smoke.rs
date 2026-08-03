@@ -69,8 +69,8 @@ fn structured_and_binary_live_paths_are_read_only_and_sanitized() {
         &key,
         &[
             "call".to_owned(),
-            "company".to_owned(),
-            "--corp-code".to_owned(),
+            "company-overview".to_owned(),
+            "--company-code".to_owned(),
             "00126380".to_owned(),
             "--representation".to_owned(),
             "json".to_owned(),
@@ -79,7 +79,7 @@ fn structured_and_binary_live_paths_are_read_only_and_sanitized() {
     assert_eq!(structured.status.code(), Some(0));
     let structured = parse(&structured, &key);
     assert_eq!(structured["kind"], "response");
-    assert_eq!(structured["operation"]["name"], "company");
+    assert_eq!(structured["operation"]["name"], "company-overview");
     assert_eq!(structured["operation"]["logical_id"], "DS001-2019002");
     assert_eq!(structured["operation"]["representation"], "json");
     assert_eq!(structured["response"]["reply"]["kind"], "success");
@@ -90,7 +90,7 @@ fn structured_and_binary_live_paths_are_read_only_and_sanitized() {
         &key,
         &[
             "call".to_owned(),
-            "corp-code".to_owned(),
+            "download-company-codes".to_owned(),
             "--output".to_owned(),
             path_text(&destination),
         ],
@@ -98,7 +98,7 @@ fn structured_and_binary_live_paths_are_read_only_and_sanitized() {
     assert_eq!(binary.status.code(), Some(0));
     let binary = parse(&binary, &key);
     assert_eq!(binary["kind"], "response");
-    assert_eq!(binary["operation"]["name"], "corp-code");
+    assert_eq!(binary["operation"]["name"], "download-company-codes");
     assert_eq!(binary["operation"]["logical_id"], "DS001-2019018");
     assert_eq!(binary["operation"]["representation"], "zip");
     assert_eq!(binary["response"]["reply"]["kind"], "archive");

@@ -87,8 +87,8 @@ From the repository root, install and inspect one operation with:
 ```sh
 cargo +1.97.1 install --locked --path sdk/rust/crates/opendart-cli
 opendart --version
-opendart operations describe company
-opendart call company --help
+opendart operations describe company-overview
+opendart call company-overview --help
 ```
 
 After configuring `OPENDART_API_KEY` as described under
@@ -96,8 +96,8 @@ After configuring `OPENDART_API_KEY` as described under
 repository's local environment wrapper:
 
 ```sh
-./scripts/with-opendart-env -- opendart call company \
-  --corp-code 00126380 \
+./scripts/with-opendart-env -- opendart call company-overview \
+  --company-code 00126380 \
   --representation json
 ```
 

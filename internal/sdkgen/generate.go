@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/rustinterface"
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
 	"github.com/cpaikr/opendart/internal/sdkgen/ownership"
 	rustemitter "github.com/cpaikr/opendart/internal/sdkgen/rust"
@@ -23,6 +24,7 @@ var (
 	ErrGeneratedStale      = errors.New("generated Rust artifact is stale")
 	ErrGeneratedUnexpected = errors.New("generated Rust artifact contains an unexpected file")
 	ErrGeneratedUnowned    = errors.New("generated Rust artifact ownership marker is invalid")
+	ErrRustInterfaceInput  = errors.New("rust interface input is invalid")
 )
 
 // ArtifactError identifies which owned projection failed freshness validation.
@@ -40,7 +42,13 @@ func (e *ArtifactError) Unwrap() error {
 	return e.cause
 }
 
-// RustOutputs identifies the two independently owned Rust source trees.
+// RustInputs identifies every semantic input to Rust artifact generation.
+type RustInputs struct {
+	OpenAPI   string
+	Interface string
+}
+
+// RustOutputs identifies the SDK tree and the CLI projection parent.
 type RustOutputs struct {
 	SDK string
 	CLI string
@@ -54,7 +62,7 @@ type ArtifactReport struct {
 	Output        string `json:"output"`
 }
 
-// Report describes one semantic build and both generated Rust projections.
+// Report describes one semantic build and all generated Rust projections.
 type Report struct {
 	Language              string           `json:"language"`
 	SemanticSchemaVersion uint32           `json:"semanticSchemaVersion"`
@@ -83,9 +91,9 @@ type stagedProduct struct {
 }
 
 // GenerateRust renders, validates, and publishes the complete Rust artifact set.
-// Both trees pass ownership preflight before either accepted tree is replaced.
-func GenerateRust(root string, outputs RustOutputs) (Report, error) {
-	generated, files, err := renderRust(root)
+// All trees pass ownership preflight before any accepted tree is replaced.
+func GenerateRust(inputs RustInputs, outputs RustOutputs) (Report, error) {
+	generated, files, err := renderRust(inputs)
 	if err != nil {
 		return Report{}, err
 	}
@@ -94,6 +102,12 @@ func GenerateRust(root string, outputs RustOutputs) (Report, error) {
 
 func generateRustArtifacts(generated model.ArtifactSet, files rustemitter.Artifacts, outputs RustOutputs) (Report, error) {
 	products := rustProducts(generated, files, outputs)
+	if err := validateProductOutputs(products); err != nil {
+		return Report{}, err
+	}
+	if err := prepareCLIOutputRoot(outputs.CLI, true); err != nil {
+		return Report{}, err
+	}
 	staged, err := stageProducts(products)
 	if err != nil {
 		return Report{}, err
@@ -118,10 +132,10 @@ func generateRustArtifacts(generated model.ArtifactSet, files rustemitter.Artifa
 	return report, nil
 }
 
-// CheckRustFresh renders both projections in memory and compares both complete
+// CheckRustFresh renders all projections in memory and compares their complete
 // owned subtrees without rewriting the working tree.
-func CheckRustFresh(root string, outputs RustOutputs) error {
-	generated, files, err := renderRust(root)
+func CheckRustFresh(inputs RustInputs, outputs RustOutputs) error {
+	generated, files, err := renderRust(inputs)
 	if err != nil {
 		return err
 	}
@@ -131,6 +145,9 @@ func CheckRustFresh(root string, outputs RustOutputs) error {
 func checkRustArtifactsFresh(generated model.ArtifactSet, files rustemitter.Artifacts, outputs RustOutputs) error {
 	products := rustProducts(generated, files, outputs)
 	if err := validateProductOutputs(products); err != nil {
+		return err
+	}
+	if err := prepareCLIOutputRoot(outputs.CLI, false); err != nil {
 		return err
 	}
 	for _, product := range products {
@@ -145,8 +162,14 @@ func checkRustArtifactsFresh(generated model.ArtifactSet, files rustemitter.Arti
 	return nil
 }
 
-func renderRust(root string) (model.ArtifactSet, rustemitter.Artifacts, error) {
-	document, err := openapispec.Load(root)
+func renderRust(inputs RustInputs) (model.ArtifactSet, rustemitter.Artifacts, error) {
+	if strings.TrimSpace(inputs.OpenAPI) == "" {
+		return model.ArtifactSet{}, rustemitter.Artifacts{}, errors.New("Rust artifact OpenAPI input is required")
+	}
+	if strings.TrimSpace(inputs.Interface) == "" {
+		return model.ArtifactSet{}, rustemitter.Artifacts{}, errors.New("Rust interface input directory is required")
+	}
+	document, err := openapispec.Load(inputs.OpenAPI)
 	if err != nil {
 		return model.ArtifactSet{}, rustemitter.Artifacts{}, fmt.Errorf("load Rust artifact OpenAPI input: %w", err)
 	}
@@ -158,7 +181,11 @@ func renderRust(root string) (model.ArtifactSet, rustemitter.Artifacts, error) {
 	if err != nil {
 		return model.ArtifactSet{}, rustemitter.Artifacts{}, fmt.Errorf("inspect Rust artifact OpenAPI input: %w", err)
 	}
-	generated, err := model.BuildArtifacts(surface)
+	batches, err := rustinterface.ReadAll(inputs.Interface)
+	if err != nil {
+		return model.ArtifactSet{}, rustemitter.Artifacts{}, fmt.Errorf("%w: %w", ErrRustInterfaceInput, err)
+	}
+	generated, err := model.BuildArtifacts(surface, batches)
 	if err != nil {
 		return model.ArtifactSet{}, rustemitter.Artifacts{}, err
 	}
@@ -172,8 +199,45 @@ func renderRust(root string) (model.ArtifactSet, rustemitter.Artifacts, error) {
 func rustProducts(generated model.ArtifactSet, files rustemitter.Artifacts, outputs RustOutputs) []ownedProduct {
 	return []ownedProduct{
 		{kind: "sdk", markerName: ownership.Filename, markerPrefix: ownership.MarkerPrefix, schemaVersion: generated.SDK.SchemaVersion, checksum: generated.SDK.Checksum, output: outputs.SDK, files: files.SDK},
-		{kind: "cli", markerName: ownership.CLIFilename, markerPrefix: ownership.CLIMarkerPrefix, schemaVersion: generated.CLI.SchemaVersion, checksum: generated.CLI.Checksum, output: outputs.CLI, files: files.CLI},
+		{kind: "cli-interface", markerName: ownership.CLIInterfaceFilename, markerPrefix: ownership.CLIInterfaceMarkerPrefix, schemaVersion: generated.CLIInterface.SchemaVersion, checksum: generated.CLIInterface.Checksum, output: filepath.Join(outputs.CLI, "interface"), files: files.CLIInterface},
+		{kind: "cli-dispatch", markerName: ownership.CLIDispatchFilename, markerPrefix: ownership.CLIDispatchMarkerPrefix, schemaVersion: generated.CLIDispatch.SchemaVersion, checksum: generated.CLIDispatch.Checksum, output: filepath.Join(outputs.CLI, "dispatch"), files: files.CLIDispatch},
 	}
+}
+
+func prepareCLIOutputRoot(root string, create bool) error {
+	if strings.TrimSpace(root) == "" {
+		return &ArtifactError{Kind: "cli", Output: root, cause: errors.New("generated Rust CLI output is required")}
+	}
+	absolute, err := filepath.Abs(root)
+	if err != nil {
+		return &ArtifactError{Kind: "cli", Output: root, cause: err}
+	}
+	info, err := os.Lstat(absolute)
+	if errors.Is(err, os.ErrNotExist) && create {
+		if err := os.MkdirAll(absolute, 0o755); err != nil {
+			return &ArtifactError{Kind: "cli", Output: absolute, cause: err}
+		}
+		return nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return &ArtifactError{Kind: "cli", Output: absolute, cause: ErrGeneratedMissing}
+	}
+	if err != nil {
+		return &ArtifactError{Kind: "cli", Output: absolute, cause: err}
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return &ArtifactError{Kind: "cli", Output: absolute, cause: ErrGeneratedUnowned}
+	}
+	entries, err := os.ReadDir(absolute)
+	if err != nil {
+		return &ArtifactError{Kind: "cli", Output: absolute, cause: err}
+	}
+	for _, entry := range entries {
+		if entry.Name() != "interface" && entry.Name() != "dispatch" {
+			return &ArtifactError{Kind: "cli", Output: absolute, cause: fmt.Errorf("%w: %s", ErrGeneratedUnexpected, entry.Name())}
+		}
+	}
+	return nil
 }
 
 func stageProducts(products []ownedProduct) ([]*stagedProduct, error) {

@@ -36,7 +36,9 @@ opendart/
 │       │   ├── src/client.rs        optional native HTTP client
 │       │   └── src/provenance.rs    release-selected source identity
 │       └── opendart-cli/
-│           ├── src/generated/       generator-owned command breadth and dispatch
+│           ├── src/generated/
+│           │   ├── interface/       Rust-symbol-free command and discovery projection
+│           │   └── dispatch/        private typed SDK adapter projection
 │           └── src/*.rs             handwritten process and output behavior
 └── docs/
     ├── rust-sdk/                    durable SDK contracts
@@ -97,8 +99,8 @@ itself release the independently versioned CLI.
 
 ## Generated and handwritten source
 
-Each Rust product has one independently marked generated subtree. Handwritten
-modules expose the supported interface and hide generated layout where
+The SDK product and both CLI projections have independently marked generated
+subtrees. Handwritten modules expose the supported interface and hide generated layout where
 possible. Only the private generator may replace those owned trees; its
 transaction and freshness guarantees belong in
 [Rust SDK generation](generation.md).

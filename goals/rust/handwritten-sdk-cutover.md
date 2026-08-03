@@ -26,23 +26,39 @@ _None._
 
 ### Completed included results
 
-_None._
+- Reviewed product contract and Rust-native conformance gate. Implementation,
+  repository validation, independent review, feedback resolution, and PR
+  delivery completed in [PR #74](https://github.com/cpaikr/opendart/pull/74).
 
 ### Current in-scope result
 
-Reviewed product contract and Rust-native conformance gate. Implementation and
-independent review are complete; required PR delivery remains active.
+CLI-owned grammar, discovery, and isolated private dispatch. The result is
+active from merge commit `d071546`; implementation and independent review are
+complete, and clean-tree offline qualification passes. PR delivery remains
+pending.
 
 ### Next in-scope action
 
-Finish the conformance result's PR review and merge into `rust`. Then advance
-the durable plan state to `plans/rust/cli-presentation-projection.md`; do not
-begin the second implementation slice before the first PR is merged.
+Create, review, and merge the qualified CLI projection PR before starting the
+handwritten conformer result.
 
 ### Evidence and blockers
 
-- Delivery boundary: use the established non-production `rust` integration branch and preflight its direct metadata push before creating the first work branch.
+- Result-one delivery: PR #74 merged into `rust` as `d071546` after all required
+  checks passed and all 20 review conversations were resolved.
 - Boundary check: the current result is directly included by the original contract; public SDK publication and adoption remain outside this goal.
 - First-result validation: full Go verification, the focused seven-case offline
   Rust gate, strict Clippy, diff hygiene, and independent implementation and
-  system reviews pass with no actionable findings.
+  system reviews passed with no actionable findings.
+- Result-two implementation: 85 reviewed commands and 167 physical dispatch
+  cases are generated into independently checksummed interface and private
+  dispatch trees; public discovery exposes source concepts and coarse output
+  shape without private Rust symbols.
+- Result-two review: generator and Rust CLI/package reviewers found no remaining
+  actionable issues after the manifest input directory was made explicit and
+  missing/orphan mapping diagnostics were tightened.
+- Result-two validation: repository verification, all Go tests, Rust formatting,
+  strict Clippy, CLI unit and discovery tests, compatibility loopbacks, and the
+  complete clean-tree `./scripts/verify pre-push` gate pass, including package
+  verification, clean release installation, MSRV, WASM, reqwest compatibility,
+  rustdoc, and doctests.

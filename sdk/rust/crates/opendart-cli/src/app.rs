@@ -8,7 +8,7 @@ use crate::command::ParseOutcome;
 use crate::discovery::{Home, Operation, Operations};
 use crate::error::ErrorEnvelope;
 use crate::execution::{ClientOverrides, Executor};
-use crate::generated::catalog;
+use crate::interface_projection::catalog;
 
 pub(crate) fn run<I, T>(args: I) -> u8
 where
@@ -32,8 +32,10 @@ fn dispatch(matches: &ArgMatches) -> u8 {
     // Compile every generated projection identity into the consumer binary;
     // repository freshness verifies the corresponding generated headers.
     let _generated_identity = (
-        crate::generated::GENERATOR_SCHEMA,
-        crate::generated::PROJECTION_CHECKSUM,
+        crate::interface_projection::GENERATOR_SCHEMA,
+        crate::interface_projection::PROJECTION_CHECKSUM,
+        crate::dispatch_projection::GENERATOR_SCHEMA,
+        crate::dispatch_projection::PROJECTION_CHECKSUM,
     );
     match matches.subcommand() {
         None => home(),
@@ -91,7 +93,7 @@ fn call(matches: &ArgMatches) -> u8 {
     let Some(requested_operation) = requested_operation_context(operation_spec, matches) else {
         return emit(&ErrorEnvelope::sdk_contract_mismatch(None), 1);
     };
-    let prepared = match crate::generated::dispatch::prepare_call(matches) {
+    let prepared = match crate::dispatch_projection::adapter::prepare_call(matches) {
         Ok(prepared) => prepared,
         Err(error) => {
             return emit(

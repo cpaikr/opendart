@@ -62,10 +62,10 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseReleaseGuard+":"+filepath.Base(root))
 			return nil
 		},
-		checkRustSDK: func(source string, output sdkgen.RustOutputs) error {
+		checkRustSDK: func(inputs sdkgen.RustInputs, output sdkgen.RustOutputs) error {
 			sdkCrate := filepath.Base(filepath.Dir(filepath.Dir(output.SDK)))
 			cliCrate := filepath.Base(filepath.Dir(filepath.Dir(output.CLI)))
-			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(source)+":"+sdkCrate+":"+cliCrate)
+			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(inputs.OpenAPI)+":"+filepath.Base(inputs.Interface)+":"+sdkCrate+":"+cliCrate)
 			return nil
 		},
 		checkRustContract: func(root string) (rustconformance.Report, error) {
@@ -84,7 +84,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"contract-fixtures:repository",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
-		"rust-sdk-freshness:openapi.yaml:opendart:opendart-cli",
+		"rust-sdk-freshness:openapi.yaml:interface:opendart:opendart-cli",
 		"rust-conformance-contract:repository",
 		"live-conformance-preflight:repository",
 		"auditor-evidence:auditor-2026-07-18.json",
@@ -167,6 +167,7 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 4},
 		{name: "Rust SDK freshness", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 6},
 		{name: "Rust CLI freshness artifact", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantArtifactParent: "opendart-cli", wantRule: "generated-missing", rustCLIArtifact: true, wantCallCount: 6},
+		{name: "Rust interface input", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "interface", wantRule: "rust-interface-input", rustError: fmt.Errorf("load failed: %w", sdkgen.ErrRustInterfaceInput), wantCallCount: 6},
 		{name: "Rust SDK model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "openapi.yaml", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 6},
 		{name: "Rust SDK normalized model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "openapi.yaml", wantRule: "rust-name-collision", wantOperation: "get_company_json", wantLocation: "/logicalOperations/0", rustError: &model.Error{Rule: "rust-name-collision", Operation: "get_company_json", Location: "/logicalOperations/0", Detail: "collision"}, wantCallCount: 6},
 		{name: "Rust conformance contract", fail: phaseRustConformance, wantPhase: phaseRustConformance, wantArtifact: "ds001.toml", wantRule: "interface-header", wantOperation: "DS001-2019001", wantCallCount: 7},
@@ -233,13 +234,16 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					}
 					return nil
 				},
-				checkRustSDK: func(string, sdkgen.RustOutputs) error {
+				checkRustSDK: func(sdkgen.RustInputs, sdkgen.RustOutputs) error {
 					calls++
 					if test.fail == phaseRustSDKFreshness {
 						if test.rustCLIArtifact {
 							root := repositoryRoot(t)
 							return sdkgen.CheckRustFresh(
-								filepath.Join(root, "openapi", "openapi.yaml"),
+								sdkgen.RustInputs{
+									OpenAPI:   filepath.Join(root, "openapi", "openapi.yaml"),
+									Interface: filepath.Join(root, "sdk", "rust", "interface"),
+								},
 								sdkgen.RustOutputs{
 									SDK: filepath.Join(root, "sdk", "rust", "crates", "opendart", "src", "generated"),
 									CLI: filepath.Join(t.TempDir(), "opendart-cli", "src", "generated"),
@@ -320,7 +324,7 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 		checkLive:         func(string) error { return nil },
 		checkEvidence:     func(string) error { return nil },
 		checkRelease:      func(string) error { return nil },
-		checkRustSDK:      func(string, sdkgen.RustOutputs) error { return nil },
+		checkRustSDK:      func(sdkgen.RustInputs, sdkgen.RustOutputs) error { return nil },
 		checkRustContract: func(string) (rustconformance.Report, error) { return rustconformance.Report{}, nil },
 	}
 

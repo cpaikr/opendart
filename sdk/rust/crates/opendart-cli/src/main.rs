@@ -7,8 +7,12 @@ mod command;
 mod discovery;
 mod error;
 mod execution;
+#[path = "generated/dispatch/mod.rs"]
 #[rustfmt::skip]
-mod generated;
+mod dispatch_projection;
+#[path = "generated/interface/mod.rs"]
+#[rustfmt::skip]
+mod interface_projection;
 mod output;
 mod prepared;
 

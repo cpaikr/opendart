@@ -156,7 +156,7 @@ func runBundle(args []string, stdout, stderr io.Writer) int {
 type verificationRunner func(string) (verification.Report, error)
 type crateVerificationRunner func(crateverification.Options) (crateverification.Report, error)
 
-type sdkGenerationRunner func(string, sdkgen.RustOutputs) (sdkgen.Report, error)
+type sdkGenerationRunner func(sdkgen.RustInputs, sdkgen.RustOutputs) (sdkgen.Report, error)
 
 func runGenerateSDK(args []string, stdout, stderr io.Writer) int {
 	return runGenerateSDKWith(args, stdout, stderr, sdkgen.GenerateRust)
@@ -167,6 +167,7 @@ func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGener
 	flags.SetOutput(stderr)
 	language := flags.String("language", "", "SDK language (rust)")
 	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
+	interfaceDirectory := flags.String("interface", "sdk/rust/interface", "reviewed Rust and CLI interface directory")
 	output := flags.String("output", "", "owned generated source directory")
 	cliOutput := flags.String("cli-output", "", "owned generated CLI source directory")
 	if err := flags.Parse(args); err != nil {
@@ -184,7 +185,10 @@ func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGener
 	if strings.TrimSpace(*cliOutput) == "" {
 		return writeCommandError(stderr, "generate-sdk", errors.New("--cli-output is required"), 2)
 	}
-	report, err := runner(*root, sdkgen.RustOutputs{SDK: *output, CLI: *cliOutput})
+	report, err := runner(
+		sdkgen.RustInputs{OpenAPI: *root, Interface: *interfaceDirectory},
+		sdkgen.RustOutputs{SDK: *output, CLI: *cliOutput},
+	)
 	if err != nil {
 		return writeCommandError(stderr, "generate-sdk", err, 1)
 	}

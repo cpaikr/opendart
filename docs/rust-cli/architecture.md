@@ -7,10 +7,9 @@ CLI. The repository-wide view is documented in
 
 [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md) accepts a target
 where generation owns only CLI grammar, discovery, and private exhaustive typed
-wiring while the handwritten SDK owns all HTTP behavior. The
-[CLI presentation plan](../../plans/rust/cli-presentation-projection.md) first
-decouples public grammar and discovery from Rust symbols; this page continues
-to describe the implemented generated-SDK integration until that plan lands.
+wiring while the handwritten SDK owns all HTTP behavior. The CLI presentation
+boundary is implemented now; the private dispatch still targets the generated
+SDK until the later handwritten cutover.
 
 ## Purpose and boundaries
 
@@ -27,10 +26,11 @@ collection policy. Those remain in the canonical contract, SDK, or caller.
 
 ```text
 canonical OpenAPI 3.2
-    -> private OpenAPI projection
-    -> normalized SDK model
-         |-> SDK Rust renderer -> opendart generated types
-         `-> CLI Rust renderer -> opendart-cli generated commands
+    + reviewed Rust/CLI interface manifests
+    -> private normalized projections
+         |-> SDK projection -> opendart generated types
+         |-> CLI interface projection -> reviewed grammar + discovery
+         `-> CLI dispatch projection -> private generated-SDK adapter
 
 agent invocation
     -> handwritten CLI runtime
@@ -42,8 +42,11 @@ agent invocation
          `-> exact binary stream to an explicit artifact path
 ```
 
-The normalized model is the deep module at the generation seam: emitters learn
-one validated logical/physical operation model rather than OpenAPI parser types.
+The normalized projections are the deep modules at the generation seam:
+emitters learn validated protocol facts rather than OpenAPI parser types. The
+CLI interface checksum excludes Rust symbols; the private dispatch checksum
+includes the current SDK inputs, fields, preparation methods, and response
+wrappers needed for compilation.
 The public SDK is the runtime seam: the CLI does not reproduce request encoding,
 authorization, response classification, or typed decoding.
 
@@ -53,21 +56,24 @@ authorization, response classification, or typed decoding.
 
 `internal/openapi` continues to confine third-party OpenAPI types.
 `internal/sdkgen/model` owns normalized operation, parameter, representation,
-response-shape, identity, and presentation metadata. Product-specific
-projections ensure a CLI-only description change does not rewrite or release
-the SDK.
+identity, and presentation metadata. `internal/rustinterface` strictly loads
+the six reviewed product manifests. Product-specific projections ensure a
+CLI-only description or vocabulary change does not rewrite the SDK, while a
+private Rust-symbol change cannot rewrite public CLI grammar or discovery.
 
-The Rust generation orchestrator renders and verifies two independently owned
-trees from one model:
+The Rust generation orchestrator renders and verifies three independently owned
+trees from one semantic build:
 
 - the existing SDK generated subtree; and
-- `sdk/rust/crates/opendart-cli/src/generated`, containing the command catalog,
-  discovery records, typed input construction, and dispatch arms.
+- `sdk/rust/crates/opendart-cli/src/generated/interface`, containing the
+  Rust-symbol-free command catalog and discovery records; and
+- `sdk/rust/crates/opendart-cli/src/generated/dispatch`, containing only typed
+  input construction, preparation wiring, and exhaustive dispatch cases.
 
-Both trees are staged and validated before either is replaced. An optional
-presentation overlay may change descriptions or examples only. It is keyed by
-logical ID and fails closed on unknown IDs, duplicate keys, type facts, or
-operation inventory changes.
+All three trees are staged and ownership-validated before any is replaced. The
+interface manifests are keyed by logical and physical identity and fail closed
+on missing, duplicate, stale, ambiguous, or orphan command, flag, alias, and
+representation mappings.
 
 ### SDK JSON serialization
 
@@ -208,8 +214,10 @@ outcome.
 - `internal/sdkgen/rust` — orchestration and product-specific Rust renderers.
 - `sdk/rust/crates/opendart` — typed request, response, serialization, and HTTP
   interfaces consumed by the CLI.
-- `sdk/rust/crates/opendart-cli/src/generated` — one generator-owned command and
-  dispatch subtree.
+- `sdk/rust/crates/opendart-cli/src/generated/interface` — generator-owned,
+  Rust-symbol-free command and discovery projection.
+- `sdk/rust/crates/opendart-cli/src/generated/dispatch` — separately owned
+  private generated-SDK adapter projection.
 - `sdk/rust/crates/opendart-cli/src` — handwritten parsing, execution, output,
   credential, and artifact modules.
 - `sdk/rust/crates/opendart-cli/tests` — process-level contract, loopback, and
@@ -221,7 +229,7 @@ generator-owned and handwritten runtime code remains crate-owned.
 ## Invariants
 
 - The canonical OpenAPI contract remains the only endpoint inventory.
-- Every logical SDK operation resolves through both its SDK-derived CLI name and
+- Every logical operation resolves through one reviewed CLI-owned name and its
   exact logical ID, with generation-time collision checks.
 - Generated dispatch calls public SDK preparation and typed execution; it does
   not reproduce request or response mechanics.
