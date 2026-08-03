@@ -101,7 +101,7 @@ type dependencies struct {
 	checkLive         func(string) error
 	checkEvidence     func(string) error
 	checkRelease      func(string) error
-	checkRustSDK      func(string, sdkgen.RustOutputs) error
+	checkRustSDK      func(sdkgen.RustInputs, sdkgen.RustOutputs) error
 	checkRustContract func(string) (rustconformance.Report, error)
 }
 
@@ -137,6 +137,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	auditorEvidence := filepath.Join(absoluteRoot, "docs", "api", "evidence", "auditor-2026-07-18.json")
 	rustSDKOutput := filepath.Join(absoluteRoot, "sdk", "rust", "crates", "opendart", "src", "generated")
 	rustCLIOutput := filepath.Join(absoluteRoot, "sdk", "rust", "crates", "opendart-cli", "src", "generated")
+	rustInterfaceInput := filepath.Join(absoluteRoot, "sdk", "rust", "interface")
 
 	catalog, err := deps.validateCatalog(guide.CatalogOptions{Root: source})
 	if err != nil {
@@ -161,7 +162,10 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
 		return Report{}, err
 	}
-	if err := deps.checkRustSDK(source, sdkgen.RustOutputs{SDK: rustSDKOutput, CLI: rustCLIOutput}); err != nil {
+	if err := deps.checkRustSDK(
+		sdkgen.RustInputs{OpenAPI: source, Interface: rustInterfaceInput},
+		sdkgen.RustOutputs{SDK: rustSDKOutput, CLI: rustCLIOutput},
+	); err != nil {
 		rule := "sdk-generation"
 		switch {
 		case errors.Is(err, sdkgen.ErrGeneratedMissing):

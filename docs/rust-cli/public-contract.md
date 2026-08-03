@@ -4,12 +4,9 @@ This document defines the supported shell, output, credential, and compatibility
 interface for the `opendart` binary. See the
 [delivery plan](../../plans/rust/public-opendart-cli.md) for current status.
 
-This contract describes the current generated-SDK integration. The accepted
-[CLI presentation plan](../../plans/rust/cli-presentation-projection.md) gives
-commands explicit CLI-owned names and removes Rust implementation symbols such
-as `sdk_field` and `response_type` from discovery before the later handwritten
-SDK cutover. Those changes are not current behavior and will update this
-contract with the implementation.
+The CLI grammar and discovery interface are owned independently of the current
+generated-SDK implementation. The generated SDK remains the runtime conformer
+behind a private exhaustive dispatch adapter until the handwritten cutover.
 
 ## Command grammar
 
@@ -19,8 +16,8 @@ The primary call shape is:
 opendart call <operation> [operation flags] --representation <json|xml>
 ```
 
-`<operation>` accepts either the canonical kebab-case name derived from the
-public SDK input type or its exact logical OpenDART ID. Discovery returns both.
+`<operation>` accepts either the reviewed CLI-owned semantic name or its exact
+logical OpenDART ID. Discovery returns both.
 Physical OpenAPI operation IDs are evidence in discovery and output, not call
 aliases.
 
@@ -34,10 +31,11 @@ representation flag and require `--output <path>`.
 rejected rather than interpreted as binary stdout, and the successful artifact
 record returns the same path spelling supplied by the caller.
 
-Generated parameter flags use kebab case from the SDK field name. Required SDK
-constructor inputs are required flags; optional SDK builders are optional
-flags. Scalar flags accept one value. A list input repeats the same flag once
-per item; the SDK, not the CLI, owns its wire-level joining and encoding.
+Parameter flags use the reviewed CLI vocabulary and expose the corresponding
+OpenAPI source concept, never a Rust field name. Required source parameters are
+required flags; optional source parameters are optional flags. Scalar flags
+accept one value. A list input repeats the same flag once per item; the SDK,
+not the CLI, owns its wire-level joining and encoding.
 Unknown flags, duplicate scalar flags, positional spillover, missing values,
 unsupported representations, empty SDK-required values, and explicit SDK
 cardinality violations fail with exit `2` before credentials or network access.
@@ -129,10 +127,9 @@ matches succeeds with an empty `operations` array.
 `operations describe` emits `kind: operation` and is self-sufficient for
 constructing a valid call. It adds operation-specific flags, requiredness, list
 shape, explicit constraints, credential requirements, call execution flags,
-representation-specific invocation templates, physical IDs and SDK response
-types, response field structure, ZIP destination requirements, and the official
-guide URL. Presentation text may be improved without changing these generated
-facts.
+representation-specific invocation templates, physical IDs, coarse output
+shape, ZIP destination requirements, and the official guide URL. Presentation
+text may be improved without changing these generated facts.
 
 The exact outer shape is `{"kind":"operation","operation":{...}}`.
 The operation has `name`, `logical_id`, `group`, `api_id`, `guide_url`,
@@ -141,7 +138,7 @@ The operation has `name`, `logical_id`, `group`, `api_id`, `guide_url`,
 `required_env: ["OPENDART_API_KEY"]`. `execution_flags` repeats the complete home
 records so the detail document stands alone.
 
-Each operation flag has `name`, `sdk_field`, `description`, `required`,
+Each operation flag has `name`, `source_name`, `description`, `required`,
 `value_kind`, and `occurrence`. Scalar flags use `occurrence: "once"`; list
 flags use `occurrence: "repeat"`. `min_items` and `max_items` appear only when
 the SDK enforces them. `constraints` appears only when the generated SDK
@@ -149,8 +146,8 @@ enforces request-value rules. Its optional fields are `format`,
 `allowed_values`, `min_length`, `max_length`, `decimal_minimum`, and
 `decimal_maximum`; omitted fields have no implied constraint.
 
-Each representation has `name`, `physical_id`, `response_type`,
-`response_shape`, `selector_argv`, and `output`. `selector_argv` is
+Each representation has `name`, `physical_id`, `response_shape`,
+`selector_argv`, and `output`. `selector_argv` is
 `["--representation", "json"]` or `["--representation", "xml"]` when
 selection is required and is empty when the operation has one implicit
 representation. Structured output is `{"kind":"stdout"}`. ZIP output is
@@ -159,12 +156,10 @@ The artifact record also exposes `limit_argument_argv` as
 `["--artifact-limit-bytes","<positive-integer>"]`, `limit_required: false`,
 and `default_limit_bytes: 536870912`.
 
-Response shapes are recursive objects using `kind` values `object`, `array`,
-`source_value`, `source_status`, or `binary`; object shapes have an
-`additional_fields` Boolean and fields with `name`, `required`, `shape`, and an
-optional `description`, while an array has `items`. `additional_fields: true`
-means the SDK retains and serializes source fields not yet present in the
-generated schema.
+Response shape is deliberately coarse: `structured_source` means stdout
+contains the SDK's source-preserving structured reply, while `binary` means the
+exact body is published as an artifact. Discovery does not copy response
+schemas or expose Rust response-wrapper names.
 
 “Construct a valid call” means that a consumer using only the discovery JSON
 can assemble an argument vector accepted by CLI parsing and SDK preparation
@@ -241,7 +236,7 @@ A structured call has this JSON shape:
 {
   "kind": "response",
   "operation": {
-    "name": "company",
+    "name": "company-overview",
     "logical_id": "DS001-2019002",
     "physical_id": "get_company_json",
     "representation": "json"
@@ -311,7 +306,7 @@ Failures that do not produce a typed source reply use a CLI error envelope:
 {
   "kind": "error",
   "operation": {
-    "name": "company",
+    "name": "company-overview",
     "logical_id": "DS001-2019002",
     "physical_id": "get_company_json",
     "representation": "json"
@@ -404,7 +399,7 @@ reference:
 {
   "kind": "response",
   "operation": {
-    "name": "corp-code",
+    "name": "download-company-codes",
     "logical_id": "DS001-2019018",
     "physical_id": "get_corpCode_xml",
     "representation": "zip"

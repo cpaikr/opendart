@@ -45,9 +45,11 @@ manifest.
 The reviewed manifests in `sdk/rust/interface` are separate product-language
 inputs for the handwritten SDK and CLI. They bind OpenAPI identities and
 parameter concepts to approved Rust and CLI names without copying paths,
-schemas, statuses, media types, or other wire facts. The current SDK generator
-does not consume them; the Rust conformance gate checks them directly against
-OpenAPI, and the CLI-only projections consume them in the next delivery slice.
+schemas, statuses, media types, or other wire facts. The current SDK projection
+does not consume them; the Rust conformance gate checks them against OpenAPI,
+while the CLI interface projection consumes only reviewed CLI vocabulary and
+the private dispatch projection binds canonical concepts to current generated
+SDK symbols.
 
 ## Logical and physical operations
 
@@ -119,12 +121,13 @@ uncertainty and consumed bytes.
 
 ## Command and transaction
 
-From the repository root, regenerate both Rust projections with:
+From the repository root, regenerate all Rust product projections with:
 
 ```sh
 go run ./cmd/opendart-tool generate-sdk \
   --language rust \
   --root openapi/openapi.yaml \
+  --interface sdk/rust/interface \
   --output sdk/rust/crates/opendart/src/generated \
   --cli-output sdk/rust/crates/opendart-cli/src/generated
 ```
@@ -132,11 +135,12 @@ go run ./cmd/opendart-tool generate-sdk \
 The command:
 
 1. Loads and validates the complete canonical document.
-2. Builds one semantic model and separately checksummed SDK and CLI projections.
-3. Renders both owned trees into staging directories.
+2. Builds one semantic model and separately checksummed SDK, CLI-interface, and
+   CLI-dispatch projections.
+3. Renders all three owned trees into staging directories.
 4. Validates their complete content and ownership markers.
-5. Replaces neither accepted tree until both staged projections are valid.
-6. Rolls the pair back if accepted-tree replacement fails partway through.
+5. Replaces no accepted tree until all staged projections are valid.
+6. Rolls the set back if accepted-tree replacement fails partway through.
 
 The generator replaces only marked owned subtrees. It never invokes Cargo and
 does not hide validation behind Make, Just, npm, shell, or another wrapper.
@@ -153,9 +157,10 @@ Generator freshness owns its compact canonical formatting; `cargo fmt --check`
 covers handwritten Rust. Cargo checks, Clippy, tests, and rustdoc still compile
 and validate generated code.
 
-`opendart-tool verify` renders both projections in memory and compares them
-byte for byte with the committed trees. Verification is offline and never
-rewrites the working tree.
+`opendart-tool verify` renders all three projections in memory and compares
+them byte for byte with the committed trees. Verification is offline and never
+rewrites the working tree. The public CLI projection is deliberately free of
+Rust input, field, preparation-method, and response-wrapper symbols.
 
 The projection checksum includes only normalized inputs that affect generated
 Rust behavior, API, or emitted documentation. Full source provenance is
@@ -173,6 +178,7 @@ Generation fails closed on:
 - an unsupported contract construct that affects a public request or response;
 - unresolved or non-confined references;
 - missing, duplicate, or incompatible operation identities;
+- missing, duplicate, stale, ambiguous, or orphan CLI interface mappings;
 - Rust name collisions;
 - unsupported parameter serialization or constraint evidence;
 - ambiguous authentication placement;

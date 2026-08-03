@@ -1,6 +1,6 @@
 # Establish the handwritten SDK contract and Rust-native conformance gate
 
-Status: implementation complete; PR delivery pending
+Status: complete
 
 ## Outcome
 
@@ -12,6 +12,9 @@ treating the generated client or the conformer's construction path as an
 oracle.
 
 ## Delivery state
+
+- Delivery completed in [PR #74](https://github.com/cpaikr/opendart/pull/74),
+  merged into `rust` as `d071546` after required CI and review resolution.
 
 - The six reviewed interface manifests cover all 85 logical and 167 physical
   operations with exact Rust and CLI product names, 171 recursive structured
@@ -217,8 +220,7 @@ This Rust plan neither changes nor certifies those Go commands.
 
 ## Next action
 
-Finish this result's PR review and merge it into `rust`. Then mark the result
-complete and execute [the CLI presentation projection plan](cli-presentation-projection.md).
+Execute [the CLI presentation projection plan](cli-presentation-projection.md).
 Keep the generated SDK as the sole runtime conformer until that plan is
 independently complete; do not scale the handwritten operation inventory before
 then.

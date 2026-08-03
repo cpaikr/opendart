@@ -16,14 +16,14 @@ import (
 )
 
 func TestGenerateRustIsDeterministicAndFresh(t *testing.T) {
-	root := canonicalRoot(t)
+	inputs := canonicalInputs(t)
 	left := testOutputs(t.TempDir())
 	right := testOutputs(t.TempDir())
-	leftReport, err := GenerateRust(root, left)
+	leftReport, err := GenerateRust(inputs, left)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rightReport, err := GenerateRust(root, right)
+	rightReport, err := GenerateRust(inputs, right)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,14 +35,27 @@ func TestGenerateRustIsDeterministicAndFresh(t *testing.T) {
 			t.Fatal("generation in distinct roots produced different bytes")
 		}
 	}
-	if err := CheckRustFresh(root, left); err != nil {
+	if err := CheckRustFresh(inputs, left); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := GenerateRust(root, left); err != nil {
+	if _, err := GenerateRust(inputs, left); err != nil {
 		t.Fatalf("replace accepted owned output: %v", err)
 	}
-	if err := CheckRustFresh(root, left); err != nil {
+	if err := CheckRustFresh(inputs, left); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestGenerateRustAcceptsOpenAPIOutsideRepositoryLayout(t *testing.T) {
+	inputs := canonicalInputs(t)
+	openAPIRoot := filepath.Dir(inputs.OpenAPI)
+	copiedRoot := filepath.Join(t.TempDir(), "custom-contract")
+	if err := os.CopyFS(copiedRoot, os.DirFS(openAPIRoot)); err != nil {
+		t.Fatal(err)
+	}
+	inputs.OpenAPI = filepath.Join(copiedRoot, filepath.Base(inputs.OpenAPI))
+	if _, err := GenerateRust(inputs, testOutputs(t.TempDir())); err != nil {
+		t.Fatalf("generate from independently located inputs: %v", err)
 	}
 }
 
@@ -55,7 +68,7 @@ func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
 		{name: "missing tree", edit: func(*testing.T, RustOutputs) {}, want: ErrGeneratedMissing},
 		{name: "half-published tree", edit: func(t *testing.T, output RustOutputs) {
 			generateTestTree(t, output)
-			if err := os.RemoveAll(output.CLI); err != nil {
+			if err := os.RemoveAll(filepath.Join(output.CLI, "dispatch")); err != nil {
 				t.Fatal(err)
 			}
 		}, want: ErrGeneratedMissing},
@@ -67,7 +80,13 @@ func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
 		}, want: ErrGeneratedStale},
 		{name: "stale cli file", edit: func(t *testing.T, output RustOutputs) {
 			generateTestTree(t, output)
-			if err := os.WriteFile(filepath.Join(output.CLI, "catalog.rs"), []byte("stale"), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(output.CLI, "interface", "catalog.rs"), []byte("stale"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}, want: ErrGeneratedStale},
+		{name: "stale dispatch file", edit: func(t *testing.T, output RustOutputs) {
+			generateTestTree(t, output)
+			if err := os.WriteFile(filepath.Join(output.CLI, "dispatch", "adapter.rs"), []byte("stale"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}, want: ErrGeneratedStale},
@@ -85,7 +104,7 @@ func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
 		}, want: ErrGeneratedUnexpected},
 		{name: "invalid marker", edit: func(t *testing.T, output RustOutputs) {
 			generateTestTree(t, output)
-			if err := os.WriteFile(filepath.Join(output.CLI, ".opendart-cli-generated"), []byte("changed"), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(output.CLI, "interface", ".opendart-cli-interface-generated"), []byte("changed"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}, want: ErrGeneratedUnowned},
@@ -126,14 +145,14 @@ func TestGenerateRustRefusesToReplaceUnownedOutput(t *testing.T) {
 	}
 }
 
-func TestGenerateRustPreflightsBothTreesBeforeReplacingEither(t *testing.T) {
+func TestGenerateRustPreflightsAllTreesBeforeReplacingAny(t *testing.T) {
 	outputs := testOutputs(t.TempDir())
 	generateTestTree(t, outputs)
 	staleSDK := []byte("accepted stale bytes")
 	if err := os.WriteFile(filepath.Join(outputs.SDK, "mapping.rs"), staleSDK, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(outputs.CLI, ".opendart-cli-generated"), []byte("unowned"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(outputs.CLI, "dispatch", ".opendart-cli-dispatch-generated"), []byte("unowned"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := generateTestArtifacts(t, outputs); !errors.Is(err, ErrGeneratedUnowned) {
@@ -221,11 +240,11 @@ type canonicalRustArtifacts struct {
 }
 
 var loadCanonicalRustArtifactsOnce = sync.OnceValues(func() (canonicalRustArtifacts, error) {
-	root, err := canonicalRootPath()
+	inputs, err := canonicalInputPaths()
 	if err != nil {
 		return canonicalRustArtifacts{}, err
 	}
-	generated, files, err := renderRust(root)
+	generated, files, err := renderRust(inputs)
 	return canonicalRustArtifacts{generated: generated, files: files}, err
 })
 
@@ -285,19 +304,23 @@ func readTestTree(t *testing.T, root string) map[string]string {
 	return files
 }
 
-func canonicalRoot(t *testing.T) string {
+func canonicalInputs(t *testing.T) RustInputs {
 	t.Helper()
-	root, err := canonicalRootPath()
+	inputs, err := canonicalInputPaths()
 	if err != nil {
 		t.Fatal(err)
 	}
-	return root
+	return inputs
 }
 
-func canonicalRootPath() (string, error) {
+func canonicalInputPaths() (RustInputs, error) {
 	_, current, _, ok := runtime.Caller(0)
 	if !ok {
-		return "", errors.New("cannot locate test source")
+		return RustInputs{}, errors.New("cannot locate test source")
 	}
-	return filepath.Join(filepath.Dir(current), "..", "..", "openapi", "openapi.yaml"), nil
+	repository := filepath.Join(filepath.Dir(current), "..", "..")
+	return RustInputs{
+		OpenAPI:   filepath.Join(repository, "openapi", "openapi.yaml"),
+		Interface: filepath.Join(repository, "sdk", "rust", "interface"),
+	}, nil
 }

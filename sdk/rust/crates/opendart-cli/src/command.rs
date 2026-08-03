@@ -36,7 +36,7 @@ where
 {
     let arguments: Vec<OsString> = args.into_iter().map(Into::into).collect();
     let arguments = normalize_arguments(arguments);
-    match crate::generated::command::command().try_get_matches_from(arguments.clone()) {
+    match crate::interface_projection::command::command().try_get_matches_from(arguments.clone()) {
         Ok(matches) => ParseOutcome::Matches(matches),
         Err(error)
             if matches!(
@@ -119,7 +119,7 @@ fn unknown_root_command(arguments: &[OsString]) -> bool {
 }
 
 fn command_context(arguments: &[OsString]) -> CommandContext {
-    let root = crate::generated::command::command();
+    let root = crate::interface_projection::command::command();
     let mut command = &root;
     let mut context = CommandContext::Root;
     for argument in arguments.iter().skip(1) {
@@ -143,9 +143,11 @@ fn command_context(arguments: &[OsString]) -> CommandContext {
             CommandContext::Operations if subcommand.get_name() == "describe" => {
                 CommandContext::OperationsDescribe
             }
-            CommandContext::Call => crate::generated::catalog::operation(subcommand.get_name())
-                .map(CommandContext::Operation)
-                .unwrap_or(CommandContext::Call),
+            CommandContext::Call => {
+                crate::interface_projection::catalog::operation(subcommand.get_name())
+                    .map(CommandContext::Operation)
+                    .unwrap_or(CommandContext::Call)
+            }
             _ => break,
         };
         command = subcommand;
@@ -157,7 +159,7 @@ fn valid_subcommands(context: CommandContext) -> Vec<String> {
     match context {
         CommandContext::Root => ["operations", "call"].map(str::to_owned).to_vec(),
         CommandContext::Operations => ["list", "describe"].map(str::to_owned).to_vec(),
-        CommandContext::Call => crate::generated::catalog::OPERATIONS
+        CommandContext::Call => crate::interface_projection::catalog::OPERATIONS
             .iter()
             .map(|operation| operation.name.to_owned())
             .collect(),

@@ -15,11 +15,12 @@ import (
 	"strings"
 
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/rustinterface"
 	"github.com/pelletier/go-toml/v2"
 )
 
 const (
-	manifestSchema  = 1
+	manifestSchema  = rustinterface.SchemaVersion
 	maxManifestSize = 1 << 20
 	maxGuardFiles   = 512
 )
@@ -70,49 +71,12 @@ func (e *Error) Error() string {
 
 func (e *Error) Unwrap() error { return e.cause }
 
-type accessors struct {
-	Source  string `toml:"source"`
-	Status  string `toml:"status"`
-	Message string `toml:"message"`
-	Items   string `toml:"items"`
-	Field   string `toml:"field"`
-}
-
-type batchManifest struct {
-	SchemaVersion int                `toml:"schema_version"`
-	Family        string             `toml:"family"`
-	Accessors     accessors          `toml:"accessors"`
-	Operations    []productOperation `toml:"operation"`
-}
-
-type productOperation struct {
-	LogicalID     string             `toml:"logical_id"`
-	RustModule    string             `toml:"rust_module"`
-	RustInput     string             `toml:"rust_input"`
-	CLICommand    string             `toml:"cli_command"`
-	CLIAlias      string             `toml:"cli_alias"`
-	Physical      []physicalProduct  `toml:"physical"`
-	Parameters    []parameterProduct `toml:"parameter"`
-	ResponseViews []responseView     `toml:"response_view"`
-}
-
-type responseView struct {
-	Path      string            `toml:"path"`
-	RustType  string            `toml:"rust_type"`
-	Accessors map[string]string `toml:"accessors"`
-}
-
-type physicalProduct struct {
-	OperationID  string `toml:"operation_id"`
-	RustMethod   string `toml:"rust_method"`
-	RustResponse string `toml:"rust_response"`
-}
-
-type parameterProduct struct {
-	OpenAPIName string `toml:"openapi_name"`
-	RustName    string `toml:"rust_name"`
-	CLIFlag     string `toml:"cli_flag"`
-}
+type accessors = rustinterface.Accessors
+type batchManifest = rustinterface.Batch
+type productOperation = rustinterface.Operation
+type responseView = rustinterface.ResponseView
+type physicalProduct = rustinterface.Physical
+type parameterProduct = rustinterface.Parameter
 
 type obligationManifest struct {
 	SchemaVersion int              `toml:"schema_version"`
@@ -255,11 +219,11 @@ func checkBatches(directory string, sources map[string]sourceOperation) (Report,
 	for number := 1; number <= 6; number++ {
 		family := fmt.Sprintf("DS%03d", number)
 		artifact := fmt.Sprintf("sdk/rust/interface/ds%03d.toml", number)
-		var manifest batchManifest
-		if err := decodeManifest(filepath.Join(directory, fmt.Sprintf("ds%03d.toml", number)), &manifest); err != nil {
+		manifest, err := rustinterface.ReadBatch(filepath.Join(directory, fmt.Sprintf("ds%03d.toml", number)))
+		if err != nil {
 			return Report{}, reject("interface-manifest", artifact, "", err)
 		}
-		if manifest.SchemaVersion != manifestSchema || manifest.Family != family || len(manifest.Operations) == 0 {
+		if manifest.SchemaVersion != rustinterface.SchemaVersion || manifest.Family != family || len(manifest.Operations) == 0 {
 			return Report{}, reject("interface-header", artifact, "", nil)
 		}
 		if err := validateAccessors(manifest.Accessors); err != nil {

@@ -9,9 +9,10 @@ not authorize a registry, release, secret, or workflow side effect.
 
 ## Current
 
-- [Establish the handwritten SDK contract and Rust-native conformance gate](plans/rust/handwritten-sdk-contract-and-conformance.md)
-  has completed implementation and independent review; its required PR delivery
-  remains active before the roadmap advances.
+- [Decouple the CLI presentation projection from Rust SDK symbols](plans/rust/cli-presentation-projection.md)
+  is active after the contract and conformance gate completed review and merged
+  in PR #74. The generated SDK remains the sole runtime conformer while this
+  result separates public CLI grammar and discovery from private typed dispatch.
 
 ## Plans
 

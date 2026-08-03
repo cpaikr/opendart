@@ -82,8 +82,11 @@ decoding disabled. Applications retain persistence, quota, retry, collection,
 and domain policy.
 
 The binary-only CLI crate keeps orchestration and output policy handwritten.
-Generated code owns its operation catalog, clap command breadth, response-shape
-discovery, typed SDK input construction, and exhaustive preparation dispatch.
+Two separately checksummed CLI projections split this ownership. The public
+interface projection owns reviewed command grammar, source-concept discovery,
+physical identities, and coarse output shape without Rust symbols. The private
+dispatch projection alone owns current SDK input construction, response types,
+and exhaustive preparation dispatch.
 
 ### Verify and package
 

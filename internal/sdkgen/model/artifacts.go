@@ -8,41 +8,45 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode"
 
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
+	"github.com/cpaikr/opendart/internal/rustinterface"
 )
 
 const (
 	// SemanticSchemaVersion identifies the combined normalized artifact model.
-	SemanticSchemaVersion uint32 = 2
-	// CLIProjectionSchemaVersion identifies the generated CLI contract projection.
-	CLIProjectionSchemaVersion uint32 = 3
+	SemanticSchemaVersion uint32 = 3
+	// CLIInterfaceProjectionSchemaVersion identifies public grammar and discovery.
+	CLIInterfaceProjectionSchemaVersion uint32 = 1
+	// CLIDispatchProjectionSchemaVersion identifies private generated-SDK wiring.
+	CLIDispatchProjectionSchemaVersion uint32 = 1
 )
 
 // ArtifactSet is one normalized build with independently identified projections.
 type ArtifactSet struct {
-	Semantic SemanticModel
-	SDK      Model
-	CLI      CLIModel
+	Semantic     SemanticModel
+	SDK          Model
+	CLIInterface CLIInterfaceModel
+	CLIDispatch  CLIDispatchModel
 }
 
 // SemanticModel records the complete normalized facts behind both Rust products.
 type SemanticModel struct {
-	SchemaVersion uint32   `json:"schemaVersion"`
-	Checksum      string   `json:"checksum,omitempty"`
-	SDK           Model    `json:"sdk"`
-	CLI           CLIModel `json:"cli"`
+	SchemaVersion uint32            `json:"schemaVersion"`
+	Checksum      string            `json:"checksum,omitempty"`
+	SDK           Model             `json:"sdk"`
+	CLIInterface  CLIInterfaceModel `json:"cliInterface"`
+	CLIDispatch   CLIDispatchModel  `json:"cliDispatch"`
 }
 
-// CLIModel is the deterministic projection consumed only by the public CLI renderer.
-type CLIModel struct {
+// CLIInterfaceModel is the Rust-symbol-free public grammar and discovery input.
+type CLIInterfaceModel struct {
 	SchemaVersion uint32         `json:"schemaVersion"`
 	Checksum      string         `json:"checksum,omitempty"`
 	Operations    []CLIOperation `json:"operations"`
 }
 
-// CLIOperation contains generated command, discovery, and SDK dispatch facts.
+// CLIOperation contains only reviewed CLI names and canonical protocol facts.
 type CLIOperation struct {
 	Name            string              `json:"name"`
 	LogicalID       string              `json:"logicalId"`
@@ -50,7 +54,6 @@ type CLIOperation struct {
 	APIID           string              `json:"apiId"`
 	GuideURL        string              `json:"guideUrl"`
 	Description     string              `json:"description"`
-	SDKInputType    string              `json:"sdkInputType"`
 	Parameters      []CLIParameter      `json:"parameters"`
 	Representations []CLIRepresentation `json:"representations"`
 }
@@ -58,8 +61,7 @@ type CLIOperation struct {
 // CLIParameter describes one generated operation-specific flag.
 type CLIParameter struct {
 	Flag        string            `json:"flag"`
-	WireName    string            `json:"wireName"`
-	SDKField    string            `json:"sdkField"`
+	SourceName  string            `json:"sourceName"`
 	Description string            `json:"description"`
 	Required    bool              `json:"required"`
 	Shape       ParameterShape    `json:"shape"`
@@ -68,56 +70,87 @@ type CLIParameter struct {
 	Constraints StringConstraints `json:"constraints,omitzero"`
 }
 
-// CLIRepresentation binds one public selector to its SDK preparation surface.
+// CLIRepresentation describes one canonical physical representation publicly.
 type CLIRepresentation struct {
 	Name          Representation   `json:"name"`
 	PhysicalID    string           `json:"physicalId"`
-	PrepareMethod string           `json:"prepareMethod"`
-	ResponseType  string           `json:"responseType"`
 	Selector      bool             `json:"selector"`
 	ResponseShape CLIResponseShape `json:"responseShape"`
-	TestArgv      []string         `json:"testArgv"`
 }
 
-// CLIResponseShape is the recursive discovery view of an SDK response.
+// CLIDispatchModel is the separately identified private generated-SDK adapter.
+type CLIDispatchModel struct {
+	SchemaVersion uint32                 `json:"schemaVersion"`
+	Checksum      string                 `json:"checksum,omitempty"`
+	Operations    []CLIDispatchOperation `json:"operations"`
+}
+
+// CLIDispatchOperation binds one reviewed command to current private SDK symbols.
+type CLIDispatchOperation struct {
+	Name            string                      `json:"name"`
+	LogicalID       string                      `json:"logicalId"`
+	SDKInputType    string                      `json:"sdkInputType"`
+	Parameters      []CLIDispatchParameter      `json:"parameters"`
+	Representations []CLIDispatchRepresentation `json:"representations"`
+}
+
+// CLIDispatchParameter binds one hidden parser identity to one SDK input field.
+type CLIDispatchParameter struct {
+	ArgumentID string         `json:"argumentId"`
+	SDKField   string         `json:"sdkField"`
+	Required   bool           `json:"required"`
+	Shape      ParameterShape `json:"shape"`
+}
+
+// CLIDispatchRepresentation binds protocol identity to current SDK preparation.
+type CLIDispatchRepresentation struct {
+	Name          Representation `json:"name"`
+	PhysicalID    string         `json:"physicalId"`
+	PrepareMethod string         `json:"prepareMethod"`
+	ResponseType  string         `json:"responseType"`
+	TestArgv      []string       `json:"testArgv"`
+}
+
+// CLIResponseShape is the deliberately coarse public output category.
 type CLIResponseShape struct {
-	Kind             string             `json:"kind"`
-	AdditionalFields bool               `json:"additionalFields,omitempty"`
-	Fields           []CLIResponseField `json:"fields,omitempty"`
-	Items            *CLIResponseShape  `json:"items,omitempty"`
-}
-
-// CLIResponseField describes one source-named field in a generated response.
-type CLIResponseField struct {
-	Name        string           `json:"name"`
-	Required    bool             `json:"required"`
-	Description string           `json:"description,omitempty"`
-	Shape       CLIResponseShape `json:"shape"`
+	Kind string `json:"kind"`
 }
 
 // BuildArtifacts validates and builds the semantic, SDK, and CLI identities together.
-func BuildArtifacts(surface openapispec.SDKSurface) (ArtifactSet, error) {
+func BuildArtifacts(surface openapispec.SDKSurface, batches []rustinterface.Batch) (ArtifactSet, error) {
 	sdk, err := Build(surface)
 	if err != nil {
 		return ArtifactSet{}, err
 	}
-	cli, err := buildCLIProjection(surface, sdk)
+	cliInterface, cliDispatch, err := buildCLIProjections(surface, sdk, batches)
 	if err != nil {
 		return ArtifactSet{}, err
 	}
-	semantic := SemanticModel{SchemaVersion: SemanticSchemaVersion, SDK: sdk, CLI: cli}
+	semantic := SemanticModel{
+		SchemaVersion: SemanticSchemaVersion,
+		SDK:           sdk, CLIInterface: cliInterface, CLIDispatch: cliDispatch,
+	}
 	semantic.SDK.Checksum = ""
-	semantic.CLI.Checksum = ""
+	semantic.CLIInterface.Checksum = ""
+	semantic.CLIDispatch.Checksum = ""
 	semantic.Checksum, err = projectionChecksum(semantic, "semantic model")
 	if err != nil {
 		return ArtifactSet{}, err
 	}
 	semantic.SDK = sdk
-	semantic.CLI = cli
-	return ArtifactSet{Semantic: semantic, SDK: sdk, CLI: cli}, nil
+	semantic.CLIInterface = cliInterface
+	semantic.CLIDispatch = cliDispatch
+	return ArtifactSet{
+		Semantic: semantic, SDK: sdk,
+		CLIInterface: cliInterface, CLIDispatch: cliDispatch,
+	}, nil
 }
 
-func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, error) {
+func buildCLIProjections(
+	surface openapispec.SDKSurface,
+	sdk Model,
+	batches []rustinterface.Batch,
+) (CLIInterfaceModel, CLIDispatchModel, error) {
 	sources := make(map[string][]openapispec.SDKSurfaceOperation)
 	for _, operation := range surface.Operations {
 		sources[operation.LogicalOperationID] = append(sources[operation.LogicalOperationID], operation)
@@ -125,6 +158,28 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 	physical := make(map[string]PhysicalOperation, len(sdk.Physical))
 	for _, operation := range sdk.Physical {
 		physical[operation.OperationID] = operation
+	}
+	interfaces := make(map[string]rustinterface.Operation, len(sdk.Logical))
+	interfaceFamilies := make(map[string]string, len(sdk.Logical))
+	seenFamilies := make(map[string]bool, len(batches))
+	for _, batch := range batches {
+		if batch.SchemaVersion != rustinterface.SchemaVersion || batch.Family == "" || len(batch.Operations) == 0 {
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("cli-interface-header", "", "interface", batch.Family)
+		}
+		if seenFamilies[batch.Family] {
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("duplicate-cli-interface-family", "", "interface", batch.Family)
+		}
+		seenFamilies[batch.Family] = true
+		for _, operation := range batch.Operations {
+			if operation.LogicalID == "" {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("missing-cli-interface-identity", "", "logical_id", batch.Family)
+			}
+			if _, exists := interfaces[operation.LogicalID]; exists {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("duplicate-cli-interface-operation", operation.LogicalID, "logical_id", operation.LogicalID)
+			}
+			interfaces[operation.LogicalID] = operation
+			interfaceFamilies[operation.LogicalID] = batch.Family
+		}
 	}
 
 	reserved := map[string]bool{
@@ -135,64 +190,100 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 	}
 	aliases := make(map[string]string, len(sdk.Logical)*2)
 	operations := make([]CLIOperation, 0, len(sdk.Logical))
+	dispatchOperations := make([]CLIDispatchOperation, 0, len(sdk.Logical))
 	for _, operation := range sdk.Logical {
-		name := kebabName(operation.RustName)
-		if name == "" {
-			return CLIModel{}, reject("invalid-cli-name", operation.ID, "rustName", operation.RustName)
+		product, exists := interfaces[operation.ID]
+		if !exists {
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("missing-cli-interface-operation", operation.ID, "logicalOperationId", operation.ID)
+		}
+		name := product.CLICommand
+		if !validCLIName(name) {
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("invalid-cli-name", operation.ID, "cli_command", name)
+		}
+		if product.CLIAlias != operation.ID {
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("stale-cli-alias", operation.ID, "cli_alias", product.CLIAlias)
+		}
+		if product.LogicalID != operation.ID || interfaceFamilies[operation.ID] != strings.ToUpper(operation.Group) {
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("stale-cli-interface-identity", operation.ID, "logical_id", product.LogicalID)
 		}
 		for _, alias := range []string{name, operation.ID} {
 			if previous := aliases[alias]; previous != "" && previous != operation.ID {
-				return CLIModel{}, reject("cli-name-collision", operation.ID, "logicalOperationId", previous+" and "+operation.ID+" share "+alias)
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("cli-name-collision", operation.ID, "logicalOperationId", previous+" and "+operation.ID+" share "+alias)
 			}
 			aliases[alias] = operation.ID
 		}
 
 		logicalSources := sources[operation.ID]
 		if len(logicalSources) == 0 {
-			return CLIModel{}, reject("missing-cli-source", operation.ID, "logicalOperationId", operation.ID)
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("missing-cli-source", operation.ID, "logicalOperationId", operation.ID)
 		}
 		description := canonicalDescription(logicalSources[0].Description)
 		if description == "" {
-			return CLIModel{}, reject("missing-cli-description", operation.ID, "description", operation.ID)
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("missing-cli-description", operation.ID, "description", operation.ID)
 		}
 		parameterDescriptions := make(map[string]string, len(logicalSources[0].Parameters))
 		for _, parameter := range logicalSources[0].Parameters {
 			description := canonicalDescription(parameter.Description)
 			if description == "" {
-				return CLIModel{}, reject("missing-cli-parameter-description", logicalSources[0].OperationID, "parameters/"+parameter.Name+"/description", operation.ID)
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("missing-cli-parameter-description", logicalSources[0].OperationID, "parameters/"+parameter.Name+"/description", operation.ID)
 			}
 			parameterDescriptions[parameter.Name] = description
 		}
 		for _, source := range logicalSources[1:] {
 			if canonicalDescription(source.Description) != description {
-				return CLIModel{}, reject("incompatible-cli-description", source.OperationID, "description", operation.ID)
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("incompatible-cli-description", source.OperationID, "description", operation.ID)
 			}
 			for _, parameter := range source.Parameters {
 				if canonicalDescription(parameter.Description) != parameterDescriptions[parameter.Name] {
-					return CLIModel{}, reject("incompatible-cli-parameter-description", source.OperationID, "parameters/"+parameter.Name, operation.ID)
+					return CLIInterfaceModel{}, CLIDispatchModel{}, reject("incompatible-cli-parameter-description", source.OperationID, "parameters/"+parameter.Name, operation.ID)
 				}
 			}
 		}
 
+		expectedParameters := make(map[string]bool, len(operation.Parameters))
+		for _, parameter := range operation.Parameters {
+			expectedParameters[parameter.WireName] = true
+		}
+		bindings := make(map[string]rustinterface.Parameter, len(product.Parameters))
+		for _, parameter := range product.Parameters {
+			if parameter.OpenAPIName == "" || bindings[parameter.OpenAPIName].OpenAPIName != "" {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("duplicate-cli-parameter-mapping", operation.ID, "parameters", parameter.OpenAPIName)
+			}
+			if !expectedParameters[parameter.OpenAPIName] {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("orphan-cli-parameter-mapping", operation.ID, "parameters", parameter.OpenAPIName)
+			}
+			bindings[parameter.OpenAPIName] = parameter
+		}
 		flags := make(map[string]string, len(operation.Parameters))
 		parameters := make([]CLIParameter, 0, len(operation.Parameters))
+		dispatchParameters := make([]CLIDispatchParameter, 0, len(operation.Parameters))
 		for _, parameter := range operation.Parameters {
-			flag := strings.ReplaceAll(parameter.RustName, "_", "-")
+			binding, exists := bindings[parameter.WireName]
+			if !exists {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("missing-cli-parameter-mapping", operation.ID, "parameters", parameter.WireName)
+			}
+			flag := binding.CLIFlag
+			if !validCLIName(flag) {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("invalid-cli-flag", operation.ID, "parameters/"+parameter.WireName, flag)
+			}
 			if reserved[flag] {
-				return CLIModel{}, reject("reserved-cli-flag", operation.ID, "parameters/"+parameter.WireName, flag)
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("reserved-cli-flag", operation.ID, "parameters/"+parameter.WireName, flag)
 			}
 			if previous := flags[flag]; previous != "" {
-				return CLIModel{}, reject("cli-flag-collision", operation.ID, "parameters/"+parameter.WireName, previous+" and "+parameter.WireName)
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("cli-flag-collision", operation.ID, "parameters/"+parameter.WireName, previous+" and "+parameter.WireName)
 			}
 			flags[flag] = parameter.WireName
 			parameters = append(parameters, CLIParameter{
-				Flag: flag, WireName: parameter.WireName, SDKField: parameter.RustName,
+				Flag: flag, SourceName: parameter.WireName,
 				Description: parameterDescriptions[parameter.WireName], Required: parameter.Required,
 				Shape: parameter.Shape, MinItems: parameter.MinItems, MaxItems: parameter.MaxItems,
 				Constraints: parameter.Constraints,
 			})
+			dispatchParameters = append(dispatchParameters, CLIDispatchParameter{
+				ArgumentID: parameter.WireName, SDKField: parameter.RustName,
+				Required: parameter.Required, Shape: parameter.Shape,
+			})
 		}
-
 		structuredCount := 0
 		hasBinary := false
 		for _, variant := range operation.Variants {
@@ -203,49 +294,82 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 			}
 		}
 		if hasBinary && structuredCount != 0 {
-			return CLIModel{}, reject("mixed-cli-representation-kinds", operation.ID, "variants", "structured and ZIP variants require incompatible CLI output contracts")
+			return CLIInterfaceModel{}, CLIDispatchModel{}, reject("mixed-cli-representation-kinds", operation.ID, "variants", "structured and ZIP variants require incompatible CLI output contracts")
+		}
+		expectedPhysical := make(map[string]bool, len(operation.Variants))
+		for _, variant := range operation.Variants {
+			expectedPhysical[variant.OperationID] = true
+		}
+		physicalBindings := make(map[string]bool, len(product.Physical))
+		for _, binding := range product.Physical {
+			if binding.OperationID == "" || physicalBindings[binding.OperationID] {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("duplicate-cli-physical-mapping", operation.ID, "physical", binding.OperationID)
+			}
+			if !expectedPhysical[binding.OperationID] {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("orphan-cli-physical-mapping", operation.ID, "physical", binding.OperationID)
+			}
+			physicalBindings[binding.OperationID] = true
 		}
 		representations := make([]CLIRepresentation, 0, len(operation.Variants))
+		dispatchRepresentations := make([]CLIDispatchRepresentation, 0, len(operation.Variants))
 		for _, variant := range operation.Variants {
+			if !physicalBindings[variant.OperationID] {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("missing-cli-physical-mapping", operation.ID, "physical", variant.OperationID)
+			}
 			physicalOperation, exists := physical[variant.OperationID]
 			if !exists || physicalOperation.LogicalID != operation.ID || physicalOperation.PrimaryRepresentation != variant.Representation {
-				return CLIModel{}, reject("invalid-cli-representation", operation.ID, "variants", variant.OperationID)
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("invalid-cli-representation", operation.ID, "variants", variant.OperationID)
 			}
 			responseType := "opendart::BinaryReply<opendart::BodyStream>"
 			shape := CLIResponseShape{Kind: "binary"}
 			if variant.Representation != RepresentationZIP {
 				responseType = "opendart::responses::" + responseRootName(operation.RustName, variant.Representation)
-				primary, err := primaryShape(physicalOperation)
-				if err != nil {
-					return CLIModel{}, err
+				if _, err := primaryShape(physicalOperation); err != nil {
+					return CLIInterfaceModel{}, CLIDispatchModel{}, err
 				}
-				shape, err = projectResponseShape(primary, physicalOperation.OperationID, "responses/"+string(variant.Representation))
-				if err != nil {
-					return CLIModel{}, err
-				}
+				shape = CLIResponseShape{Kind: "structured_source"}
 			}
 			representation := CLIRepresentation{
 				Name: variant.Representation, PhysicalID: variant.OperationID,
-				PrepareMethod: "prepare_" + string(variant.Representation), ResponseType: responseType,
 				Selector:      variant.Representation != RepresentationZIP && structuredCount > 1,
 				ResponseShape: shape,
 			}
 			testArgv, err := cliTestArgv(parameters, representation)
 			if err != nil {
-				return CLIModel{}, reject("missing-cli-test-invocation", operation.ID, "variants/"+variant.OperationID, err.Error())
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("missing-cli-test-invocation", operation.ID, "variants/"+variant.OperationID, err.Error())
 			}
-			representation.TestArgv = testArgv
 			representations = append(representations, representation)
+			dispatchRepresentations = append(dispatchRepresentations, CLIDispatchRepresentation{
+				Name: variant.Representation, PhysicalID: variant.OperationID,
+				PrepareMethod: "prepare_" + string(variant.Representation),
+				ResponseType:  responseType, TestArgv: testArgv,
+			})
 		}
 		sort.Slice(representations, func(i, j int) bool {
 			order := map[Representation]int{RepresentationJSON: 0, RepresentationXML: 1, RepresentationZIP: 2}
 			return order[representations[i].Name] < order[representations[j].Name]
 		})
+		sort.Slice(dispatchRepresentations, func(i, j int) bool {
+			order := map[Representation]int{RepresentationJSON: 0, RepresentationXML: 1, RepresentationZIP: 2}
+			return order[dispatchRepresentations[i].Name] < order[dispatchRepresentations[j].Name]
+		})
 		operations = append(operations, CLIOperation{
 			Name: name, LogicalID: operation.ID, Group: strings.ToUpper(operation.Group),
 			APIID: operation.APIID, GuideURL: operation.GuideURL, Description: description,
-			SDKInputType: operation.RustName, Parameters: parameters, Representations: representations,
+			Parameters: parameters, Representations: representations,
 		})
+		dispatchOperations = append(dispatchOperations, CLIDispatchOperation{
+			Name: name, LogicalID: operation.ID, SDKInputType: operation.RustName,
+			Parameters: dispatchParameters, Representations: dispatchRepresentations,
+		})
+	}
+	if len(interfaces) != len(sdk.Logical) {
+		for logicalID := range interfaces {
+			if _, exists := sources[logicalID]; !exists {
+				return CLIInterfaceModel{}, CLIDispatchModel{}, reject("orphan-cli-interface-operation", logicalID, "logical_id", logicalID)
+			}
+		}
+		return CLIInterfaceModel{}, CLIDispatchModel{}, reject("cli-interface-coverage", "", "logical_id", fmt.Sprintf("mapped %d of %d", len(interfaces), len(sdk.Logical)))
 	}
 	sort.Slice(operations, func(i, j int) bool {
 		if operations[i].Name == operations[j].Name {
@@ -253,13 +377,31 @@ func buildCLIProjection(surface openapispec.SDKSurface, sdk Model) (CLIModel, er
 		}
 		return operations[i].Name < operations[j].Name
 	})
-	projection := CLIModel{SchemaVersion: CLIProjectionSchemaVersion, Operations: operations}
-	checksum, err := projectionChecksum(projection, "CLI projection")
-	if err != nil {
-		return CLIModel{}, err
+	sort.Slice(dispatchOperations, func(i, j int) bool {
+		if dispatchOperations[i].Name == dispatchOperations[j].Name {
+			return dispatchOperations[i].LogicalID < dispatchOperations[j].LogicalID
+		}
+		return dispatchOperations[i].Name < dispatchOperations[j].Name
+	})
+	interfaceProjection := CLIInterfaceModel{
+		SchemaVersion: CLIInterfaceProjectionSchemaVersion,
+		Operations:    operations,
 	}
-	projection.Checksum = checksum
-	return projection, nil
+	checksum, err := projectionChecksum(interfaceProjection, "CLI interface projection")
+	if err != nil {
+		return CLIInterfaceModel{}, CLIDispatchModel{}, err
+	}
+	interfaceProjection.Checksum = checksum
+	dispatchProjection := CLIDispatchModel{
+		SchemaVersion: CLIDispatchProjectionSchemaVersion,
+		Operations:    dispatchOperations,
+	}
+	checksum, err = projectionChecksum(dispatchProjection, "CLI dispatch projection")
+	if err != nil {
+		return CLIInterfaceModel{}, CLIDispatchModel{}, err
+	}
+	dispatchProjection.Checksum = checksum
+	return interfaceProjection, dispatchProjection, nil
 }
 
 func cliTestArgv(parameters []CLIParameter, representation CLIRepresentation) ([]string, error) {
@@ -270,7 +412,7 @@ func cliTestArgv(parameters []CLIParameter, representation CLIRepresentation) ([
 		}
 		value, err := cliTestValue(parameter)
 		if err != nil {
-			return nil, fmt.Errorf("parameter %s: %w", parameter.WireName, err)
+			return nil, fmt.Errorf("parameter %s: %w", parameter.SourceName, err)
 		}
 		count := int64(1)
 		if parameter.Shape == StringArray && parameter.MinItems != nil {
@@ -340,72 +482,28 @@ func primaryShape(operation PhysicalOperation) (ResponseShape, error) {
 	return ResponseShape{}, reject("missing-cli-response-shape", operation.OperationID, "responses", string(operation.PrimaryRepresentation))
 }
 
-func projectResponseShape(shape ResponseShape, operation, location string) (CLIResponseShape, error) {
-	switch shape.Kind {
-	case "binary":
-		return CLIResponseShape{Kind: "binary"}, nil
-	case "opaque":
-		return CLIResponseShape{Kind: "source_value"}, nil
-	case "string":
-		if shape.OpenStatus {
-			return CLIResponseShape{Kind: "source_status"}, nil
-		}
-		return CLIResponseShape{}, reject("unsupported-cli-response-shape", operation, location, "project CLI response shape: ordinary string kind has no public discovery representation")
-	case "array":
-		if shape.Items == nil {
-			return CLIResponseShape{}, reject("invalid-cli-response-shape", operation, location, "project CLI response shape: array has no items")
-		}
-		items, err := projectResponseShape(*shape.Items, operation, location+"/items")
-		if err != nil {
-			return CLIResponseShape{}, err
-		}
-		return CLIResponseShape{Kind: "array", Items: &items}, nil
-	case "object":
-		fields := make([]CLIResponseField, 0, len(shape.Properties))
-		for _, property := range shape.Properties {
-			child, err := projectResponseShape(property.Shape, operation, location+"/properties/"+property.Name)
-			if err != nil {
-				return CLIResponseShape{}, err
-			}
-			fields = append(fields, CLIResponseField{
-				Name: property.Name, Required: responsePropertyRequired(shape, property.Name),
-				Description: strings.TrimSpace(property.Shape.Description), Shape: child,
-			})
-		}
-		return CLIResponseShape{Kind: "object", AdditionalFields: shape.AdditionalPropertiesPolicy == "allowed", Fields: fields}, nil
-	default:
-		return CLIResponseShape{}, reject("unsupported-cli-response-shape", operation, location, fmt.Sprintf("project CLI response shape: unsupported kind %q", shape.Kind))
-	}
-}
-
-func responsePropertyRequired(shape ResponseShape, name string) bool {
-	for _, required := range shape.Required {
-		if required == name {
-			return true
-		}
-	}
-	return false
-}
-
 func responseRootName(input string, representation Representation) string {
 	suffix := map[Representation]string{RepresentationJSON: "Json", RepresentationXML: "Xml"}[representation]
 	return input + suffix + "Response"
 }
 
-func kebabName(value string) string {
-	runes := []rune(value)
-	var output strings.Builder
-	for index, character := range runes {
-		if unicode.IsUpper(character) && index > 0 {
-			previous := runes[index-1]
-			nextLower := index+1 < len(runes) && unicode.IsLower(runes[index+1])
-			if unicode.IsLower(previous) || unicode.IsDigit(previous) || (unicode.IsUpper(previous) && nextLower) {
-				output.WriteByte('-')
+func validCLIName(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, part := range strings.Split(value, "-") {
+		if part == "" {
+			return false
+		}
+		for _, character := range part {
+			if character < 'a' || character > 'z' {
+				if character < '0' || character > '9' {
+					return false
+				}
 			}
 		}
-		output.WriteRune(unicode.ToLower(character))
 	}
-	return output.String()
+	return true
 }
 
 func projectionChecksum(value any, label string) (string, error) {

@@ -62,10 +62,10 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseReleaseGuard+":"+filepath.Base(root))
 			return nil
 		},
-		checkRustSDK: func(source string, output sdkgen.RustOutputs) error {
+		checkRustSDK: func(inputs sdkgen.RustInputs, output sdkgen.RustOutputs) error {
 			sdkCrate := filepath.Base(filepath.Dir(filepath.Dir(output.SDK)))
 			cliCrate := filepath.Base(filepath.Dir(filepath.Dir(output.CLI)))
-			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(source)+":"+sdkCrate+":"+cliCrate)
+			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(inputs.OpenAPI)+":"+filepath.Base(inputs.Interface)+":"+sdkCrate+":"+cliCrate)
 			return nil
 		},
 		checkRustContract: func(root string) (rustconformance.Report, error) {
@@ -84,7 +84,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"contract-fixtures:repository",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
-		"rust-sdk-freshness:openapi.yaml:opendart:opendart-cli",
+		"rust-sdk-freshness:openapi.yaml:interface:opendart:opendart-cli",
 		"rust-conformance-contract:repository",
 		"live-conformance-preflight:repository",
 		"auditor-evidence:auditor-2026-07-18.json",
@@ -233,13 +233,16 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					}
 					return nil
 				},
-				checkRustSDK: func(string, sdkgen.RustOutputs) error {
+				checkRustSDK: func(sdkgen.RustInputs, sdkgen.RustOutputs) error {
 					calls++
 					if test.fail == phaseRustSDKFreshness {
 						if test.rustCLIArtifact {
 							root := repositoryRoot(t)
 							return sdkgen.CheckRustFresh(
-								filepath.Join(root, "openapi", "openapi.yaml"),
+								sdkgen.RustInputs{
+									OpenAPI:   filepath.Join(root, "openapi", "openapi.yaml"),
+									Interface: filepath.Join(root, "sdk", "rust", "interface"),
+								},
 								sdkgen.RustOutputs{
 									SDK: filepath.Join(root, "sdk", "rust", "crates", "opendart", "src", "generated"),
 									CLI: filepath.Join(t.TempDir(), "opendart-cli", "src", "generated"),
@@ -320,7 +323,7 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 		checkLive:         func(string) error { return nil },
 		checkEvidence:     func(string) error { return nil },
 		checkRelease:      func(string) error { return nil },
-		checkRustSDK:      func(string, sdkgen.RustOutputs) error { return nil },
+		checkRustSDK:      func(sdkgen.RustInputs, sdkgen.RustOutputs) error { return nil },
 		checkRustContract: func(string) (rustconformance.Report, error) { return rustconformance.Report{}, nil },
 	}
 

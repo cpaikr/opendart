@@ -54,7 +54,7 @@ pub(crate) struct FlagSpec {
     pub(crate) name: &'static str,
     #[serde(skip)]
     pub(crate) id: &'static str,
-    pub(crate) sdk_field: &'static str,
+    pub(crate) source_name: &'static str,
     pub(crate) description: &'static str,
     pub(crate) required: bool,
     pub(crate) value_kind: &'static str,
@@ -87,7 +87,6 @@ pub(crate) struct StringConstraintSpec {
 pub(crate) struct RepresentationSpec {
     pub(crate) name: &'static str,
     pub(crate) physical_id: &'static str,
-    pub(crate) response_type: &'static str,
     pub(crate) response_shape: ResponseShape,
     pub(crate) selector_argv: &'static [&'static str],
     pub(crate) output: OutputSpec,
@@ -110,25 +109,8 @@ pub(crate) enum OutputSpec {
 #[derive(Clone, Copy, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub(crate) enum ResponseShape {
-    Object {
-        additional_fields: bool,
-        fields: &'static [ResponseField],
-    },
-    Array {
-        items: &'static ResponseShape,
-    },
-    SourceValue,
-    SourceStatus,
+    StructuredSource,
     Binary,
-}
-
-#[derive(Clone, Copy, Serialize)]
-pub(crate) struct ResponseField {
-    pub(crate) name: &'static str,
-    pub(crate) required: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) description: Option<&'static str>,
-    pub(crate) shape: ResponseShape,
 }
 
 #[derive(Serialize)]

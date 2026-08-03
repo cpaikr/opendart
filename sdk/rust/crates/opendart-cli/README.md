@@ -8,11 +8,9 @@ The CLI package is prepared for crates.io but is not yet published. Current
 publication status lives in the
 [CLI delivery plan](../../../../plans/rust/public-opendart-cli.md).
 
-This README describes the current CLI integration. The accepted
-[CLI presentation plan](../../../../plans/rust/cli-presentation-projection.md)
-gives the CLI explicit presentation names and removes Rust symbols from public
-discovery before the later handwritten SDK cutover. Those changes are not
-current behavior.
+The CLI owns reviewed semantic command and flag names independently of Rust SDK
+symbols. A separately generated private adapter still dispatches exhaustively
+to the current generated SDK until the later handwritten cutover.
 
 From a reviewed source checkout, install the locked package reproducibly with:
 
@@ -25,7 +23,7 @@ Confirm the installed binary and inspect the operation-specific help:
 ```sh
 opendart --version
 opendart --help
-opendart call company --help
+opendart call company-overview --help
 ```
 
 Use the top-level `--version` for the CLI package identity. Use
@@ -38,7 +36,7 @@ Discovery never reads an API key or contacts OpenDART:
 
 ```sh
 opendart operations list
-opendart operations describe company
+opendart operations describe company-overview
 ```
 
 Every discovery response is one JSON document on standard output. It contains
@@ -58,15 +56,15 @@ With `OPENDART_API_KEY` present in the inherited environment, an installed CLI
 can make a structured call directly:
 
 ```sh
-opendart call company \
-  --corp-code 00126380 \
+opendart call company-overview \
+  --company-code 00126380 \
   --representation json
 ```
 
 Download the corporate-code archive to a new path with:
 
 ```sh
-opendart call corp-code --output /tmp/corp-code.zip
+opendart call download-company-codes --output /tmp/company-codes.zip
 ```
 
 Choose a different path or remove the prior artifact before repeating the

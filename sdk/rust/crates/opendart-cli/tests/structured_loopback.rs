@@ -19,8 +19,8 @@ const XML_SUCCESS_FIXTURE: &[u8] = include_bytes!("fixtures/company-xml-success.
 fn company_arguments(representation: &str) -> Vec<String> {
     vec![
         "call".to_owned(),
-        "company".to_owned(),
-        "--corp-code".to_owned(),
+        "company-overview".to_owned(),
+        "--company-code".to_owned(),
         "00126380".to_owned(),
         "--representation".to_owned(),
         representation.to_owned(),
@@ -166,7 +166,7 @@ fn json_success_preserves_typed_additive_values_and_exact_numbers() {
     let value = json(&output, 0);
 
     assert_eq!(value["kind"], "response");
-    assert_eq!(value["operation"]["name"], "company");
+    assert_eq!(value["operation"]["name"], "company-overview");
     assert_eq!(value["operation"]["logical_id"], "DS001-2019002");
     assert_eq!(value["operation"]["physical_id"], "get_company_json");
     assert_eq!(value["operation"]["representation"], "json");
@@ -252,7 +252,7 @@ fn envelope_limits_malformed_bodies_and_decode_failures_are_sanitized() {
     let output = with_response(http_response("application/json", body, &[]), &too_small);
     let error = json(&output, 1);
     assert_eq!(error["error"]["code"], "body_limit");
-    assert_eq!(error["operation"]["name"], "company");
+    assert_eq!(error["operation"]["name"], "company-overview");
     assert_eq!(error["metadata"]["status"], 200);
 
     let output = with_response(

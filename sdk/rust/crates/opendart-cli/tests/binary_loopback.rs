@@ -19,7 +19,7 @@ const SYNTHETIC_KEY: &str = "work5-synthetic-sentinel";
 fn binary_arguments(destination: &Path) -> Vec<String> {
     vec![
         "call".to_owned(),
-        "corp-code".to_owned(),
+        "download-company-codes".to_owned(),
         "--output".to_owned(),
         destination.to_string_lossy().into_owned(),
     ]
@@ -183,7 +183,7 @@ fn assert_artifact_reply(
 ) {
     let value = json(output, expected_exit);
     assert_eq!(value["kind"], "response");
-    assert_eq!(value["operation"]["name"], "corp-code");
+    assert_eq!(value["operation"]["name"], "download-company-codes");
     assert_eq!(value["operation"]["logical_id"], "DS001-2019018");
     assert_eq!(value["operation"]["physical_id"], "get_corpCode_xml");
     assert_eq!(value["operation"]["representation"], "zip");
@@ -444,7 +444,7 @@ fn invalid_and_existing_destinations_fail_before_credentials_or_network() {
     for spelling in ["", "-"] {
         let arguments = vec![
             "call".to_owned(),
-            "corp-code".to_owned(),
+            "download-company-codes".to_owned(),
             "--output".to_owned(),
             spelling.to_owned(),
         ];
@@ -452,7 +452,7 @@ fn invalid_and_existing_destinations_fail_before_credentials_or_network() {
         assert_eq!(error["error"]["code"], "invalid_invocation");
         assert_eq!(error["error"]["reason"], "invalid_output_path");
         assert_eq!(error["error"]["argument"], "--output");
-        assert_eq!(error["operation"]["name"], "corp-code");
+        assert_eq!(error["operation"]["name"], "download-company-codes");
         assert!(error["error"].get("path").is_none());
     }
 
@@ -585,7 +585,7 @@ fn staged_path_replacement_never_publishes_replacement_bytes() {
             assert_eq!(error["kind"], "error");
             assert_eq!(error["error"]["code"], "artifact_io");
             assert_eq!(error["error"]["reason"], "publish_failed");
-            assert_eq!(error["operation"]["name"], "corp-code");
+            assert_eq!(error["operation"]["name"], "download-company-codes");
             assert_eq!(error["metadata"]["status"], 200);
             assert!(
                 !destination.exists(),
@@ -631,7 +631,7 @@ fn cleanup_failure_does_not_replace_the_primary_artifact_limit_error() {
     );
     let error = json(&output, 1);
     assert_eq!(error["error"]["code"], "artifact_limit");
-    assert_eq!(error["operation"]["name"], "corp-code");
+    assert_eq!(error["operation"]["name"], "download-company-codes");
     assert_eq!(error["metadata"]["status"], 200);
     assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
     assert_eq!(error["cleanup"]["reason"], "cleanup_failed");
@@ -660,7 +660,7 @@ fn cleanup_failure_does_not_replace_the_primary_body_stream_error() {
     let error = json(&output, 1);
     assert_eq!(without_cleanup(error.clone()), baseline);
     assert_eq!(error["error"]["code"], "transport_body");
-    assert_eq!(error["operation"]["name"], "corp-code");
+    assert_eq!(error["operation"]["name"], "download-company-codes");
     assert_eq!(error["metadata"]["status"], 200);
     assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
     assert_eq!(error["cleanup"]["reason"], "cleanup_failed");
@@ -698,7 +698,7 @@ fn cleanup_failure_does_not_replace_the_primary_write_error() {
         "write_failed",
         "Check destination storage and permissions, then retry",
     );
-    assert_eq!(error["operation"]["name"], "corp-code");
+    assert_eq!(error["operation"]["name"], "download-company-codes");
     assert_eq!(error["metadata"]["status"], 200);
     assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
     assert_eq!(error["cleanup"]["reason"], "cleanup_failed");
@@ -736,7 +736,7 @@ fn cleanup_failure_does_not_replace_the_primary_publication_error() {
         "publish_failed",
         "Check the --output parent directory permissions and retry",
     );
-    assert_eq!(error["operation"]["name"], "corp-code");
+    assert_eq!(error["operation"]["name"], "download-company-codes");
     assert_eq!(error["metadata"]["status"], 200);
     assert_eq!(error["cleanup"]["stage"], "discard_staging_link");
     assert_eq!(error["cleanup"]["reason"], "cleanup_failed");

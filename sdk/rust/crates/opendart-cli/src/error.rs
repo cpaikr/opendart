@@ -606,7 +606,7 @@ fn canonical_flag_spec(
 ) -> Option<&'static crate::discovery::FlagSpec> {
     spec.flags
         .iter()
-        .find(|flag| flag.id == parameter || flag.sdk_field == parameter)
+        .find(|flag| flag.id == parameter || flag.source_name == parameter)
 }
 
 fn transport_fields(kind: TransportFailureKind) -> (&'static str, &'static str) {
