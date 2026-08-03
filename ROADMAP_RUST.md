@@ -10,11 +10,11 @@ not authorize a registry, release, secret, or workflow side effect.
 ## Current
 
 - [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
-  passed clean exhaustive offline qualification and is in delivery review as
-  PR #76 after the CLI presentation projection merged in PR #75. The working
+  completes upon merge of PR #76 after clean exhaustive offline qualification
+  and independent and Codex review with no actionable findings. The reviewed
   product state contains one handwritten SDK conformer, no generated SDK source
-  or generator, and a retargeted private CLI dispatch; merge remains before
-  completion.
+  or generator, and a retargeted private CLI dispatch; final required checks
+  and merge are the only remaining delivery transitions.
 
 ## Plans
 

@@ -1,6 +1,6 @@
 # Goal: Deliver the offline-qualified handwritten Rust SDK conformer
 
-Status: active
+Status: complete upon merge of PR #76
 Planning scope: ROADMAP_RUST.md
 
 ## Original contract
@@ -36,15 +36,15 @@ _None._
 ### Current in-scope result
 
 Handwritten SDK implementation, CLI retargeting, generated-SDK deletion,
-documentation reconciliation, and offline package qualification. The reviewed
-implementation is committed as `16be5b3` and delivery is active in
-[PR #76](https://github.com/cpaikr/opendart/pull/76).
+documentation reconciliation, and offline package qualification. Every result
+and completion criterion is satisfied on the reviewed PR head; merge of
+[PR #76](https://github.com/cpaikr/opendart/pull/76) completes delivery and this
+goal.
 
 ### Next in-scope action
 
-Resolve review and required checks on PR #76, merge it into `rust`, and close
-this goal. Public SDK publication remains deferred and requires separate
-authority.
+Wait for the final required checks on PR #76 and merge it into `rust`. Public
+SDK publication remains deferred and requires separate authority.
 
 ### Evidence and blockers
 
@@ -92,6 +92,8 @@ authority.
   and Rust contract, including full race detection, strict feature and target
   checks, exact package inventories, freshly extracted SDK all-feature test
   compilation, and clean CLI installation, all without credentials.
-- Result-three delivery: PR #76 is open against `rust` with its initial
-  CodeRabbit review requested; required checks and feedback resolution are
-  active.
+- Result-three delivery: PR #76 is open against `rust`. Independent reviews and
+  Codex PR review completed with no actionable findings; the CodeRabbit check
+  passed without review because automatic reviews are disabled for the
+  repository. The final required checks are active, and merge is the only
+  remaining delivery transition.
