@@ -5,6 +5,11 @@ CLI. The repository-wide view is documented in
 [the root architecture](../../ARCHITECTURE.md), and delivery status lives in the
 [CLI plan](../../plans/rust/public-opendart-cli.md).
 
+[ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md) accepts a target
+where generation owns only CLI grammar, discovery, and private exhaustive typed
+wiring while the handwritten SDK owns all HTTP behavior. This page continues
+to describe the implemented generated-SDK integration until that cutover lands.
+
 ## Purpose and boundaries
 
 The CLI gives shell agents one non-interactive call path for every logical

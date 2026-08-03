@@ -11,6 +11,11 @@ Usage examples live in the
 [crate README](../../sdk/rust/crates/opendart/README.md). Delivery state belongs
 in the [Public Rust SDK task](../../tasks/rust/public-rust-sdk.md).
 
+This is the current generated SDK contract. The accepted handwritten-only
+replacement is defined by [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md)
+and its linked plans. Do not read target names or target removal decisions into
+this contract before the implementation cutover updates both together.
+
 ## Generated operation surface
 
 The supported `operations` module contains one idiomatic request type for each

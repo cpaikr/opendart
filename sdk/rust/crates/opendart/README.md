@@ -9,6 +9,11 @@ Current crates.io availability is tracked in the
 dependency only after the intended version and its public artifacts have been
 verified. The dependency examples below describe the stable `0.1` line.
 
+This README documents the current generated implementation. The accepted
+handwritten-only replacement is recorded in
+[ADR 0004](../../../../docs/decisions/0004-handwritten-rust-sdk-conformer.md)
+and does not become the public crate contract until its implementation cutover.
+
 The checked-in `operations` module is generator-owned but supported public API.
 Operation names and behavior participate in SemVer; generated file layout does
 not.

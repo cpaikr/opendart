@@ -2,6 +2,12 @@
 
 ## Product boundary
 
+This document describes the implemented repository architecture. The accepted
+handwritten-only Rust SDK target is recorded in
+[ADR 0004](docs/decisions/0004-handwritten-rust-sdk-conformer.md); generated SDK
+sections below remain current until the combined implementation cutover updates
+code and active architecture together.
+
 This repository maintains public products derived from one source-backed
 OpenDART contract:
 
@@ -249,6 +255,12 @@ Its [architecture](docs/rust-cli/architecture.md),
 [public contract](docs/rust-cli/public-contract.md), and
 [verification guide](docs/rust-cli/verification-and-release.md) record the
 implemented source-distribution boundary and durable publication contract.
+
+[ADR 0004](docs/decisions/0004-handwritten-rust-sdk-conformer.md) accepts one
+handwritten Rust conformer, Rust-native conformance, deliberate Rust and CLI
+product names, source-complete response wrappers, and a presentation-only CLI
+interface projection. The linked Rust plans own the transition; this document
+continues to describe the generated implementation until that transition lands.
 
 [`ROADMAP.md`](ROADMAP.md) and [`ROADMAP_RUST.md`](ROADMAP_RUST.md) own delivery
 priority. Their linked plans and tasks own implementation status, blockers, and

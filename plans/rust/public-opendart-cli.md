@@ -3,9 +3,10 @@
 ## Outcome
 
 Publish the `opendart-cli` crate so its `opendart` binary exposes every logical
-Rust SDK operation through a generated, non-interactive shell interface. Calls
-use SDK request and response types directly, emit complete compact JSON
-envelopes, and preserve binary bodies at explicit paths without duplicating
+OpenAPI operation through a generated, non-interactive CLI interface. Commands
+and discovery use explicit CLI-owned product names and protocol identities;
+private exhaustive dispatch calls the handwritten SDK, emits its source-shaped
+compact JSON, and preserves binary bodies at explicit paths without duplicating
 endpoint contracts.
 
 ## Implemented state
@@ -33,6 +34,12 @@ endpoint contracts.
   contains the SDK component but no CLI component, the release guard rejects
   CLI release output, and the reusable crate workflow is still SDK-specific.
   No current workflow can publish `opendart-cli`.
+- The SDK's generated conformer is scheduled for replacement by the
+  [handwritten contract](handwritten-sdk-contract-and-conformance.md) and
+  combined [implementation and cutover](handwritten-sdk-conformer.md) plans.
+  The retained CLI interface projection may own commands, discovery, and
+  exhaustive typed wiring, but it must not expose Rust implementation names or
+  own provider validation, request serialization, or response decoding.
 
 ## Source-publication gate
 
@@ -42,7 +49,7 @@ true:
 
 1. An exact non-prerelease `opendart` version is present on crates.io and the
    accepted registry artifact, checksum, manifests, contents, inventory, and
-   source provenance have been verified.
+   source provenance have been verified after the handwritten SDK cutover.
 2. Clean consumers install and exercise that exact SDK version, and its
    component-isolated trusted-publishing and interrupted-release recovery paths
    have succeeded.
@@ -98,7 +105,7 @@ publish the crate, or finalize a CLI release.
   immutable revision with matching registry checksum, package contents,
   manifests, inventory, tag, and provenance.
 - Clean supported hosts install the registry package with its lockfile and
-  keyless discovery matches the canonical generated model.
+  keyless discovery matches the retained canonical CLI interface projection.
 - The release workflow receives no OpenDART credential, and only its protected
   CLI publication job receives temporary or trusted crates.io authority.
 - SDK, CLI, and specification versions, changelogs, tags, component outputs,
@@ -113,12 +120,17 @@ publish the crate, or finalize a CLI release.
   installers, and package-manager publication remain in the
   [prebuilt-release task](../../tasks/rust/opendart-cli-prebuilt-releases.md).
 - CLI generation and ordinary verification remain offline and
-  credential-free. A real OpenDART smoke call is optional post-release evidence,
-  never a publication or finalization gate.
+  credential-free. Generated CLI code may own explicit CLI grammar, discovery,
+  and exhaustive private typed wiring, with its own checksum and freshness
+  gate. Public discovery must not expose SDK field or response-type symbols,
+  and the projection must not own provider serialization, validation, or
+  response decoding. A real OpenDART smoke call is optional post-release
+  evidence, never a publication or finalization gate.
 
 ## Next action
 
-Wait for the SDK task to publish and verify the exact non-prerelease `opendart`
-registry artifact. Then align the CLI's exact dependency pin and implement the
-isolated CLI release path above; do not bootstrap CLI publication from SDK
-prerelease evidence alone.
+Wait for the handwritten SDK plans to establish the CLI-owned interface and
+complete the handwritten-only product cutover, then wait for the SDK task to
+publish and verify the exact non-prerelease `opendart` registry artifact. Align
+the CLI's exact dependency pin only after that gate; do not bootstrap CLI
+publication from generated-SDK or prerelease evidence alone.

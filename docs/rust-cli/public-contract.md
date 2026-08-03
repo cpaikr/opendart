@@ -4,6 +4,12 @@ This document defines the supported shell, output, credential, and compatibility
 interface for the `opendart` binary. See the
 [delivery plan](../../plans/rust/public-opendart-cli.md) for current status.
 
+This contract describes the current generated-SDK integration. The accepted
+cutover in [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md) gives
+commands explicit CLI-owned names and removes Rust implementation symbols such
+as `sdk_field` and `response_type` from discovery. Those changes are not current
+behavior and will update this contract with the implementation.
+
 ## Command grammar
 
 The primary call shape is:

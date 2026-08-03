@@ -11,6 +11,12 @@ Current delivery and recovery state belongs in the
 operations and repository-wide policy belong in
 [RELEASING.md](../../RELEASING.md).
 
+The verification details below describe the current generated implementation.
+[ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md) accepts the
+replacement gate—Rust-native conformance, retained independent evidence, and
+CLI-only projection freshness—but those checks replace the current ones only
+with the handwritten implementation cutover.
+
 ## Verification interface
 
 From the repository root:

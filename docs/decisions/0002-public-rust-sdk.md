@@ -1,9 +1,16 @@
 # ADR 0002: Add a first-party Rust SDK
 
-- Status: accepted
+- Status: accepted; generated-conformer mechanism amended by
+  [ADR 0004](0004-handwritten-rust-sdk-conformer.md)
 - Date: 2026-07-19
 
 ## Context
+
+This ADR still owns the first-party SDK product, pure request boundary, safe
+native client, security, compatibility, packaging, and independent release
+decisions. ADR 0004 replaces the accepted generated-conformer mechanism with a
+handwritten-only target. The generated implementation remains current until
+that cutover lands.
 
 The canonical OpenAPI 3.2 contract is useful to generators and tooling, but
 ordinary Rust callers otherwise have to choose their own generator, reproduce

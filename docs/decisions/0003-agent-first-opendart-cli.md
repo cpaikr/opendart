@@ -1,9 +1,17 @@
 # ADR 0003: Add an agent-first OpenDART CLI
 
-- Status: accepted
+- Status: accepted; SDK coupling and presentation identity amended by
+  [ADR 0004](0004-handwritten-rust-sdk-conformer.md)
 - Date: 2026-07-20
 
 ## Context
+
+This ADR still owns the agent-first CLI product, compact JSON process contract,
+binary artifact behavior, source-status policy, independent release component,
+and SDK-before-CLI publication order. ADR 0004 gives CLI presentation explicit
+product names, removes Rust implementation symbols from public discovery, and
+limits retained generation to CLI interface breadth and private typed wiring.
+The generated implementation described below remains current until cutover.
 
 The public Rust SDK provides complete typed request preparation and conservative
 response decoding, but shell users still have to write Rust to call an
@@ -117,7 +125,7 @@ that SDK version is published and verified.
 
 ## Related work
 
-- [Target CLI architecture](../rust-cli/architecture.md)
+- [Current CLI architecture](../rust-cli/architecture.md)
 - [Public CLI contract](../rust-cli/public-contract.md)
 - [Public CLI implementation plan](../../plans/rust/public-opendart-cli.md)
 - [ADR 0002: Add a first-party Rust SDK](0002-public-rust-sdk.md)

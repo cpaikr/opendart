@@ -9,21 +9,29 @@ not authorize a registry, release, secret, or workflow side effect.
 
 ## Current
 
-_None. Rust delivery is deferred._
+_None. Rust product work remains deferred._
 
 ## Plans
 
-1. [Publish and adopt the public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
-   is the next product outcome. Its publication work is blocked on a verified
-   non-prerelease `opendart` registry release.
-2. [Publish and adopt the public Rust SDK](tasks/rust/public-rust-sdk.md) is the
-   enabling delivery item, but its release recovery is also deferred.
+1. [Establish the handwritten SDK contract and Rust-native conformance gate](plans/rust/handwritten-sdk-contract-and-conformance.md)
+   fixes the reviewed Rust and CLI product interfaces and builds proportionate
+   evidence that does not use a shared cross-language projection or the
+   generated client as an oracle.
+2. [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
+   owns the complete transition from the generated public implementation to one
+   handwritten product path, including CLI adaptation, SDK generator deletion,
+   active-documentation reconciliation, and offline package qualification.
+3. [Publish and adopt the public Rust SDK](tasks/rust/public-rust-sdk.md) remains
+   the enabling delivery item after the handwritten package passes its complete
+   release gate.
+4. [Publish and adopt the public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
+   remains blocked on a verified non-prerelease `opendart` registry release.
 
-The list expresses product priority, not executable dependency order. The SDK
-must be published and verified before CLI publication can start. The
-interrupted beta.1 candidate is now a fail-closed tombstone and cannot be
-recovered by the SDK workflow. Delivery remains deferred until the replacement
-contract and a new Release Please proposal are reviewed.
+The list is the intended work order. Capturing these plans does not start them
+or authorize registry, release, secret, or workflow effects. The interrupted
+beta.1 candidate remains a fail-closed tombstone and cannot be recovered. A new
+SDK release candidate may be proposed only after the handwritten-only product
+state is complete and reviewed.
 
 ## Tasks
 

@@ -6,6 +6,10 @@ This document defines where the public Rust SDK lives and which repository
 component owns each part of its implementation. Delivery state and next actions
 belong in the [Public Rust SDK task](../../tasks/rust/public-rust-sdk.md).
 
+The topology below is current. [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md)
+accepts a handwritten-only SDK layout and a retained CLI interface projection;
+the combined implementation plan will update this page when that layout exists.
+
 ## Topology
 
 The implemented boundary is:

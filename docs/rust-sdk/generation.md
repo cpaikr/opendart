@@ -10,6 +10,12 @@ checkout.
 Delivery state belongs in the
 [Public Rust SDK task](../../tasks/rust/public-rust-sdk.md).
 
+This document describes the current SDK and CLI generation pipeline. Under
+[ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md), SDK wire-code
+generation is transitional and will be deleted with the handwritten cutover;
+only a bounded CLI interface projection may remain. Until then, these commands
+and freshness rules remain the implemented repository contract.
+
 ## Inputs and source of truth
 
 Generation loads `openapi/openapi.yaml` and its confined references through
