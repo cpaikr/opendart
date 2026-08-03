@@ -5,7 +5,7 @@ deterministic requests and preserves source-response evidence without taking
 ownership of retry, quota, collection, persistence, or domain policy.
 
 Current crates.io availability is tracked in the
-[Public Rust SDK task](https://github.com/cpaikr/opendart/blob/main/tasks/rust/public-rust-sdk.md). Use a registry
+[Public Rust SDK plan](https://github.com/cpaikr/opendart/blob/main/plans/rust/public-rust-sdk.md). Use a registry
 dependency only after the intended version and its public artifacts have been
 verified. The dependency examples below describe the stable `0.1` line.
 

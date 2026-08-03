@@ -7,7 +7,7 @@ publication-authority boundaries for the `opendart` crate. It does not record a
 release run or its next action.
 
 Current delivery and recovery state belongs in the
-[Public Rust SDK task](../../tasks/rust/public-rust-sdk.md). Maintainer release
+[Public Rust SDK plan](../../plans/rust/public-rust-sdk.md). Maintainer release
 operations and repository-wide policy belong in
 [RELEASING.md](../../RELEASING.md).
 
@@ -189,4 +189,4 @@ changelog, draft, or command result alone is not release evidence.
 
 The live presence of a token, draft, tag, registry version, or documentation
 build belongs only in the
-[Public Rust SDK task](../../tasks/rust/public-rust-sdk.md).
+[Public Rust SDK plan](../../plans/rust/public-rust-sdk.md).

@@ -185,5 +185,5 @@ before-CLI publication order remain.
   plan](../../plans/rust/handwritten-sdk-contract-and-conformance.md)
 - [Handwritten implementation and cutover
   plan](../../plans/rust/handwritten-sdk-conformer.md)
-- [Public Rust SDK delivery task](../../tasks/rust/public-rust-sdk.md)
+- [Public Rust SDK delivery plan](../../plans/rust/public-rust-sdk.md)
 - [Public CLI delivery plan](../../plans/rust/public-opendart-cli.md)

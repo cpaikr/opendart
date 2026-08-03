@@ -10,7 +10,7 @@ at different publication states:
 | `opendart-cli` Rust crate | `sdk/rust/crates/opendart-cli` and `opendart-cli-vX.Y.Z` | Independent ownership is configured for future use, but release eligibility and publication are disabled. |
 
 The [Rust roadmap](ROADMAP_RUST.md) and
-[public SDK task](tasks/rust/public-rust-sdk.md) own live delivery status.
+[public SDK plan](plans/rust/public-rust-sdk.md) owns live delivery status.
 This policy owns durable release rules, not incident or run history.
 
 ## Sources of truth

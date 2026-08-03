@@ -217,7 +217,7 @@ to preserve generator-shaped compatibility.
   bounded interface projection.
 - Independent evidence, mutation controls, real transport safety, clean package
   installation, and release guards all pass.
-- The [public SDK delivery task](../../tasks/rust/public-rust-sdk.md) becomes the
+- The [public SDK delivery plan](public-rust-sdk.md) becomes the
   next queued Rust item but still requires an explicit start and renewed
   external-state review before release action.
 

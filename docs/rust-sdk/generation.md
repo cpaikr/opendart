@@ -8,7 +8,7 @@ the checked-in Rust projection and never need the generator or a repository
 checkout.
 
 Delivery state belongs in the
-[Public Rust SDK task](../../tasks/rust/public-rust-sdk.md).
+[Public Rust SDK plan](../../plans/rust/public-rust-sdk.md).
 
 This document describes the current SDK and CLI generation pipeline. Under
 [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md), SDK wire-code

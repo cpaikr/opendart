@@ -81,4 +81,4 @@ projection checksum.
 - [CLI verification and release](../../docs/rust-cli/verification-and-release.md)
 
 Current SDK delivery state is tracked in the
-[Public Rust SDK task](../../tasks/rust/public-rust-sdk.md).
+[Public Rust SDK plan](../../plans/rust/public-rust-sdk.md).

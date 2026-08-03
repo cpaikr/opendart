@@ -9,22 +9,21 @@ not authorize a registry, release, secret, or workflow side effect.
 
 ## Current
 
-_None. Rust product work remains deferred._
+- [Establish the handwritten SDK contract and Rust-native conformance gate](plans/rust/handwritten-sdk-contract-and-conformance.md)
+  fixes the reviewed Rust and CLI product interfaces and builds proportionate
+  evidence that does not use a shared cross-language projection or the
+  generated client as an oracle.
 
 ## Plans
 
-1. [Establish the handwritten SDK contract and Rust-native conformance gate](plans/rust/handwritten-sdk-contract-and-conformance.md)
-   fixes the reviewed Rust and CLI product interfaces and builds proportionate
-   evidence that does not use a shared cross-language projection or the
-   generated client as an oracle.
-2. [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
+1. [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
    owns the complete transition from the generated public implementation to one
    handwritten product path, including CLI adaptation, SDK generator deletion,
    active-documentation reconciliation, and offline package qualification.
-3. [Publish and adopt the public Rust SDK](tasks/rust/public-rust-sdk.md) remains
+2. [Publish and adopt the public Rust SDK](plans/rust/public-rust-sdk.md) remains
    the enabling delivery item after the handwritten package passes its complete
    release gate.
-4. [Publish and adopt the public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
+3. [Publish and adopt the public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
    remains blocked on a verified non-prerelease `opendart` registry release.
 
 The list is the intended work order. Capturing these plans does not start them

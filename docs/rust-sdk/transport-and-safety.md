@@ -9,7 +9,7 @@ transport-independent prepared-request API remains available without the
 client.
 
 Delivery state belongs in the
-[Public Rust SDK task](../../tasks/rust/public-rust-sdk.md).
+[Public Rust SDK plan](../../plans/rust/public-rust-sdk.md).
 
 ## Availability and construction
 

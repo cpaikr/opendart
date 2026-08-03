@@ -113,7 +113,7 @@ publish the crate, or finalize a CLI release.
 
 ## Boundaries
 
-- The [public SDK task](../../tasks/rust/public-rust-sdk.md) owns SDK registry
+- The [public SDK plan](public-rust-sdk.md) owns SDK registry
   publication and verification. This plan consumes its verified non-prerelease
   artifact; it does not broaden SDK release authority.
 - Initial CLI distribution is crates.io source only. Prebuilt archives,

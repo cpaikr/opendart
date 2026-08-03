@@ -141,7 +141,7 @@ endpoint total, and no layer exposes libopenapi types.
 
 ## Related work
 
-- [Public Rust SDK task](../../tasks/rust/public-rust-sdk.md)
+- [Public Rust SDK plan](../../plans/rust/public-rust-sdk.md)
 - [Rust SDK public contract](../rust-sdk/public-contract.md)
 - [Rust SDK generation](../rust-sdk/generation.md)
 - [Rust transport and safety](../rust-sdk/transport-and-safety.md)
