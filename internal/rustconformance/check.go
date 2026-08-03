@@ -76,7 +76,6 @@ type batchManifest = rustinterface.Batch
 type productOperation = rustinterface.Operation
 type responseView = rustinterface.ResponseView
 type physicalProduct = rustinterface.Physical
-type parameterProduct = rustinterface.Parameter
 
 type obligationManifest struct {
 	SchemaVersion int              `toml:"schema_version"`

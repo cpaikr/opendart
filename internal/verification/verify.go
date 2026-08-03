@@ -168,6 +168,8 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	); err != nil {
 		rule := "sdk-generation"
 		switch {
+		case errors.Is(err, sdkgen.ErrRustInterfaceInput):
+			rule = "rust-interface-input"
 		case errors.Is(err, sdkgen.ErrGeneratedMissing):
 			rule = "generated-missing"
 		case errors.Is(err, sdkgen.ErrGeneratedStale):
@@ -179,6 +181,9 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 		}
 		operation, location := "", ""
 		artifact := rustSDKOutput
+		if errors.Is(err, sdkgen.ErrRustInterfaceInput) {
+			artifact = rustInterfaceInput
+		}
 		var artifactError *sdkgen.ArtifactError
 		if errors.As(err, &artifactError) {
 			artifact = artifactError.Output

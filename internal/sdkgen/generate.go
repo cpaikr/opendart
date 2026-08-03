@@ -24,6 +24,7 @@ var (
 	ErrGeneratedStale      = errors.New("generated Rust artifact is stale")
 	ErrGeneratedUnexpected = errors.New("generated Rust artifact contains an unexpected file")
 	ErrGeneratedUnowned    = errors.New("generated Rust artifact ownership marker is invalid")
+	ErrRustInterfaceInput  = errors.New("rust interface input is invalid")
 )
 
 // ArtifactError identifies which owned projection failed freshness validation.
@@ -182,7 +183,7 @@ func renderRust(inputs RustInputs) (model.ArtifactSet, rustemitter.Artifacts, er
 	}
 	batches, err := rustinterface.ReadAll(inputs.Interface)
 	if err != nil {
-		return model.ArtifactSet{}, rustemitter.Artifacts{}, fmt.Errorf("load Rust interface input: %w", err)
+		return model.ArtifactSet{}, rustemitter.Artifacts{}, fmt.Errorf("%w: %w", ErrRustInterfaceInput, err)
 	}
 	generated, err := model.BuildArtifacts(surface, batches)
 	if err != nil {

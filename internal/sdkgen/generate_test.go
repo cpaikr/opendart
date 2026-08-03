@@ -59,6 +59,18 @@ func TestGenerateRustAcceptsOpenAPIOutsideRepositoryLayout(t *testing.T) {
 	}
 }
 
+func TestCheckRustFreshClassifiesWrappedInterfaceInputFailure(t *testing.T) {
+	inputs := canonicalInputs(t)
+	inputs.Interface = t.TempDir()
+	err := CheckRustFresh(inputs, testOutputs(t.TempDir()))
+	if !errors.Is(err, ErrRustInterfaceInput) {
+		t.Fatalf("error = %v, want ErrRustInterfaceInput", err)
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("error = %v, want wrapped os.ErrNotExist", err)
+	}
+}
+
 func TestCheckRustFreshRejectsTreeDrift(t *testing.T) {
 	tests := []struct {
 		name string
