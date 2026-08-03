@@ -1,0 +1,836 @@
+schema_version = 1
+
+[[case]]
+operation_id = "get_company_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = true
+
+[[case]]
+operation_id = "get_company_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = true
+
+[[case]]
+operation_id = "get_corpCode_xml"
+obligations = ["alternate-status", "prepare", "streaming"]
+executable = true
+
+[[case]]
+operation_id = "get_document_xml"
+obligations = ["alternate-status", "prepare", "streaming"]
+executable = false
+
+[[case]]
+operation_id = "get_list_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_list_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_accnutAdtorNmNdAdtOpinion_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_accnutAdtorNmNdAdtOpinion_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_accnutAdtorNonAdtServcCnclsSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_accnutAdtorNonAdtServcCnclsSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_adtServcCnclsSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_adtServcCnclsSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_alotMatter_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_alotMatter_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cndlCaplScritsNrdmpBlce_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cndlCaplScritsNrdmpBlce_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cprndNrdmpBlce_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cprndNrdmpBlce_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_detScritsIsuAcmslt_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_detScritsIsuAcmslt_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_drctrAdtAllMendngSttusGmtsckConfmAmount_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_drctrAdtAllMendngSttusGmtsckConfmAmount_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_drctrAdtAllMendngSttusMendngPymntamtTyCl_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_drctrAdtAllMendngSttusMendngPymntamtTyCl_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_empSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_empSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_entrprsBilScritsNrdmpBlce_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_entrprsBilScritsNrdmpBlce_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_exctvSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_exctvSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hmvAuditAllSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hmvAuditAllSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hmvAuditIndvdlBySttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hmvAuditIndvdlBySttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hmvAuditIndvdlBySttusV2_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hmvAuditIndvdlBySttusV2_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hyslrChgSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hyslrChgSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hyslrSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_hyslrSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_indvdlByPay_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_indvdlByPay_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_indvdlByPayV2_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_indvdlByPayV2_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_irdsSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_irdsSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_mrhlSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_mrhlSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_newCaplScritsNrdmpBlce_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_newCaplScritsNrdmpBlce_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_otrCprInvstmntSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_otrCprInvstmntSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_outcmpnyDrctrNdChangeSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_outcmpnyDrctrNdChangeSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_prvsrpCptalUseDtls_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_prvsrpCptalUseDtls_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_pssrpCptalUseDtls_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_pssrpCptalUseDtls_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_srtpdPsndbtNrdmpBlce_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_srtpdPsndbtNrdmpBlce_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stockTotqySttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stockTotqySttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tesstkAcqsDspsSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tesstkAcqsDspsSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_unrstExctvMendngSttus_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_unrstExctvMendngSttus_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttCmpnyIndx_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttCmpnyIndx_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttMultiAcnt_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttMultiAcnt_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttSinglAcnt_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttSinglAcnt_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttSinglAcntAll_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttSinglAcntAll_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttSinglIndx_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttSinglIndx_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fnlttXbrl_xml"
+obligations = ["alternate-status", "prepare", "streaming"]
+executable = false
+
+[[case]]
+operation_id = "get_xbrlTaxonomy_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_xbrlTaxonomy_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_elestock_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_elestock_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_majorstock_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_majorstock_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_astInhtrfEtcPtbkOpt_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_astInhtrfEtcPtbkOpt_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bdwtIsDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bdwtIsDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bnkMngtPcbg_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bnkMngtPcbg_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bnkMngtPcsp_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bnkMngtPcsp_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bsnInhDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bsnInhDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bsnSp_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bsnSp_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bsnTrfDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bsnTrfDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cmpDvDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cmpDvDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cmpDvmgDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cmpDvmgDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cmpMgDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cmpMgDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_crDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_crDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ctrcvsBgrq_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ctrcvsBgrq_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cvbdIsDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_cvbdIsDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_dfOcr_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_dfOcr_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_dsRsOcr_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_dsRsOcr_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_exbdIsDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_exbdIsDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fricDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_fricDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_lwstLg_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_lwstLg_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_otcprStkInvscrInhDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_otcprStkInvscrInhDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_otcprStkInvscrTrfDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_otcprStkInvscrTrfDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ovDlst_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ovDlst_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ovDlstDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ovDlstDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ovLst_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ovLst_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ovLstDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_ovLstDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_pifricDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_pifricDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_piicDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_piicDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stkExtrDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stkExtrDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stkrtbdInhDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stkrtbdInhDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stkrtbdTrfDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stkrtbdTrfDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tgastInhDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tgastInhDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tgastTrfDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tgastTrfDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tsstkAqDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tsstkAqDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tsstkAqTrctrCcDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tsstkAqTrctrCcDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tsstkAqTrctrCnsDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tsstkAqTrctrCnsDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tsstkDpDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_tsstkDpDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_wdCocobdIsDecsn_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_wdCocobdIsDecsn_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bdRs_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_bdRs_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_dvRs_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_dvRs_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_estkRs_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_estkRs_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_extrRs_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_extrRs_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_mgRs_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_mgRs_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stkdpRs_json"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false
+
+[[case]]
+operation_id = "get_stkdpRs_xml"
+obligations = ["decoder", "prepare", "response-binding"]
+executable = false

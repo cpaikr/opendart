@@ -1,11 +1,43 @@
 package contractfixtures
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 )
+
+func TestVerifyBodyRequiresExactDeclaredSize(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, "bodies"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	body := []byte(`{"status":"000"}`)
+	path := filepath.Join(root, "bodies", "success.json")
+	if err := os.WriteFile(path, body, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	digest := sha256.Sum256(body)
+	item := responseCase{
+		ID:     "exact-size",
+		File:   "bodies/success.json",
+		SHA256: hex.EncodeToString(digest[:]),
+		Bytes:  int64(len(body)),
+	}
+	if err := verifyBody(root, item); err != nil {
+		t.Fatalf("exact declared size rejected: %v", err)
+	}
+	item.Bytes++
+	if err := verifyBody(root, item); err == nil {
+		t.Fatal("incorrect declared size accepted")
+	}
+	item.Bytes = 0
+	if err := verifyBody(root, item); err == nil {
+		t.Fatal("undeclared size accepted")
+	}
+}
 
 func TestCheckRepositoryCorpus(t *testing.T) {
 	_, file, _, ok := runtime.Caller(0)

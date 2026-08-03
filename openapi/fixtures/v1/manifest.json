@@ -47,6 +47,7 @@
       "outcome": "typed-success",
       "file": "bodies/company-success.json",
       "sha256": "6f1118c76c260332583a9d8edaba5d811133e7adc93db393f0a83d1b1ad5cb4b",
+      "bytes": 80,
       "provenance": {"kind": "synthetic", "rationale": "typed JSON, additive fields, and exact-number evidence"}
     },
     {
@@ -56,6 +57,7 @@
       "outcome": "typed-success",
       "file": "bodies/company-success.xml",
       "sha256": "38ae72c80746a7588f2dac3edd918a27409f3076409b670488a68a05c0f98c40",
+      "bytes": 94,
       "provenance": {"kind": "synthetic", "rationale": "typed XML and additive element evidence"}
     },
     {
@@ -65,6 +67,7 @@
       "outcome": "source-status",
       "file": "bodies/status-013.json",
       "sha256": "42c03e1de37e1ede9771a22f44b049b491b02f4954766e07c55d6bf652b7be2e",
+      "bytes": 53,
       "provenance": {"kind": "synthetic", "rationale": "documented status classification with additive evidence"}
     },
     {
@@ -74,6 +77,7 @@
       "outcome": "http-status-failure",
       "file": "bodies/company-success.json",
       "sha256": "6f1118c76c260332583a9d8edaba5d811133e7adc93db393f0a83d1b1ad5cb4b",
+      "bytes": 80,
       "provenance": {"kind": "synthetic", "rationale": "HTTP status takes precedence over a contradictory success body"}
     },
     {
@@ -83,6 +87,7 @@
       "outcome": "source-status",
       "file": "bodies/zip-error-010.xml",
       "sha256": "091f3f3010e29761667823aad9be5c3a2c69230a6018004b5a95f7cb1b23bdd9",
+      "bytes": 70,
       "provenance": {"kind": "synthetic", "observation": "zip-endpoints-may-return-xml-status"}
     },
     {
@@ -92,7 +97,8 @@
       "outcome": "decode-failure",
       "file": "bodies/wrong-root.xml",
       "sha256": "cc2f271be2e4d301f216aa03e2506ebeebca7b093b30aff2da9188fd267b9381",
-      "provenance": {"kind": "synthetic", "rationale": "generated XML root contract"}
+      "bytes": 69,
+      "provenance": {"kind": "synthetic", "rationale": "documented XML root contract"}
     },
     {
       "id": "malformed-json",
@@ -101,6 +107,7 @@
       "outcome": "envelope-failure",
       "file": "bodies/malformed.json",
       "sha256": "ca625b966ad77efb7637b3a040e24410be67f79f2c0d174764e49444053f5d7f",
+      "bytes": 17,
       "provenance": {"kind": "synthetic", "rationale": "fail-closed malformed envelope"}
     }
   ]

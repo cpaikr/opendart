@@ -1,0 +1,59 @@
+schema_version = 1
+activation = "handwritten-sdk-cutover"
+
+# These guards are reviewed now and deliberately inactive while the generated
+# implementation remains the current product. The cutover activates all four
+# together; the repository checker then enforces their file and symbol rules.
+
+[[guard]]
+id = "generated-sdk-exports"
+kind = "public-contract"
+active = false
+artifacts = ["sdk/rust/crates/opendart/src/lib.rs"]
+forbidden = [
+  "mod generated;",
+  "pub use generated::operations;",
+  "pub use generated::responses;",
+]
+must_be_absent = ["sdk/rust/crates/opendart/src/generated"]
+
+[[guard]]
+id = "generator-provenance"
+kind = "public-contract"
+active = false
+artifacts = [
+  "sdk/rust/crates/opendart/src",
+]
+forbidden = [
+  "GENERATOR_SCHEMA",
+  "PROJECTION_CHECKSUM",
+  "generator_schema",
+  "projection_identity",
+  "projection_sha256",
+]
+
+[[guard]]
+id = "public-implementation-selector"
+kind = "compile-time"
+active = false
+[[guard.target]]
+artifacts = ["sdk/rust/crates/opendart/Cargo.toml"]
+forbidden = ["generated =", "handwritten ="]
+
+[[guard.target]]
+artifacts = ["sdk/rust/crates/opendart/src"]
+forbidden = [
+  'cfg(feature = "generated")',
+  'cfg(feature = "handwritten")',
+  "pub enum Implementation",
+  "pub struct Implementation",
+  "pub fn implementation(",
+  "pub fn with_implementation(",
+]
+
+[[guard]]
+id = "second-structured-execution-result"
+kind = "public-contract"
+active = false
+artifacts = ["sdk/rust/crates/opendart/src"]
+forbidden = ["pub async fn execute_raw"]

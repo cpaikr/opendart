@@ -1,0 +1,145 @@
+schema_version = 1
+family = "DS001"
+
+[accessors]
+source = "source"
+status = "status"
+message = "message"
+items = "items"
+field = "field"
+
+[[operation]]
+logical_id = "DS001-2019001"
+rust_module = "disclosure"
+rust_input = "DisclosureSearchInput"
+cli_command = "search-disclosures"
+cli_alias = "DS001-2019001"
+
+[[operation.physical]]
+operation_id = "get_list_json"
+rust_method = "prepare_json"
+rust_response = "DisclosureSearchJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_list_xml"
+rust_method = "prepare_xml"
+rust_response = "DisclosureSearchXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.parameter]]
+openapi_name = "last_reprt_at"
+rust_name = "final_reports_only"
+cli_flag = "final-reports-only"
+
+[[operation.parameter]]
+openapi_name = "pblntf_ty"
+rust_name = "disclosure_type"
+cli_flag = "disclosure-type"
+
+[[operation.parameter]]
+openapi_name = "pblntf_detail_ty"
+rust_name = "disclosure_detail_type"
+cli_flag = "disclosure-detail-type"
+
+[[operation.parameter]]
+openapi_name = "corp_cls"
+rust_name = "company_class"
+cli_flag = "company-class"
+
+[[operation.parameter]]
+openapi_name = "sort"
+rust_name = "sort_by"
+cli_flag = "sort-by"
+
+[[operation.parameter]]
+openapi_name = "sort_mth"
+rust_name = "sort_order"
+cli_flag = "sort-order"
+
+[[operation.parameter]]
+openapi_name = "page_no"
+rust_name = "page"
+cli_flag = "page"
+
+[[operation.parameter]]
+openapi_name = "page_count"
+rust_name = "page_size"
+cli_flag = "page-size"
+
+[[operation.response_view]]
+path = "$"
+accessors = { page_no = "page_number", page_count = "page_size", total_count = "total_count", total_page = "total_pages" }
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "DisclosureSummary"
+accessors = { corp_cls = "company_class", corp_name = "company_name", corp_code = "company_code", stock_code = "stock_code", report_nm = "report_name", rcept_no = "receipt_number", flr_nm = "filer_name", rcept_dt = "receipt_date", rm = "remarks" }
+
+[[operation]]
+logical_id = "DS001-2019002"
+rust_module = "disclosure"
+rust_input = "CompanyOverviewInput"
+cli_command = "company-overview"
+cli_alias = "DS001-2019002"
+
+[[operation.physical]]
+operation_id = "get_company_json"
+rust_method = "prepare_json"
+rust_response = "CompanyOverviewJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_company_xml"
+rust_method = "prepare_xml"
+rust_response = "CompanyOverviewXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = { corp_name = "legal_name", corp_name_eng = "english_legal_name", stock_name = "display_name", stock_code = "stock_code", ceo_nm = "chief_executive_name", corp_cls = "company_class", jurir_no = "corporate_registration_number", bizr_no = "business_registration_number", adres = "address", hm_url = "website_url", ir_url = "investor_relations_url", phn_no = "phone_number", fax_no = "fax_number", induty_code = "industry_code", est_dt = "establishment_date", acc_mt = "fiscal_year_end_month" }
+
+[[operation]]
+logical_id = "DS001-2019003"
+rust_module = "disclosure"
+rust_input = "DisclosureDocumentInput"
+cli_command = "download-disclosure-document"
+cli_alias = "DS001-2019003"
+
+[[operation.physical]]
+operation_id = "get_document_xml"
+rust_method = "prepare_archive"
+rust_response = "DisclosureDocumentArchiveResponse"
+
+[[operation.parameter]]
+openapi_name = "rcept_no"
+rust_name = "receipt_number"
+cli_flag = "receipt-number"
+
+[[operation]]
+logical_id = "DS001-2019018"
+rust_module = "disclosure"
+rust_input = "CompanyCodesInput"
+cli_command = "download-company-codes"
+cli_alias = "DS001-2019018"
+
+[[operation.physical]]
+operation_id = "get_corpCode_xml"
+rust_method = "prepare_archive"
+rust_response = "CompanyCodesArchiveResponse"

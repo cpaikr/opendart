@@ -1,5 +1,7 @@
 # Establish the handwritten SDK contract and Rust-native conformance gate
 
+Status: implementation complete; PR delivery pending
+
 ## Outcome
 
 The repository has an accepted, testable contract for its only Rust OpenDART
@@ -9,23 +11,28 @@ named, and an offline Rust-native gate can reject implementation errors without
 treating the generated client or the conformer's construction path as an
 oracle.
 
-## Current state
+## Delivery state
 
-- [ADR 0004](../../docs/decisions/0004-handwritten-rust-sdk-conformer.md)
-  accepts the handwritten-only target and amends the generated-conformer parts
-  of ADRs 0002 and 0003. The generated implementation remains the current
-  product path until the single implementation-and-cutover plan completes.
-- The generated SDK covers every physical operation and is deterministic, but
-  its normalized model and renderer create correlated-failure risk.
-  Reproducibility does not prove protocol conformance.
-- Handwritten request, authorization, wire-inspection, response-evidence, and
-  safe-client modules already establish the intended pure and secure seams.
-- The independent fictional evidence corpus has two request cases and seven
-  response cases. It proves important cross-boundary protocol families and is
-  retained, but it is not an exhaustive parallel wire contract.
-- No accepted SDK registry artifact, tag, or release constrains the replacement
-  interface. The interrupted `0.1.0-beta.1` draft remains a release tombstone,
-  not a compatibility source.
+- The six reviewed interface manifests cover all 85 logical and 167 physical
+  operations with exact Rust and CLI product names, 171 recursive structured
+  response views, and 1,900 schema-backed accessor mappings.
+- The OpenAPI-derived checker enforces identity, parameter, authentication,
+  representation, normalized schema, namespace, alias, response-view, and
+  case-obligation consistency without using generated Rust output as an oracle.
+- Private handwritten JSON, XML, and ZIP pilots cross the public preparation,
+  interpretation, and streaming seams. Deterministic faulty prepared requests,
+  validators, and decoders prove rejection of every protected mutation family.
+- The retained fictional corpus is bounded and digest-checked, and its JSON,
+  XML, ZIP, provider-status, HTTP-status, malformed, wrong-root, unknown-field,
+  unknown-status, and credential-reflection evidence runs offline.
+- Four atomic cutover guards are reviewed but inactive while the generated SDK
+  remains the current public product. They cover generated exports and source,
+  generator and projection provenance, public implementation selection, and a
+  second structured execution result.
+- Focused conformance, full Go verification, Rust tests, strict Clippy, package
+  qualification evidence, release guards, and independent implementation and
+  system reviews pass without changing current public behavior or publication
+  state.
 
 ## Plan contract
 
@@ -210,7 +217,8 @@ This Rust plan neither changes nor certifies those Go commands.
 
 ## Next action
 
-Define the name-only interface manifest format, author and approve the DS001
-batch, repeat through DS006, and pass the global consistency gate. Then complete
-the case-obligation inventory and executable representative JSON, XML, and ZIP
-cases with deterministic faulty-adapter controls before scaling implementation.
+Finish this result's PR review and merge it into `rust`. Then mark the result
+complete and execute [the CLI presentation projection plan](cli-presentation-projection.md).
+Keep the generated SDK as the sole runtime conformer until that plan is
+independently complete; do not scale the handwritten operation inventory before
+then.

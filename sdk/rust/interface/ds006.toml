@@ -1,0 +1,285 @@
+schema_version = 1
+family = "DS006"
+
+[accessors]
+source = "source"
+status = "status"
+message = "message"
+items = "items"
+field = "field"
+
+[[operation]]
+logical_id = "DS006-2020054"
+rust_module = "registration_statement"
+rust_input = "EquitySecuritiesRegistrationInput"
+cli_command = "equity-securities-registrations"
+cli_alias = "DS006-2020054"
+
+[[operation.physical]]
+operation_id = "get_estkRs_json"
+rust_method = "prepare_json"
+rust_response = "EquitySecuritiesRegistrationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_estkRs_xml"
+rust_method = "prepare_xml"
+rust_response = "EquitySecuritiesRegistrationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.group[]"
+rust_type = "EquitySecuritiesRegistrationSection"
+accessors = { title = "title" }
+
+[[operation.response_view]]
+path = "$.group[].list[]"
+rust_type = "EquitySecuritiesRegistrationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", sbd = "subscription_date", pymd = "payment_date", sband = "subscription_notice_date", asand = "allocation_notice_date", asstd = "allocation_record_date", exstk = "warrant_underlying_security", exprc = "warrant_exercise_price", expd = "warrant_exercise_period", rpt_rcpn = "material_event_receipt_number", stksen = "security_type", stkcnt = "security_quantity", fv = "face_value", slprc = "offering_price", slta = "offering_total", slmthn = "offering_method", actsen = "underwriter_type", actnmn = "underwriter_name", udtcnt = "underwriting_quantity", udtamt = "underwriting_amount", udtprc = "underwriting_consideration", udtmth = "underwriting_method", se = "category", amt = "amount", hdr = "holder", rl_cmp = "relationship_to_company", bfsl_hdstk = "holdings_before_sale", slstk = "securities_sold", atsl_hdstk = "holdings_after_sale", grtrs = "grant_reason", exavivr = "eligible_exercise_investors", grtcnt = "granted_quantity" }
+
+[[operation]]
+logical_id = "DS006-2020055"
+rust_module = "registration_statement"
+rust_input = "DebtSecuritiesRegistrationInput"
+cli_command = "debt-securities-registrations"
+cli_alias = "DS006-2020055"
+
+[[operation.physical]]
+operation_id = "get_bdRs_json"
+rust_method = "prepare_json"
+rust_response = "DebtSecuritiesRegistrationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_bdRs_xml"
+rust_method = "prepare_xml"
+rust_response = "DebtSecuritiesRegistrationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.group[]"
+rust_type = "DebtSecuritiesRegistrationSection"
+accessors = { title = "title" }
+
+[[operation.response_view]]
+path = "$.group[].list[]"
+rust_type = "DebtSecuritiesRegistrationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", tm = "tranche", bdnmn = "debt_security_name", slmth = "offering_method", fta = "aggregate_face_amount", slta = "offering_total", isprc = "issue_price", intr = "interest_rate", isrr = "issue_yield", rpd = "maturity_date", print_pymint = "principal_interest_payment_agent", mngt_cmp = "bond_manager", cdrt_int = "credit_rating_and_agency", sbd = "subscription_date", pymd = "payment_date", sband = "subscription_notice_date", asand = "allocation_notice_date", asstd = "allocation_record_date", dpcrn = "denomination_currency", dpcr_amt = "denomination_issue_amount", usarn = "use_region", usntn = "use_country", wnexpl_at = "won_exchange_planned", udtintnm = "underwriting_institution_name", grt_int = "guarantor", grt_amt = "guaranteed_amount", icmg_mgknd = "collateral_type", icmg_mgamt = "collateral_amount", estk_exstk = "linked_equity_security", estk_exrt = "exercise_ratio", estk_exprc = "exercise_price", estk_expd = "exercise_period", rpt_rcpn = "material_event_receipt_number", drcb_at = "is_derivative_linked_bond", drcb_uast = "underlying_asset", drcb_optknd = "option_type", drcb_mtd = "derivative_bond_maturity_date", actsen = "underwriter_type", actnmn = "underwriter_name", stksen = "security_type", udtcnt = "underwriting_quantity", udtamt = "underwriting_amount", udtprc = "underwriting_consideration", udtmth = "underwriting_method", se = "category", amt = "amount", hdr = "holder", rl_cmp = "relationship_to_company", bfsl_hdstk = "holdings_before_sale", slstk = "securities_sold", atsl_hdstk = "holdings_after_sale" }
+
+[[operation]]
+logical_id = "DS006-2020056"
+rust_module = "registration_statement"
+rust_input = "DepositaryReceiptRegistrationInput"
+cli_command = "depositary-receipt-registrations"
+cli_alias = "DS006-2020056"
+
+[[operation.physical]]
+operation_id = "get_stkdpRs_json"
+rust_method = "prepare_json"
+rust_response = "DepositaryReceiptRegistrationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_stkdpRs_xml"
+rust_method = "prepare_xml"
+rust_response = "DepositaryReceiptRegistrationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.group[]"
+rust_type = "DepositaryReceiptRegistrationSection"
+accessors = { title = "title" }
+
+[[operation.response_view]]
+path = "$.group[].list[]"
+rust_type = "DepositaryReceiptRegistrationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", sbd = "subscription_date", pymd = "payment_date", sband = "subscription_notice_date", asand = "allocation_notice_date", asstd = "allocation_record_date", exstk = "warrant_underlying_security", exprc = "warrant_exercise_price", expd = "warrant_exercise_period", rpt_rcpn = "material_event_receipt_number", stksen = "security_type", stkcnt = "security_quantity", fv = "face_value", slprc = "offering_price", slta = "offering_total", slmthn = "offering_method", actsen = "underwriter_type", actnmn = "underwriter_name", udtcnt = "underwriting_quantity", udtamt = "underwriting_amount", udtprc = "underwriting_consideration", udtmth = "underwriting_method", se = "category", amt = "amount", hdr = "holder", rl_cmp = "relationship_to_company", bfsl_hdstk = "holdings_before_sale", slstk = "securities_sold", atsl_hdstk = "holdings_after_sale" }
+
+[[operation]]
+logical_id = "DS006-2020057"
+rust_module = "registration_statement"
+rust_input = "MergerRegistrationInput"
+cli_command = "merger-registrations"
+cli_alias = "DS006-2020057"
+
+[[operation.physical]]
+operation_id = "get_mgRs_json"
+rust_method = "prepare_json"
+rust_response = "MergerRegistrationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_mgRs_xml"
+rust_method = "prepare_xml"
+rust_response = "MergerRegistrationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.group[]"
+rust_type = "MergerRegistrationSection"
+accessors = { title = "title" }
+
+[[operation.response_view]]
+path = "$.group[].list[]"
+rust_type = "MergerRegistrationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", stn = "transaction_form", bddd = "board_resolution_date", ctrd = "contract_date", gmtsck_shddstd = "shareholder_record_date", ap_gmtsck = "approval_shareholder_meeting_date", aprskh_pd_bgd = "appraisal_rights_start_date", aprskh_pd_edd = "appraisal_rights_end_date", aprskh_prc = "appraisal_rights_price", mgdt_etc = "transaction_effective_date", rt_vl = "ratio_or_value", exevl_int = "external_valuation_firm", grtmn_etc = "cash_or_other_consideration", rpt_rcpn = "material_event_receipt_number", kndn = "security_type", cnt = "quantity", fv = "face_value", slprc = "offering_price", slta = "offering_total", cmpnm = "counterparty_company_name", sen = "party_type", tast = "total_assets", cpt = "paid_in_capital", isstk_knd = "issued_share_type", isstk_cnt = "issued_share_count" }
+
+[[operation]]
+logical_id = "DS006-2020058"
+rust_module = "registration_statement"
+rust_input = "ShareExchangeTransferRegistrationInput"
+cli_command = "share-exchange-transfer-registrations"
+cli_alias = "DS006-2020058"
+
+[[operation.physical]]
+operation_id = "get_extrRs_json"
+rust_method = "prepare_json"
+rust_response = "ShareExchangeTransferRegistrationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_extrRs_xml"
+rust_method = "prepare_xml"
+rust_response = "ShareExchangeTransferRegistrationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.group[]"
+rust_type = "ShareExchangeTransferRegistrationSection"
+accessors = { title = "title" }
+
+[[operation.response_view]]
+path = "$.group[].list[]"
+rust_type = "ShareExchangeTransferRegistrationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", stn = "transaction_form", bddd = "board_resolution_date", ctrd = "contract_date", gmtsck_shddstd = "shareholder_record_date", ap_gmtsck = "approval_shareholder_meeting_date", aprskh_pd_bgd = "appraisal_rights_start_date", aprskh_pd_edd = "appraisal_rights_end_date", aprskh_prc = "appraisal_rights_price", mgdt_etc = "transaction_effective_date", rt_vl = "ratio_or_value", exevl_int = "external_valuation_firm", grtmn_etc = "cash_or_other_consideration", rpt_rcpn = "material_event_receipt_number", kndn = "security_type", cnt = "quantity", fv = "face_value", slprc = "offering_price", slta = "offering_total", cmpnm = "counterparty_company_name", sen = "party_type", tast = "total_assets", cpt = "paid_in_capital", isstk_knd = "issued_share_type", isstk_cnt = "issued_share_count" }
+
+[[operation]]
+logical_id = "DS006-2020059"
+rust_module = "registration_statement"
+rust_input = "DemergerRegistrationInput"
+cli_command = "demerger-registrations"
+cli_alias = "DS006-2020059"
+
+[[operation.physical]]
+operation_id = "get_dvRs_json"
+rust_method = "prepare_json"
+rust_response = "DemergerRegistrationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_dvRs_xml"
+rust_method = "prepare_xml"
+rust_response = "DemergerRegistrationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.group[]"
+rust_type = "DemergerRegistrationSection"
+accessors = { title = "title" }
+
+[[operation.response_view]]
+path = "$.group[].list[]"
+rust_type = "DemergerRegistrationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", stn = "transaction_form", bddd = "board_resolution_date", ctrd = "contract_date", gmtsck_shddstd = "shareholder_record_date", ap_gmtsck = "approval_shareholder_meeting_date", aprskh_pd_bgd = "appraisal_rights_start_date", aprskh_pd_edd = "appraisal_rights_end_date", aprskh_prc = "appraisal_rights_price", mgdt_etc = "transaction_effective_date", rt_vl = "ratio_or_value", exevl_int = "external_valuation_firm", grtmn_etc = "cash_or_other_consideration", rpt_rcpn = "material_event_receipt_number", kndn = "security_type", cnt = "quantity", fv = "face_value", slprc = "offering_price", slta = "offering_total", cmpnm = "counterparty_company_name", sen = "party_type", tast = "total_assets", cpt = "paid_in_capital", isstk_knd = "issued_share_type", isstk_cnt = "issued_share_count" }

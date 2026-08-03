@@ -13,9 +13,10 @@ operations and repository-wide policy belong in
 
 The verification details below describe the current generated implementation.
 [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md) accepts the
-replacement gate—Rust-native conformance, retained independent evidence, and
-CLI-only projection freshness—but those checks replace the current ones only
-with the handwritten implementation cutover.
+replacement contract. Its independent inventory, retained evidence, and
+representative handwritten JSON/XML/ZIP pilot already run privately; generated
+freshness remains authoritative for the public product until the handwritten
+implementation cutover.
 
 ## Verification interface
 
@@ -24,6 +25,9 @@ From the repository root:
 ```sh
 # Focused edit loop
 ./scripts/verify fast rust -p opendart
+
+# Focused offline Rust-native inventory, evidence, and mutation gate
+./scripts/verify rust-conformance
 
 # Required Linux Rust contract
 ./scripts/verify rust
@@ -41,6 +45,11 @@ Native macOS and Windows artifact checks remain CI-owned.
 
 The private Go verifier requires:
 
+- exact reviewed Rust and CLI name coverage for 85 logical operations and 167
+  physical operations;
+- one applicable obligation set per physical operation and representative
+  executable JSON, XML, and ZIP coverage;
+- retained fixture provenance, SHA-256 digest, and exact bounded byte size;
 - exact canonical-to-generated physical-operation coverage;
 - stable logical pairing, response routing, and generated request vectors;
 - deterministic owned SDK and CLI projections;
@@ -50,6 +59,12 @@ The private Go verifier requires:
 - approved workflow, permission, action-pin, and Release Please policy.
 
 It never contacts OpenDART and does not replace Cargo compilation.
+
+The focused `rust-conformance` mode combines that repository inventory and
+fixture verification with the private handwritten pilot and its deterministic
+fault adapters. It requires only committed local inputs and locked offline
+Cargo dependencies. It neither selects nor certifies the generated client as
+an oracle.
 
 ### Cargo verification
 

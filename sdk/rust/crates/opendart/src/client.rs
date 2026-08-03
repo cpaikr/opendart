@@ -907,6 +907,32 @@ async fn classify_binary(
     })
 }
 
+#[cfg(all(test, opendart_compat))]
+pub(crate) async fn classify_binary_fixture(
+    chunks: Vec<Bytes>,
+    inspector: WireInspector,
+    expected_xml_root: Option<&'static str>,
+) -> BinaryReply<BodyStream> {
+    classify_binary(
+        Box::pin(FixtureStream(chunks.into_iter().collect())),
+        inspector,
+        expected_xml_root,
+    )
+    .await
+}
+
+#[cfg(all(test, opendart_compat))]
+struct FixtureStream(VecDeque<Bytes>);
+
+#[cfg(all(test, opendart_compat))]
+impl Stream for FixtureStream {
+    type Item = Result<Bytes, TransportFailureKind>;
+
+    fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        Poll::Ready(self.0.pop_front().map(Ok))
+    }
+}
+
 struct OneErrorStream(Option<TransportFailureKind>);
 
 impl Stream for OneErrorStream {
