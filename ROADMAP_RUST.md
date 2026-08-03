@@ -9,12 +9,11 @@ not authorize a registry, release, secret, or workflow side effect.
 
 ## Current
 
-- [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
-  completes upon merge of PR #76 after clean exhaustive offline qualification
-  and independent and Codex review with no actionable findings. The reviewed
-  product state contains one handwritten SDK conformer, no generated SDK source
-  or generator, and a retargeted private CLI dispatch; final required checks
-  and merge are the only remaining delivery transitions.
+- No authorized Rust implementation is active. The
+  [handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
+  completed in PR #76 after clean exhaustive offline qualification, final-head
+  CI, and independent and Codex review with no actionable findings. Public SDK
+  publication remains queued but has not started.
 
 ## Plans
 
@@ -23,10 +22,10 @@ not authorize a registry, release, secret, or workflow side effect.
    and isolated dispatch before the later conformer cutover retargeted that
    dispatch without changing the public projection.
 2. [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
-   owns the complete transition from the generated public implementation to one
-   handwritten product path, including private CLI dispatch retargeting, SDK
-   generator deletion, active-documentation reconciliation, and offline package
-   qualification.
+   completed in PR #76. It transitioned the generated public implementation to
+   one handwritten product path, including private CLI dispatch retargeting,
+   SDK generator deletion, active-documentation reconciliation, and offline
+   package qualification.
 3. [Publish and adopt the public Rust SDK](plans/rust/public-rust-sdk.md) remains
    the enabling delivery item after the handwritten package passes its complete
    release gate.

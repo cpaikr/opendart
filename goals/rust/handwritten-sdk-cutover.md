@@ -1,6 +1,6 @@
 # Goal: Deliver the offline-qualified handwritten Rust SDK conformer
 
-Status: complete upon merge of PR #76
+Status: complete
 Planning scope: ROADMAP_RUST.md
 
 ## Original contract
@@ -33,18 +33,17 @@ _None._
   complete offline qualification, independent review, feedback resolution, and
   PR delivery completed in [PR #75](https://github.com/cpaikr/opendart/pull/75).
 
-### Current in-scope result
+### Completed final in-scope result
 
 Handwritten SDK implementation, CLI retargeting, generated-SDK deletion,
 documentation reconciliation, and offline package qualification. Every result
-and completion criterion is satisfied on the reviewed PR head; merge of
-[PR #76](https://github.com/cpaikr/opendart/pull/76) completes delivery and this
-goal.
+and completion criterion was satisfied on the reviewed head and delivered in
+[PR #76](https://github.com/cpaikr/opendart/pull/76).
 
 ### Next in-scope action
 
-Wait for the final required checks on PR #76 and merge it into `rust`. Public
-SDK publication remains deferred and requires separate authority.
+No in-scope action remains. Public SDK publication remains deferred and
+requires separate authority.
 
 ### Evidence and blockers
 
@@ -92,8 +91,7 @@ SDK publication remains deferred and requires separate authority.
   and Rust contract, including full race detection, strict feature and target
   checks, exact package inventories, freshly extracted SDK all-feature test
   compilation, and clean CLI installation, all without credentials.
-- Result-three delivery: PR #76 is open against `rust`. Independent reviews and
-  Codex PR review completed with no actionable findings; the CodeRabbit check
-  passed without review because automatic reviews are disabled for the
-  repository. The final required checks are active, and merge is the only
-  remaining delivery transition.
+- Result-three delivery: PR #76 merged into `rust` as `8167e45` after every
+  required check passed. Independent reviews and Codex PR review completed with
+  no actionable findings; the CodeRabbit check passed without review because
+  automatic reviews are disabled for the repository.
