@@ -36,14 +36,15 @@ _None._
 ### Current in-scope result
 
 Handwritten SDK implementation, CLI retargeting, generated-SDK deletion,
-documentation reconciliation, and offline package qualification. The result is
-active from merge commit `176f440`.
+documentation reconciliation, and offline package qualification. The reviewed
+implementation is committed as `16be5b3` and delivery is active in
+[PR #76](https://github.com/cpaikr/opendart/pull/76).
 
 ### Next in-scope action
 
-Run clean-tree exhaustive offline qualification, deliver the final cutover PR,
-and resolve its review and required checks. Public SDK publication remains
-deferred and requires separate authority.
+Resolve review and required checks on PR #76, merge it into `rust`, and close
+this goal. Public SDK publication remains deferred and requires separate
+authority.
 
 ### Evidence and blockers
 
@@ -86,5 +87,11 @@ deferred and requires separate authority.
 - Result-three review: design, SDK, CLI/tooling, and system reviewers confirmed
   the single-conformer architecture, per-operation locality, source-backed
   wrappers, package and release boundaries, and final conformance closure with
-  no remaining actionable findings. Final clean qualification and PR delivery
-  are active.
+  no remaining actionable findings.
+- Result-three validation: clean `./scripts/verify exhaustive` passes every Go
+  and Rust contract, including full race detection, strict feature and target
+  checks, exact package inventories, freshly extracted SDK all-feature test
+  compilation, and clean CLI installation, all without credentials.
+- Result-three delivery: PR #76 is open against `rust` with its initial
+  CodeRabbit review requested; required checks and feedback resolution are
+  active.

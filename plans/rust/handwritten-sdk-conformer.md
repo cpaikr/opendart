@@ -1,6 +1,6 @@
 # Implement and cut over the handwritten Rust SDK conformer
 
-Status: active from merge `176f440`
+Status: delivery active in PR #76 from commit `16be5b3`
 
 ## Outcome
 
@@ -230,8 +230,8 @@ to preserve generator-shaped compatibility.
 
 ## Next action
 
-Run clean-tree exhaustive offline qualification, deliver the cutover PR, and
-resolve its review and required checks. Exhaustive public structured
-interpretation, ZIP alternate-status execution, operation-local validation, and
-OpenAPI-bound response topology mutation controls are complete. Public SDK
-publication remains deferred.
+Resolve review and required checks on PR #76, then merge it into `rust`.
+Clean-tree exhaustive offline qualification, public structured interpretation,
+ZIP alternate-status execution, operation-local validation, and OpenAPI-bound
+response topology mutation controls are complete. Public SDK publication
+remains deferred.
