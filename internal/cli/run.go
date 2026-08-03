@@ -44,8 +44,8 @@ func RunContext(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return runLint(args[1:], stdout, stderr)
 	case "bundle":
 		return runBundle(args[1:], stdout, stderr)
-	case "generate-sdk":
-		return runGenerateSDK(args[1:], stdout, stderr)
+	case "generate-cli":
+		return runGenerateCLI(args[1:], stdout, stderr)
 	case "verify":
 		return runVerify(args[1:], stdout, stderr)
 	case "guide-drift":
@@ -156,44 +156,35 @@ func runBundle(args []string, stdout, stderr io.Writer) int {
 type verificationRunner func(string) (verification.Report, error)
 type crateVerificationRunner func(crateverification.Options) (crateverification.Report, error)
 
-type sdkGenerationRunner func(sdkgen.RustInputs, sdkgen.RustOutputs) (sdkgen.Report, error)
+type cliGenerationRunner func(sdkgen.Inputs, string) (sdkgen.Report, error)
 
-func runGenerateSDK(args []string, stdout, stderr io.Writer) int {
-	return runGenerateSDKWith(args, stdout, stderr, sdkgen.GenerateRust)
+func runGenerateCLI(args []string, stdout, stderr io.Writer) int {
+	return runGenerateCLIWith(args, stdout, stderr, sdkgen.GenerateCLI)
 }
 
-func runGenerateSDKWith(args []string, stdout, stderr io.Writer, runner sdkGenerationRunner) int {
-	flags := flag.NewFlagSet("generate-sdk", flag.ContinueOnError)
+func runGenerateCLIWith(args []string, stdout, stderr io.Writer, runner cliGenerationRunner) int {
+	flags := flag.NewFlagSet("generate-cli", flag.ContinueOnError)
 	flags.SetOutput(stderr)
-	language := flags.String("language", "", "SDK language (rust)")
 	root := flags.String("root", "openapi/openapi.yaml", "root OpenAPI document")
 	interfaceDirectory := flags.String("interface", "sdk/rust/interface", "reviewed Rust and CLI interface directory")
-	output := flags.String("output", "", "owned generated source directory")
-	cliOutput := flags.String("cli-output", "", "owned generated CLI source directory")
+	output := flags.String("output", "", "owned generated CLI source directory")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
-	if code := rejectPositionalArguments("generate-sdk", flags, stderr); code != 0 {
+	if code := rejectPositionalArguments("generate-cli", flags, stderr); code != 0 {
 		return code
 	}
-	if *language != "rust" {
-		return writeCommandError(stderr, "generate-sdk", errors.New("--language must be rust"), 2)
-	}
 	if strings.TrimSpace(*output) == "" {
-		return writeCommandError(stderr, "generate-sdk", errors.New("--output is required"), 2)
-	}
-	if strings.TrimSpace(*cliOutput) == "" {
-		return writeCommandError(stderr, "generate-sdk", errors.New("--cli-output is required"), 2)
+		return writeCommandError(stderr, "generate-cli", errors.New("--output is required"), 2)
 	}
 	report, err := runner(
-		sdkgen.RustInputs{OpenAPI: *root, Interface: *interfaceDirectory},
-		sdkgen.RustOutputs{SDK: *output, CLI: *cliOutput},
+		sdkgen.Inputs{OpenAPI: *root, Interface: *interfaceDirectory}, *output,
 	)
 	if err != nil {
-		return writeCommandError(stderr, "generate-sdk", err, 1)
+		return writeCommandError(stderr, "generate-cli", err, 1)
 	}
 	if err := writeJSON(stdout, report); err != nil {
-		return writeCommandError(stderr, "write generate-sdk report", err, 1)
+		return writeCommandError(stderr, "write generate-cli report", err, 1)
 	}
 	return 0
 }
@@ -661,7 +652,7 @@ func usage(output io.Writer) error {
 		"  catalog        validate generated catalog and reference invariants",
 		"  lint           apply strict OpenAPI policy",
 		"  bundle         write the portable OpenAPI bundle",
-		"  generate-sdk   generate the owned Rust SDK and CLI source trees",
+		"  generate-cli  generate the owned CLI interface and private dispatch trees",
 		"  verify         run credential-free repository verification",
 		"  guide-drift    compare the current public guide with the committed contract",
 		"  guide-drift-notify  update the isolated public guide drift issue",

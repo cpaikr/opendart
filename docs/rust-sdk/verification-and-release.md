@@ -11,12 +11,9 @@ Current delivery and recovery state belongs in the
 operations and repository-wide policy belong in
 [RELEASING.md](../../RELEASING.md).
 
-The verification details below describe the current generated implementation.
-[ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md) accepts the
-replacement contract. Its independent inventory, retained evidence, and
-representative handwritten JSON/XML/ZIP pilot already run privately; generated
-freshness remains authoritative for the public product until the handwritten
-implementation cutover.
+The verification details below qualify the single handwritten SDK conformer and
+the retained CLI-only projections accepted by
+[ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md).
 
 ## Verification interface
 
@@ -47,12 +44,13 @@ The private Go verifier requires:
 
 - exact reviewed Rust and CLI name coverage for 85 logical operations and 167
   physical operations;
-- one applicable obligation set per physical operation and representative
-  executable JSON, XML, and ZIP coverage;
+- one applicable executable obligation set per physical operation, including
+  JSON, XML, and ZIP coverage;
 - retained fixture provenance, SHA-256 digest, and exact bounded byte size;
-- exact canonical-to-generated physical-operation coverage;
-- stable logical pairing, response routing, and generated request vectors;
-- deterministic owned SDK and CLI projections;
+- exact canonical-to-handwritten physical-operation coverage;
+- stable logical pairing, response routing, and independently reviewed
+  preparation expectations;
+- deterministic owned CLI interface and private dispatch projections;
 - approved Cargo metadata, tracked package inventories, and aligned versions;
 - release-selected source provenance matching the committed canonical bundle;
   and
@@ -60,29 +58,29 @@ The private Go verifier requires:
 
 It never contacts OpenDART and does not replace Cargo compilation.
 
-The focused `rust-conformance` mode combines that repository inventory and
-fixture verification with the private handwritten pilot and its deterministic
-fault adapters. It requires only committed local inputs and locked offline
-Cargo dependencies. It neither selects nor certifies the generated client as
-an oracle.
+The focused `rust-conformance` mode combines repository inventory and fixture
+verification with every handwritten preparation and interpretation path plus
+deterministic fault adapters. It requires only committed local inputs and
+locked offline Cargo dependencies.
 
 ### Cargo verification
 
 The pinned stable toolchain runs:
 
-- rustfmt over handwritten Rust;
+- rustfmt over all SDK source and handwritten CLI runtime;
 - Clippy with warnings denied for all features and no default features;
 - workspace tests plus explicit no-default-features tests;
 - rustdoc with warnings denied;
 - WebAssembly compilation with default and no default features;
 - native dependency-graph assertions;
 - the adversarial reqwest feature-unification package;
-- exact package-inventory checks and workspace packaging; and
+- exact package-inventory checks, workspace packaging, and an all-feature test
+  compile from the expanded SDK source archive; and
 - a clean CLI installation from the workspace.
 
-The generated SDK module is intentionally `#[rustfmt::skip]`; byte-for-byte
-generator freshness is its formatting gate. Every Cargo compile gate still
-builds generated code.
+The generated CLI interface and dispatch projections retain independent
+byte-for-byte freshness checks. Cargo compilation exercises both projections
+against the handwritten SDK.
 
 The declared MSRV independently runs locked all-features and
 no-default-features checks and metadata loading. The toolchain pins and Cargo
@@ -97,12 +95,17 @@ likewise exclude the native client and runtime packages.
 `sdk/rust/package-files.txt` and
 `sdk/rust/opendart-cli-package-files.txt` are reviewed golden inventories.
 Packaging must include the normalized manifest, workspace lock, public source,
-reviewed generated code, package documentation, applicable tests and fixtures,
-and Cargo-generated provenance. It must exclude generator implementation,
-repository-private specification inputs, credentials, and local artifacts.
+handwritten SDK source, retained CLI projections, package documentation,
+applicable tests and fixtures, and Cargo-generated provenance. The SDK archive
+must contain representative `values`, `protocol`, and `operations` modules and
+must contain no generated SDK source. Both archives exclude generator
+implementation, repository-private specification inputs, credentials, and
+local artifacts.
 
-Workspace packaging verifies the exact local SDK dependency used by the CLI; it
-does not grant publication authority to either package.
+Workspace packaging verifies the exact local SDK dependency used by the CLI.
+The gate then compiles the SDK's test targets from Cargo's expanded package
+directory, so test-only code cannot depend on repository files omitted from the
+archive. Neither proof grants publication authority to either package.
 
 ### Credential-free and live boundaries
 
@@ -135,13 +138,11 @@ A packaged crate identifies:
 - its Cargo version;
 - its exact Git revision through `.cargo_vcs_info.json`;
 - the selected semantic specification source release, when applicable;
-- the independently selected canonical bundle SHA-256;
-- the generator schema; and
-- the deterministic SDK projection SHA-256.
+- the independently selected canonical bundle SHA-256.
 
-Generated freshness uses the SDK projection checksum. A specification change
-outside that projection does not rewrite or release the crate. Release
-verification proves that the selected source tag contains the canonical source
+A specification change does not mechanically rewrite the handwritten crate.
+Compatibility review determines whether conforming SDK behavior or API must
+change. Release verification proves that the selected source tag contains the canonical source
 inputs without asserting that a later generated bundle is byte-identical to
 the tag's bundle.
 
@@ -159,8 +160,8 @@ applies.
 | Required input, serialization change, public rename/removal, or narrower wire type | Major |
 | MSRV or guaranteed transport-policy change | Compatibility review |
 
-Generated changes are not automatically compatible. Review the public Rust
-surface and request behavior, not only the source OpenAPI label.
+OpenAPI changes are not automatically compatible. Review the public Rust
+surface and request behavior, not only the source label.
 
 ## Release Please ownership
 
@@ -191,8 +192,7 @@ The SDK-specific release evidence is:
 - a credential-free candidate package built from the exact reviewed revision;
 - the reviewed package inventory and both normalized and original Cargo
   manifests;
-- Cargo VCS metadata plus matching specification, bundle, generator-schema,
-  and SDK-projection provenance;
+- Cargo VCS metadata plus matching specification-release and bundle provenance;
 - the accepted crates.io checksum and archive matching that candidate;
 - a clean consumer built against the exact registry version; and
 - the public source documentation for that same version.

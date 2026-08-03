@@ -36,14 +36,18 @@ func TestRunRejectsUnknownCommand(t *testing.T) {
 }
 
 func TestRunRejectsRetiredCompatibilityCommand(t *testing.T) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	for _, command := range []string{"compatibility", "generate-sdk"} {
+		t.Run(command, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
 
-	if code := Run([]string{"compatibility"}, &stdout, &stderr); code != 2 {
-		t.Fatalf("Run() code = %d, want 2", code)
-	}
-	if !strings.Contains(stderr.String(), `unknown command "compatibility"`) {
-		t.Fatalf("stderr = %q", stderr.String())
+			if code := Run([]string{command}, &stdout, &stderr); code != 2 {
+				t.Fatalf("Run() code = %d, want 2", code)
+			}
+			if !strings.Contains(stderr.String(), `unknown command "`+command+`"`) {
+				t.Fatalf("stderr = %q", stderr.String())
+			}
+		})
 	}
 }
 
@@ -54,7 +58,7 @@ func TestRunPrintsHelp(t *testing.T) {
 	if code := Run([]string{"help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("Run() code = %d, want 0", code)
 	}
-	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-sdk", "verify", "guide-drift", "guide-drift-notify", "verify-crate-artifact", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
+	for _, command := range []string{"sync", "catalog", "lint", "bundle", "generate-cli", "verify", "guide-drift", "guide-drift-notify", "verify-crate-artifact", "live-conformance", "live-conformance-notify", "probe-multi-company", "probe-auditor-evidence"} {
 		if !strings.Contains(stdout.String(), command) {
 			t.Fatalf("stdout does not list %q: %q", command, stdout.String())
 		}
@@ -394,26 +398,26 @@ func TestRunBundleRequiresOutputAndForwardsPaths(t *testing.T) {
 	})
 }
 
-func TestRunGenerateSDKRequiresRustAndForwardsPaths(t *testing.T) {
-	var inputs sdkgen.RustInputs
-	var output sdkgen.RustOutputs
+func TestRunGenerateCLIRequiresOutputAndForwardsPaths(t *testing.T) {
+	var inputs sdkgen.Inputs
+	var output string
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := runGenerateSDKWith([]string{"--language", "rust", "--root", "spec.yaml", "--interface", "product-interface", "--output", "generated", "--cli-output", "cli-generated"}, &stdout, &stderr, func(receivedInputs sdkgen.RustInputs, receivedOutput sdkgen.RustOutputs) (sdkgen.Report, error) {
+	code := runGenerateCLIWith([]string{"--root", "spec.yaml", "--interface", "product-interface", "--output", "cli-generated"}, &stdout, &stderr, func(receivedInputs sdkgen.Inputs, receivedOutput string) (sdkgen.Report, error) {
 		inputs, output = receivedInputs, receivedOutput
-		return sdkgen.Report{Language: "rust", SemanticSchemaVersion: 1, SemanticChecksum: "checksum"}, nil
+		return sdkgen.Report{Artifacts: []sdkgen.ArtifactReport{{Kind: "cli-interface", Checksum: "checksum"}}}, nil
 	})
-	if code != 0 || stderr.Len() != 0 || inputs.OpenAPI != "spec.yaml" || inputs.Interface != "product-interface" || output.SDK != "generated" || output.CLI != "cli-generated" {
+	if code != 0 || stderr.Len() != 0 || inputs.OpenAPI != "spec.yaml" || inputs.Interface != "product-interface" || output != "cli-generated" {
 		t.Fatalf("code = %d, inputs = %#v, output = %q, stderr = %q", code, inputs, output, stderr.String())
 	}
 	var report sdkgen.Report
-	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil || report.SemanticChecksum != "checksum" {
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil || len(report.Artifacts) != 1 || report.Artifacts[0].Checksum != "checksum" {
 		t.Fatalf("report = %#v, error = %v", report, err)
 	}
 
-	for _, args := range [][]string{{"--language", "python", "--output", "generated", "--cli-output", "cli-generated"}, {"--language", "rust"}, {"--language", "rust", "--output", "generated"}} {
+	for _, args := range [][]string{nil, {"--output", " "}} {
 		stderr.Reset()
-		if code := runGenerateSDKWith(args, &bytes.Buffer{}, &stderr, func(sdkgen.RustInputs, sdkgen.RustOutputs) (sdkgen.Report, error) {
+		if code := runGenerateCLIWith(args, &bytes.Buffer{}, &stderr, func(sdkgen.Inputs, string) (sdkgen.Report, error) {
 			t.Fatal("runner should not be called for invalid options")
 			return sdkgen.Report{}, nil
 		}); code != 2 {
@@ -680,7 +684,7 @@ func TestRunGuideDriftNotifyFailureIsFixed(t *testing.T) {
 }
 
 func TestNewCommandsRejectPositionalArguments(t *testing.T) {
-	for _, command := range []string{"catalog", "lint", "bundle", "generate-sdk", "verify", "guide-drift", "guide-drift-notify", "live-conformance", "live-conformance-notify"} {
+	for _, command := range []string{"catalog", "lint", "bundle", "generate-cli", "verify", "guide-drift", "guide-drift-notify", "live-conformance", "live-conformance-notify"} {
 		t.Run(command, func(t *testing.T) {
 			var stderr bytes.Buffer
 			if code := Run([]string{command, "unexpected"}, &bytes.Buffer{}, &stderr); code != 2 {

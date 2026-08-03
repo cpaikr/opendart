@@ -1,0 +1,342 @@
+use super::*;
+
+/// Inputs for logical operation `DS002-2020005`.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ShortTermBondOutstandingBalanceInput {
+    company_code: String,
+    business_year: String,
+    report_code: String,
+}
+
+impl ShortTermBondOutstandingBalanceInput {
+    /// Creates inputs from all required source-shaped values.
+    #[must_use]
+    pub fn new(company_code: String, business_year: String, report_code: String) -> Self {
+        Self {
+            company_code,
+            business_year,
+            report_code,
+        }
+    }
+
+    fn parameters(
+        &self,
+        operation: OperationIdentity,
+    ) -> Result<Vec<crate::request::QueryParameter<'_>>, PrepareError> {
+        let mut query = Query::new(operation);
+        let value = CompanyCode::new(operation, "corp_code", &self.company_code)?;
+        query.required("corp_code", value.as_str())?;
+        let value = BusinessYear::new(operation, "bsns_year", &self.business_year)?;
+        query.required("bsns_year", value.as_str())?;
+        let value = ReportCode::new(operation, "reprt_code", &self.report_code)?;
+        query.required("reprt_code", value.as_str())?;
+        Ok(query.finish())
+    }
+
+    /// Prepares physical operation `get_srtpdPsndbtNrdmpBlce_json`.
+    ///
+    /// # Errors
+    /// Returns a stable [`PrepareError`] when supplied input violates canonical OpenAPI constraints.
+    pub fn prepare_json(
+        &self,
+    ) -> Result<PreparedRequest<ShortTermBondOutstandingBalanceJsonResponse>, PrepareError> {
+        let operation = OperationIdentity::new("get_srtpdPsndbtNrdmpBlce_json", "DS002-2020005");
+        let parameters = self.parameters(operation)?;
+        Ok(PreparedRequest::new(
+            RequestParts::structured_json("/api/srtpdPsndbtNrdmpBlce.json", operation, &parameters),
+            decode_short_term_bond_outstanding_balance_json_response,
+        ))
+    }
+
+    /// Prepares physical operation `get_srtpdPsndbtNrdmpBlce_xml`.
+    ///
+    /// # Errors
+    /// Returns a stable [`PrepareError`] when supplied input violates canonical OpenAPI constraints.
+    pub fn prepare_xml(
+        &self,
+    ) -> Result<PreparedRequest<ShortTermBondOutstandingBalanceXmlResponse>, PrepareError> {
+        let operation = OperationIdentity::new("get_srtpdPsndbtNrdmpBlce_xml", "DS002-2020005");
+        let parameters = self.parameters(operation)?;
+        Ok(PreparedRequest::new(
+            RequestParts::structured_xml(
+                "/api/srtpdPsndbtNrdmpBlce.xml",
+                operation,
+                &parameters,
+                "result",
+            ),
+            decode_short_term_bond_outstanding_balance_xml_response,
+        ))
+    }
+}
+
+/// Borrowed semantic view over `$.list[]`.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ShortTermBondMaturityBalance<'a> {
+    source: &'a SourceValue,
+}
+
+impl<'a> ShortTermBondMaturityBalance<'a> {
+    fn new(source: &'a SourceValue) -> Self {
+        Self { source }
+    }
+
+    /// Returns the complete normalized source object for this view.
+    #[must_use]
+    pub const fn source(&self) -> &'a SourceValue {
+        self.source
+    }
+
+    /// Returns a field by its exact source name.
+    #[must_use]
+    pub fn field(&self, name: &str) -> Option<&'a SourceValue> {
+        self.source.get(name)
+    }
+
+    /// Returns source field `corp_cls` when present.
+    #[must_use]
+    pub fn company_class(&self) -> Option<&SourceValue> {
+        self.source.get("corp_cls")
+    }
+
+    /// Returns source field `corp_code` when present.
+    #[must_use]
+    pub fn company_code(&self) -> Option<&SourceValue> {
+        self.source.get("corp_code")
+    }
+
+    /// Returns source field `corp_name` when present.
+    #[must_use]
+    pub fn company_name(&self) -> Option<&SourceValue> {
+        self.source.get("corp_name")
+    }
+
+    /// Returns source field `de10_below` when present.
+    #[must_use]
+    pub fn up_to_ten_days(&self) -> Option<&SourceValue> {
+        self.source.get("de10_below")
+    }
+
+    /// Returns source field `de10_excess_de30_below` when present.
+    #[must_use]
+    pub fn over_ten_up_to_thirty_days(&self) -> Option<&SourceValue> {
+        self.source.get("de10_excess_de30_below")
+    }
+
+    /// Returns source field `de180_excess_yy1_below` when present.
+    #[must_use]
+    pub fn over_one_hundred_eighty_days_up_to_one_year(&self) -> Option<&SourceValue> {
+        self.source.get("de180_excess_yy1_below")
+    }
+
+    /// Returns source field `de30_excess_de90_below` when present.
+    #[must_use]
+    pub fn over_thirty_up_to_ninety_days(&self) -> Option<&SourceValue> {
+        self.source.get("de30_excess_de90_below")
+    }
+
+    /// Returns source field `de90_excess_de180_below` when present.
+    #[must_use]
+    pub fn over_ninety_up_to_one_hundred_eighty_days(&self) -> Option<&SourceValue> {
+        self.source.get("de90_excess_de180_below")
+    }
+
+    /// Returns source field `isu_lmt` when present.
+    #[must_use]
+    pub fn issuance_limit(&self) -> Option<&SourceValue> {
+        self.source.get("isu_lmt")
+    }
+
+    /// Returns source field `rcept_no` when present.
+    #[must_use]
+    pub fn receipt_number(&self) -> Option<&SourceValue> {
+        self.source.get("rcept_no")
+    }
+
+    /// Returns source field `remndr_exprtn1` when present.
+    #[must_use]
+    pub fn remaining_maturity_category(&self) -> Option<&SourceValue> {
+        self.source.get("remndr_exprtn1")
+    }
+
+    /// Returns source field `remndr_exprtn2` when present.
+    #[must_use]
+    pub fn remaining_maturity_detail(&self) -> Option<&SourceValue> {
+        self.source.get("remndr_exprtn2")
+    }
+
+    /// Returns source field `remndr_lmt` when present.
+    #[must_use]
+    pub fn remaining_issuance_limit(&self) -> Option<&SourceValue> {
+        self.source.get("remndr_lmt")
+    }
+
+    /// Returns source field `sm` when present.
+    #[must_use]
+    pub fn total(&self) -> Option<&SourceValue> {
+        self.source.get("sm")
+    }
+
+    /// Returns source field `stlm_dt` when present.
+    #[must_use]
+    pub fn fiscal_period_end_date(&self) -> Option<&SourceValue> {
+        self.source.get("stlm_dt")
+    }
+}
+
+/// Opaque response for physical operation `get_srtpdPsndbtNrdmpBlce_json`.
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde-json", serde(transparent))]
+pub struct ShortTermBondOutstandingBalanceJsonResponse {
+    source: SourceValue,
+}
+
+impl ShortTermBondOutstandingBalanceJsonResponse {
+    /// Returns the complete normalized source object.
+    #[must_use]
+    pub const fn source(&self) -> &SourceValue {
+        &self.source
+    }
+
+    /// Returns the open source status when present and string-shaped.
+    #[must_use]
+    pub fn status(&self) -> Option<SourceStatus> {
+        source_status(&self.source)
+    }
+
+    /// Returns the source message when present.
+    #[must_use]
+    pub fn message(&self) -> Option<&SourceValue> {
+        self.source.get("message")
+    }
+
+    /// Returns a field by its exact source name.
+    #[must_use]
+    pub fn field(&self, name: &str) -> Option<&SourceValue> {
+        self.source.get(name)
+    }
+
+    /// Iterates the reviewed `$.list[]` item views.
+    pub fn items(&self) -> impl Iterator<Item = ShortTermBondMaturityBalance<'_>> + '_ {
+        items(&self.source, "list", false).map(ShortTermBondMaturityBalance::new)
+    }
+}
+
+fn decode_short_term_bond_outstanding_balance_json_response(
+    source: SourceValue,
+) -> Result<ShortTermBondOutstandingBalanceJsonResponse, ResponseDecodeError> {
+    decode_short_term_bond_outstanding_balance_json_response_root(&source, "$".to_owned())?;
+    Ok(ShortTermBondOutstandingBalanceJsonResponse { source })
+}
+
+fn decode_short_term_bond_outstanding_balance_json_response_root(
+    value: &SourceValue,
+    path: String,
+) -> Result<(), ResponseDecodeError> {
+    let object = ObjectDecoder::new(value, path)?;
+    object.optional(
+        "list",
+        decode_short_term_bond_outstanding_balance_json_response_root_list,
+    )?;
+    object.optional("status", decode_source_status)?;
+    Ok(())
+}
+
+fn decode_short_term_bond_outstanding_balance_json_response_root_list(
+    value: &SourceValue,
+    path: String,
+) -> Result<(), ResponseDecodeError> {
+    decode_array(
+        value,
+        path,
+        decode_short_term_bond_outstanding_balance_json_response_root_list_item,
+    )?;
+    Ok(())
+}
+
+fn decode_short_term_bond_outstanding_balance_json_response_root_list_item(
+    value: &SourceValue,
+    path: String,
+) -> Result<(), ResponseDecodeError> {
+    ObjectDecoder::new(value, path)?;
+    Ok(())
+}
+
+/// Opaque response for physical operation `get_srtpdPsndbtNrdmpBlce_xml`.
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde-json", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde-json", serde(transparent))]
+pub struct ShortTermBondOutstandingBalanceXmlResponse {
+    source: SourceValue,
+}
+
+impl ShortTermBondOutstandingBalanceXmlResponse {
+    /// Returns the complete normalized source object.
+    #[must_use]
+    pub const fn source(&self) -> &SourceValue {
+        &self.source
+    }
+
+    /// Returns the open source status when present and string-shaped.
+    #[must_use]
+    pub fn status(&self) -> Option<SourceStatus> {
+        source_status(&self.source)
+    }
+
+    /// Returns the source message when present.
+    #[must_use]
+    pub fn message(&self) -> Option<&SourceValue> {
+        self.source.get("message")
+    }
+
+    /// Returns a field by its exact source name.
+    #[must_use]
+    pub fn field(&self, name: &str) -> Option<&SourceValue> {
+        self.source.get(name)
+    }
+
+    /// Iterates the reviewed `$.list[]` item views.
+    pub fn items(&self) -> impl Iterator<Item = ShortTermBondMaturityBalance<'_>> + '_ {
+        items(&self.source, "list", true).map(ShortTermBondMaturityBalance::new)
+    }
+}
+
+fn decode_short_term_bond_outstanding_balance_xml_response(
+    source: SourceValue,
+) -> Result<ShortTermBondOutstandingBalanceXmlResponse, ResponseDecodeError> {
+    decode_short_term_bond_outstanding_balance_xml_response_root(&source, "$".to_owned())?;
+    Ok(ShortTermBondOutstandingBalanceXmlResponse { source })
+}
+
+fn decode_short_term_bond_outstanding_balance_xml_response_root(
+    value: &SourceValue,
+    path: String,
+) -> Result<(), ResponseDecodeError> {
+    let object = ObjectDecoder::new_xml(value, path)?;
+    object.optional(
+        "list",
+        decode_short_term_bond_outstanding_balance_xml_response_root_list,
+    )?;
+    object.optional("status", decode_source_status)?;
+    Ok(())
+}
+
+fn decode_short_term_bond_outstanding_balance_xml_response_root_list(
+    value: &SourceValue,
+    path: String,
+) -> Result<(), ResponseDecodeError> {
+    decode_xml_array(
+        value,
+        path,
+        decode_short_term_bond_outstanding_balance_xml_response_root_list_item,
+    )?;
+    Ok(())
+}
+
+fn decode_short_term_bond_outstanding_balance_xml_response_root_list_item(
+    value: &SourceValue,
+    path: String,
+) -> Result<(), ResponseDecodeError> {
+    ObjectDecoder::new_xml(value, path)?;
+    Ok(())
+}

@@ -4,9 +4,9 @@ This document defines the supported shell, output, credential, and compatibility
 interface for the `opendart` binary. See the
 [delivery plan](../../plans/rust/public-opendart-cli.md) for current status.
 
-The CLI grammar and discovery interface are owned independently of the current
-generated-SDK implementation. The generated SDK remains the runtime conformer
-behind a private exhaustive dispatch adapter until the handwritten cutover.
+The CLI grammar and discovery interface are owned independently of the
+handwritten SDK. A private generated adapter dispatches exhaustively to that SDK
+without owning protocol or HTTP behavior.
 
 ## Command grammar
 
@@ -141,7 +141,7 @@ records so the detail document stands alone.
 Each operation flag has `name`, `source_name`, `description`, `required`,
 `value_kind`, and `occurrence`. Scalar flags use `occurrence: "once"`; list
 flags use `occurrence: "repeat"`. `min_items` and `max_items` appear only when
-the SDK enforces them. `constraints` appears only when the generated SDK
+the SDK enforces them. `constraints` appears only when the handwritten SDK
 enforces request-value rules. Its optional fields are `format`,
 `allowed_values`, `min_length`, `max_length`, `decimal_minimum`, and
 `decimal_maximum`; omitted fields have no implied constraint.
@@ -259,13 +259,13 @@ The operation wrapper is CLI-owned. `response` is the complete typed SDK
 `SourceResponse`; its metadata remains sanitized by the SDK. `SourceReply` uses
 stable adjacent tagging:
 
-- `{"kind":"success","value":...}` for the generated response type; and
+- `{"kind":"success","value":...}` for the handwritten source-backed wrapper; and
 - `{"kind":"status","value":...}` for the complete `StatusEnvelope`.
 
-Generated response fields retain their source names. Additive fields flatten
-into the object rather than appearing under a CLI-only extension bucket. An
-absent SDK `Option` is omitted; `Some(SourceValue::null())` remains an explicit
-null. `SourceStatus` is its exact source string. Known HTTP versions use stable
+Wrapper serialization delegates to complete retained source evidence. Additive
+fields remain in their source object rather than appearing under a CLI-only
+extension bucket; absent source fields remain absent and explicit source null
+remains null. `SourceStatus` is its exact source string. Known HTTP versions use stable
 lowercase protocol strings such as `http/1.1`; an `Other` version preserves the
 SDK's stored string. Each sanitized response header is an object with `name`
 and `value`, where `value` is the exact byte array so non-UTF-8 evidence is not

@@ -133,8 +133,9 @@ not append session transcripts.
   preventing reruns from colliding with or consuming an earlier attempt's
   artifact. Offline workflow mutation tests enforce the paired names.
 - Reconciled the completed `sub` slice into `rust` while preserving individual
-  source commits. The combined CLI exposes SDK generation and live commands;
-  repository verification runs Rust SDK freshness before live preflight.
+  source commits. The combined CLI exposes CLI-projection generation and live
+  commands; repository verification runs CLI projection freshness before live
+  preflight.
 
 ## Blockers
 

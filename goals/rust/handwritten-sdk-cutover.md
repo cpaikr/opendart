@@ -29,18 +29,21 @@ _None._
 - Reviewed product contract and Rust-native conformance gate. Implementation,
   repository validation, independent review, feedback resolution, and PR
   delivery completed in [PR #74](https://github.com/cpaikr/opendart/pull/74).
+- CLI-owned grammar, discovery, and isolated private dispatch. Implementation,
+  complete offline qualification, independent review, feedback resolution, and
+  PR delivery completed in [PR #75](https://github.com/cpaikr/opendart/pull/75).
 
 ### Current in-scope result
 
-CLI-owned grammar, discovery, and isolated private dispatch. The result is
-active from merge commit `d071546`; implementation and independent review are
-complete, and clean-tree offline qualification passes. PR delivery remains
-pending.
+Handwritten SDK implementation, CLI retargeting, generated-SDK deletion,
+documentation reconciliation, and offline package qualification. The result is
+active from merge commit `176f440`.
 
 ### Next in-scope action
 
-Create, review, and merge the qualified CLI projection PR before starting the
-handwritten conformer result.
+Run clean-tree exhaustive offline qualification, deliver the final cutover PR,
+and resolve its review and required checks. Public SDK publication remains
+deferred and requires separate authority.
 
 ### Evidence and blockers
 
@@ -62,3 +65,26 @@ handwritten conformer result.
   complete clean-tree `./scripts/verify pre-push` gate pass, including package
   verification, clean release installation, MSRV, WASM, reqwest compatibility,
   rustdoc, and doctests.
+- Result-two delivery: PR #75 merged into `rust` as `176f440` after all required
+  checks passed and both CodeRabbit review conversations were addressed and
+  resolved.
+- Boundary check: the final included result owns the handwritten conformer,
+  private CLI dispatch retargeting, generated-SDK deletion, documentation, and
+  offline qualification. Publication and adoption remain excluded.
+- Result-three implementation: all 85 logical inputs, 167 preparation paths,
+  164 structured wrappers, and 1,900 reviewed accessors are handwritten in
+  per-operation modules behind six public family facades. Generated SDK source,
+  renderers, selection, projection provenance, and freshness machinery are
+  absent; private CLI dispatch targets only the handwritten API while its
+  public projection checksum is unchanged.
+- Result-three conformance: all 164 structured physical cases cross public
+  representation-specific interpretation, all three ZIP cases cross the real
+  client alternate-status lifecycle, and distinct operation-local validators
+  have focused coverage. Registry case kinds bind root, list, and group-list
+  topology directly to canonical OpenAPI, with root-to-list and
+  group-list-to-list mutations rejected.
+- Result-three review: design, SDK, CLI/tooling, and system reviewers confirmed
+  the single-conformer architecture, per-operation locality, source-backed
+  wrappers, package and release boundaries, and final conformance closure with
+  no remaining actionable findings. Final clean qualification and PR delivery
+  are active.

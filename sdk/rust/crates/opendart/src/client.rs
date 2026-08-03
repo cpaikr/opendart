@@ -54,7 +54,7 @@ impl Client {
     /// Returns [`ClientError`] when the prepared representation is not structured,
     /// the total deadline cannot be represented, the HTTP exchange fails or times
     /// out, the body exceeds its configured limit, the source envelope is malformed,
-    /// or the success payload does not match the generated response type.
+    /// or the success payload does not match the handwritten response type.
     pub async fn execute<T>(
         &self,
         prepared: &PreparedRequest<T>,
@@ -62,25 +62,6 @@ impl Client {
         let (metadata, body) = self.receive_structured(prepared).await?;
         let reply = prepared
             .interpret_response(&self.inspector, &self.api_key, metadata.status(), &body)
-            .map_err(|error| map_interpret_error(metadata.clone(), error))?;
-        Ok(SourceResponse { metadata, reply })
-    }
-
-    /// Executes a typed structured request while retaining its normalized raw success payload.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`ClientError`] when the prepared representation is not structured,
-    /// the total deadline cannot be represented, the HTTP exchange fails or times
-    /// out, the body exceeds its configured limit, the source envelope is malformed,
-    /// or an XML root differs from the generated operation contract.
-    pub async fn execute_raw<T>(
-        &self,
-        prepared: &PreparedRequest<T>,
-    ) -> Result<SourceResponse<SourceReply<SourceValue>>, ClientError> {
-        let (metadata, body) = self.receive_structured(prepared).await?;
-        let reply = prepared
-            .inspect_response(&self.inspector, &self.api_key, metadata.status(), &body)
             .map_err(|error| map_interpret_error(metadata.clone(), error))?;
         Ok(SourceResponse { metadata, reply })
     }
@@ -503,14 +484,14 @@ pub enum ClientError {
         /// The sanitized envelope failure.
         source: EnvelopeError,
     },
-    /// A well-formed success envelope violated the selected generated response shape.
+    /// A well-formed success envelope violated the selected handwritten response shape.
     #[error("{operation}: {source}")]
     ResponseDecode {
         /// The prepared operation.
         operation: OperationIdentity,
-        /// Metadata retained before generated response decoding.
+        /// Metadata retained before handwritten response decoding.
         metadata: ResponseMetadata,
-        /// The sanitized generated-shape failure.
+        /// The sanitized response-shape failure.
         source: ResponseDecodeError,
     },
 }
@@ -981,7 +962,9 @@ fn placeholder_operation() -> OperationIdentity {
 mod tests {
     use super::*;
     use crate::SourceValueKind;
-    use crate::operations::{Company, CorpCode, List};
+    use crate::operations::disclosure::{
+        CompanyCodesInput, CompanyOverviewInput, CompanyOverviewJsonResponse, DisclosureSearchInput,
+    };
     use std::{
         io::{Read, Write},
         net::TcpListener as StdTcpListener,
@@ -1077,8 +1060,10 @@ mod tests {
         response
     }
 
-    fn company_request() -> PreparedRequest<crate::responses::CompanyJsonResponse> {
-        Company::new("00126380").prepare_json().unwrap()
+    fn company_request() -> PreparedRequest<CompanyOverviewJsonResponse> {
+        CompanyOverviewInput::new("00126380".to_owned())
+            .prepare_json()
+            .unwrap()
     }
 
     async fn collect(mut stream: BodyStream) -> (Vec<u8>, Option<TransportFailureKind>) {
@@ -1340,13 +1325,11 @@ mod tests {
             panic!("payload-bearing status must remain success evidence");
         };
         assert_eq!(
-            value.corp_name.as_ref().and_then(SourceValue::as_str),
+            value.legal_name().and_then(SourceValue::as_str),
             Some("Example Corp")
         );
         assert_eq!(
-            value
-                .additional_field("value")
-                .and_then(SourceValue::as_number_str),
+            value.field("value").and_then(SourceValue::as_number_str),
             Some("1.20e3")
         );
         assert!(result.metadata.headers().iter().any(|header| {
@@ -1505,7 +1488,7 @@ mod tests {
                 .test_origin(origin)
                 .build()
                 .unwrap();
-            let prepared = CorpCode::new().prepare_zip().unwrap();
+            let prepared = CompanyCodesInput::new().prepare_archive().unwrap();
 
             let result = client.execute_binary(&prepared).await.unwrap();
             let BinaryReply::Unrecognized(stream) = result.reply else {
@@ -1567,31 +1550,6 @@ mod tests {
                 ..
             })
         ));
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn execute_raw_retains_the_normalized_success_envelope() {
-        let body = br#"{"status":"000","future":{"nested":true}}"#;
-        let (origin, server) =
-            serve_once(response(&[("content-type", "application/json")], body)).await;
-        let client = Client::builder(ApiKey::new("key").unwrap())
-            .test_origin(origin)
-            .build()
-            .unwrap();
-        let prepared = company_request();
-
-        let result = client.execute_raw(&prepared).await.unwrap();
-        let SourceReply::Success(value) = result.reply else {
-            panic!("payload-bearing status must remain success evidence");
-        };
-        assert_eq!(
-            value
-                .get("future")
-                .and_then(|future| future.get("nested"))
-                .and_then(SourceValue::as_bool),
-            Some(true)
-        );
         server.await.unwrap();
     }
 
@@ -1664,7 +1622,7 @@ mod tests {
             .test_origin(origin)
             .build()
             .unwrap();
-        let prepared = CorpCode::new().prepare_zip().unwrap();
+        let prepared = CompanyCodesInput::new().prepare_archive().unwrap();
 
         let error = client.execute_binary(&prepared).await.unwrap_err();
         assert!(matches!(
@@ -1679,7 +1637,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn xml_execution_uses_its_distinct_generated_response_type() {
+    async fn xml_execution_uses_its_distinct_handwritten_response_type() {
         let body = br#"<result><status>000</status><corp_name>Example Corp</corp_name></result>"#;
         let (origin, server) =
             serve_once(response(&[("content-type", "application/xml")], body)).await;
@@ -1687,14 +1645,16 @@ mod tests {
             .test_origin(origin)
             .build()
             .unwrap();
-        let prepared = Company::new("00126380").prepare_xml().unwrap();
+        let prepared = CompanyOverviewInput::new("00126380".to_owned())
+            .prepare_xml()
+            .unwrap();
 
         let result = client.execute(&prepared).await.unwrap();
         let SourceReply::Success(value) = result.reply else {
             panic!("payload-bearing status must remain success evidence");
         };
         assert_eq!(
-            value.corp_name.as_ref().and_then(SourceValue::as_str),
+            value.legal_name().and_then(SourceValue::as_str),
             Some("Example Corp")
         );
         server.await.unwrap();
@@ -1728,17 +1688,18 @@ mod tests {
                 .test_origin(origin)
                 .build()
                 .unwrap();
-            let prepared = List::new().prepare_xml().unwrap();
+            let prepared = DisclosureSearchInput::new().prepare_xml().unwrap();
 
             let result = client.execute(&prepared).await.unwrap();
             let SourceReply::Success(value) = result.reply else {
                 panic!("payload-bearing status must remain success evidence");
             };
-            assert_eq!(value.list.as_ref().map(Vec::len), expected_length);
+            let items = value.items().collect::<Vec<_>>();
+            assert_eq!((!items.is_empty()).then_some(items.len()), expected_length);
             if body == br#"<result><status>000</status><list/></result>"# {
-                let empty = &value.list.as_ref().unwrap()[0];
-                assert!(empty.corp_code.is_none());
-                assert_eq!(empty.additional_fields().count(), 0);
+                let empty = items[0];
+                assert!(empty.company_code().is_none());
+                assert_eq!(empty.source().fields().count(), 0);
             }
             server.await.unwrap();
         }
@@ -1753,7 +1714,7 @@ mod tests {
             .test_origin(origin)
             .build()
             .unwrap();
-        let prepared = List::new().prepare_json().unwrap();
+        let prepared = DisclosureSearchInput::new().prepare_json().unwrap();
 
         let error = client.execute(&prepared).await.unwrap_err();
         assert_eq!(error.metadata().map(ResponseMetadata::status), Some(200));
@@ -1783,7 +1744,9 @@ mod tests {
                 .test_origin(origin)
                 .build()
                 .unwrap();
-            let prepared = Company::new("00126380").prepare_xml().unwrap();
+            let prepared = CompanyOverviewInput::new("00126380".to_owned())
+                .prepare_xml()
+                .unwrap();
 
             let error = client.execute(&prepared).await.unwrap_err();
             assert_eq!(error.metadata().map(ResponseMetadata::status), Some(200));
@@ -1894,7 +1857,7 @@ mod tests {
             .test_origin(origin)
             .build()
             .unwrap();
-        let prepared = CorpCode::new().prepare_zip().unwrap();
+        let prepared = CompanyCodesInput::new().prepare_archive().unwrap();
 
         let result = client.execute_binary(&prepared).await.unwrap();
         assert_eq!(result.metadata.status(), 200);
@@ -1932,7 +1895,7 @@ mod tests {
             .total_timeout(Duration::from_millis(70))
             .build()
             .unwrap();
-        let prepared = CorpCode::new().prepare_zip().unwrap();
+        let prepared = CompanyCodesInput::new().prepare_archive().unwrap();
 
         let started = tokio::time::Instant::now();
         let result = client.execute_binary(&prepared).await.unwrap();

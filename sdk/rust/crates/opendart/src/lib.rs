@@ -3,11 +3,12 @@
 #![warn(clippy::missing_errors_doc)]
 
 mod error;
-#[rustfmt::skip]
-mod generated;
+pub mod operations;
+mod protocol;
 mod provenance;
 mod request;
 mod validation;
+mod values;
 mod wire;
 
 #[cfg(test)]
@@ -23,8 +24,6 @@ mod client;
 #[path = "../../../compat/reqwest-feature-unification/opendart_bridge.rs"]
 pub mod compatibility;
 
-pub use generated::operations;
-pub use generated::responses;
 pub use provenance::{SourceProvenance, source_provenance};
 
 #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]

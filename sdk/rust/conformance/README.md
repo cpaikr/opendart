@@ -7,9 +7,8 @@ Rust OpenDART conformer.
   reviewed obligation set. Structured JSON/XML operations require preparation,
   response binding, and decoding; ZIP operations require preparation,
   exact-byte streaming, and XML alternate-status handling.
-- `cutover-guards.toml` records four deliberately inactive checks. The checker
-  accepts only all-inactive or all-active state and, once activated at
-  handwritten cutover, enforces no generated SDK exports or directory, no
+- `cutover-guards.toml` records four active handwritten-cutover checks. The
+  checker rejects partial activation and enforces no generated SDK exports or directory, no
   generator provenance, no public implementation selector, and no second
   structured execution result.
 - The private tests in `crates/opendart/src/conformance.rs` execute the
@@ -34,6 +33,6 @@ Run the combined offline gate from the repository root:
 ./scripts/verify rust-conformance
 ```
 
-The current generated SDK remains the public product until the handwritten
-cutover. The conformance pilot and cutover guards are private and introduce no
-generated/handwritten selector or compatibility surface.
+The handwritten SDK is the only product conformer. Its conformance harness and
+cutover guards remain private and introduce no implementation selector or
+compatibility surface.

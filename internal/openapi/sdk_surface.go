@@ -15,12 +15,12 @@ import (
 )
 
 // SDKSurface is compatibility evidence that the private OpenAPI boundary can
-// expose generator inputs without exporting libopenapi model types.
+// expose canonical operation facts without exporting libopenapi model types.
 type SDKSurface struct {
 	Operations []SDKSurfaceOperation
 }
 
-// SDKSurfaceError reports a generator-boundary rule with stable operation and
+// SDKSurfaceError reports an inspection-boundary rule with stable operation and
 // source-pointer context, without exposing third-party model values.
 type SDKSurfaceError struct {
 	Rule      string
@@ -38,7 +38,7 @@ func rejectSDKSurface(rule, operation, location, detail string) *SDKSurfaceError
 }
 
 // SDKSurfaceOperation contains only repository-owned values needed to prove
-// that one physical operation is visible to a future normalized SDK model.
+// that one physical operation is visible to CLI and conformance inspection.
 type SDKSurfaceOperation struct {
 	Method             string
 	Path               string
@@ -56,7 +56,7 @@ type SDKSurfaceOperation struct {
 }
 
 // SDKSurfaceParameter records the request serialization and schema facts that
-// must cross the private OpenAPI boundary during SDK generation.
+// must cross the private OpenAPI inspection boundary.
 type SDKSurfaceParameter struct {
 	Name              string
 	Description       string
@@ -75,7 +75,8 @@ type SDKSurfaceParameter struct {
 }
 
 // SDKSurfaceStringConstraints is the closed request-value validation surface
-// supported by generators. For array parameters it applies to each item.
+// supported by repository inspection. For array parameters it applies to each
+// item.
 type SDKSurfaceStringConstraints struct {
 	Format         string
 	AllowedValues  []string
@@ -86,8 +87,8 @@ type SDKSurfaceStringConstraints struct {
 }
 
 // SDKSurfaceSchema is the conservative, repository-owned response-shape
-// projection used by SDK generators. It deliberately excludes examples,
-// defaults, formats, and narrative constraints.
+// projection used by checked CLI and conformance validation. It deliberately
+// excludes examples, defaults, formats, and narrative constraints.
 type SDKSurfaceSchema struct {
 	Reference            string
 	Description          string
@@ -134,7 +135,7 @@ type SDKSurfaceResponse struct {
 }
 
 // SDKSurfaceMediaType preserves one response representation and the source
-// evidence that determines how generated code routes it.
+// evidence that determines conformer routing.
 type SDKSurfaceMediaType struct {
 	Name              string
 	ContentTypeStatus string
@@ -142,8 +143,8 @@ type SDKSurfaceMediaType struct {
 }
 
 // InspectSDKSurface walks every physical operation and returns a deterministic
-// repository-owned projection. It is intentionally a compatibility probe, not
-// the final normalized generator model.
+// repository-owned projection. It remains a compatibility and inspection
+// boundary, not an SDK implementation model.
 func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 	if d == nil || d.model == nil || d.model.Model.Paths == nil || d.model.Model.Paths.PathItems == nil {
 		return SDKSurface{}, errors.New("OpenAPI document has no paths")
@@ -163,7 +164,7 @@ func (d *Document) InspectSDKSurface() (SDKSurface, error) {
 				return SDKSurface{}, fmt.Errorf("%s has no operationId", identity)
 			}
 			if operation.RequestBody != nil {
-				return SDKSurface{}, rejectSDKSurface("unsupported-request-body", operation.OperationId, pathName+"/"+method+"/requestBody", "generated requests are bodyless")
+				return SDKSurface{}, rejectSDKSurface("unsupported-request-body", operation.OperationId, pathName+"/"+method+"/requestBody", "supported operations are bodyless")
 			}
 			relativeTarget, err := sdkRelativeTarget(d.model.Model.Servers, pathItem.Servers, operation.Servers, pathName)
 			if err != nil {

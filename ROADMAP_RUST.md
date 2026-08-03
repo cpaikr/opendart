@@ -9,16 +9,18 @@ not authorize a registry, release, secret, or workflow side effect.
 
 ## Current
 
-- [Decouple the CLI presentation projection from Rust SDK symbols](plans/rust/cli-presentation-projection.md)
-  is active after the contract and conformance gate completed review and merged
-  in PR #74. The generated SDK remains the sole runtime conformer while this
-  result separates public CLI grammar and discovery from private typed dispatch.
+- [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
+  is in final offline qualification and review after the CLI presentation
+  projection merged in PR #75. The working product state contains one
+  handwritten SDK conformer, no generated SDK source or generator, and a
+  retargeted private CLI dispatch; PR delivery remains before completion.
 
 ## Plans
 
 1. [Decouple the CLI presentation projection from Rust SDK symbols](plans/rust/cli-presentation-projection.md)
-   implements the reviewed CLI-owned grammar and discovery contract while the
-   generated SDK remains the sole runtime conformer behind private dispatch.
+   completed in PR #75. It established reviewed CLI-owned grammar, discovery,
+   and isolated dispatch before the later conformer cutover retargeted that
+   dispatch without changing the public projection.
 2. [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
    owns the complete transition from the generated public implementation to one
    handwritten product path, including private CLI dispatch retargeting, SDK

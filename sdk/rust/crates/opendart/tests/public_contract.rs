@@ -1,6 +1,6 @@
 //! Black-box checks for the transport-independent public contract.
 
-use std::{cell::Cell, fmt::Display};
+use std::fmt::Display;
 
 #[cfg(opendart_compat)]
 use std::path::Path;
@@ -16,9 +16,13 @@ use opendart::{
     PreparedBinaryRequest, PreparedRequest, Representation, RequestMethod, ResponseInterpretError,
     ResponseMetadata, SourceReply, SourceValue, SourceValueKind, WireInspectError, WireInspector,
     operations::{
-        AccnutAdtorNmNdAdtOpinion, Company, CorpCode, FnlttCmpnyIndx, FnlttMultiAcnt, List,
+        annual_report::AccountingAuditorNameAndAuditOpinionInput,
+        disclosure::{
+            CompanyCodesInput, CompanyOverviewInput, CompanyOverviewJsonResponse,
+            DisclosureSearchInput,
+        },
+        financial_statement::{CompaniesFinancialIndicatorsInput, CompaniesKeyAccountsInput},
     },
-    responses::CompanyJsonResponse,
     source_provenance,
 };
 use static_assertions::assert_not_impl_any;
@@ -35,24 +39,24 @@ use static_assertions::assert_impl_all;
 
 assert_not_impl_any!(ApiKey: Clone, Display);
 assert_not_impl_any!(AuthorizedRequest<'static>: Clone, Display);
-assert_not_impl_any!(PreparedRequest<CompanyJsonResponse>: Clone);
+assert_not_impl_any!(PreparedRequest<CompanyOverviewJsonResponse>: Clone);
 assert_not_impl_any!(PreparedBinaryRequest: Clone);
 assert_not_impl_any!(ApiKey: serde::Serialize);
 assert_not_impl_any!(AuthorizedRequest<'static>: serde::Serialize);
-assert_not_impl_any!(PreparedRequest<CompanyJsonResponse>: serde::Serialize);
+assert_not_impl_any!(PreparedRequest<CompanyOverviewJsonResponse>: serde::Serialize);
 assert_not_impl_any!(PreparedBinaryRequest: serde::Serialize);
 
 #[cfg(feature = "serde-json")]
-assert_impl_all!(CompanyJsonResponse: serde::Serialize);
+assert_impl_all!(CompanyOverviewJsonResponse: serde::Serialize);
 #[cfg(feature = "serde-json")]
 assert_impl_all!(SourceValue: serde::Serialize);
 #[cfg(feature = "serde-json")]
 assert_impl_all!(ResponseMetadata: serde::Serialize);
 #[cfg(feature = "serde-json")]
-assert_impl_all!(SourceResponse<SourceReply<CompanyJsonResponse>>: serde::Serialize);
+assert_impl_all!(SourceResponse<SourceReply<CompanyOverviewJsonResponse>>: serde::Serialize);
 
 #[cfg(not(feature = "serde-json"))]
-assert_not_impl_any!(CompanyJsonResponse: serde::Serialize);
+assert_not_impl_any!(CompanyOverviewJsonResponse: serde::Serialize);
 #[cfg(not(feature = "serde-json"))]
 assert_not_impl_any!(SourceValue: serde::Serialize);
 #[cfg(not(feature = "serde-json"))]
@@ -79,9 +83,13 @@ assert_not_impl_any!(opendart::BodyStream: serde::Serialize);
 
 #[test]
 fn representative_json_request_is_deterministic_and_credential_free() {
-    let prepared = AccnutAdtorNmNdAdtOpinion::new("00126380", "2025", "11011")
-        .prepare_json()
-        .expect("representative input should prepare");
+    let prepared = AccountingAuditorNameAndAuditOpinionInput::new(
+        "00126380".to_owned(),
+        "2025".to_owned(),
+        "11011".to_owned(),
+    )
+    .prepare_json()
+    .expect("representative input should prepare");
 
     assert_eq!(prepared.method(), RequestMethod::Get);
     assert_eq!(
@@ -99,7 +107,7 @@ fn representative_json_request_is_deterministic_and_credential_free() {
 
 #[test]
 fn representation_selection_changes_only_the_physical_contract() {
-    let operation = Company::new("00126380");
+    let operation = CompanyOverviewInput::new("00126380".to_owned());
     let json = operation.prepare_json().expect("JSON should be supported");
     let xml = operation.prepare_xml().expect("XML should be supported");
 
@@ -111,7 +119,9 @@ fn representation_selection_changes_only_the_physical_contract() {
 
 #[test]
 fn prepared_request_interprets_typed_responses_without_an_http_client() {
-    let prepared = Company::new("00126380").prepare_json().unwrap();
+    let prepared = CompanyOverviewInput::new("00126380".to_owned())
+        .prepare_json()
+        .unwrap();
     let inspector = WireInspector::new(1024).unwrap();
     let api_key = ApiKey::new("example-key").unwrap();
     let reply = prepared
@@ -124,17 +134,19 @@ fn prepared_request_interprets_typed_responses_without_an_http_client() {
         .unwrap();
 
     let SourceReply::Success(company) = reply else {
-        panic!("a success envelope should use the generated response decoder");
+        panic!("a success envelope should use the handwritten response decoder");
     };
     assert_eq!(
-        company.corp_name.as_ref().and_then(SourceValue::as_str),
+        company.legal_name().and_then(SourceValue::as_str),
         Some("Example Corp")
     );
 }
 
 #[test]
 fn prepared_request_makes_non_success_http_status_explicit() {
-    let prepared = Company::new("00126380").prepare_json().unwrap();
+    let prepared = CompanyOverviewInput::new("00126380".to_owned())
+        .prepare_json()
+        .unwrap();
     let inspector = WireInspector::new(1024).unwrap();
     let api_key = ApiKey::new("example-key").unwrap();
     let error = prepared
@@ -163,7 +175,9 @@ fn prepared_request_makes_non_success_http_status_explicit() {
 
 #[test]
 fn caller_owned_interpreter_omits_credential_evidence() {
-    let prepared = Company::new("00126380").prepare_json().unwrap();
+    let prepared = CompanyOverviewInput::new("00126380".to_owned())
+        .prepare_json()
+        .unwrap();
     let inspector = WireInspector::new(1024).unwrap();
     let api_key = ApiKey::new("secret value").unwrap();
     for body in [
@@ -187,9 +201,13 @@ fn caller_owned_interpreter_omits_credential_evidence() {
 async fn repository_contract_corpus_crosses_the_public_interpreter() {
     let inspector = WireInspector::new(64 * 1024).unwrap();
     let api_key = ApiKey::new("fixture-key").unwrap();
-    let json = Company::new("00126380").prepare_json().unwrap();
-    let xml = Company::new("00126380").prepare_xml().unwrap();
-    let binary = CorpCode::new().prepare_zip().unwrap();
+    let json = CompanyOverviewInput::new("00126380".to_owned())
+        .prepare_json()
+        .unwrap();
+    let xml = CompanyOverviewInput::new("00126380".to_owned())
+        .prepare_xml()
+        .unwrap();
+    let binary = CompanyCodesInput::new().prepare_archive().unwrap();
 
     let manifest: JsonValue = serde_json::from_slice(&contract_fixture("manifest.json"))
         .expect("contract fixture manifest is valid JSON");
@@ -335,8 +353,8 @@ fn contract_fixture(name: &str) -> Vec<u8> {
 
 #[test]
 fn fixed_binary_operation_routes_zip_and_xml_source_error() {
-    let prepared = CorpCode::new()
-        .prepare_zip()
+    let prepared = CompanyCodesInput::new()
+        .prepare_archive()
         .expect("ZIP should be supported");
     assert_eq!(prepared.relative_path(), "/api/corpCode.xml");
     assert_eq!(
@@ -363,23 +381,28 @@ fn assert_invalid_cardinality(error: PrepareError, physical: &'static str, logic
 }
 
 #[test]
-fn bounded_array_consumes_each_available_valid_item_once() {
-    let yielded = Cell::new(0);
-    let values = ["00334624", "00126380"].into_iter().inspect(|_| {
-        yielded.set(yielded.get() + 1);
-    });
-    let operation = FnlttMultiAcnt::new(values, "2025", "11011");
+fn bounded_array_preserves_input_order() {
+    let prepared = CompaniesKeyAccountsInput::new(
+        vec!["00334624".to_owned(), "00126380".to_owned()],
+        "2025".to_owned(),
+        "11011".to_owned(),
+    )
+    .prepare_json()
+    .unwrap();
 
-    assert_eq!(yielded.get(), 2);
-    assert_eq!(operation.corp_code(), ["00334624", "00126380"]);
+    assert_eq!(
+        prepared.encoded_query(),
+        "corp_code=00334624,00126380&bsns_year=2025&reprt_code=11011"
+    );
 }
 
 #[test]
 fn bounded_array_preserves_exact_maximum_serialization() {
-    let values = vec!["00126380"; 100];
-    let prepared = FnlttMultiAcnt::new(values.clone(), "2025", "11011")
-        .prepare_json()
-        .expect("the documented maximum should prepare");
+    let values = vec!["00126380".to_owned(); 100];
+    let prepared =
+        CompaniesKeyAccountsInput::new(values.clone(), "2025".to_owned(), "11011".to_owned())
+            .prepare_json()
+            .expect("the documented maximum should prepare");
     assert_eq!(
         prepared.encoded_query(),
         format!(
@@ -390,18 +413,12 @@ fn bounded_array_preserves_exact_maximum_serialization() {
 }
 
 #[test]
-fn bounded_array_stops_at_overflow_sentinel_and_reports_every_representation() {
-    let yielded = Cell::new(0);
-    let operation = FnlttMultiAcnt::new(
-        std::iter::repeat_with(|| {
-            yielded.set(yielded.get() + 1);
-            "00126380"
-        }),
-        "2025",
-        "11011",
+fn bounded_array_reports_overflow_for_every_representation() {
+    let operation = CompaniesKeyAccountsInput::new(
+        vec!["00126380".to_owned(); 101],
+        "2025".to_owned(),
+        "11011".to_owned(),
     );
-    assert_eq!(yielded.get(), 101);
-    assert_eq!(operation.corp_code().len(), 101);
     assert_invalid_cardinality(
         operation
             .prepare_json()
@@ -419,9 +436,13 @@ fn bounded_array_stops_at_overflow_sentinel_and_reports_every_representation() {
 }
 
 #[test]
-fn every_generated_bounded_parameter_uses_the_same_overflow_contract() {
-    let operation = FnlttCmpnyIndx::new(std::iter::repeat("00126380"), "2025", "11011", "M210000");
-    assert_eq!(operation.corp_code().len(), 101);
+fn every_handwritten_bounded_parameter_uses_the_same_overflow_contract() {
+    let operation = CompaniesFinancialIndicatorsInput::new(
+        vec!["00126380".to_owned(); 101],
+        "2025".to_owned(),
+        "11011".to_owned(),
+        "M210000".to_owned(),
+    );
     assert_invalid_cardinality(
         operation
             .prepare_json()
@@ -441,19 +462,23 @@ fn every_generated_bounded_parameter_uses_the_same_overflow_contract() {
 #[test]
 fn multi_company_request_rejects_empty_and_invalid_elements() {
     assert!(
-        FnlttMultiAcnt::new(Vec::<String>::new(), "2025", "11011")
+        CompaniesKeyAccountsInput::new(Vec::new(), "2025".to_owned(), "11011".to_owned(),)
             .prepare_json()
             .is_err()
     );
     assert!(
-        FnlttMultiAcnt::new([""], "2025", "11011")
+        CompaniesKeyAccountsInput::new(vec![String::new()], "2025".to_owned(), "11011".to_owned(),)
             .prepare_json()
             .is_err()
     );
     assert!(
-        FnlttMultiAcnt::new(["a,b", "회사 /+"], "2025", "11011")
-            .prepare_json()
-            .is_err(),
+        CompaniesKeyAccountsInput::new(
+            vec!["a,b".to_owned(), "회사 /+".to_owned()],
+            "2025".to_owned(),
+            "11011".to_owned(),
+        )
+        .prepare_json()
+        .is_err(),
         "company-code format validation must run before comma serialization"
     );
 }
@@ -463,7 +488,7 @@ fn authorization_is_explicit_and_redacted() {
     let sentinel = "secret /+ credential";
     let encoded = "secret+%2F%2B+credential";
     let key = ApiKey::new(sentinel).expect("non-empty key should be accepted");
-    let prepared = Company::new("00126380")
+    let prepared = CompanyOverviewInput::new("00126380".to_owned())
         .prepare_json()
         .expect("request should prepare");
     let authorized = prepared.authorize(&key);
@@ -525,14 +550,14 @@ fn api_key_validation_does_not_impose_length_or_character_set_rules() {
 
 #[test]
 fn empty_inputs_fail_without_echoing_values() {
-    let error = Company::new("")
+    let error = CompanyOverviewInput::new(String::new())
         .prepare_json()
         .expect_err("empty required input must fail");
     assert!(error.to_string().contains("corp_code"));
     assert!(ApiKey::new("").is_err());
 
-    let error = List::new()
-        .with_page_no("")
+    let error = DisclosureSearchInput::new()
+        .with_page(String::new())
         .prepare_json()
         .expect_err("a supplied optional query value must not be empty");
     assert!(error.to_string().contains("page_no"));
@@ -541,27 +566,35 @@ fn empty_inputs_fail_without_echoing_values() {
 #[test]
 fn canonical_input_constraints_fail_during_preparation_without_echoing_values() {
     let cases = [
-        Company::new("１２３４５６７８")
+        CompanyOverviewInput::new("１２３４５６７８".to_owned())
             .prepare_json()
             .expect_err("company codes require ASCII digits"),
-        List::new()
-            .with_bgn_de("20230229")
+        DisclosureSearchInput::new()
+            .with_start_date("20230229".to_owned())
             .prepare_json()
             .expect_err("compact dates require a valid calendar day"),
-        List::new()
-            .with_last_reprt_at("maybe")
+        DisclosureSearchInput::new()
+            .with_final_reports_only("maybe".to_owned())
             .prepare_json()
             .expect_err("closed values must be enforced"),
-        List::new()
-            .with_page_count("101")
+        DisclosureSearchInput::new()
+            .with_page_size("101".to_owned())
             .prepare_json()
             .expect_err("page count must remain within its bound"),
-        AccnutAdtorNmNdAdtOpinion::new("00126380", "２０２５", "11011")
-            .prepare_json()
-            .expect_err("business years require ASCII digits"),
-        AccnutAdtorNmNdAdtOpinion::new("00126380", "2025", "99999")
-            .prepare_json()
-            .expect_err("report codes require documented values"),
+        AccountingAuditorNameAndAuditOpinionInput::new(
+            "00126380".to_owned(),
+            "２０２５".to_owned(),
+            "11011".to_owned(),
+        )
+        .prepare_json()
+        .expect_err("business years require ASCII digits"),
+        AccountingAuditorNameAndAuditOpinionInput::new(
+            "00126380".to_owned(),
+            "2025".to_owned(),
+            "99999".to_owned(),
+        )
+        .prepare_json()
+        .expect_err("report codes require documented values"),
     ];
 
     for error in cases {
@@ -587,7 +620,7 @@ fn operation_identity_debug_contains_only_stable_identifiers() {
         assert!(diagnostic.contains(identity.logical()));
     }
 
-    let prepared = Company::new("00126380")
+    let prepared = CompanyOverviewInput::new("00126380".to_owned())
         .prepare_json()
         .expect("request should prepare");
     assert_identity(prepared.identity());
@@ -855,7 +888,8 @@ fn source_provenance_identifies_the_reviewed_contract_snapshot() {
     let provenance = source_provenance();
     assert_eq!(provenance.crate_version(), env!("CARGO_PKG_VERSION"));
     assert_eq!(provenance.specification_source_release(), Some("v0.1.0"));
-    assert_eq!(provenance.canonical_bundle_sha256().len(), 64);
-    assert_eq!(provenance.sdk_projection_sha256().len(), 64);
-    assert!(provenance.generator_schema() > 0);
+    assert_eq!(
+        provenance.canonical_bundle_sha256(),
+        "61dae078d750cde76a83ccb48d5b37ab9bf9d034528fd46600aff1d2523e34e3"
+    );
 }

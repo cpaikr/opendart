@@ -14,10 +14,10 @@ contract.
 | Area | State |
 | --- | --- |
 | Product design | [ADR 0004](../../docs/decisions/0004-handwritten-rust-sdk-conformer.md) accepts one handwritten Rust conformer, Rust-native conformance, idiomatic product naming, source-shaped response serialization, and a presentation-only CLI projection while preserving ADR 0002's SDK product boundary |
-| Implementation | The generated SDK, transport-independent response interpretation, safe client, and CLI integration are implemented; no handwritten operation conformer exists yet |
+| Implementation | The handwritten-only SDK, Rust-native conformance, source-backed wrappers, safe client, and CLI integration are implemented; SDK generation and generated SDK source are absent |
 | Delivery | `0.1.0-beta.1` is superseded; its publication stopped before `cargo publish` |
 | Public availability | No accepted registry artifact, SDK tag, or published SDK release has been verified |
-| Scheduling | Release recovery is deferred behind the contract, CLI presentation, and handwritten-conformer plans in [the Rust roadmap](../../ROADMAP_RUST.md) |
+| Scheduling | Implementation predecessors are complete; release recovery remains deferred until explicitly started with renewed external-state review |
 
 The merged Release Please proposal advanced the SDK manifest, changelog, lock
 files, and release manifest to `0.1.0-beta.1`. Those repository changes are
@@ -48,27 +48,24 @@ do not infer current release state from this dated record.
 
 ## Remaining delivery work
 
-1. Complete the [contract and Rust-native conformance plan](../../plans/rust/handwritten-sdk-contract-and-conformance.md),
-   the [CLI presentation projection plan](../../plans/rust/cli-presentation-projection.md),
-   and the [handwritten implementation and cutover plan](../../plans/rust/handwritten-sdk-conformer.md).
-2. Review the resulting breaking package contract, then let Release Please
+1. Review the resulting breaking handwritten package contract and renewed
+   offline qualification evidence, then let Release Please
    propose a new beta candidate from the handwritten-only SDK revision.
-3. Revalidate the new draft, version, candidate commit, environment, registry,
+2. Revalidate the new draft, version, candidate commit, environment, registry,
    and tag state. Stop on any mismatch.
-4. Verify the accepted beta artifact, revoke bootstrap authority, and complete
+3. Verify the accepted beta artifact, revoke bootstrap authority, and complete
    the selected trusted-publishing cutover.
-5. Publish and verify a non-prerelease `0.1.0` through a reviewed,
+4. Publish and verify a non-prerelease `0.1.0` through a reviewed,
    release-eligible commit.
-6. Use that verified non-prerelease SDK as the publication gate for the public
+5. Use that verified non-prerelease SDK as the publication gate for the public
    CLI.
 
 ## Next action
 
-Take no registry or release action while this task is deferred. When Rust work
-resumes, start with the contract and Rust-native conformance plan; do not scale
-the handwritten implementation until that plan fixes the exact Rust and CLI
-interfaces, operation identity mapping, evidence, and mutation controls. The
-superseded beta.1 draft is not an authorized recovery source.
+Take no registry or release action while this task is deferred. When release
+work resumes, renew external state and qualification evidence from the complete
+handwritten-only package. The superseded beta.1 draft is not an authorized
+recovery source.
 
 ## Canonical references
 
@@ -78,7 +75,7 @@ superseded beta.1 draft is not an authorized recovery source.
 - [CLI presentation projection](../../plans/rust/cli-presentation-projection.md)
 - [Handwritten SDK implementation and cutover](../../plans/rust/handwritten-sdk-conformer.md)
 - [SDK public contract](../../docs/rust-sdk/public-contract.md)
-- [Generation pipeline](../../docs/rust-sdk/generation.md)
+- [CLI projection generation](../../docs/rust-sdk/generation.md)
 - [Transport and safety](../../docs/rust-sdk/transport-and-safety.md)
 - [SDK verification and release](../../docs/rust-sdk/verification-and-release.md)
 - [Repository release policy](../../RELEASING.md)

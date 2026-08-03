@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -110,14 +111,16 @@ type cutoverGuardTarget struct {
 }
 
 type sourceOperation struct {
-	logicalID         string
-	family            string
-	parameters        []string
-	parameterContract []openapispec.SDKSurfaceParameter
-	security          []openapispec.SDKSurfaceSecurityRequirement
-	representation    string
-	alternates        []string
-	responseSchema    *openapispec.SDKSurfaceSchema
+	logicalID          string
+	family             string
+	relativeTarget     string
+	parameters         []string
+	requiredParameters []string
+	parameterContract  []openapispec.SDKSurfaceParameter
+	security           []openapispec.SDKSurfaceSecurityRequirement
+	representation     string
+	alternates         []string
+	responseSchema     *openapispec.SDKSurfaceSchema
 }
 
 // Check validates all six reviewed name batches and the complete physical
@@ -141,7 +144,7 @@ func Check(repositoryRoot string) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	if err := checkExecutableCaseHarness(root); err != nil {
+	if err := checkExecutableCaseHarness(root, sources); err != nil {
 		return Report{}, err
 	}
 	report.ExecutableCases = executable
@@ -176,8 +179,12 @@ func loadSourceOperations(root string) (map[string]sourceOperation, error) {
 			return nil, reject("inventory-disagreement", "openapi/openapi.yaml", operation.OperationID, nil)
 		}
 		parameters := make([]string, 0, len(operation.Parameters))
+		requiredParameters := make([]string, 0, len(operation.Parameters))
 		for _, parameter := range operation.Parameters {
 			parameters = append(parameters, parameter.Name)
+			if parameter.Required {
+				requiredParameters = append(requiredParameters, parameter.Name)
+			}
 		}
 		sort.Strings(parameters)
 		parameterContract := append([]openapispec.SDKSurfaceParameter(nil), operation.Parameters...)
@@ -185,13 +192,15 @@ func loadSourceOperations(root string) (map[string]sourceOperation, error) {
 			return parameterContract[left].Name < parameterContract[right].Name
 		})
 		sources[operation.OperationID] = sourceOperation{
-			logicalID:         operation.LogicalOperationID,
-			family:            operation.APIGroupCode,
-			parameters:        parameters,
-			parameterContract: parameterContract,
-			security:          append([]openapispec.SDKSurfaceSecurityRequirement(nil), operation.Security...),
-			representation:    catalogOperation.PrimaryRepresentation,
-			alternates:        append([]string(nil), catalogOperation.AlternateResponseMedia...),
+			logicalID:          operation.LogicalOperationID,
+			family:             operation.APIGroupCode,
+			relativeTarget:     operation.RelativeTarget,
+			parameters:         parameters,
+			requiredParameters: requiredParameters,
+			parameterContract:  parameterContract,
+			security:           append([]openapispec.SDKSurfaceSecurityRequirement(nil), operation.Security...),
+			representation:     catalogOperation.PrimaryRepresentation,
+			alternates:         append([]string(nil), catalogOperation.AlternateResponseMedia...),
 		}
 		if catalogOperation.PrimaryRepresentation != "application/zip" {
 			schema, err := responseSchema(operation, catalogOperation.PrimaryRepresentation)
@@ -579,12 +588,6 @@ func checkObligations(path string, sources map[string]sourceOperation) (int, err
 		return 0, reject("obligation-header", artifact, "", nil)
 	}
 	seen := make(map[string]struct{}, len(manifest.Cases))
-	wantExecutable := map[string]string{
-		"get_company_json": "application/json",
-		"get_company_xml":  "application/xml",
-		"get_corpCode_xml": "application/zip",
-	}
-	seenExecutable := make(map[string]struct{}, len(wantExecutable))
 	executableCount := 0
 	for _, item := range manifest.Cases {
 		source, ok := sources[item.OperationID]
@@ -603,28 +606,22 @@ func checkObligations(path string, sources map[string]sourceOperation) (int, err
 		if !slices.Equal(got, want) {
 			return 0, reject("obligation-set", artifact, item.OperationID, fmt.Errorf("got %v want %v", got, want))
 		}
-		if item.Executable {
-			wantRepresentation, reviewed := wantExecutable[item.OperationID]
-			if !reviewed || source.representation != wantRepresentation {
-				return 0, reject("executable-case", artifact, item.OperationID, nil)
-			}
-			executableCount++
-			seenExecutable[item.OperationID] = struct{}{}
-		} else if _, reviewed := wantExecutable[item.OperationID]; reviewed {
+		if !item.Executable {
 			return 0, reject("executable-case", artifact, item.OperationID, nil)
 		}
+		executableCount++
 		seen[item.OperationID] = struct{}{}
 	}
 	if len(seen) != len(sources) {
 		return 0, reject("obligation-coverage", artifact, "", fmt.Errorf("mapped %d of %d", len(seen), len(sources)))
 	}
-	if len(seenExecutable) != len(wantExecutable) {
-		return 0, reject("executable-case", artifact, "", fmt.Errorf("mapped %d of %d", len(seenExecutable), len(wantExecutable)))
+	if executableCount != len(sources) {
+		return 0, reject("executable-case", artifact, "", fmt.Errorf("mapped %d of %d", executableCount, len(sources)))
 	}
 	return executableCount, nil
 }
 
-func checkExecutableCaseHarness(repositoryRoot string) error {
+func checkExecutableCaseHarness(repositoryRoot string, sources map[string]sourceOperation) error {
 	artifact := "sdk/rust/crates/opendart/src/conformance.rs"
 	path := filepath.Join(repositoryRoot, filepath.FromSlash(artifact))
 	info, err := os.Lstat(path)
@@ -644,15 +641,199 @@ func checkExecutableCaseHarness(repositoryRoot string) error {
 		return reject("executable-case-harness", artifact, "", errors.New("reviewed executable dispatcher is not a Rust test"))
 	}
 	required := []string{
-		`include_str!("../../../conformance/obligations.toml")`,
-		"for operation_id in operation_ids",
-		`"get_company_json" => executable_get_company_json()`,
-		`"get_company_xml" => executable_get_company_xml()`,
-		`"get_corpCode_xml" => executable_get_corp_code_xml()`,
+		"fn executable_cases() -> Vec<ExecutableCase>",
+		"for case in cases",
+		"(case.run)()",
+		"expected_relative_path($physical)",
+		"expected_query($logical)",
+		"universal_response_body(expected, $topology)",
+		"ResponseTopology::List,",
+		"ResponseTopology::Root,",
+		"ResponseTopology::GroupList,",
+		".interpret_response(&inspector, &key, 200, body)",
+		"SourceReply::Success(_)",
+		".decode(wrong_kind_root())",
+		"expected: SourceValueKind::Object",
+		"actual: SourceValueKind::Array",
+		"exercise_binary_alternate_status(&prepared)",
+		".execute_binary(prepared)",
+		"BinaryReply::Status(status)",
 	}
 	for _, token := range required {
 		if !strings.Contains(code, token) {
 			return reject("executable-case-harness", artifact, "", fmt.Errorf("missing required harness token %q", token))
+		}
+	}
+	registryEntry := regexp.MustCompile(`(?m)^\s*(binary_executable_case|executable_case|root_executable_case|group_list_executable_case)!\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"`)
+	entries := registryEntry.FindAllStringSubmatch(code, -1)
+	seen := make(map[string]struct{}, len(entries))
+	for _, entry := range entries {
+		macro, operationID, logicalID := entry[1], entry[2], entry[3]
+		source, ok := sources[operationID]
+		if !ok || source.logicalID != logicalID {
+			return reject("executable-case-harness", artifact, operationID, errors.New("registry identity is not canonical"))
+		}
+		if _, duplicate := seen[operationID]; duplicate {
+			return reject("executable-case-harness", artifact, operationID, errors.New("duplicate registry operation"))
+		}
+		wantMacro := ""
+		if source.representation == "application/zip" {
+			wantMacro = "binary_executable_case"
+		} else {
+			canonicalTopology, err := executableResponseTopology(source.responseSchema)
+			if err != nil {
+				return reject("executable-case-harness", artifact, operationID, err)
+			}
+			switch canonicalTopology {
+			case executableRootTopology:
+				wantMacro = "root_executable_case"
+			case executableListTopology:
+				wantMacro = "executable_case"
+			case executableGroupListTopology:
+				wantMacro = "group_list_executable_case"
+			default:
+				return reject("executable-case-harness", artifact, operationID, fmt.Errorf("unknown canonical topology %q", canonicalTopology))
+			}
+		}
+		if macro != wantMacro {
+			return reject("executable-case-harness", artifact, operationID, fmt.Errorf("registered with %s, want %s", macro, wantMacro))
+		}
+		derivedPath, err := executableFixturePath(operationID, source.representation)
+		if err != nil {
+			return reject("executable-case-harness", artifact, operationID, err)
+		}
+		if derivedPath != source.relativeTarget {
+			return reject("executable-case-harness", artifact, operationID, fmt.Errorf("derived path %q does not match canonical %q", derivedPath, source.relativeTarget))
+		}
+		canonicalQuery, err := executableFixtureQuery(source)
+		if err != nil {
+			return reject("executable-case-harness", artifact, operationID, err)
+		}
+		logicalQuery, err := executableFixtureLogicalQuery(logicalID)
+		if err != nil {
+			return reject("executable-case-harness", artifact, operationID, err)
+		}
+		if logicalQuery != canonicalQuery {
+			return reject("executable-case-harness", artifact, operationID, fmt.Errorf("logical fixture query %q does not match canonical %q", logicalQuery, canonicalQuery))
+		}
+		seen[operationID] = struct{}{}
+	}
+	if len(seen) != len(sources) {
+		return reject("executable-case-harness", artifact, "", fmt.Errorf("registered %d of %d operations", len(seen), len(sources)))
+	}
+	return nil
+}
+
+func executableFixturePath(operationID, representation string) (string, error) {
+	target, ok := strings.CutPrefix(operationID, "get_")
+	if !ok {
+		return "", errors.New("physical operation does not use get_ prefix")
+	}
+	suffix, extension := "_xml", ".xml"
+	if representation == "application/json" {
+		suffix, extension = "_json", ".json"
+	}
+	stem, ok := strings.CutSuffix(target, suffix)
+	if !ok || stem == "" {
+		return "", fmt.Errorf("physical operation does not use %s suffix", suffix)
+	}
+	return "/api/" + stem + extension, nil
+}
+
+func executableFixtureQuery(source sourceOperation) (string, error) {
+	fixtureValues := map[string]string{
+		"corp_code":   "00126380",
+		"bsns_year":   "2025",
+		"reprt_code":  "11011",
+		"rcept_no":    "20250101000001",
+		"fs_div":      "CFS",
+		"sj_div":      "BS1",
+		"idx_cl_code": "M210000",
+		"bgn_de":      "20250101",
+		"end_de":      "20251231",
+	}
+	encoded := make([]string, 0, len(source.requiredParameters))
+	for _, parameter := range source.requiredParameters {
+		value, ok := fixtureValues[parameter]
+		if !ok {
+			return "", fmt.Errorf("no independently authored fixture value for required parameter %q", parameter)
+		}
+		encoded = append(encoded, url.QueryEscape(parameter)+"="+url.QueryEscape(value))
+	}
+	return strings.Join(encoded, "&"), nil
+}
+
+func executableFixtureLogicalQuery(logicalID string) (string, error) {
+	switch {
+	case strings.HasPrefix(logicalID, "DS002-"):
+		return "corp_code=00126380&bsns_year=2025&reprt_code=11011", nil
+	case strings.HasPrefix(logicalID, "DS005-"), strings.HasPrefix(logicalID, "DS006-"):
+		return "corp_code=00126380&bgn_de=20250101&end_de=20251231", nil
+	case strings.HasPrefix(logicalID, "DS004-"):
+		return "corp_code=00126380", nil
+	}
+	switch logicalID {
+	case "DS001-2019001", "DS001-2019018":
+		return "", nil
+	case "DS001-2019002":
+		return "corp_code=00126380", nil
+	case "DS001-2019003":
+		return "rcept_no=20250101000001", nil
+	case "DS003-2019016", "DS003-2019017":
+		return "corp_code=00126380&bsns_year=2025&reprt_code=11011", nil
+	case "DS003-2019019":
+		return "rcept_no=20250101000001&reprt_code=11011", nil
+	case "DS003-2019020":
+		return "corp_code=00126380&bsns_year=2025&reprt_code=11011&fs_div=CFS", nil
+	case "DS003-2020001":
+		return "sj_div=BS1", nil
+	case "DS003-2022001", "DS003-2022002":
+		return "corp_code=00126380&bsns_year=2025&reprt_code=11011&idx_cl_code=M210000", nil
+	default:
+		return "", fmt.Errorf("no independently authored fixture query for logical operation %q", logicalID)
+	}
+}
+
+type executableTopology string
+
+const (
+	executableRootTopology      executableTopology = "root"
+	executableListTopology      executableTopology = "list"
+	executableGroupListTopology executableTopology = "group-list"
+)
+
+func executableResponseTopology(schema *openapispec.SDKSurfaceSchema) (executableTopology, error) {
+	if schema == nil {
+		return "", errors.New("structured operation has no response schema")
+	}
+	list := executableSchemaProperty(*schema, "list")
+	group := executableSchemaProperty(*schema, "group")
+	if list != nil && group != nil {
+		return "", errors.New("response schema exposes both list and group containers")
+	}
+	if list != nil {
+		if !slices.Contains(list.Types, "array") || list.Items == nil {
+			return "", errors.New("list response container is not an array")
+		}
+		return executableListTopology, nil
+	}
+	if group != nil {
+		if !slices.Contains(group.Types, "array") || group.Items == nil {
+			return "", errors.New("group response container is not an array")
+		}
+		nestedList := executableSchemaProperty(*group.Items, "list")
+		if nestedList == nil || !slices.Contains(nestedList.Types, "array") || nestedList.Items == nil {
+			return "", errors.New("group response container has no nested list array")
+		}
+		return executableGroupListTopology, nil
+	}
+	return executableRootTopology, nil
+}
+
+func executableSchemaProperty(schema openapispec.SDKSurfaceSchema, name string) *openapispec.SDKSurfaceSchema {
+	for i := range schema.Properties {
+		if schema.Properties[i].Name == name {
+			return &schema.Properties[i].Schema
 		}
 	}
 	return nil

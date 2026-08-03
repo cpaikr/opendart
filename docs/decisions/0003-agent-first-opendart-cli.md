@@ -11,7 +11,8 @@ binary artifact behavior, source-status policy, independent release component,
 and SDK-before-CLI publication order. ADR 0004 gives CLI presentation explicit
 product names, removes Rust implementation symbols from public discovery, and
 limits retained generation to CLI interface breadth and private typed wiring.
-The generated implementation described below remains current until cutover.
+The generated SDK mechanics described below are the superseded original
+decision record; the current implementation follows ADR 0004.
 
 The public Rust SDK provides complete typed request preparation and conservative
 response decoding, but shell users still have to write Rust to call an

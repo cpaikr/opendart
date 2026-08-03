@@ -1,0 +1,71 @@
+//! Handwritten DS002 operations.
+
+use crate::protocol::{Query, items, source_status};
+use crate::request::RequestParts;
+use crate::values::{BusinessYear, CompanyCode, ReportCode};
+use crate::wire::decode::{ObjectDecoder, decode_array, decode_source_status, decode_xml_array};
+use crate::{
+    OperationIdentity, PrepareError, PreparedRequest, ResponseDecodeError, SourceStatus,
+    SourceValue,
+};
+
+mod capital_increase_and_reduction_status;
+pub use capital_increase_and_reduction_status::*;
+mod dividend_information;
+pub use dividend_information::*;
+mod treasury_stock_transactions;
+pub use treasury_stock_transactions::*;
+mod largest_shareholder_status;
+pub use largest_shareholder_status::*;
+mod largest_shareholder_changes;
+pub use largest_shareholder_changes::*;
+mod minority_shareholder_status;
+pub use minority_shareholder_status::*;
+mod executive_status;
+pub use executive_status::*;
+mod employee_status;
+pub use employee_status::*;
+mod director_auditor_individual_compensation;
+pub use director_auditor_individual_compensation::*;
+mod director_auditor_total_compensation;
+pub use director_auditor_total_compensation::*;
+mod top_five_individual_compensation;
+pub use top_five_individual_compensation::*;
+mod other_corporation_investment_status;
+pub use other_corporation_investment_status::*;
+mod total_shares_status;
+pub use total_shares_status::*;
+mod debt_securities_issuance_results;
+pub use debt_securities_issuance_results::*;
+mod commercial_paper_outstanding_balance;
+pub use commercial_paper_outstanding_balance::*;
+mod short_term_bond_outstanding_balance;
+pub use short_term_bond_outstanding_balance::*;
+mod corporate_bond_outstanding_balance;
+pub use corporate_bond_outstanding_balance::*;
+mod hybrid_capital_securities_outstanding_balance;
+pub use hybrid_capital_securities_outstanding_balance::*;
+mod contingent_capital_securities_outstanding_balance;
+pub use contingent_capital_securities_outstanding_balance::*;
+mod accounting_auditor_name_and_audit_opinion;
+pub use accounting_auditor_name_and_audit_opinion::*;
+mod audit_service_contracts;
+pub use audit_service_contracts::*;
+mod non_audit_service_contracts;
+pub use non_audit_service_contracts::*;
+mod outside_director_status_and_changes;
+pub use outside_director_status_and_changes::*;
+mod unregistered_executive_compensation;
+pub use unregistered_executive_compensation::*;
+mod shareholder_approved_director_auditor_compensation;
+pub use shareholder_approved_director_auditor_compensation::*;
+mod director_auditor_compensation_by_type;
+pub use director_auditor_compensation_by_type::*;
+mod public_offering_proceeds_usage;
+pub use public_offering_proceeds_usage::*;
+mod private_placement_proceeds_usage;
+pub use private_placement_proceeds_usage::*;
+mod director_auditor_individual_compensation_v2;
+pub use director_auditor_individual_compensation_v2::*;
+mod top_five_individual_compensation_v2;
+pub use top_five_individual_compensation_v2::*;

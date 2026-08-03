@@ -6,8 +6,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
+	"sync"
 	"testing"
 
+	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/rustinterface"
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
 	rustemitter "github.com/cpaikr/opendart/internal/sdkgen/rust"
@@ -15,21 +18,12 @@ import (
 
 func TestConstraintProjectionsOmitOnlyZeroValues(t *testing.T) {
 	for _, test := range []struct {
-		name  string
-		zero  any
-		value any
-	}{
-		{
-			name:  "SDK",
-			zero:  model.Parameter{},
-			value: model.Parameter{Constraints: model.StringConstraints{Format: "opendart-date"}},
-		},
-		{
-			name:  "CLI",
-			zero:  model.CLIParameter{},
-			value: model.CLIParameter{Constraints: model.StringConstraints{Format: "opendart-date"}},
-		},
-	} {
+		name        string
+		zero, value any
+	}{{
+		name: "CLI", zero: model.CLIParameter{},
+		value: model.CLIParameter{Constraints: model.StringConstraints{Format: "opendart-date"}},
+	}} {
 		t.Run(test.name, func(t *testing.T) {
 			zero, err := json.Marshal(test.zero)
 			if err != nil {
@@ -58,7 +52,7 @@ func TestConstraintProjectionsOmitOnlyZeroValues(t *testing.T) {
 	}
 }
 
-func TestBuildArtifactsSeparatesSemanticSDKAndCLIIdentities(t *testing.T) {
+func TestBuildArtifactsSeparatesPublicInterfaceAndPrivateDispatchIdentities(t *testing.T) {
 	surface := canonicalSurface(t)
 	batches := canonicalInterfaceBatches(t)
 	first, err := model.BuildArtifacts(surface, batches)
@@ -69,13 +63,13 @@ func TestBuildArtifactsSeparatesSemanticSDKAndCLIIdentities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if first.Semantic.Checksum == "" || first.SDK.Checksum == "" || first.CLIInterface.Checksum == "" || first.CLIDispatch.Checksum == "" {
+	if first.CLIInterface.Checksum == "" || first.CLIDispatch.Checksum == "" {
 		t.Fatalf("missing projection identity: %#v", first)
 	}
-	if first.Semantic.Checksum != second.Semantic.Checksum || first.SDK.Checksum != second.SDK.Checksum || first.CLIInterface.Checksum != second.CLIInterface.Checksum || first.CLIDispatch.Checksum != second.CLIDispatch.Checksum {
+	if first.CLIInterface.Checksum != second.CLIInterface.Checksum || first.CLIDispatch.Checksum != second.CLIDispatch.Checksum {
 		t.Fatal("artifact identities are not deterministic")
 	}
-	if first.Semantic.Checksum == first.SDK.Checksum || first.Semantic.Checksum == first.CLIInterface.Checksum || first.Semantic.Checksum == first.CLIDispatch.Checksum || first.SDK.Checksum == first.CLIInterface.Checksum || first.SDK.Checksum == first.CLIDispatch.Checksum || first.CLIInterface.Checksum == first.CLIDispatch.Checksum {
+	if first.CLIInterface.Checksum == first.CLIDispatch.Checksum {
 		t.Fatal("distinct projection schemas unexpectedly share an identity")
 	}
 
@@ -92,11 +86,11 @@ func TestBuildArtifactsSeparatesSemanticSDKAndCLIIdentities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if changed.SDK.Checksum != first.SDK.Checksum {
-		t.Fatal("CLI-only prose changed the SDK projection")
+	if changed.CLIInterface.Checksum == first.CLIInterface.Checksum {
+		t.Fatal("CLI-only prose did not change the public projection")
 	}
-	if changed.CLIInterface.Checksum == first.CLIInterface.Checksum || changed.Semantic.Checksum == first.Semantic.Checksum {
-		t.Fatal("CLI-only prose did not change its owning projections")
+	if changed.CLIDispatch.Checksum != first.CLIDispatch.Checksum {
+		t.Fatal("CLI-only prose changed private typed dispatch")
 	}
 	firstFiles, err := rustemitter.RenderArtifacts(first)
 	if err != nil {
@@ -106,11 +100,11 @@ func TestBuildArtifactsSeparatesSemanticSDKAndCLIIdentities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(firstFiles.SDK, changedFiles.SDK) {
-		t.Fatal("CLI-only prose rewrote generated SDK bytes")
-	}
 	if reflect.DeepEqual(firstFiles.CLIInterface, changedFiles.CLIInterface) {
 		t.Fatal("CLI-only prose did not rewrite generated CLI bytes")
+	}
+	if !reflect.DeepEqual(firstFiles.CLIDispatch, changedFiles.CLIDispatch) {
+		t.Fatal("CLI-only prose rewrote private dispatch bytes")
 	}
 }
 
@@ -150,7 +144,7 @@ func TestBuildArtifactsProjectsCanonicalDiscoveryFacts(t *testing.T) {
 			if len(representation.TestArgv) == 0 {
 				t.Fatalf("%s/%s has no generated test invocation", operation.Name, representation.Name)
 			}
-			if representation.Name == model.RepresentationZIP && representation.ResponseType != "opendart::BinaryReply<opendart::BodyStream>" {
+			if representation.Name == model.RepresentationZIP && !strings.HasPrefix(representation.ResponseType, "opendart::operations::") {
 				t.Fatalf("ZIP response type = %q", representation.ResponseType)
 			}
 		}
@@ -198,6 +192,27 @@ func TestBuildArtifactsRejectsCLIOnlyCollisionsAndDivergence(t *testing.T) {
 			}
 		}
 		t.Fatal("canonical surface has no paired logical operation")
+	})
+
+	t.Run("variant parameter description", func(t *testing.T) {
+		surface := canonicalSurface(t)
+		for sourceIndex := range surface.Operations {
+			source := &surface.Operations[sourceIndex]
+			if len(source.Parameters) == 0 {
+				continue
+			}
+			for variantIndex := range surface.Operations {
+				variant := &surface.Operations[variantIndex]
+				if variant.OperationID == source.OperationID || variant.LogicalOperationID != source.LogicalOperationID {
+					continue
+				}
+				variant.Parameters[0].Description = "divergent"
+				_, err := model.BuildArtifacts(surface, canonicalInterfaceBatches(t))
+				assertArtifactRule(t, err, "incompatible-cli-parameter-description")
+				return
+			}
+		}
+		t.Fatal("canonical surface has no paired parameterized operation")
 	})
 
 	t.Run("missing operation mapping", func(t *testing.T) {
@@ -290,4 +305,45 @@ func assertArtifactRule(t *testing.T, err error, rule string) {
 	if !errors.As(err, &modelError) || modelError.Rule != rule {
 		t.Fatalf("error = %#v, want rule %q", err, rule)
 	}
+}
+
+var loadCanonicalSurfaceOnce = sync.OnceValues(func() ([]byte, error) {
+	_, current, _, ok := runtime.Caller(0)
+	if !ok {
+		return nil, errors.New("cannot locate test source")
+	}
+	document, err := openapispec.Load(filepath.Join(filepath.Dir(current), "..", "..", "..", "openapi", "openapi.yaml"))
+	if err != nil {
+		return nil, err
+	}
+	defer document.Close()
+	surface, err := document.InspectSDKSurface()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(surface)
+})
+
+func canonicalSurface(t *testing.T) openapispec.SDKSurface {
+	t.Helper()
+	encoded, err := loadCanonicalSurfaceOnce()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var surface openapispec.SDKSurface
+	if err := json.Unmarshal(encoded, &surface); err != nil {
+		t.Fatal(err)
+	}
+	return surface
+}
+
+func firstOperationWithParameters(t *testing.T, surface *openapispec.SDKSurface) *openapispec.SDKSurfaceOperation {
+	t.Helper()
+	for index := range surface.Operations {
+		if len(surface.Operations[index].Parameters) != 0 {
+			return &surface.Operations[index]
+		}
+	}
+	t.Fatal("canonical surface has no parameterized operation")
+	return nil
 }

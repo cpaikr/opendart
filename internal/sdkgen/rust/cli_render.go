@@ -9,19 +9,14 @@ import (
 	"github.com/cpaikr/opendart/internal/sdkgen/ownership"
 )
 
-// Artifacts contains all independently owned Rust product trees.
+// Artifacts contains both independently owned CLI projection trees.
 type Artifacts struct {
-	SDK          map[string][]byte
 	CLIInterface map[string][]byte
 	CLIDispatch  map[string][]byte
 }
 
-// RenderArtifacts renders the SDK and CLI adapters from one normalized build.
+// RenderArtifacts renders public CLI presentation and private handwritten wiring.
 func RenderArtifacts(source model.ArtifactSet) (Artifacts, error) {
-	sdk, err := Render(source.SDK)
-	if err != nil {
-		return Artifacts{}, err
-	}
 	cliInterface, err := renderCLIInterface(source.CLIInterface)
 	if err != nil {
 		return Artifacts{}, err
@@ -30,7 +25,7 @@ func RenderArtifacts(source model.ArtifactSet) (Artifacts, error) {
 	if err != nil {
 		return Artifacts{}, err
 	}
-	return Artifacts{SDK: sdk, CLIInterface: cliInterface, CLIDispatch: cliDispatch}, nil
+	return Artifacts{CLIInterface: cliInterface, CLIDispatch: cliDispatch}, nil
 }
 
 func renderCLIInterface(source model.CLIInterfaceModel) (map[string][]byte, error) {
@@ -315,13 +310,13 @@ func renderCLIOperationDispatch(output *strings.Builder, operation model.CLIDisp
 	if hasOptional {
 		declaration = "let mut input"
 	}
-	fmt.Fprintf(output, "            %s = opendart::operations::%s::new(%s);\n", declaration, operation.SDKInputType, strings.Join(required, ", "))
+	fmt.Fprintf(output, "            %s = opendart::operations::%s::%s::new(%s);\n", declaration, operation.RustModule, operation.RustInput, strings.Join(required, ", "))
 	for _, parameter := range operation.Parameters {
 		if parameter.Required {
 			continue
 		}
 		fmt.Fprintf(output, "            if let Some(value) = matches.%s(%s) { input = input.with_%s(%s); }\n",
-			cliMatchGetter(parameter), quote(parameter.ArgumentID), parameter.SDKField, cliOptionalValue(parameter))
+			cliMatchGetter(parameter), quote(parameter.ArgumentID), parameter.RustField, cliOptionalValue(parameter))
 	}
 	fmt.Fprintf(output, "            let operation = operation(%s).expect(\"generated catalog entry\");\n", quote(operation.Name))
 	if len(operation.Representations) == 1 {
@@ -361,7 +356,7 @@ func cliOptionalValue(parameter model.CLIDispatchParameter) string {
 func preparedExpression(representation model.CLIDispatchRepresentation) string {
 	constructor := "prepared::structured"
 	if representation.Name == model.RepresentationZIP {
-		return fmt.Sprintf("{ let request: opendart::PreparedBinaryRequest = input.%s()?; let _response_type: Option<%s> = None; Ok(prepared::binary(operation, request)) }", representation.PrepareMethod, representation.ResponseType)
+		return fmt.Sprintf("{ let request: opendart::PreparedBinaryRequest = input.%s()?; Ok(prepared::binary(operation, request)) }", representation.PrepareMethod)
 	}
 	return fmt.Sprintf("{ let request: opendart::PreparedRequest<%s> = input.%s()?; Ok(%s(operation, request)) }", representation.ResponseType, representation.PrepareMethod, constructor)
 }
@@ -378,4 +373,31 @@ func rustStringOption(value string) string {
 		return "None"
 	}
 	return "Some(" + quote(value) + ")"
+}
+
+func quote(value string) string {
+	var output strings.Builder
+	output.WriteByte('"')
+	for _, character := range value {
+		switch character {
+		case '"':
+			output.WriteString(`\"`)
+		case '\\':
+			output.WriteString(`\\`)
+		case '\n':
+			output.WriteString(`\n`)
+		case '\r':
+			output.WriteString(`\r`)
+		case '\t':
+			output.WriteString(`\t`)
+		default:
+			if character >= 0x20 && character <= 0x7e {
+				output.WriteRune(character)
+			} else {
+				fmt.Fprintf(&output, `\u{%x}`, character)
+			}
+		}
+	}
+	output.WriteByte('"')
+	return output.String()
 }

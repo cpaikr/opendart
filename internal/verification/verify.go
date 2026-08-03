@@ -17,16 +17,16 @@ import (
 )
 
 const (
-	phaseCatalog          = "catalog"
-	phaseSourceLint       = "source-lint"
-	phaseContractFixtures = "contract-fixtures"
-	phaseBundleLint       = "bundle-lint"
-	phaseBundleFreshness  = "bundle-freshness"
-	phaseRustSDKFreshness = "rust-sdk-freshness"
-	phaseRustConformance  = "rust-conformance-contract"
-	phaseLiveConformance  = "live-conformance-preflight"
-	phaseAuditorEvidence  = "auditor-evidence"
-	phaseReleaseGuard     = "release-guard"
+	phaseCatalog                = "catalog"
+	phaseSourceLint             = "source-lint"
+	phaseContractFixtures       = "contract-fixtures"
+	phaseBundleLint             = "bundle-lint"
+	phaseBundleFreshness        = "bundle-freshness"
+	phaseCLIProjectionFreshness = "rust-cli-projection-freshness"
+	phaseRustConformance        = "rust-conformance-contract"
+	phaseLiveConformance        = "live-conformance-preflight"
+	phaseAuditorEvidence        = "auditor-evidence"
+	phaseReleaseGuard           = "release-guard"
 )
 
 var passedPhases = []string{
@@ -35,7 +35,7 @@ var passedPhases = []string{
 	phaseContractFixtures,
 	phaseBundleFreshness,
 	phaseBundleLint,
-	phaseRustSDKFreshness,
+	phaseCLIProjectionFreshness,
 	phaseRustConformance,
 	phaseLiveConformance,
 	phaseAuditorEvidence,
@@ -94,15 +94,15 @@ func (e *Error) Unwrap() error {
 }
 
 type dependencies struct {
-	validateCatalog   func(guide.CatalogOptions) (guide.CatalogReport, error)
-	lint              func(string) ([]openapispec.LintDiagnostic, error)
-	checkFresh        func(string, string) error
-	checkFixtures     func(string) error
-	checkLive         func(string) error
-	checkEvidence     func(string) error
-	checkRelease      func(string) error
-	checkRustSDK      func(sdkgen.RustInputs, sdkgen.RustOutputs) error
-	checkRustContract func(string) (rustconformance.Report, error)
+	validateCatalog    func(guide.CatalogOptions) (guide.CatalogReport, error)
+	lint               func(string) ([]openapispec.LintDiagnostic, error)
+	checkFresh         func(string, string) error
+	checkFixtures      func(string) error
+	checkLive          func(string) error
+	checkEvidence      func(string) error
+	checkRelease       func(string) error
+	checkCLIProjection func(sdkgen.Inputs, string) error
+	checkRustContract  func(string) (rustconformance.Report, error)
 }
 
 // Verify runs the complete repository gate using only committed local files.
@@ -117,10 +117,10 @@ func Verify(repositoryRoot string) (Report, error) {
 			_, err := liveconformance.PreflightRepository(root)
 			return err
 		},
-		checkEvidence:     auditorprobe.ValidateEvidenceFile,
-		checkRelease:      releaseguard.Check,
-		checkRustSDK:      sdkgen.CheckRustFresh,
-		checkRustContract: rustconformance.Check,
+		checkEvidence:      auditorprobe.ValidateEvidenceFile,
+		checkRelease:       releaseguard.Check,
+		checkCLIProjection: sdkgen.CheckCLIFresh,
+		checkRustContract:  rustconformance.Check,
 	})
 }
 
@@ -135,7 +135,6 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	source := filepath.Join(absoluteRoot, "openapi", "openapi.yaml")
 	bundle := filepath.Join(absoluteRoot, "openapi", "generated", "openapi.bundle.yaml")
 	auditorEvidence := filepath.Join(absoluteRoot, "docs", "api", "evidence", "auditor-2026-07-18.json")
-	rustSDKOutput := filepath.Join(absoluteRoot, "sdk", "rust", "crates", "opendart", "src", "generated")
 	rustCLIOutput := filepath.Join(absoluteRoot, "sdk", "rust", "crates", "opendart-cli", "src", "generated")
 	rustInterfaceInput := filepath.Join(absoluteRoot, "sdk", "rust", "interface")
 
@@ -162,11 +161,10 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	if err := lintArtifact(deps, phaseBundleLint, bundle); err != nil {
 		return Report{}, err
 	}
-	if err := deps.checkRustSDK(
-		sdkgen.RustInputs{OpenAPI: source, Interface: rustInterfaceInput},
-		sdkgen.RustOutputs{SDK: rustSDKOutput, CLI: rustCLIOutput},
+	if err := deps.checkCLIProjection(
+		sdkgen.Inputs{OpenAPI: source, Interface: rustInterfaceInput}, rustCLIOutput,
 	); err != nil {
-		rule := "sdk-generation"
+		rule := "cli-projection-generation"
 		switch {
 		case errors.Is(err, sdkgen.ErrRustInterfaceInput):
 			rule = "rust-interface-input"
@@ -180,7 +178,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 			rule = "generated-ownership"
 		}
 		operation, location := "", ""
-		artifact := rustSDKOutput
+		artifact := rustCLIOutput
 		if errors.Is(err, sdkgen.ErrRustInterfaceInput) {
 			artifact = rustInterfaceInput
 		}
@@ -198,7 +196,7 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 			artifact = source
 			rule, operation, location = surfaceError.Rule, surfaceError.Operation, surfaceError.Location
 		}
-		return Report{}, contextualFailure(phaseRustSDKFreshness, artifact, rule, operation, location, err)
+		return Report{}, contextualFailure(phaseCLIProjectionFreshness, artifact, rule, operation, location, err)
 	}
 	rustContract, err := deps.checkRustContract(absoluteRoot)
 	if err != nil {

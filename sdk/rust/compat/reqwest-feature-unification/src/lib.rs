@@ -4,7 +4,10 @@
 mod tests {
     use std::{error::Error, time::Duration};
 
-    use opendart::{ApiKey, Client, operations::Company};
+    use opendart::{
+        ApiKey, Client,
+        operations::disclosure::{CompanyOverviewInput, CompanyOverviewJsonResponse},
+    };
     use tokio::{io::AsyncReadExt, net::TcpListener, task::JoinHandle};
 
     async fn start_client_hello_capture() -> (String, JoinHandle<Vec<u8>>) {
@@ -43,8 +46,10 @@ mod tests {
             .collect()
     }
 
-    fn company_request() -> opendart::PreparedRequest<opendart::responses::CompanyJsonResponse> {
-        Company::new("00126380").prepare_json().unwrap()
+    fn company_request() -> opendart::PreparedRequest<CompanyOverviewJsonResponse> {
+        CompanyOverviewInput::new("00126380".to_owned())
+            .prepare_json()
+            .unwrap()
     }
 
     async fn resolution_error(client: &reqwest::Client, host: &str) -> String {

@@ -45,7 +45,6 @@ var reviewedReadOnlyGlobalPackages = []string{
 	"./internal/openapi",
 	"./internal/releaseguard",
 	"./internal/rustconformance",
-	"./internal/sdkgen/rust",
 	"./internal/verification",
 }
 
@@ -347,8 +346,9 @@ esac
 
 func expectedTargetedRaceBody() string {
 	var body strings.Builder
-	body.WriteString(`  # Each package owns concurrency or a shared test fixture. Releaseguard's AST
-  # audit keeps this explicit set aligned with concurrency-bearing Go packages.
+	body.WriteString(`  # These include the CLI projection generator and model packages, which own
+  # shared test fixtures. Releaseguard's AST audit keeps this explicit set
+  # aligned with concurrency-bearing Go packages.
   go test -race -vet=off \`)
 	for index, packagePath := range targetedRacePackages {
 		body.WriteString("\n    ")
