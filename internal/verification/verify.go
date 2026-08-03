@@ -11,6 +11,7 @@ import (
 	"github.com/cpaikr/opendart/internal/liveconformance"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/releaseguard"
+	"github.com/cpaikr/opendart/internal/rustconformance"
 	"github.com/cpaikr/opendart/internal/sdkgen"
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
 )
@@ -22,6 +23,7 @@ const (
 	phaseBundleLint       = "bundle-lint"
 	phaseBundleFreshness  = "bundle-freshness"
 	phaseRustSDKFreshness = "rust-sdk-freshness"
+	phaseRustConformance  = "rust-conformance-contract"
 	phaseLiveConformance  = "live-conformance-preflight"
 	phaseAuditorEvidence  = "auditor-evidence"
 	phaseReleaseGuard     = "release-guard"
@@ -34,6 +36,7 @@ var passedPhases = []string{
 	phaseBundleFreshness,
 	phaseBundleLint,
 	phaseRustSDKFreshness,
+	phaseRustConformance,
 	phaseLiveConformance,
 	phaseAuditorEvidence,
 	phaseReleaseGuard,
@@ -42,8 +45,9 @@ var passedPhases = []string{
 // Report is the bounded, deterministic result of credential-free repository
 // verification. Artifact paths and detailed source metadata stay out of it.
 type Report struct {
-	PassedPhases []string       `json:"passedPhases"`
-	Catalog      CatalogSummary `json:"catalog"`
+	PassedPhases    []string               `json:"passedPhases"`
+	Catalog         CatalogSummary         `json:"catalog"`
+	RustConformance rustconformance.Report `json:"rustConformance"`
 }
 
 // CatalogSummary retains the accepted inventory totals without copying paths,
@@ -90,14 +94,15 @@ func (e *Error) Unwrap() error {
 }
 
 type dependencies struct {
-	validateCatalog func(guide.CatalogOptions) (guide.CatalogReport, error)
-	lint            func(string) ([]openapispec.LintDiagnostic, error)
-	checkFresh      func(string, string) error
-	checkFixtures   func(string) error
-	checkLive       func(string) error
-	checkEvidence   func(string) error
-	checkRelease    func(string) error
-	checkRustSDK    func(string, sdkgen.RustOutputs) error
+	validateCatalog   func(guide.CatalogOptions) (guide.CatalogReport, error)
+	lint              func(string) ([]openapispec.LintDiagnostic, error)
+	checkFresh        func(string, string) error
+	checkFixtures     func(string) error
+	checkLive         func(string) error
+	checkEvidence     func(string) error
+	checkRelease      func(string) error
+	checkRustSDK      func(string, sdkgen.RustOutputs) error
+	checkRustContract func(string) (rustconformance.Report, error)
 }
 
 // Verify runs the complete repository gate using only committed local files.
@@ -112,9 +117,10 @@ func Verify(repositoryRoot string) (Report, error) {
 			_, err := liveconformance.PreflightRepository(root)
 			return err
 		},
-		checkEvidence: auditorprobe.ValidateEvidenceFile,
-		checkRelease:  releaseguard.Check,
-		checkRustSDK:  sdkgen.CheckRustFresh,
+		checkEvidence:     auditorprobe.ValidateEvidenceFile,
+		checkRelease:      releaseguard.Check,
+		checkRustSDK:      sdkgen.CheckRustFresh,
+		checkRustContract: rustconformance.Check,
 	})
 }
 
@@ -185,6 +191,17 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 		}
 		return Report{}, contextualFailure(phaseRustSDKFreshness, artifact, rule, operation, location, err)
 	}
+	rustContract, err := deps.checkRustContract(absoluteRoot)
+	if err != nil {
+		artifact, rule, operation := filepath.Join(absoluteRoot, "sdk", "rust", "interface"), "rust-conformance-contract", ""
+		var contractError *rustconformance.Error
+		if errors.As(err, &contractError) {
+			artifact = filepath.Join(absoluteRoot, filepath.FromSlash(contractError.Artifact))
+			rule = contractError.Rule
+			operation = contractError.Operation
+		}
+		return Report{}, contextualFailure(phaseRustConformance, artifact, rule, operation, "", err)
+	}
 	if err := deps.checkLive(absoluteRoot); err != nil {
 		return Report{}, liveConformanceFailure(err)
 	}
@@ -201,7 +218,8 @@ func verifyWith(repositoryRoot string, deps dependencies) (Report, error) {
 	}
 
 	return Report{
-		PassedPhases: append([]string(nil), passedPhases...),
+		PassedPhases:    append([]string(nil), passedPhases...),
+		RustConformance: rustContract,
 		Catalog: CatalogSummary{
 			OpenAPI:          catalog.OpenAPI,
 			LogicalEndpoints: catalog.LogicalEndpoints,

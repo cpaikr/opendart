@@ -58,6 +58,7 @@ type responseCase struct {
 	Outcome           string     `json:"outcome"`
 	File              string     `json:"file"`
 	SHA256            string     `json:"sha256"`
+	Bytes             int64      `json:"bytes"`
 	Provenance        provenance `json:"provenance"`
 }
 
@@ -286,6 +287,9 @@ func verifyBody(root string, item responseCase) error {
 	}
 	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || info.Size() > maxBodyBytes {
 		return fmt.Errorf("response case %s body is not a bounded regular file", item.ID)
+	}
+	if item.Bytes <= 0 || info.Size() != item.Bytes {
+		return fmt.Errorf("response case %s body size mismatch", item.ID)
 	}
 	// #nosec G304 -- the normalized relative path was lstat-checked as a bounded regular file.
 	body, err := os.ReadFile(path)

@@ -1,0 +1,1220 @@
+schema_version = 1
+family = "DS002"
+
+[accessors]
+source = "source"
+status = "status"
+message = "message"
+items = "items"
+field = "field"
+
+[[operation]]
+logical_id = "DS002-2019004"
+rust_module = "annual_report"
+rust_input = "CapitalIncreaseAndReductionStatusInput"
+cli_command = "capital-increase-and-reduction-status"
+cli_alias = "DS002-2019004"
+
+[[operation.physical]]
+operation_id = "get_irdsSttus_json"
+rust_method = "prepare_json"
+rust_response = "CapitalIncreaseAndReductionStatusJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_irdsSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "CapitalIncreaseAndReductionStatusXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CapitalIncreaseAndReductionEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", isu_dcrs_de = "share_change_date", isu_dcrs_stle = "share_change_method", isu_dcrs_stock_knd = "share_class", isu_dcrs_qy = "share_change_count", isu_dcrs_mstvdv_fval_amount = "par_value_per_share", isu_dcrs_mstvdv_amount = "transaction_price_per_share", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019005"
+rust_module = "annual_report"
+rust_input = "DividendInformationInput"
+cli_command = "dividend-information"
+cli_alias = "DS002-2019005"
+
+[[operation.physical]]
+operation_id = "get_alotMatter_json"
+rust_method = "prepare_json"
+rust_response = "DividendInformationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_alotMatter_xml"
+rust_method = "prepare_xml"
+rust_response = "DividendInformationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "DividendEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", se = "category", stock_knd = "share_class", thstrm = "current_period", frmtrm = "prior_period", lwfr = "two_periods_prior", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019006"
+rust_module = "annual_report"
+rust_input = "TreasuryStockTransactionsInput"
+cli_command = "treasury-stock-transactions"
+cli_alias = "DS002-2019006"
+
+[[operation.physical]]
+operation_id = "get_tesstkAcqsDspsSttus_json"
+rust_method = "prepare_json"
+rust_response = "TreasuryStockTransactionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_tesstkAcqsDspsSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "TreasuryStockTransactionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "TreasuryStockTransaction"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", acqs_mth1 = "acquisition_method_category", acqs_mth2 = "acquisition_method_subcategory", acqs_mth3 = "acquisition_method_detail", stock_knd = "share_class", bsis_qy = "opening_share_count", change_qy_acqs = "acquired_share_count", change_qy_dsps = "disposed_share_count", change_qy_incnr = "retired_share_count", trmend_qy = "closing_share_count", rm = "remarks", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019007"
+rust_module = "annual_report"
+rust_input = "LargestShareholderStatusInput"
+cli_command = "largest-shareholder-status"
+cli_alias = "DS002-2019007"
+
+[[operation.physical]]
+operation_id = "get_hyslrSttus_json"
+rust_method = "prepare_json"
+rust_response = "LargestShareholderStatusJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_hyslrSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "LargestShareholderStatusXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "LargestShareholder"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", nm = "name", relate = "relationship", stock_knd = "share_class", bsis_posesn_stock_co = "opening_owned_share_count", bsis_posesn_stock_qota_rt = "opening_ownership_percentage", trmend_posesn_stock_co = "closing_owned_share_count", trmend_posesn_stock_qota_rt = "closing_ownership_percentage", rm = "remarks", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019008"
+rust_module = "annual_report"
+rust_input = "LargestShareholderChangesInput"
+cli_command = "largest-shareholder-changes"
+cli_alias = "DS002-2019008"
+
+[[operation.physical]]
+operation_id = "get_hyslrChgSttus_json"
+rust_method = "prepare_json"
+rust_response = "LargestShareholderChangesJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_hyslrChgSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "LargestShareholderChangesXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "LargestShareholderChange"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", change_on = "change_date", mxmm_shrholdr_nm = "largest_shareholder_name", posesn_stock_co = "owned_share_count", qota_rt = "ownership_percentage", change_cause = "change_reason", rm = "remarks", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019009"
+rust_module = "annual_report"
+rust_input = "MinorityShareholderStatusInput"
+cli_command = "minority-shareholder-status"
+cli_alias = "DS002-2019009"
+
+[[operation.physical]]
+operation_id = "get_mrhlSttus_json"
+rust_method = "prepare_json"
+rust_response = "MinorityShareholderStatusJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_mrhlSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "MinorityShareholderStatusXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "MinorityShareholderSummary"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", se = "category", shrholdr_co = "shareholder_count", shrholdr_tot_co = "total_shareholder_count", shrholdr_rate = "shareholder_percentage", hold_stock_co = "held_share_count", stock_tot_co = "total_issued_share_count", hold_stock_rate = "held_share_percentage", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019010"
+rust_module = "annual_report"
+rust_input = "ExecutiveStatusInput"
+cli_command = "executive-status"
+cli_alias = "DS002-2019010"
+
+[[operation.physical]]
+operation_id = "get_exctvSttus_json"
+rust_method = "prepare_json"
+rust_response = "ExecutiveStatusJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_exctvSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "ExecutiveStatusXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "Executive"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", nm = "name", sexdstn = "gender", birth_ym = "birth_year_month", ofcps = "position", rgist_exctv_at = "registered_executive_status", fte_at = "full_time_status", chrg_job = "responsibilities", main_career = "career_summary", mxmm_shrholdr_relate = "relationship_to_largest_shareholder", hffc_pd = "service_period", tenure_end_on = "term_end_date", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019011"
+rust_module = "annual_report"
+rust_input = "EmployeeStatusInput"
+cli_command = "employee-status"
+cli_alias = "DS002-2019011"
+
+[[operation.physical]]
+operation_id = "get_empSttus_json"
+rust_method = "prepare_json"
+rust_response = "EmployeeStatusJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_empSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "EmployeeStatusXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "EmployeeGroup"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", fo_bbm = "business_segment", sexdstn = "gender", reform_bfe_emp_co_rgllbr = "pre_revision_regular_employee_count", reform_bfe_emp_co_cnttk = "pre_revision_contract_employee_count", reform_bfe_emp_co_etc = "pre_revision_other_employee_count", rgllbr_co = "regular_employee_count", rgllbr_abacpt_labrr_co = "part_time_regular_employee_count", cnttk_co = "contract_employee_count", cnttk_abacpt_labrr_co = "part_time_contract_employee_count", sm = "total", avrg_cnwk_sdytrn = "average_years_of_service", fyer_salary_totamt = "annual_salary_total", jan_salary_am = "average_salary_per_employee", rm = "remarks", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019012"
+rust_module = "annual_report"
+rust_input = "DirectorAuditorIndividualCompensationInput"
+cli_command = "director-auditor-individual-compensation"
+cli_alias = "DS002-2019012"
+
+[[operation.physical]]
+operation_id = "get_hmvAuditIndvdlBySttus_json"
+rust_method = "prepare_json"
+rust_response = "DirectorAuditorIndividualCompensationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_hmvAuditIndvdlBySttus_xml"
+rust_method = "prepare_xml"
+rust_response = "DirectorAuditorIndividualCompensationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "DirectorAuditorIndividualCompensationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", nm = "name", ofcps = "position", mendng_totamt = "total_compensation", mendng_totamt_ct_incls_mendng = "compensation_excluded_from_total", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019013"
+rust_module = "annual_report"
+rust_input = "DirectorAuditorTotalCompensationInput"
+cli_command = "director-auditor-total-compensation"
+cli_alias = "DS002-2019013"
+
+[[operation.physical]]
+operation_id = "get_hmvAuditAllSttus_json"
+rust_method = "prepare_json"
+rust_response = "DirectorAuditorTotalCompensationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_hmvAuditAllSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "DirectorAuditorTotalCompensationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "DirectorAuditorTotalCompensationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", nmpr = "person_count", mendng_totamt = "total_compensation", jan_avrg_mendng_am = "average_compensation_per_person", rm = "remarks", stlm_dt = "fiscal_period_end_date", fscl_year = "fiscal_year", stk_bsd_pd_mendng_totamt = "stock_based_compensation_paid", stk_opt_exrcsbl_qty = "exercisable_stock_option_quantity", stk_opt_unexrcsbl_qty = "unexercisable_stock_option_quantity", stk_opt_rmn_blce = "remaining_stock_option_value", othr_stk_bsd_cmpn_unpyd_qty = "other_unpaid_stock_compensation_quantity", othr_stk_bsd_cmpn_mkt_vl = "other_unpaid_stock_compensation_market_value" }
+[[operation]]
+logical_id = "DS002-2019014"
+rust_module = "annual_report"
+rust_input = "TopFiveIndividualCompensationInput"
+cli_command = "top-five-individual-compensation"
+cli_alias = "DS002-2019014"
+
+[[operation.physical]]
+operation_id = "get_indvdlByPay_json"
+rust_method = "prepare_json"
+rust_response = "TopFiveIndividualCompensationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_indvdlByPay_xml"
+rust_method = "prepare_xml"
+rust_response = "TopFiveIndividualCompensationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "TopFiveIndividualCompensationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", nm = "name", ofcps = "position", mendng_totamt = "total_compensation", mendng_totamt_ct_incls_mendng = "compensation_excluded_from_total", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2019015"
+rust_module = "annual_report"
+rust_input = "OtherCorporationInvestmentStatusInput"
+cli_command = "other-corporation-investment-status"
+cli_alias = "DS002-2019015"
+
+[[operation.physical]]
+operation_id = "get_otrCprInvstmntSttus_json"
+rust_method = "prepare_json"
+rust_response = "OtherCorporationInvestmentStatusJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_otrCprInvstmntSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "OtherCorporationInvestmentStatusXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OtherCorporationInvestment"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", inv_prm = "investee_name", frst_acqs_de = "initial_acquisition_date", invstmnt_purps = "investment_purpose", frst_acqs_amount = "initial_acquisition_amount", bsis_blce_qy = "opening_share_count", bsis_blce_qota_rt = "opening_ownership_percentage", bsis_blce_acntbk_amount = "opening_book_value", incrs_dcrs_acqs_dsps_qy = "acquisition_disposal_share_count_change", incrs_dcrs_acqs_dsps_amount = "acquisition_disposal_amount_change", incrs_dcrs_evl_lstmn = "valuation_gain_or_loss", trmend_blce_qy = "closing_share_count", trmend_blce_qota_rt = "closing_ownership_percentage", trmend_blce_acntbk_amount = "closing_book_value", recent_bsns_year_fnnr_sttus_tot_assets = "recent_year_total_assets", recent_bsns_year_fnnr_sttus_thstrm_ntpf = "recent_year_net_income", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020002"
+rust_module = "annual_report"
+rust_input = "TotalSharesStatusInput"
+cli_command = "total-shares-status"
+cli_alias = "DS002-2020002"
+
+[[operation.physical]]
+operation_id = "get_stockTotqySttus_json"
+rust_method = "prepare_json"
+rust_response = "TotalSharesStatusJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_stockTotqySttus_xml"
+rust_method = "prepare_xml"
+rust_response = "TotalSharesStatusXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "ShareCountSummary"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", se = "category", isu_stock_totqy = "authorized_share_count", now_to_isu_stock_totqy = "cumulative_issued_share_count", now_to_dcrs_stock_totqy = "cumulative_reduced_share_count", redc = "capital_reduction_share_count", profit_incnr = "profit_retirement_share_count", rdmstk_repy = "redeemed_share_count", etc = "other_reductions", istc_totqy = "issued_share_count", tesstk_co = "treasury_share_count", distb_stock_co = "shares_in_circulation", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020003"
+rust_module = "annual_report"
+rust_input = "DebtSecuritiesIssuanceResultsInput"
+cli_command = "debt-securities-issuance-results"
+cli_alias = "DS002-2020003"
+
+[[operation.physical]]
+operation_id = "get_detScritsIsuAcmslt_json"
+rust_method = "prepare_json"
+rust_response = "DebtSecuritiesIssuanceResultsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_detScritsIsuAcmslt_xml"
+rust_method = "prepare_xml"
+rust_response = "DebtSecuritiesIssuanceResultsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "DebtSecuritiesIssuance"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", isu_cmpny = "issuer_name", scrits_knd_nm = "security_type", isu_mth_nm = "issuance_method", isu_de = "issuance_date", facvalu_totamt = "total_face_value", intrt = "interest_rate", evl_grad_instt = "credit_rating_and_agency", mtd = "maturity_date", repy_at = "repayment_status", mngt_cmpny = "lead_manager", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020004"
+rust_module = "annual_report"
+rust_input = "CommercialPaperOutstandingBalanceInput"
+cli_command = "commercial-paper-outstanding-balance"
+cli_alias = "DS002-2020004"
+
+[[operation.physical]]
+operation_id = "get_entrprsBilScritsNrdmpBlce_json"
+rust_method = "prepare_json"
+rust_response = "CommercialPaperOutstandingBalanceJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_entrprsBilScritsNrdmpBlce_xml"
+rust_method = "prepare_xml"
+rust_response = "CommercialPaperOutstandingBalanceXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CommercialPaperMaturityBalance"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", remndr_exprtn1 = "remaining_maturity_category", remndr_exprtn2 = "remaining_maturity_detail", de10_below = "up_to_ten_days", de10_excess_de30_below = "over_ten_up_to_thirty_days", de30_excess_de90_below = "over_thirty_up_to_ninety_days", de90_excess_de180_below = "over_ninety_up_to_one_hundred_eighty_days", de180_excess_yy1_below = "over_one_hundred_eighty_days_up_to_one_year", yy1_excess_yy2_below = "over_one_up_to_two_years", yy2_excess_yy3_below = "over_two_up_to_three_years", yy3_excess = "over_three_years", sm = "total", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020005"
+rust_module = "annual_report"
+rust_input = "ShortTermBondOutstandingBalanceInput"
+cli_command = "short-term-bond-outstanding-balance"
+cli_alias = "DS002-2020005"
+
+[[operation.physical]]
+operation_id = "get_srtpdPsndbtNrdmpBlce_json"
+rust_method = "prepare_json"
+rust_response = "ShortTermBondOutstandingBalanceJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_srtpdPsndbtNrdmpBlce_xml"
+rust_method = "prepare_xml"
+rust_response = "ShortTermBondOutstandingBalanceXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "ShortTermBondMaturityBalance"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", remndr_exprtn1 = "remaining_maturity_category", remndr_exprtn2 = "remaining_maturity_detail", de10_below = "up_to_ten_days", de10_excess_de30_below = "over_ten_up_to_thirty_days", de30_excess_de90_below = "over_thirty_up_to_ninety_days", de90_excess_de180_below = "over_ninety_up_to_one_hundred_eighty_days", de180_excess_yy1_below = "over_one_hundred_eighty_days_up_to_one_year", sm = "total", isu_lmt = "issuance_limit", remndr_lmt = "remaining_issuance_limit", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020006"
+rust_module = "annual_report"
+rust_input = "CorporateBondOutstandingBalanceInput"
+cli_command = "corporate-bond-outstanding-balance"
+cli_alias = "DS002-2020006"
+
+[[operation.physical]]
+operation_id = "get_cprndNrdmpBlce_json"
+rust_method = "prepare_json"
+rust_response = "CorporateBondOutstandingBalanceJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_cprndNrdmpBlce_xml"
+rust_method = "prepare_xml"
+rust_response = "CorporateBondOutstandingBalanceXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CorporateBondMaturityBalance"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", remndr_exprtn1 = "remaining_maturity_category", remndr_exprtn2 = "remaining_maturity_detail", yy1_below = "up_to_one_year", yy1_excess_yy2_below = "over_one_up_to_two_years", yy2_excess_yy3_below = "over_two_up_to_three_years", yy3_excess_yy4_below = "over_three_up_to_four_years", yy4_excess_yy5_below = "over_four_up_to_five_years", yy5_excess_yy10_below = "over_five_up_to_ten_years", yy10_excess = "over_ten_years", sm = "total", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020007"
+rust_module = "annual_report"
+rust_input = "HybridCapitalSecuritiesOutstandingBalanceInput"
+cli_command = "hybrid-capital-securities-outstanding-balance"
+cli_alias = "DS002-2020007"
+
+[[operation.physical]]
+operation_id = "get_newCaplScritsNrdmpBlce_json"
+rust_method = "prepare_json"
+rust_response = "HybridCapitalSecuritiesOutstandingBalanceJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_newCaplScritsNrdmpBlce_xml"
+rust_method = "prepare_xml"
+rust_response = "HybridCapitalSecuritiesOutstandingBalanceXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "HybridCapitalSecuritiesMaturityBalance"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", remndr_exprtn1 = "remaining_maturity_category", remndr_exprtn2 = "remaining_maturity_detail", yy1_below = "up_to_one_year", yy1_excess_yy5_below = "over_one_up_to_five_years", yy5_excess_yy10_below = "over_five_up_to_ten_years", yy10_excess_yy15_below = "over_ten_up_to_fifteen_years", yy15_excess_yy20_below = "over_fifteen_up_to_twenty_years", yy20_excess_yy30_below = "over_twenty_up_to_thirty_years", yy30_excess = "over_thirty_years", sm = "total", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020008"
+rust_module = "annual_report"
+rust_input = "ContingentCapitalSecuritiesOutstandingBalanceInput"
+cli_command = "contingent-capital-securities-outstanding-balance"
+cli_alias = "DS002-2020008"
+
+[[operation.physical]]
+operation_id = "get_cndlCaplScritsNrdmpBlce_json"
+rust_method = "prepare_json"
+rust_response = "ContingentCapitalSecuritiesOutstandingBalanceJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_cndlCaplScritsNrdmpBlce_xml"
+rust_method = "prepare_xml"
+rust_response = "ContingentCapitalSecuritiesOutstandingBalanceXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "ContingentCapitalSecuritiesMaturityBalance"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", remndr_exprtn1 = "remaining_maturity_category", remndr_exprtn2 = "remaining_maturity_detail", yy1_below = "up_to_one_year", yy1_excess_yy2_below = "over_one_up_to_two_years", yy2_excess_yy3_below = "over_two_up_to_three_years", yy3_excess_yy4_below = "over_three_up_to_four_years", yy4_excess_yy5_below = "over_four_up_to_five_years", yy5_excess_yy10_below = "over_five_up_to_ten_years", yy10_excess_yy20_below = "over_ten_up_to_twenty_years", yy20_excess_yy30_below = "over_twenty_up_to_thirty_years", yy30_excess = "over_thirty_years", sm = "total", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020009"
+rust_module = "annual_report"
+rust_input = "AccountingAuditorNameAndAuditOpinionInput"
+cli_command = "accounting-auditor-name-and-audit-opinion"
+cli_alias = "DS002-2020009"
+
+[[operation.physical]]
+operation_id = "get_accnutAdtorNmNdAdtOpinion_json"
+rust_method = "prepare_json"
+rust_response = "AccountingAuditorNameAndAuditOpinionJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_accnutAdtorNmNdAdtOpinion_xml"
+rust_method = "prepare_xml"
+rust_response = "AccountingAuditorNameAndAuditOpinionXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "AccountingAudit"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", bsns_year = "business_year", adtor = "accounting_auditor", adt_opinion = "audit_opinion", adt_reprt_spcmnt_matter = "audit_report_special_notes", emphs_matter = "emphasis_of_matter", core_adt_matter = "key_audit_matters", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020010"
+rust_module = "annual_report"
+rust_input = "AuditServiceContractsInput"
+cli_command = "audit-service-contracts"
+cli_alias = "DS002-2020010"
+
+[[operation.physical]]
+operation_id = "get_adtServcCnclsSttus_json"
+rust_method = "prepare_json"
+rust_response = "AuditServiceContractsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_adtServcCnclsSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "AuditServiceContractsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "AuditServiceContract"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", bsns_year = "business_year", adtor = "accounting_auditor", cn = "service_description", mendng = "compensation", tot_reqre_time = "total_hours", adt_cntrct_dtls_mendng = "audit_contract_compensation", adt_cntrct_dtls_time = "audit_contract_hours", real_exc_dtls_mendng = "actual_compensation", real_exc_dtls_time = "actual_hours", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020011"
+rust_module = "annual_report"
+rust_input = "NonAuditServiceContractsInput"
+cli_command = "non-audit-service-contracts"
+cli_alias = "DS002-2020011"
+
+[[operation.physical]]
+operation_id = "get_accnutAdtorNonAdtServcCnclsSttus_json"
+rust_method = "prepare_json"
+rust_response = "NonAuditServiceContractsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_accnutAdtorNonAdtServcCnclsSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "NonAuditServiceContractsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "NonAuditServiceContract"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", bsns_year = "business_year", cntrct_cncls_de = "contract_date", servc_cn = "service_description", servc_exc_pd = "service_period", servc_mendng = "service_compensation", rm = "remarks", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020012"
+rust_module = "annual_report"
+rust_input = "OutsideDirectorStatusAndChangesInput"
+cli_command = "outside-director-status-and-changes"
+cli_alias = "DS002-2020012"
+
+[[operation.physical]]
+operation_id = "get_outcmpnyDrctrNdChangeSttus_json"
+rust_method = "prepare_json"
+rust_response = "OutsideDirectorStatusAndChangesJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_outcmpnyDrctrNdChangeSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "OutsideDirectorStatusAndChangesXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OutsideDirectorStatus"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", drctr_co = "director_count", otcmp_drctr_co = "outside_director_count", apnt = "appointed_outside_director_count", rlsofc = "dismissed_outside_director_count", mdstrm_resig = "midterm_resignation_count", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020013"
+rust_module = "annual_report"
+rust_input = "UnregisteredExecutiveCompensationInput"
+cli_command = "unregistered-executive-compensation"
+cli_alias = "DS002-2020013"
+
+[[operation.physical]]
+operation_id = "get_unrstExctvMendngSttus_json"
+rust_method = "prepare_json"
+rust_response = "UnregisteredExecutiveCompensationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_unrstExctvMendngSttus_xml"
+rust_method = "prepare_xml"
+rust_response = "UnregisteredExecutiveCompensationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "UnregisteredExecutiveCompensationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", se = "category", nmpr = "person_count", fyer_salary_totamt = "annual_salary_total", jan_salary_am = "average_salary_per_employee", rm = "remarks", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020014"
+rust_module = "annual_report"
+rust_input = "ShareholderApprovedDirectorAuditorCompensationInput"
+cli_command = "shareholder-approved-director-auditor-compensation"
+cli_alias = "DS002-2020014"
+
+[[operation.physical]]
+operation_id = "get_drctrAdtAllMendngSttusGmtsckConfmAmount_json"
+rust_method = "prepare_json"
+rust_response = "ShareholderApprovedDirectorAuditorCompensationJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_drctrAdtAllMendngSttusGmtsckConfmAmount_xml"
+rust_method = "prepare_xml"
+rust_response = "ShareholderApprovedDirectorAuditorCompensationXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "ShareholderApprovedDirectorAuditorCompensationEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", se = "category", nmpr = "person_count", gmtsck_confm_amount = "shareholder_approved_amount", rm = "remarks", stlm_dt = "fiscal_period_end_date", fscl_year = "fiscal_year" }
+[[operation]]
+logical_id = "DS002-2020015"
+rust_module = "annual_report"
+rust_input = "DirectorAuditorCompensationByTypeInput"
+cli_command = "director-auditor-compensation-by-type"
+cli_alias = "DS002-2020015"
+
+[[operation.physical]]
+operation_id = "get_drctrAdtAllMendngSttusMendngPymntamtTyCl_json"
+rust_method = "prepare_json"
+rust_response = "DirectorAuditorCompensationByTypeJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_drctrAdtAllMendngSttusMendngPymntamtTyCl_xml"
+rust_method = "prepare_xml"
+rust_response = "DirectorAuditorCompensationByTypeXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "DirectorAuditorCompensationByTypeEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", se = "category", nmpr = "person_count", pymnt_totamt = "total_compensation", psn1_avrg_pymntamt = "average_compensation_per_person", rm = "remarks", stlm_dt = "fiscal_period_end_date", fscl_year = "fiscal_year", stk_bsd_pd_mendng_totamt = "stock_based_compensation_paid", stk_opt_exrcsbl_qty = "exercisable_stock_option_quantity", stk_opt_unexrcsbl_qty = "unexercisable_stock_option_quantity", stk_opt_rmn_blce = "remaining_stock_option_value", othr_stk_bsd_cmpn_unpyd_qty = "other_unpaid_stock_compensation_quantity", othr_stk_bsd_cmpn_mkt_vl = "other_unpaid_stock_compensation_market_value" }
+[[operation]]
+logical_id = "DS002-2020016"
+rust_module = "annual_report"
+rust_input = "PublicOfferingProceedsUsageInput"
+cli_command = "public-offering-proceeds-usage"
+cli_alias = "DS002-2020016"
+
+[[operation.physical]]
+operation_id = "get_pssrpCptalUseDtls_json"
+rust_method = "prepare_json"
+rust_response = "PublicOfferingProceedsUsageJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_pssrpCptalUseDtls_xml"
+rust_method = "prepare_xml"
+rust_response = "PublicOfferingProceedsUsageXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "PublicOfferingProceedsUsageEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", se_nm = "category", tm = "offering_round", pay_de = "payment_date", pay_amount = "payment_amount", on_dclrt_cptal_use_plan = "disclosed_proceeds_use_plan", real_cptal_use_sttus = "actual_proceeds_usage", rs_cptal_use_plan_useprps = "registration_statement_planned_use", rs_cptal_use_plan_prcure_amount = "registration_statement_planned_amount", real_cptal_use_dtls_cn = "actual_use_description", real_cptal_use_dtls_amount = "actual_use_amount", dffrnc_occrrnc_resn = "variance_reason", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2020017"
+rust_module = "annual_report"
+rust_input = "PrivatePlacementProceedsUsageInput"
+cli_command = "private-placement-proceeds-usage"
+cli_alias = "DS002-2020017"
+
+[[operation.physical]]
+operation_id = "get_prvsrpCptalUseDtls_json"
+rust_method = "prepare_json"
+rust_response = "PrivatePlacementProceedsUsageJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_prvsrpCptalUseDtls_xml"
+rust_method = "prepare_xml"
+rust_response = "PrivatePlacementProceedsUsageXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "PrivatePlacementProceedsUsageEntry"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", se_nm = "category", tm = "offering_round", pay_de = "payment_date", pay_amount = "payment_amount", cptal_use_plan = "proceeds_use_plan", real_cptal_use_sttus = "actual_proceeds_usage", mtrpt_cptal_use_plan_useprps = "material_event_report_planned_use", mtrpt_cptal_use_plan_prcure_amount = "material_event_report_planned_amount", real_cptal_use_dtls_cn = "actual_use_description", real_cptal_use_dtls_amount = "actual_use_amount", dffrnc_occrrnc_resn = "variance_reason", stlm_dt = "fiscal_period_end_date" }
+[[operation]]
+logical_id = "DS002-2026001"
+rust_module = "annual_report"
+rust_input = "DirectorAuditorIndividualCompensationV2Input"
+cli_command = "director-auditor-individual-compensation-v2"
+cli_alias = "DS002-2026001"
+
+[[operation.physical]]
+operation_id = "get_hmvAuditIndvdlBySttusV2_json"
+rust_method = "prepare_json"
+rust_response = "DirectorAuditorIndividualCompensationV2JsonResponse"
+
+[[operation.physical]]
+operation_id = "get_hmvAuditIndvdlBySttusV2_xml"
+rust_method = "prepare_xml"
+rust_response = "DirectorAuditorIndividualCompensationV2XmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", stlm_dt = "fiscal_period_end_date" }
+
+[[operation.response_view]]
+path = "$.group[]"
+rust_type = "DirectorAuditorCompensationRecipient"
+accessors = { nm = "name", fscl_year = "fiscal_year", ofcps = "position", mendng_totamt = "total_compensation" }
+
+[[operation.response_view]]
+path = "$.group[].list[]"
+rust_type = "DirectorAuditorEquityCompensationDetail"
+accessors = { stk_bsd_pd_mendng_totamt_knd = "stock_based_compensation_type", stk_bsd_pd_mendng_totamt_qty = "stock_based_compensation_quantity", stk_bsd_pd_mendng_totamt_amt = "stock_based_compensation_amount", stk_opt_exrcsbl_qty = "exercisable_stock_option_quantity", stk_opt_unexrcsbl_qty = "unexercisable_stock_option_quantity", stk_opt_exrc_pr = "stock_option_exercise_price", stk_opt_rmn_blce = "remaining_stock_option_value", othr_stk_bsd_cmpn_unpyd_qty = "other_unpaid_stock_compensation_quantity", othr_stk_bsd_cmpn_mkt_vl = "other_unpaid_stock_compensation_market_value", rm = "remarks" }
+[[operation]]
+logical_id = "DS002-2026002"
+rust_module = "annual_report"
+rust_input = "TopFiveIndividualCompensationV2Input"
+cli_command = "top-five-individual-compensation-v2"
+cli_alias = "DS002-2026002"
+
+[[operation.physical]]
+operation_id = "get_indvdlByPayV2_json"
+rust_method = "prepare_json"
+rust_response = "TopFiveIndividualCompensationV2JsonResponse"
+
+[[operation.physical]]
+operation_id = "get_indvdlByPayV2_xml"
+rust_method = "prepare_xml"
+rust_response = "TopFiveIndividualCompensationV2XmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = { rcept_no = "receipt_number", corp_cls = "company_class", corp_code = "company_code", corp_name = "company_name", stlm_dt = "fiscal_period_end_date" }
+
+[[operation.response_view]]
+path = "$.group[]"
+rust_type = "TopFiveCompensationRecipient"
+accessors = { nm = "name", fscl_year = "fiscal_year", ofcps = "position", mendng_totamt = "total_compensation" }
+
+[[operation.response_view]]
+path = "$.group[].list[]"
+rust_type = "TopFiveEquityCompensationDetail"
+accessors = { stk_bsd_pd_mendng_totamt_knd = "stock_based_compensation_type", stk_bsd_pd_mendng_totamt_qty = "stock_based_compensation_quantity", stk_bsd_pd_mendng_totamt_amt = "stock_based_compensation_amount", stk_opt_exrcsbl_qty = "exercisable_stock_option_quantity", stk_opt_unexrcsbl_qty = "unexercisable_stock_option_quantity", stk_opt_exrc_pr = "stock_option_exercise_price", stk_opt_rmn_blce = "remaining_stock_option_value", othr_stk_bsd_cmpn_unpyd_qty = "other_unpaid_stock_compensation_quantity", othr_stk_bsd_cmpn_mkt_vl = "other_unpaid_stock_compensation_market_value", rm = "remarks" }

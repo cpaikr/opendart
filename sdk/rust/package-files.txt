@@ -6,6 +6,7 @@ Cargo.toml.orig
 LICENSE
 README.md
 src/client.rs
+src/conformance.rs
 src/error.rs
 src/generated/.opendart-sdk-generated
 src/generated/mapping.rs

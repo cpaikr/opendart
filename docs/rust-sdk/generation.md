@@ -42,6 +42,13 @@ Third-party OpenAPI types remain confined to `internal/openapi`.
 The model is a private in-memory Go API, not a public or serialized SDK
 manifest.
 
+The reviewed manifests in `sdk/rust/interface` are separate product-language
+inputs for the handwritten SDK and CLI. They bind OpenAPI identities and
+parameter concepts to approved Rust and CLI names without copying paths,
+schemas, statuses, media types, or other wire facts. The current SDK generator
+does not consume them; the Rust conformance gate checks them directly against
+OpenAPI, and the CLI-only projections consume them in the next delivery slice.
+
 ## Logical and physical operations
 
 Every canonical path and method with one `operationId` is one physical callable

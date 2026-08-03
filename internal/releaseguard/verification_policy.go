@@ -44,6 +44,7 @@ var reviewedReadOnlyGlobalPackages = []string{
 	"./internal/multicompanyprobe",
 	"./internal/openapi",
 	"./internal/releaseguard",
+	"./internal/rustconformance",
 	"./internal/sdkgen/rust",
 	"./internal/verification",
 }
@@ -204,10 +205,11 @@ verification_tmp=
 		{name: "usage", body: `  printf '%s\n' \
     'description: Run repository-owned verification tiers' \
     'usage: ./scripts/verify <mode>' \
-    'modes[7]{name,scope}:' \
+    'modes[8]{name,scope}:' \
     '  "fast go <go-test-args...>",Focused Go tests' \
     '  "fast rust <cargo-test-args...>",Focused Rust tests' \
     '  go,Required Linux Go pull-request contract' \
+    '  rust-conformance,Focused offline Rust-native conformance gate' \
     '  rust,Required Linux Rust pull-request contract' \
     '  pre-push,Required Linux Go and Rust contracts' \
     '  full-race,Full Go race-detector sweep' \
@@ -239,6 +241,10 @@ verification_tmp=
   verify_targeted_race
   phase "repository policy and artifact verification"
   go run ./cmd/opendart-tool verify --repository-root .`},
+		{name: "verify_rust_conformance", body: `  phase "Rust conformance inventory, retained evidence, and mutation controls"
+  go test -vet=off ./internal/rustconformance ./internal/contractfixtures
+  phase "Handwritten Rust public-seam and mutation cases offline"
+  RUSTFLAGS="--cfg opendart_compat" cargo +1.97.1 test --locked --offline --manifest-path sdk/rust/Cargo.toml -p opendart --all-features --lib conformance`},
 		{name: "install_rust_toolchains", body: indentScript(installRustToolchainsScript)},
 		{name: "fetch_rust_dependencies", body: indentScript(fetchRustDependenciesScript)},
 		{name: "verify_rust_stable", body: indentScript(stableRustVerificationScript)},
@@ -310,6 +316,10 @@ case "$1" in
   go)
     require_no_arguments "$@"
     verify_go
+    ;;
+  rust-conformance)
+    require_no_arguments "$@"
+    verify_rust_conformance
     ;;
   rust)
     require_no_arguments "$@"

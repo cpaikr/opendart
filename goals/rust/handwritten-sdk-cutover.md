@@ -30,13 +30,19 @@ _None._
 
 ### Current in-scope result
 
-Reviewed product contract and Rust-native conformance gate.
+Reviewed product contract and Rust-native conformance gate. Implementation and
+independent review are complete; required PR delivery remains active.
 
 ### Next in-scope action
 
-Review `plans/rust/handwritten-sdk-contract-and-conformance.md` against repository evidence, resolve its remaining in-scope decisions, and implement its conformance gate.
+Finish the conformance result's PR review and merge into `rust`. Then advance
+the durable plan state to `plans/rust/cli-presentation-projection.md`; do not
+begin the second implementation slice before the first PR is merged.
 
 ### Evidence and blockers
 
 - Delivery boundary: use the established non-production `rust` integration branch and preflight its direct metadata push before creating the first work branch.
 - Boundary check: the current result is directly included by the original contract; public SDK publication and adoption remain outside this goal.
+- First-result validation: full Go verification, the focused seven-case offline
+  Rust gate, strict Clippy, diff hygiene, and independent implementation and
+  system reviews pass with no actionable findings.

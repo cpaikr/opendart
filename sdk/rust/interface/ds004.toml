@@ -1,0 +1,71 @@
+schema_version = 1
+family = "DS004"
+
+[accessors]
+source = "source"
+status = "status"
+message = "message"
+items = "items"
+field = "field"
+
+[[operation]]
+logical_id = "DS004-2019021"
+rust_module = "ownership"
+rust_input = "MajorShareholdingsInput"
+cli_command = "major-shareholdings"
+cli_alias = "DS004-2019021"
+
+[[operation.physical]]
+operation_id = "get_majorstock_json"
+rust_method = "prepare_json"
+rust_response = "MajorShareholdingsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_majorstock_xml"
+rust_method = "prepare_xml"
+rust_response = "MajorShareholdingsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "MajorShareholding"
+accessors = { rcept_no = "receipt_number", rcept_dt = "receipt_date", corp_code = "company_code", corp_name = "company_name", report_tp = "report_type", repror = "reporting_person", stkqy = "shares_held", stkqy_irds = "share_change", stkrt = "ownership_percentage", stkrt_irds = "ownership_percentage_change", ctr_stkqy = "contract_shares", ctr_stkrt = "contract_ownership_percentage", report_resn = "report_reason" }
+
+[[operation]]
+logical_id = "DS004-2019022"
+rust_module = "ownership"
+rust_input = "InsiderShareholdingsInput"
+cli_command = "insider-shareholdings"
+cli_alias = "DS004-2019022"
+
+[[operation.physical]]
+operation_id = "get_elestock_json"
+rust_method = "prepare_json"
+rust_response = "InsiderShareholdingsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_elestock_xml"
+rust_method = "prepare_xml"
+rust_response = "InsiderShareholdingsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "InsiderShareholding"
+accessors = { rcept_no = "receipt_number", rcept_dt = "receipt_date", corp_code = "company_code", corp_name = "company_name", repror = "reporting_person", isu_exctv_rgist_at = "registered_executive_status", isu_exctv_ofcps = "executive_position", isu_main_shrholdr = "major_shareholder_status", sp_stock_lmp_cnt = "specific_securities_held", sp_stock_lmp_irds_cnt = "specific_securities_change", sp_stock_lmp_rate = "specific_securities_percentage", sp_stock_lmp_irds_rate = "specific_securities_percentage_change" }

@@ -1,0 +1,282 @@
+schema_version = 1
+family = "DS003"
+
+[accessors]
+source = "source"
+status = "status"
+message = "message"
+items = "items"
+field = "field"
+
+[[operation]]
+logical_id = "DS003-2019016"
+rust_module = "financial_statement"
+rust_input = "CompanyKeyAccountsInput"
+cli_command = "company-key-accounts"
+cli_alias = "DS003-2019016"
+
+[[operation.physical]]
+operation_id = "get_fnlttSinglAcnt_json"
+rust_method = "prepare_json"
+rust_response = "CompanyKeyAccountsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_fnlttSinglAcnt_xml"
+rust_method = "prepare_xml"
+rust_response = "CompanyKeyAccountsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CompanyKeyAccount"
+accessors = { rcept_no = "receipt_number", bsns_year = "business_year", stock_code = "stock_code", reprt_code = "report_code", account_nm = "account_name", fs_div = "financial_statement_scope", fs_nm = "financial_statement_name", sj_div = "statement_type", sj_nm = "statement_name", thstrm_nm = "current_period_name", thstrm_dt = "current_period_date", thstrm_amount = "current_period_amount", thstrm_add_amount = "current_period_cumulative_amount", frmtrm_nm = "prior_period_name", frmtrm_dt = "prior_period_date", frmtrm_amount = "prior_period_amount", frmtrm_add_amount = "prior_period_cumulative_amount", bfefrmtrm_nm = "two_periods_prior_name", bfefrmtrm_dt = "two_periods_prior_date", bfefrmtrm_amount = "two_periods_prior_amount", ord = "display_order", currency = "currency" }
+
+[[operation]]
+logical_id = "DS003-2019017"
+rust_module = "financial_statement"
+rust_input = "CompaniesKeyAccountsInput"
+cli_command = "companies-key-accounts"
+cli_alias = "DS003-2019017"
+
+[[operation.physical]]
+operation_id = "get_fnlttMultiAcnt_json"
+rust_method = "prepare_json"
+rust_response = "CompaniesKeyAccountsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_fnlttMultiAcnt_xml"
+rust_method = "prepare_xml"
+rust_response = "CompaniesKeyAccountsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_codes"
+cli_flag = "company-codes"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CompaniesKeyAccount"
+accessors = { rcept_no = "receipt_number", bsns_year = "business_year", stock_code = "stock_code", reprt_code = "report_code", account_nm = "account_name", fs_div = "financial_statement_scope", fs_nm = "financial_statement_name", sj_div = "statement_type", sj_nm = "statement_name", thstrm_nm = "current_period_name", thstrm_dt = "current_period_date", thstrm_amount = "current_period_amount", thstrm_add_amount = "current_period_cumulative_amount", frmtrm_nm = "prior_period_name", frmtrm_dt = "prior_period_date", frmtrm_amount = "prior_period_amount", frmtrm_add_amount = "prior_period_cumulative_amount", bfefrmtrm_nm = "two_periods_prior_name", bfefrmtrm_dt = "two_periods_prior_date", bfefrmtrm_amount = "two_periods_prior_amount", ord = "display_order", currency = "currency" }
+
+[[operation]]
+logical_id = "DS003-2019019"
+rust_module = "financial_statement"
+rust_input = "XbrlFinancialStatementsInput"
+cli_command = "download-xbrl-financial-statements"
+cli_alias = "DS003-2019019"
+
+[[operation.physical]]
+operation_id = "get_fnlttXbrl_xml"
+rust_method = "prepare_archive"
+rust_response = "XbrlFinancialStatementsArchiveResponse"
+
+[[operation.parameter]]
+openapi_name = "rcept_no"
+rust_name = "receipt_number"
+cli_flag = "receipt-number"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation]]
+logical_id = "DS003-2019020"
+rust_module = "financial_statement"
+rust_input = "CompanyFinancialStatementsInput"
+cli_command = "company-financial-statements"
+cli_alias = "DS003-2019020"
+
+[[operation.physical]]
+operation_id = "get_fnlttSinglAcntAll_json"
+rust_method = "prepare_json"
+rust_response = "CompanyFinancialStatementsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_fnlttSinglAcntAll_xml"
+rust_method = "prepare_xml"
+rust_response = "CompanyFinancialStatementsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.parameter]]
+openapi_name = "fs_div"
+rust_name = "financial_statement_scope"
+cli_flag = "financial-statement-scope"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CompanyFinancialStatementLine"
+accessors = { rcept_no = "receipt_number", reprt_code = "report_code", bsns_year = "business_year", corp_code = "company_code", sj_div = "statement_type", sj_nm = "statement_name", account_id = "account_id", account_nm = "account_name", account_detail = "account_detail", thstrm_nm = "current_period_name", thstrm_amount = "current_period_amount", thstrm_add_amount = "current_period_cumulative_amount", frmtrm_nm = "prior_period_name", frmtrm_amount = "prior_period_amount", frmtrm_q_nm = "prior_interim_period_name", frmtrm_q_amount = "prior_interim_period_amount", frmtrm_add_amount = "prior_period_cumulative_amount", bfefrmtrm_nm = "two_periods_prior_name", bfefrmtrm_amount = "two_periods_prior_amount", ord = "display_order", currency = "currency" }
+
+[[operation]]
+logical_id = "DS003-2020001"
+rust_module = "financial_statement"
+rust_input = "XbrlTaxonomyInput"
+cli_command = "xbrl-taxonomy"
+cli_alias = "DS003-2020001"
+
+[[operation.physical]]
+operation_id = "get_xbrlTaxonomy_json"
+rust_method = "prepare_json"
+rust_response = "XbrlTaxonomyJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_xbrlTaxonomy_xml"
+rust_method = "prepare_xml"
+rust_response = "XbrlTaxonomyXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "sj_div"
+rust_name = "statement_type"
+cli_flag = "statement-type"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "XbrlTaxonomyAccount"
+accessors = { sj_div = "statement_type", account_id = "account_id", account_nm = "account_name", bsns_de = "reference_date", label_kor = "korean_label", label_eng = "english_label", data_tp = "data_type", ifrs_ref = "ifrs_reference" }
+
+[[operation]]
+logical_id = "DS003-2022001"
+rust_module = "financial_statement"
+rust_input = "CompanyFinancialIndicatorsInput"
+cli_command = "company-financial-indicators"
+cli_alias = "DS003-2022001"
+
+[[operation.physical]]
+operation_id = "get_fnlttSinglIndx_json"
+rust_method = "prepare_json"
+rust_response = "CompanyFinancialIndicatorsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_fnlttSinglIndx_xml"
+rust_method = "prepare_xml"
+rust_response = "CompanyFinancialIndicatorsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.parameter]]
+openapi_name = "idx_cl_code"
+rust_name = "indicator_category"
+cli_flag = "indicator-category"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CompanyFinancialIndicator"
+accessors = { reprt_code = "report_code", bsns_year = "business_year", corp_code = "company_code", stock_code = "stock_code", stlm_dt = "fiscal_year_end", idx_cl_code = "indicator_category_code", idx_cl_nm = "indicator_category_name", idx_code = "indicator_code", idx_nm = "indicator_name", idx_val = "indicator_value" }
+
+[[operation]]
+logical_id = "DS003-2022002"
+rust_module = "financial_statement"
+rust_input = "CompaniesFinancialIndicatorsInput"
+cli_command = "companies-financial-indicators"
+cli_alias = "DS003-2022002"
+
+[[operation.physical]]
+operation_id = "get_fnlttCmpnyIndx_json"
+rust_method = "prepare_json"
+rust_response = "CompaniesFinancialIndicatorsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_fnlttCmpnyIndx_xml"
+rust_method = "prepare_xml"
+rust_response = "CompaniesFinancialIndicatorsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_codes"
+cli_flag = "company-codes"
+
+[[operation.parameter]]
+openapi_name = "bsns_year"
+rust_name = "business_year"
+cli_flag = "business-year"
+
+[[operation.parameter]]
+openapi_name = "reprt_code"
+rust_name = "report_code"
+cli_flag = "report-code"
+
+[[operation.parameter]]
+openapi_name = "idx_cl_code"
+rust_name = "indicator_category"
+cli_flag = "indicator-category"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CompaniesFinancialIndicator"
+accessors = { reprt_code = "report_code", bsns_year = "business_year", corp_code = "company_code", stock_code = "stock_code", stlm_dt = "fiscal_year_end", idx_cl_code = "indicator_category_code", idx_cl_nm = "indicator_category_name", idx_code = "indicator_code", idx_nm = "indicator_name", idx_val = "indicator_value" }

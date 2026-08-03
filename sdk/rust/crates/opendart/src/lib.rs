@@ -10,6 +10,9 @@ mod request;
 mod validation;
 mod wire;
 
+#[cfg(test)]
+mod conformance;
+
 #[cfg(all(feature = "client-reqwest", not(target_family = "wasm")))]
 mod client;
 #[cfg(all(

@@ -10,9 +10,8 @@ not authorize a registry, release, secret, or workflow side effect.
 ## Current
 
 - [Establish the handwritten SDK contract and Rust-native conformance gate](plans/rust/handwritten-sdk-contract-and-conformance.md)
-  fixes the reviewed Rust and CLI product interfaces and builds proportionate
-  evidence that does not use a shared cross-language projection or the
-  generated client as an oracle.
+  has completed implementation and independent review; its required PR delivery
+  remains active before the roadmap advances.
 
 ## Plans
 

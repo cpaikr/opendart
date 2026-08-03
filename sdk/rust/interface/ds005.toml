@@ -1,0 +1,2616 @@
+schema_version = 1
+family = "DS005"
+
+[accessors]
+source = "source"
+status = "status"
+message = "message"
+items = "items"
+field = "field"
+
+[[operation]]
+logical_id = "DS005-2020018"
+rust_module = "material_event"
+rust_input = "OtherAssetTransactionsAndPutbackOptionsInput"
+cli_command = "other-asset-transactions-and-putback-options"
+cli_alias = "DS005-2020018"
+
+[[operation.physical]]
+operation_id = "get_astInhtrfEtcPtbkOpt_json"
+rust_method = "prepare_json"
+rust_response = "OtherAssetTransactionsAndPutbackOptionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_astInhtrfEtcPtbkOpt_xml"
+rust_method = "prepare_xml"
+rust_response = "OtherAssetTransactionsAndPutbackOptionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OtherAssetTransactionAndPutbackOption"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+rp_rsn = "report_reason"
+ast_inhtrf_prc = "asset_transfer_price"
+
+[[operation]]
+logical_id = "DS005-2020036"
+rust_module = "material_event"
+rust_input = "CreditorBankManagementDiscontinuationsInput"
+cli_command = "creditor-bank-management-discontinuations"
+cli_alias = "DS005-2020036"
+
+[[operation.physical]]
+operation_id = "get_bnkMngtPcsp_json"
+rust_method = "prepare_json"
+rust_response = "CreditorBankManagementDiscontinuationsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_bnkMngtPcsp_xml"
+rust_method = "prepare_xml"
+rust_response = "CreditorBankManagementDiscontinuationsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CreditorBankManagementDiscontinuation"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+mngt_pcsp_dd = "management_procedure_discontinuation_decision_date"
+mngt_int = "management_institution"
+sp_rs = "discontinuation_reason"
+ft_ctp = "future_measures"
+cfd = "confirmation_date"
+
+[[operation]]
+logical_id = "DS005-2020037"
+rust_module = "material_event"
+rust_input = "WriteDownContingentCapitalSecuritiesIssuanceDecisionsInput"
+cli_command = "write-down-contingent-capital-securities-issuance-decisions"
+cli_alias = "DS005-2020037"
+
+[[operation.physical]]
+operation_id = "get_wdCocobdIsDecsn_json"
+rust_method = "prepare_json"
+rust_response = "WriteDownContingentCapitalSecuritiesIssuanceDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_wdCocobdIsDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "WriteDownContingentCapitalSecuritiesIssuanceDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "WriteDownContingentCapitalSecuritiesIssuanceDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+bd_tm = "bond_series"
+bd_knd = "bond_type"
+bd_fta = "bond_face_value_total"
+ovis_fta = "overseas_issuance_face_value_total"
+ovis_fta_crn = "overseas_issuance_currency"
+ovis_ster = "overseas_issuance_exchange_rate_basis"
+ovis_isar = "overseas_issuance_region"
+ovis_mktnm = "overseas_listing_market_name"
+fdpp_fclt = "facility_funding_amount"
+fdpp_bsninh = "business_acquisition_funding_amount"
+fdpp_op = "operating_funding_amount"
+fdpp_dtrp = "debt_repayment_funding_amount"
+fdpp_ocsa = "other_corporation_securities_acquisition_funding_amount"
+fdpp_etc = "other_funding_amount"
+bd_intr_sf = "bond_coupon_interest_rate"
+bd_intr_ex = "bond_maturity_interest_rate"
+bd_mtd = "bond_maturity_date"
+dbtrs_sc = "debt_restructuring_scope"
+sbd = "subscription_date"
+pymd = "payment_date"
+rpmcmp = "lead_underwriter"
+grint = "guarantor"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+rs_sm_atn = "securities_registration_statement_required"
+ex_sm_r = "registration_statement_exemption_reason"
+ovis_ltdtl = "overseas_issuance_linked_securities_lending_details"
+ftc_stt_atn = "fair_trade_commission_reporting_required"
+
+[[operation]]
+logical_id = "DS005-2020038"
+rust_module = "material_event"
+rust_input = "TreasuryStockAcquisitionDecisionsInput"
+cli_command = "treasury-stock-acquisition-decisions"
+cli_alias = "DS005-2020038"
+
+[[operation.physical]]
+operation_id = "get_tsstkAqDecsn_json"
+rust_method = "prepare_json"
+rust_response = "TreasuryStockAcquisitionDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_tsstkAqDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "TreasuryStockAcquisitionDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "TreasuryStockAcquisitionDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+aqpln_stk_ostk = "planned_common_share_acquisition_count"
+aqpln_stk_estk = "planned_other_share_acquisition_count"
+aqpln_prc_ostk = "planned_common_share_acquisition_amount"
+aqpln_prc_estk = "planned_other_share_acquisition_amount"
+aqexpd_bgd = "expected_acquisition_start_date"
+aqexpd_edd = "expected_acquisition_end_date"
+hdexpd_bgd = "expected_holding_start_date"
+hdexpd_edd = "expected_holding_end_date"
+aq_pp = "acquisition_purpose"
+aq_mth = "acquisition_method"
+cs_iv_bk = "entrusted_investment_broker"
+aq_wtn_div_ostk = "pre_acquisition_distributable_profit_common_share_count"
+aq_wtn_div_ostk_rt = "pre_acquisition_distributable_profit_common_share_ratio"
+aq_wtn_div_estk = "pre_acquisition_distributable_profit_other_share_count"
+aq_wtn_div_estk_rt = "pre_acquisition_distributable_profit_other_share_ratio"
+eaq_ostk = "pre_acquisition_other_common_share_count"
+eaq_ostk_rt = "pre_acquisition_other_common_share_ratio"
+eaq_estk = "pre_acquisition_other_other_share_count"
+eaq_estk_rt = "pre_acquisition_other_other_share_ratio"
+aq_dd = "acquisition_decision_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+d1_prodlm_ostk = "daily_common_share_purchase_order_limit"
+d1_prodlm_estk = "daily_other_share_purchase_order_limit"
+
+[[operation]]
+logical_id = "DS005-2020039"
+rust_module = "material_event"
+rust_input = "TreasuryStockDisposalDecisionsInput"
+cli_command = "treasury-stock-disposal-decisions"
+cli_alias = "DS005-2020039"
+
+[[operation.physical]]
+operation_id = "get_tsstkDpDecsn_json"
+rust_method = "prepare_json"
+rust_response = "TreasuryStockDisposalDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_tsstkDpDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "TreasuryStockDisposalDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "TreasuryStockDisposalDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+dppln_stk_ostk = "planned_common_share_disposal_count"
+dppln_stk_estk = "planned_other_share_disposal_count"
+dpstk_prc_ostk = "common_share_disposal_price"
+dpstk_prc_estk = "other_share_disposal_price"
+dppln_prc_ostk = "planned_common_share_disposal_amount"
+dppln_prc_estk = "planned_other_share_disposal_amount"
+dpprpd_bgd = "planned_disposal_start_date"
+dpprpd_edd = "planned_disposal_end_date"
+dp_pp = "disposal_purpose"
+dp_m_mkt = "market_sale_share_count"
+dp_m_ovtm = "after_hours_block_trade_share_count"
+dp_m_otc = "over_the_counter_disposal_share_count"
+dp_m_etc = "other_disposal_share_count"
+cs_iv_bk = "entrusted_investment_broker"
+aq_wtn_div_ostk = "pre_disposal_distributable_profit_common_share_count"
+aq_wtn_div_ostk_rt = "pre_disposal_distributable_profit_common_share_ratio"
+aq_wtn_div_estk = "pre_disposal_distributable_profit_other_share_count"
+aq_wtn_div_estk_rt = "pre_disposal_distributable_profit_other_share_ratio"
+eaq_ostk = "pre_disposal_other_common_share_count"
+eaq_ostk_rt = "pre_disposal_other_common_share_ratio"
+eaq_estk = "pre_disposal_other_other_share_count"
+eaq_estk_rt = "pre_disposal_other_other_share_ratio"
+dp_dd = "disposal_decision_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+d1_slodlm_ostk = "daily_common_share_sale_order_limit"
+d1_slodlm_estk = "daily_other_share_sale_order_limit"
+
+[[operation]]
+logical_id = "DS005-2020040"
+rust_module = "material_event"
+rust_input = "TreasuryStockAcquisitionTrustContractExecutionDecisionsInput"
+cli_command = "treasury-stock-acquisition-trust-contract-execution-decisions"
+cli_alias = "DS005-2020040"
+
+[[operation.physical]]
+operation_id = "get_tsstkAqTrctrCnsDecsn_json"
+rust_method = "prepare_json"
+rust_response = "TreasuryStockAcquisitionTrustContractExecutionDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_tsstkAqTrctrCnsDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "TreasuryStockAcquisitionTrustContractExecutionDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "TreasuryStockAcquisitionTrustContractExecutionDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+ctr_prc = "contract_amount"
+ctr_pd_bgd = "contract_start_date"
+ctr_pd_edd = "contract_end_date"
+ctr_pp = "contract_purpose"
+ctr_cns_int = "contracting_institution"
+ctr_cns_prd = "planned_contract_date"
+aq_wtn_div_ostk = "pre_contract_distributable_profit_common_share_count"
+aq_wtn_div_ostk_rt = "pre_contract_distributable_profit_common_share_ratio"
+aq_wtn_div_estk = "pre_contract_distributable_profit_other_share_count"
+aq_wtn_div_estk_rt = "pre_contract_distributable_profit_other_share_ratio"
+eaq_ostk = "pre_contract_other_common_share_count"
+eaq_ostk_rt = "pre_contract_other_common_share_ratio"
+eaq_estk = "pre_contract_other_other_share_count"
+eaq_estk_rt = "pre_contract_other_other_share_ratio"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+cs_iv_bk = "entrusted_investment_broker"
+
+[[operation]]
+logical_id = "DS005-2020041"
+rust_module = "material_event"
+rust_input = "TreasuryStockAcquisitionTrustContractTerminationDecisionsInput"
+cli_command = "treasury-stock-acquisition-trust-contract-termination-decisions"
+cli_alias = "DS005-2020041"
+
+[[operation.physical]]
+operation_id = "get_tsstkAqTrctrCcDecsn_json"
+rust_method = "prepare_json"
+rust_response = "TreasuryStockAcquisitionTrustContractTerminationDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_tsstkAqTrctrCcDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "TreasuryStockAcquisitionTrustContractTerminationDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "TreasuryStockAcquisitionTrustContractTerminationDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+ctr_prc_bfcc = "pre_termination_contract_amount"
+ctr_prc_atcc = "post_termination_contract_amount"
+ctr_pd_bfcc_bgd = "pre_termination_contract_start_date"
+ctr_pd_bfcc_edd = "pre_termination_contract_end_date"
+cc_pp = "termination_purpose"
+cc_int = "termination_institution"
+cc_prd = "planned_termination_date"
+tp_rm_atcc = "post_termination_trust_property_return_method"
+aq_wtn_div_ostk = "pre_termination_distributable_profit_common_share_count"
+aq_wtn_div_ostk_rt = "pre_termination_distributable_profit_common_share_ratio"
+aq_wtn_div_estk = "pre_termination_distributable_profit_other_share_count"
+aq_wtn_div_estk_rt = "pre_termination_distributable_profit_other_share_ratio"
+eaq_ostk = "pre_termination_other_common_share_count"
+eaq_ostk_rt = "pre_termination_other_common_share_ratio"
+eaq_estk = "pre_termination_other_other_share_count"
+eaq_estk_rt = "pre_termination_other_other_share_ratio"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+
+[[operation]]
+logical_id = "DS005-2020042"
+rust_module = "material_event"
+rust_input = "BusinessAcquisitionDecisionsInput"
+cli_command = "business-acquisition-decisions"
+cli_alias = "DS005-2020042"
+
+[[operation.physical]]
+operation_id = "get_bsnInhDecsn_json"
+rust_method = "prepare_json"
+rust_response = "BusinessAcquisitionDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_bsnInhDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "BusinessAcquisitionDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "BusinessAcquisitionDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+inh_bsn = "acquired_business"
+inh_bsn_mc = "acquired_business_details"
+inh_prc = "acquisition_price"
+absn_inh_atn = "acquires_entire_business"
+ast_inh_bsn = "target_business_assets"
+ast_cmp_all = "company_total_assets"
+ast_rt = "target_assets_ratio"
+sl_inh_bsn = "target_business_revenue"
+sl_cmp_all = "company_total_revenue"
+sl_rt = "target_revenue_ratio"
+dbt_inh_bsn = "target_business_liabilities"
+dbt_cmp_all = "company_total_liabilities"
+dbt_rt = "target_liabilities_ratio"
+inh_pp = "acquisition_purpose"
+inh_af = "acquisition_effect"
+inh_prd_ctr_cnsd = "acquisition_contract_date"
+inh_prd_inh_std = "acquisition_reference_date"
+dlptn_cmpnm = "counterparty_name"
+dlptn_cpt = "counterparty_capital"
+dlptn_mbsn = "counterparty_principal_business"
+dlptn_hoadd = "counterparty_headquarters_address"
+dlptn_rl_cmpn = "counterparty_relationship_to_company"
+inh_pym = "acquisition_payment_terms"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+gmtsck_spd_atn = "shareholders_meeting_special_resolution_required"
+gmtsck_prd = "planned_shareholders_meeting_date"
+aprskh_plnprc = "appraisal_rights_expected_purchase_price"
+aprskh_pym_plpd_mth = "appraisal_rights_payment_timing_and_method"
+aprskh_lmt = "appraisal_rights_restrictions"
+aprskh_ctref = "appraisal_rights_effect_on_contract"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+bdlst_atn = "backdoor_listing_applicable"
+n6m_tpai_plann = "third_party_allotment_plan_within_six_months"
+otcpr_bdlst_sf_atn = "other_company_meets_backdoor_listing_requirements"
+ftc_stt_atn = "fair_trade_commission_filing_required"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+
+[[operation]]
+logical_id = "DS005-2020043"
+rust_module = "material_event"
+rust_input = "BusinessTransferDecisionsInput"
+cli_command = "business-transfer-decisions"
+cli_alias = "DS005-2020043"
+
+[[operation.physical]]
+operation_id = "get_bsnTrfDecsn_json"
+rust_method = "prepare_json"
+rust_response = "BusinessTransferDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_bsnTrfDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "BusinessTransferDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "BusinessTransferDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+trf_bsn = "transferred_business"
+trf_bsn_mc = "transferred_business_details"
+trf_prc = "transfer_price"
+ast_trf_bsn = "target_business_assets"
+ast_cmp_all = "company_total_assets"
+ast_rt = "target_assets_ratio"
+sl_trf_bsn = "target_business_revenue"
+sl_cmp_all = "company_total_revenue"
+sl_rt = "target_revenue_ratio"
+trf_pp = "transfer_purpose"
+trf_af = "transfer_effect"
+trf_prd_ctr_cnsd = "transfer_contract_date"
+trf_prd_trf_std = "transfer_reference_date"
+dlptn_cmpnm = "counterparty_name"
+dlptn_cpt = "counterparty_capital"
+dlptn_mbsn = "counterparty_principal_business"
+dlptn_hoadd = "counterparty_headquarters_address"
+dlptn_rl_cmpn = "counterparty_relationship_to_company"
+trf_pym = "transfer_payment_terms"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+gmtsck_spd_atn = "shareholders_meeting_special_resolution_required"
+gmtsck_prd = "planned_shareholders_meeting_date"
+aprskh_plnprc = "appraisal_rights_expected_purchase_price"
+aprskh_pym_plpd_mth = "appraisal_rights_payment_timing_and_method"
+aprskh_lmt = "appraisal_rights_restrictions"
+aprskh_ctref = "appraisal_rights_effect_on_contract"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+ftc_stt_atn = "fair_trade_commission_filing_required"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+
+[[operation]]
+logical_id = "DS005-2020044"
+rust_module = "material_event"
+rust_input = "TangibleAssetAcquisitionDecisionsInput"
+cli_command = "tangible-asset-acquisition-decisions"
+cli_alias = "DS005-2020044"
+
+[[operation.physical]]
+operation_id = "get_tgastInhDecsn_json"
+rust_method = "prepare_json"
+rust_response = "TangibleAssetAcquisitionDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_tgastInhDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "TangibleAssetAcquisitionDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "TangibleAssetAcquisitionDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+ast_sen = "asset_classification"
+ast_nm = "asset_name"
+inhdtl_inhprc = "acquisition_amount"
+inhdtl_tast = "total_assets"
+inhdtl_tast_vs = "acquisition_amount_to_total_assets_ratio"
+inh_pp = "acquisition_purpose"
+inh_af = "acquisition_effect"
+inh_prd_ctr_cnsd = "acquisition_contract_date"
+inh_prd_inh_std = "acquisition_reference_date"
+inh_prd_rgs_prd = "registration_date"
+dlptn_cmpnm = "counterparty_name"
+dlptn_cpt = "counterparty_capital"
+dlptn_mbsn = "counterparty_principal_business"
+dlptn_hoadd = "counterparty_headquarters_address"
+dlptn_rl_cmpn = "counterparty_relationship_to_company"
+dl_pym = "transaction_payment_terms"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+gmtsck_spd_atn = "shareholders_meeting_special_resolution_required"
+gmtsck_prd = "planned_shareholders_meeting_date"
+aprskh_exrq = "appraisal_rights_exercise_requirements"
+aprskh_plnprc = "appraisal_rights_expected_purchase_price"
+aprskh_ex_pc_mth_pd_pl = "appraisal_rights_exercise_procedure_method_period_and_place"
+aprskh_pym_plpd_mth = "appraisal_rights_payment_timing_and_method"
+aprskh_lmt = "appraisal_rights_restrictions"
+aprskh_ctref = "appraisal_rights_effect_on_contract"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+ftc_stt_atn = "fair_trade_commission_filing_required"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+
+[[operation]]
+logical_id = "DS005-2020045"
+rust_module = "material_event"
+rust_input = "TangibleAssetTransferDecisionsInput"
+cli_command = "tangible-asset-transfer-decisions"
+cli_alias = "DS005-2020045"
+
+[[operation.physical]]
+operation_id = "get_tgastTrfDecsn_json"
+rust_method = "prepare_json"
+rust_response = "TangibleAssetTransferDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_tgastTrfDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "TangibleAssetTransferDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "TangibleAssetTransferDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+ast_sen = "asset_classification"
+ast_nm = "asset_name"
+trfdtl_trfprc = "transfer_amount"
+trfdtl_tast = "total_assets"
+trfdtl_tast_vs = "transfer_amount_to_total_assets_ratio"
+trf_pp = "transfer_purpose"
+trf_af = "transfer_effect"
+trf_prd_ctr_cnsd = "transfer_contract_date"
+trf_prd_trf_std = "transfer_reference_date"
+trf_prd_rgs_prd = "registration_date"
+dlptn_cmpnm = "counterparty_name"
+dlptn_cpt = "counterparty_capital"
+dlptn_mbsn = "counterparty_principal_business"
+dlptn_hoadd = "counterparty_headquarters_address"
+dlptn_rl_cmpn = "counterparty_relationship_to_company"
+dl_pym = "transaction_payment_terms"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+gmtsck_spd_atn = "shareholders_meeting_special_resolution_required"
+gmtsck_prd = "planned_shareholders_meeting_date"
+aprskh_exrq = "appraisal_rights_exercise_requirements"
+aprskh_plnprc = "appraisal_rights_expected_purchase_price"
+aprskh_ex_pc_mth_pd_pl = "appraisal_rights_exercise_procedure_method_period_and_place"
+aprskh_pym_plpd_mth = "appraisal_rights_payment_timing_and_method"
+aprskh_lmt = "appraisal_rights_restrictions"
+aprskh_ctref = "appraisal_rights_effect_on_contract"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+ftc_stt_atn = "fair_trade_commission_filing_required"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+
+[[operation]]
+logical_id = "DS005-2020046"
+rust_module = "material_event"
+rust_input = "OtherCompanyEquitySecuritiesAcquisitionDecisionsInput"
+cli_command = "other-company-equity-securities-acquisition-decisions"
+cli_alias = "DS005-2020046"
+
+[[operation.physical]]
+operation_id = "get_otcprStkInvscrInhDecsn_json"
+rust_method = "prepare_json"
+rust_response = "OtherCompanyEquitySecuritiesAcquisitionDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_otcprStkInvscrInhDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "OtherCompanyEquitySecuritiesAcquisitionDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OtherCompanyEquitySecuritiesAcquisitionDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+iscmp_cmpnm = "issuer_company_name"
+iscmp_nt = "issuer_nationality"
+iscmp_rp = "issuer_representative"
+iscmp_cpt = "issuer_capital"
+iscmp_rl_cmpn = "issuer_relationship_to_company"
+iscmp_tisstk = "issuer_total_issued_shares"
+iscmp_mbsn = "issuer_principal_business"
+l6m_tpa_nstkaq_atn = "new_share_acquisition_via_third_party_allotment_within_six_months"
+inhdtl_stkcnt = "acquired_share_count"
+inhdtl_inhprc = "acquisition_amount"
+inhdtl_tast = "total_assets"
+inhdtl_tast_vs = "acquisition_amount_to_total_assets_ratio"
+inhdtl_ecpt = "equity"
+inhdtl_ecpt_vs = "acquisition_amount_to_equity_ratio"
+atinh_owstkcnt = "owned_shares_after_acquisition"
+atinh_eqrt = "ownership_percentage_after_acquisition"
+inh_pp = "acquisition_purpose"
+inh_prd = "planned_acquisition_date"
+dlptn_cmpnm = "counterparty_name"
+dlptn_cpt = "counterparty_capital"
+dlptn_mbsn = "counterparty_principal_business"
+dlptn_hoadd = "counterparty_headquarters_address"
+dlptn_rl_cmpn = "counterparty_relationship_to_company"
+dl_pym = "transaction_payment_terms"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+bdlst_atn = "backdoor_listing_applicable"
+n6m_tpai_plann = "third_party_allotment_plan_within_six_months"
+iscmp_bdlst_sf_atn = "issuer_meets_backdoor_listing_requirements"
+ftc_stt_atn = "fair_trade_commission_filing_required"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+
+[[operation]]
+logical_id = "DS005-2020047"
+rust_module = "material_event"
+rust_input = "OtherCompanyEquitySecuritiesTransferDecisionsInput"
+cli_command = "other-company-equity-securities-transfer-decisions"
+cli_alias = "DS005-2020047"
+
+[[operation.physical]]
+operation_id = "get_otcprStkInvscrTrfDecsn_json"
+rust_method = "prepare_json"
+rust_response = "OtherCompanyEquitySecuritiesTransferDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_otcprStkInvscrTrfDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "OtherCompanyEquitySecuritiesTransferDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OtherCompanyEquitySecuritiesTransferDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+iscmp_cmpnm = "issuer_company_name"
+iscmp_nt = "issuer_nationality"
+iscmp_rp = "issuer_representative"
+iscmp_cpt = "issuer_capital"
+iscmp_rl_cmpn = "issuer_relationship_to_company"
+iscmp_tisstk = "issuer_total_issued_shares"
+iscmp_mbsn = "issuer_principal_business"
+trfdtl_stkcnt = "transferred_share_count"
+trfdtl_trfprc = "transfer_amount"
+trfdtl_tast = "total_assets"
+trfdtl_tast_vs = "transfer_amount_to_total_assets_ratio"
+trfdtl_ecpt = "equity"
+trfdtl_ecpt_vs = "transfer_amount_to_equity_ratio"
+attrf_owstkcnt = "owned_shares_after_transfer"
+attrf_eqrt = "ownership_percentage_after_transfer"
+trf_pp = "transfer_purpose"
+trf_prd = "planned_transfer_date"
+dlptn_cmpnm = "counterparty_name"
+dlptn_cpt = "counterparty_capital"
+dlptn_mbsn = "counterparty_principal_business"
+dlptn_hoadd = "counterparty_headquarters_address"
+dlptn_rl_cmpn = "counterparty_relationship_to_company"
+dl_pym = "transaction_payment_terms"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+ftc_stt_atn = "fair_trade_commission_filing_required"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+
+[[operation]]
+logical_id = "DS005-2020048"
+rust_module = "material_event"
+rust_input = "StockRelatedBondAcquisitionDecisionsInput"
+cli_command = "stock-related-bond-acquisition-decisions"
+cli_alias = "DS005-2020048"
+
+[[operation.physical]]
+operation_id = "get_stkrtbdInhDecsn_json"
+rust_method = "prepare_json"
+rust_response = "StockRelatedBondAcquisitionDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_stkrtbdInhDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "StockRelatedBondAcquisitionDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "StockRelatedBondAcquisitionDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+stkrtbd_kndn = "stock_related_bond_type"
+tm = "bond_series"
+knd = "bond_kind"
+bdiscmp_cmpnm = "bond_issuer_company_name"
+bdiscmp_nt = "bond_issuer_nationality"
+bdiscmp_rp = "bond_issuer_representative"
+bdiscmp_cpt = "bond_issuer_capital"
+bdiscmp_rl_cmpn = "bond_issuer_relationship_to_company"
+bdiscmp_tisstk = "bond_issuer_total_issued_shares"
+bdiscmp_mbsn = "bond_issuer_principal_business"
+l6m_tpa_nstkaq_atn = "new_share_acquisition_via_third_party_allotment_within_six_months"
+inhdtl_bd_fta = "acquired_bond_face_or_registered_amount"
+inhdtl_inhprc = "acquisition_amount"
+inhdtl_tast = "total_assets"
+inhdtl_tast_vs = "acquisition_amount_to_total_assets_ratio"
+inhdtl_ecpt = "equity"
+inhdtl_ecpt_vs = "acquisition_amount_to_equity_ratio"
+inh_pp = "acquisition_purpose"
+inh_prd = "planned_acquisition_date"
+dlptn_cmpnm = "counterparty_name"
+dlptn_cpt = "counterparty_capital"
+dlptn_mbsn = "counterparty_principal_business"
+dlptn_hoadd = "counterparty_headquarters_address"
+dlptn_rl_cmpn = "counterparty_relationship_to_company"
+dl_pym = "transaction_payment_terms"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+ftc_stt_atn = "fair_trade_commission_filing_required"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+
+[[operation]]
+logical_id = "DS005-2020049"
+rust_module = "material_event"
+rust_input = "StockRelatedBondTransferDecisionsInput"
+cli_command = "stock-related-bond-transfer-decisions"
+cli_alias = "DS005-2020049"
+
+[[operation.physical]]
+operation_id = "get_stkrtbdTrfDecsn_json"
+rust_method = "prepare_json"
+rust_response = "StockRelatedBondTransferDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_stkrtbdTrfDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "StockRelatedBondTransferDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "StockRelatedBondTransferDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+stkrtbd_kndn = "stock_related_bond_type"
+tm = "bond_series"
+knd = "bond_kind"
+aqd = "acquisition_date"
+bdiscmp_cmpnm = "bond_issuer_company_name"
+bdiscmp_nt = "bond_issuer_nationality"
+bdiscmp_rp = "bond_issuer_representative"
+bdiscmp_cpt = "bond_issuer_capital"
+bdiscmp_rl_cmpn = "bond_issuer_relationship_to_company"
+bdiscmp_tisstk = "bond_issuer_total_issued_shares"
+bdiscmp_mbsn = "bond_issuer_principal_business"
+trfdtl_bd_fta = "transferred_bond_face_or_registered_amount"
+trfdtl_trfprc = "transfer_amount"
+trfdtl_tast = "total_assets"
+trfdtl_tast_vs = "transfer_amount_to_total_assets_ratio"
+trfdtl_ecpt = "equity"
+trfdtl_ecpt_vs = "transfer_amount_to_equity_ratio"
+trf_pp = "transfer_purpose"
+trf_prd = "planned_transfer_date"
+dlptn_cmpnm = "counterparty_name"
+dlptn_cpt = "counterparty_capital"
+dlptn_mbsn = "counterparty_principal_business"
+dlptn_hoadd = "counterparty_headquarters_address"
+dlptn_rl_cmpn = "counterparty_relationship_to_company"
+dl_pym = "transaction_payment_terms"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+ftc_stt_atn = "fair_trade_commission_filing_required"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+
+[[operation]]
+logical_id = "DS005-2020050"
+rust_module = "material_event"
+rust_input = "CompanyMergerDecisionsInput"
+cli_command = "company-merger-decisions"
+cli_alias = "DS005-2020050"
+
+[[operation.physical]]
+operation_id = "get_cmpMgDecsn_json"
+rust_method = "prepare_json"
+rust_response = "CompanyMergerDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_cmpMgDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "CompanyMergerDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CompanyMergerDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+mg_mth = "merger_method"
+mg_stn = "merger_form"
+mg_pp = "merger_purpose"
+mg_rt = "merger_ratio"
+mg_rt_bs = "merger_ratio_basis"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+mgnstk_ostk_cnt = "new_common_shares_from_merger"
+mgnstk_cstk_cnt = "new_class_shares_from_merger"
+mgptncmp_cmpnm = "merger_partner_name"
+mgptncmp_mbsn = "merger_partner_principal_business"
+mgptncmp_rl_cmpn = "merger_partner_relationship_to_company"
+rbsnfdtl_tast = "merger_partner_total_assets"
+rbsnfdtl_tdbt = "merger_partner_total_liabilities"
+rbsnfdtl_teqt = "merger_partner_total_equity"
+rbsnfdtl_cpt = "merger_partner_capital"
+rbsnfdtl_sl = "merger_partner_revenue"
+rbsnfdtl_nic = "merger_partner_net_income"
+eadtat_intn = "merger_partner_external_auditor"
+eadtat_op = "merger_partner_audit_opinion"
+nmgcmp_cmpnm = "new_merger_company_name"
+ffdtl_tast = "new_merger_company_total_assets"
+ffdtl_tdbt = "new_merger_company_total_liabilities"
+ffdtl_teqt = "new_merger_company_total_equity"
+ffdtl_cpt = "new_merger_company_capital"
+ffdtl_std = "new_merger_company_financials_as_of"
+nmgcmp_nbsn_rsl = "new_merger_company_new_business_segment_prior_year_revenue"
+nmgcmp_mbsn = "new_merger_company_principal_business"
+nmgcmp_rlst_atn = "new_merger_company_relisting_application_status"
+mgsc_mgctrd = "merger_contract_date"
+mgsc_shddstd = "merger_shareholder_record_date"
+mgsc_shclspd_bgd = "merger_shareholder_registry_closure_start_date"
+mgsc_shclspd_edd = "merger_shareholder_registry_closure_end_date"
+mgsc_mgop_rcpd_bgd = "merger_dissent_notice_period_start_date"
+mgsc_mgop_rcpd_edd = "merger_dissent_notice_period_end_date"
+mgsc_gmtsck_prd = "planned_merger_shareholders_meeting_date"
+mgsc_aprskh_expd_bgd = "merger_appraisal_rights_exercise_start_date"
+mgsc_aprskh_expd_edd = "merger_appraisal_rights_exercise_end_date"
+mgsc_osprpd_bgd = "merger_old_share_certificate_submission_start_date"
+mgsc_osprpd_edd = "merger_old_share_certificate_submission_end_date"
+mgsc_trspprpd_bgd = "merger_trading_suspension_start_date"
+mgsc_trspprpd_edd = "merger_trading_suspension_end_date"
+mgsc_cdobprpd_bgd = "merger_creditor_objection_start_date"
+mgsc_cdobprpd_edd = "merger_creditor_objection_end_date"
+mgsc_mgdt = "merger_date"
+mgsc_ergmd = "merger_closing_report_meeting_date"
+mgsc_mgrgsprd = "planned_merger_registration_date"
+mgsc_nstkdlprd = "planned_merger_new_share_certificate_delivery_date"
+mgsc_nstklstprd = "planned_merger_new_share_listing_date"
+bdlst_atn = "backdoor_listing_applicable"
+otcpr_bdlst_sf_atn = "other_company_meets_backdoor_listing_requirements"
+aprskh_plnprc = "appraisal_rights_expected_purchase_price"
+aprskh_pym_plpd_mth = "appraisal_rights_payment_timing_and_method"
+aprskh_ctref = "appraisal_rights_effect_on_contract"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+rs_sm_atn = "securities_registration_statement_required"
+ex_sm_r = "securities_registration_statement_exemption_reason"
+
+[[operation]]
+logical_id = "DS005-2020051"
+rust_module = "material_event"
+rust_input = "CompanySplitDecisionsInput"
+cli_command = "company-split-decisions"
+cli_alias = "DS005-2020051"
+
+[[operation.physical]]
+operation_id = "get_cmpDvDecsn_json"
+rust_method = "prepare_json"
+rust_response = "CompanySplitDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_cmpDvDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "CompanySplitDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CompanySplitDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+dv_mth = "split_method"
+dv_impef = "split_material_impact_and_effect"
+dv_rt = "split_ratio"
+dv_trfbsnprt_cn = "business_and_property_transferred_by_split"
+atdv_excmp_cmpnm = "surviving_company_name"
+atdvfdtl_tast = "surviving_company_total_assets"
+atdvfdtl_tdbt = "surviving_company_total_liabilities"
+atdvfdtl_teqt = "surviving_company_total_equity"
+atdvfdtl_cpt = "surviving_company_capital"
+atdvfdtl_std = "surviving_company_financials_as_of"
+atdv_excmp_exbsn_rsl = "surviving_business_segment_prior_year_revenue"
+atdv_excmp_mbsn = "surviving_company_principal_business"
+atdv_excmp_atdv_lstmn_atn = "surviving_company_remains_listed"
+dvfcmp_cmpnm = "new_split_company_name"
+ffdtl_tast = "new_split_company_total_assets"
+ffdtl_tdbt = "new_split_company_total_liabilities"
+ffdtl_teqt = "new_split_company_total_equity"
+ffdtl_cpt = "new_split_company_capital"
+ffdtl_std = "new_split_company_financials_as_of"
+dvfcmp_nbsn_rsl = "new_business_segment_prior_year_revenue"
+dvfcmp_mbsn = "new_split_company_principal_business"
+dvfcmp_rlst_atn = "new_split_company_relisting_application_status"
+abcr_crrt = "capital_reduction_ratio"
+abcr_osprpd_bgd = "capital_reduction_old_share_certificate_submission_start_date"
+abcr_osprpd_edd = "capital_reduction_old_share_certificate_submission_end_date"
+abcr_trspprpd_bgd = "capital_reduction_trading_suspension_start_date"
+abcr_trspprpd_edd = "capital_reduction_trading_suspension_end_date"
+abcr_nstkascnd = "capital_reduction_new_share_allocation_conditions"
+abcr_shstkcnt_rt_at_rs = "capital_reduction_proportional_allocation_and_reason"
+abcr_nstkasstd = "capital_reduction_new_share_record_date"
+abcr_nstkdlprd = "planned_capital_reduction_new_share_certificate_delivery_date"
+abcr_nstklstprd = "planned_capital_reduction_new_share_listing_date"
+gmtsck_prd = "planned_shareholders_meeting_date"
+cdobprpd_bgd = "creditor_objection_start_date"
+cdobprpd_edd = "creditor_objection_end_date"
+dvdt = "split_date"
+dvrgsprd = "planned_split_registration_date"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+rs_sm_atn = "securities_registration_statement_required"
+ex_sm_r = "securities_registration_statement_exemption_reason"
+
+[[operation]]
+logical_id = "DS005-2020052"
+rust_module = "material_event"
+rust_input = "CompanySplitMergerDecisionsInput"
+cli_command = "company-split-merger-decisions"
+cli_alias = "DS005-2020052"
+
+[[operation.physical]]
+operation_id = "get_cmpDvmgDecsn_json"
+rust_method = "prepare_json"
+rust_response = "CompanySplitMergerDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_cmpDvmgDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "CompanySplitMergerDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CompanySplitMergerDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+dvmg_mth = "split_merger_method"
+dvmg_impef = "split_merger_material_impact_and_effect"
+dv_trfbsnprt_cn = "business_and_property_transferred_by_split"
+atdv_excmp_cmpnm = "surviving_company_name"
+atdvfdtl_tast = "surviving_company_total_assets"
+atdvfdtl_tdbt = "surviving_company_total_liabilities"
+atdvfdtl_teqt = "surviving_company_total_equity"
+atdvfdtl_cpt = "surviving_company_capital"
+atdvfdtl_std = "surviving_company_financials_as_of"
+atdv_excmp_exbsn_rsl = "surviving_business_segment_prior_year_revenue"
+atdv_excmp_mbsn = "surviving_company_principal_business"
+atdv_excmp_atdv_lstmn_atn = "surviving_company_remains_listed"
+dvfcmp_cmpnm = "new_split_company_name"
+ffdtl_tast = "new_split_company_total_assets"
+ffdtl_tdbt = "new_split_company_total_liabilities"
+ffdtl_teqt = "new_split_company_total_equity"
+ffdtl_cpt = "new_split_company_capital"
+ffdtl_std = "new_split_company_financials_as_of"
+dvfcmp_nbsn_rsl = "new_business_segment_prior_year_revenue"
+dvfcmp_mbsn = "new_split_company_principal_business"
+dvfcmp_atdv_lstmn_at = "new_split_company_remains_listed"
+abcr_crrt = "capital_reduction_ratio"
+abcr_osprpd_bgd = "capital_reduction_old_share_certificate_submission_start_date"
+abcr_osprpd_edd = "capital_reduction_old_share_certificate_submission_end_date"
+abcr_trspprpd_bgd = "capital_reduction_trading_suspension_start_date"
+abcr_trspprpd_edd = "capital_reduction_trading_suspension_end_date"
+abcr_nstkascnd = "capital_reduction_new_share_allocation_conditions"
+abcr_shstkcnt_rt_at_rs = "capital_reduction_proportional_allocation_and_reason"
+abcr_nstkasstd = "capital_reduction_new_share_record_date"
+abcr_nstkdlprd = "planned_capital_reduction_new_share_certificate_delivery_date"
+abcr_nstklstprd = "planned_capital_reduction_new_share_listing_date"
+mg_stn = "merger_form"
+mgptncmp_cmpnm = "merger_partner_name"
+mgptncmp_mbsn = "merger_partner_principal_business"
+mgptncmp_rl_cmpn = "merger_partner_relationship_to_company"
+rbsnfdtl_tast = "merger_partner_total_assets"
+rbsnfdtl_tdbt = "merger_partner_total_liabilities"
+rbsnfdtl_teqt = "merger_partner_total_equity"
+rbsnfdtl_cpt = "merger_partner_capital"
+rbsnfdtl_sl = "merger_partner_revenue"
+rbsnfdtl_nic = "merger_partner_net_income"
+eadtat_intn = "merger_partner_external_auditor"
+eadtat_op = "merger_partner_audit_opinion"
+dvmgnstk_ostk_cnt = "new_common_shares_from_split_merger"
+dvmgnstk_cstk_cnt = "new_class_shares_from_split_merger"
+nmgcmp_cmpnm = "new_merger_company_name"
+nmgcmp_cpt = "new_merger_company_capital"
+nmgcmp_mbsn = "new_merger_company_principal_business"
+nmgcmp_rlst_atn = "new_merger_company_relisting_application_status"
+dvmg_rt = "split_merger_ratio"
+dvmg_rt_bs = "split_merger_ratio_basis"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+dvmgsc_dvmgctrd = "split_merger_contract_date"
+dvmgsc_shddstd = "split_merger_shareholder_record_date"
+dvmgsc_shclspd_bgd = "split_merger_shareholder_registry_closure_start_date"
+dvmgsc_shclspd_edd = "split_merger_shareholder_registry_closure_end_date"
+dvmgsc_dvmgop_rcpd_bgd = "split_merger_dissent_notice_period_start_date"
+dvmgsc_dvmgop_rcpd_edd = "split_merger_dissent_notice_period_end_date"
+dvmgsc_gmtsck_prd = "planned_split_merger_shareholders_meeting_date"
+dvmgsc_aprskh_expd_bgd = "split_merger_appraisal_rights_exercise_start_date"
+dvmgsc_aprskh_expd_edd = "split_merger_appraisal_rights_exercise_end_date"
+dvmgsc_cdobprpd_bgd = "split_merger_creditor_objection_start_date"
+dvmgsc_cdobprpd_edd = "split_merger_creditor_objection_end_date"
+dvmgsc_dvmgdt = "split_merger_date"
+dvmgsc_ergmd = "split_merger_closing_report_meeting_date"
+dvmgsc_dvmgrgsprd = "planned_split_merger_registration_date"
+bdlst_atn = "backdoor_listing_applicable"
+otcpr_bdlst_sf_atn = "other_company_meets_backdoor_listing_requirements"
+aprskh_exrq = "appraisal_rights_exercise_requirements"
+aprskh_plnprc = "appraisal_rights_expected_purchase_price"
+aprskh_ex_pc_mth_pd_pl = "appraisal_rights_exercise_procedure_method_period_and_place"
+aprskh_pym_plpd_mth = "appraisal_rights_payment_timing_and_method"
+aprskh_lmt = "appraisal_rights_restrictions"
+aprskh_ctref = "appraisal_rights_effect_on_contract"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+rs_sm_atn = "securities_registration_statement_required"
+ex_sm_r = "securities_registration_statement_exemption_reason"
+
+[[operation]]
+logical_id = "DS005-2020053"
+rust_module = "material_event"
+rust_input = "ShareExchangeTransferDecisionsInput"
+cli_command = "share-exchange-transfer-decisions"
+cli_alias = "DS005-2020053"
+
+[[operation.physical]]
+operation_id = "get_stkExtrDecsn_json"
+rust_method = "prepare_json"
+rust_response = "ShareExchangeTransferDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_stkExtrDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "ShareExchangeTransferDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "ShareExchangeTransferDecision"
+
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+extr_sen = "exchange_or_transfer_classification"
+extr_stn = "exchange_or_transfer_form"
+extr_tgcmp_cmpnm = "target_company_name"
+extr_tgcmp_rp = "target_company_representative"
+extr_tgcmp_mbsn = "target_company_principal_business"
+extr_tgcmp_rl_cmpn = "target_company_relationship_to_company"
+extr_tgcmp_tisstk_ostk = "target_company_total_common_shares"
+extr_tgcmp_tisstk_cstk = "target_company_total_class_shares"
+rbsnfdtl_tast = "target_company_total_assets"
+rbsnfdtl_tdbt = "target_company_total_liabilities"
+rbsnfdtl_teqt = "target_company_total_equity"
+rbsnfdtl_cpt = "target_company_capital"
+extr_rt = "exchange_or_transfer_ratio"
+extr_rt_bs = "exchange_or_transfer_ratio_basis"
+exevl_atn = "external_appraisal_conducted"
+exevl_bs_rs = "external_appraisal_basis_and_reason"
+exevl_intn = "external_appraisal_institution"
+exevl_pd = "external_appraisal_period"
+exevl_op = "external_appraisal_opinion"
+extr_pp = "exchange_or_transfer_purpose"
+extrsc_extrctrd = "exchange_or_transfer_contract_date"
+extrsc_shddstd = "exchange_or_transfer_shareholder_record_date"
+extrsc_shclspd_bgd = "exchange_or_transfer_shareholder_registry_closure_start_date"
+extrsc_shclspd_edd = "exchange_or_transfer_shareholder_registry_closure_end_date"
+extrsc_extrop_rcpd_bgd = "exchange_or_transfer_dissent_notice_period_start_date"
+extrsc_extrop_rcpd_edd = "exchange_or_transfer_dissent_notice_period_end_date"
+extrsc_gmtsck_prd = "planned_exchange_or_transfer_shareholders_meeting_date"
+extrsc_aprskh_expd_bgd = "exchange_or_transfer_appraisal_rights_exercise_start_date"
+extrsc_aprskh_expd_edd = "exchange_or_transfer_appraisal_rights_exercise_end_date"
+extrsc_osprpd_bgd = "exchange_or_transfer_old_share_certificate_submission_start_date"
+extrsc_osprpd_edd = "exchange_or_transfer_old_share_certificate_submission_end_date"
+extrsc_trspprpd = "exchange_or_transfer_trading_suspension_period"
+extrsc_trspprpd_bgd = "exchange_or_transfer_trading_suspension_start_date"
+extrsc_trspprpd_edd = "exchange_or_transfer_trading_suspension_end_date"
+extrsc_extrdt = "exchange_or_transfer_date"
+extrsc_nstkdlprd = "planned_exchange_or_transfer_new_share_certificate_delivery_date"
+extrsc_nstklstprd = "planned_exchange_or_transfer_new_share_listing_date"
+atextr_cpcmpnm = "wholly_owning_parent_company_after_exchange_or_transfer"
+aprskh_plnprc = "appraisal_rights_expected_purchase_price"
+aprskh_pym_plpd_mth = "appraisal_rights_payment_timing_and_method"
+aprskh_lmt = "appraisal_rights_restrictions"
+aprskh_ctref = "appraisal_rights_effect_on_contract"
+bdlst_atn = "backdoor_listing_applicable"
+otcpr_bdlst_sf_atn = "other_company_meets_backdoor_listing_requirements"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+popt_ctr_atn = "put_option_contract_exists"
+popt_ctr_cn = "put_option_contract_terms"
+rs_sm_atn = "securities_registration_statement_required"
+ex_sm_r = "securities_registration_statement_exemption_reason"
+
+[[operation]]
+logical_id = "DS005-2020019"
+rust_module = "material_event"
+rust_input = "DefaultEventsInput"
+cli_command = "default-events"
+cli_alias = "DS005-2020019"
+
+[[operation.physical]]
+operation_id = "get_dfOcr_json"
+rust_method = "prepare_json"
+rust_response = "DefaultEventsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_dfOcr_xml"
+rust_method = "prepare_xml"
+rust_response = "DefaultEventsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "DefaultEvent"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+df_cn = "default_details"
+df_amt = "default_amount"
+df_bnk = "default_bank"
+dfd = "final_default_date"
+df_rs = "default_reason_and_circumstances"
+
+[[operation]]
+logical_id = "DS005-2020020"
+rust_module = "material_event"
+rust_input = "BusinessSuspensionsInput"
+cli_command = "business-suspensions"
+cli_alias = "DS005-2020020"
+
+[[operation.physical]]
+operation_id = "get_bsnSp_json"
+rust_method = "prepare_json"
+rust_response = "BusinessSuspensionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_bsnSp_xml"
+rust_method = "prepare_xml"
+rust_response = "BusinessSuspensionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "BusinessSuspension"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+bsnsp_rm = "suspended_business_area"
+bsnsp_amt = "suspended_business_amount"
+rsl = "recent_total_sales"
+sl_vs = "percentage_of_sales"
+ls_atn = "large_corporation_status"
+krx_stt_atn = "stock_exchange_mandatory_disclosure_status"
+bsnsp_cn = "suspension_details"
+bsnsp_rs = "suspension_reason"
+ft_ctp = "future_measures"
+bsnsp_af = "suspension_impact"
+bsnspd = "suspension_date"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+
+[[operation]]
+logical_id = "DS005-2020021"
+rust_module = "material_event"
+rust_input = "RehabilitationProceedingApplicationsInput"
+cli_command = "rehabilitation-proceeding-applications"
+cli_alias = "DS005-2020021"
+
+[[operation.physical]]
+operation_id = "get_ctrcvsBgrq_json"
+rust_method = "prepare_json"
+rust_response = "RehabilitationProceedingApplicationsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_ctrcvsBgrq_xml"
+rust_method = "prepare_xml"
+rust_response = "RehabilitationProceedingApplicationsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "RehabilitationProceedingApplication"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+apcnt = "applicant_relationship_to_company"
+cpct = "competent_court"
+rq_rs = "application_reason"
+rqd = "application_date"
+ft_ctp_sc = "future_measures_and_schedule"
+
+[[operation]]
+logical_id = "DS005-2020022"
+rust_module = "material_event"
+rust_input = "DissolutionEventsInput"
+cli_command = "dissolution-events"
+cli_alias = "DS005-2020022"
+
+[[operation.physical]]
+operation_id = "get_dsRsOcr_json"
+rust_method = "prepare_json"
+rust_response = "DissolutionEventsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_dsRsOcr_xml"
+rust_method = "prepare_xml"
+rust_response = "DissolutionEventsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "DissolutionEvent"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+ds_rs = "dissolution_reason"
+ds_rsd = "dissolution_reason_occurrence_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+
+[[operation]]
+logical_id = "DS005-2020023"
+rust_module = "material_event"
+rust_input = "PaidInCapitalIncreaseDecisionsInput"
+cli_command = "paid-in-capital-increase-decisions"
+cli_alias = "DS005-2020023"
+
+[[operation.physical]]
+operation_id = "get_piicDecsn_json"
+rust_method = "prepare_json"
+rust_response = "PaidInCapitalIncreaseDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_piicDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "PaidInCapitalIncreaseDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "PaidInCapitalIncreaseDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+nstk_ostk_cnt = "new_common_share_count"
+nstk_estk_cnt = "new_other_share_count"
+fv_ps = "par_value_per_share"
+bfic_tisstk_ostk = "common_shares_issued_before_increase"
+bfic_tisstk_estk = "other_shares_issued_before_increase"
+fdpp_fclt = "facility_funds"
+fdpp_bsninh = "business_acquisition_funds"
+fdpp_op = "operating_funds"
+fdpp_dtrp = "debt_repayment_funds"
+fdpp_ocsa = "other_corporation_securities_acquisition_funds"
+fdpp_etc = "other_funds"
+ic_mthn = "capital_increase_method"
+ssl_at = "short_sale_status"
+ssl_bgd = "short_sale_start_date"
+ssl_edd = "short_sale_end_date"
+
+[[operation]]
+logical_id = "DS005-2020024"
+rust_module = "material_event"
+rust_input = "BonusShareIssueDecisionsInput"
+cli_command = "bonus-share-issue-decisions"
+cli_alias = "DS005-2020024"
+
+[[operation.physical]]
+operation_id = "get_fricDecsn_json"
+rust_method = "prepare_json"
+rust_response = "BonusShareIssueDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_fricDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "BonusShareIssueDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "BonusShareIssueDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+nstk_ostk_cnt = "new_common_share_count"
+nstk_estk_cnt = "new_other_share_count"
+fv_ps = "par_value_per_share"
+bfic_tisstk_ostk = "common_shares_issued_before_increase"
+bfic_tisstk_estk = "other_shares_issued_before_increase"
+nstk_asstd = "new_share_allocation_record_date"
+nstk_ascnt_ps_ostk = "new_common_shares_allocated_per_share"
+nstk_ascnt_ps_estk = "new_other_shares_allocated_per_share"
+nstk_dividrk = "new_share_dividend_accrual_date"
+nstk_dlprd = "new_share_certificate_delivery_date"
+nstk_lstprd = "planned_new_share_listing_date"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+
+[[operation]]
+logical_id = "DS005-2020025"
+rust_module = "material_event"
+rust_input = "CombinedPaidInAndBonusShareIssueDecisionsInput"
+cli_command = "combined-paid-in-and-bonus-share-issue-decisions"
+cli_alias = "DS005-2020025"
+
+[[operation.physical]]
+operation_id = "get_pifricDecsn_json"
+rust_method = "prepare_json"
+rust_response = "CombinedPaidInAndBonusShareIssueDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_pifricDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "CombinedPaidInAndBonusShareIssueDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CombinedPaidInAndBonusShareIssueDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+piic_nstk_ostk_cnt = "paid_in_new_common_share_count"
+piic_nstk_estk_cnt = "paid_in_new_other_share_count"
+piic_fv_ps = "paid_in_par_value_per_share"
+piic_bfic_tisstk_ostk = "paid_in_common_shares_issued_before_increase"
+piic_bfic_tisstk_estk = "paid_in_other_shares_issued_before_increase"
+piic_fdpp_fclt = "paid_in_facility_funds"
+piic_fdpp_bsninh = "paid_in_business_acquisition_funds"
+piic_fdpp_op = "paid_in_operating_funds"
+piic_fdpp_dtrp = "paid_in_debt_repayment_funds"
+piic_fdpp_ocsa = "paid_in_other_corporation_securities_acquisition_funds"
+piic_fdpp_etc = "paid_in_other_funds"
+piic_ic_mthn = "paid_in_capital_increase_method"
+fric_nstk_ostk_cnt = "bonus_issue_new_common_share_count"
+fric_nstk_estk_cnt = "bonus_issue_new_other_share_count"
+fric_fv_ps = "bonus_issue_par_value_per_share"
+fric_bfic_tisstk_ostk = "bonus_issue_common_shares_issued_before_increase"
+fric_bfic_tisstk_estk = "bonus_issue_other_shares_issued_before_increase"
+fric_nstk_asstd = "bonus_issue_new_share_allocation_record_date"
+fric_nstk_ascnt_ps_ostk = "bonus_issue_new_common_shares_allocated_per_share"
+fric_nstk_ascnt_ps_estk = "bonus_issue_new_other_shares_allocated_per_share"
+fric_nstk_dividrk = "bonus_issue_new_share_dividend_accrual_date"
+fric_nstk_dlprd = "bonus_issue_new_share_certificate_delivery_date"
+fric_nstk_lstprd = "bonus_issue_planned_new_share_listing_date"
+fric_bddd = "bonus_issue_board_resolution_date"
+fric_od_a_at_t = "bonus_issue_outside_directors_present"
+fric_od_a_at_b = "bonus_issue_outside_directors_absent"
+fric_adt_a_atn = "bonus_issue_auditor_attendance_status"
+ssl_at = "short_sale_status"
+ssl_bgd = "short_sale_start_date"
+ssl_edd = "short_sale_end_date"
+
+[[operation]]
+logical_id = "DS005-2020026"
+rust_module = "material_event"
+rust_input = "CapitalReductionDecisionsInput"
+cli_command = "capital-reduction-decisions"
+cli_alias = "DS005-2020026"
+
+[[operation.physical]]
+operation_id = "get_crDecsn_json"
+rust_method = "prepare_json"
+rust_response = "CapitalReductionDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_crDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "CapitalReductionDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CapitalReductionDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+crstk_ostk_cnt = "common_shares_subject_to_reduction"
+crstk_estk_cnt = "other_shares_subject_to_reduction"
+fv_ps = "par_value_per_share"
+bfcr_cpt = "capital_before_reduction"
+atcr_cpt = "capital_after_reduction"
+bfcr_tisstk_ostk = "common_shares_issued_before_reduction"
+atcr_tisstk_ostk = "common_shares_issued_after_reduction"
+bfcr_tisstk_estk = "other_shares_issued_before_reduction"
+atcr_tisstk_estk = "other_shares_issued_after_reduction"
+cr_rt_ostk = "common_share_reduction_ratio"
+cr_rt_estk = "other_share_reduction_ratio"
+cr_std = "capital_reduction_record_date"
+cr_mth = "capital_reduction_method"
+cr_rs = "capital_reduction_reason"
+crsc_gmtsck_prd = "scheduled_general_meeting_date"
+crsc_trnmsppd = "transfer_registration_suspension_period"
+crsc_osprpd = "old_share_certificate_submission_period"
+crsc_trspprpd = "planned_trading_suspension_period"
+crsc_osprpd_bgd = "old_share_certificate_submission_start_date"
+crsc_osprpd_edd = "old_share_certificate_submission_end_date"
+crsc_trspprpd_bgd = "planned_trading_suspension_start_date"
+crsc_trspprpd_edd = "planned_trading_suspension_end_date"
+crsc_nstkdlprd = "planned_new_share_certificate_delivery_date"
+crsc_nstklstprd = "planned_new_share_listing_date"
+cdobprpd_bgd = "creditor_objection_submission_start_date"
+cdobprpd_edd = "creditor_objection_submission_end_date"
+ospr_nstkdl_pl = "old_share_submission_and_new_share_delivery_location"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+ftc_stt_atn = "fair_trade_commission_reporting_status"
+
+[[operation]]
+logical_id = "DS005-2020027"
+rust_module = "material_event"
+rust_input = "CreditorBankManagementCommencementsInput"
+cli_command = "creditor-bank-management-commencements"
+cli_alias = "DS005-2020027"
+
+[[operation.physical]]
+operation_id = "get_bnkMngtPcbg_json"
+rust_method = "prepare_json"
+rust_response = "CreditorBankManagementCommencementsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_bnkMngtPcbg_xml"
+rust_method = "prepare_xml"
+rust_response = "CreditorBankManagementCommencementsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "CreditorBankManagementCommencement"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+mngt_pcbg_dd = "management_proceeding_commencement_decision_date"
+mngt_int = "management_institution"
+mngt_pd = "management_period"
+mngt_rs = "management_reason"
+cfd = "confirmation_date"
+
+[[operation]]
+logical_id = "DS005-2020028"
+rust_module = "material_event"
+rust_input = "LawsuitFilingsInput"
+cli_command = "lawsuit-filings"
+cli_alias = "DS005-2020028"
+
+[[operation.physical]]
+operation_id = "get_lwstLg_json"
+rust_method = "prepare_json"
+rust_response = "LawsuitFilingsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_lwstLg_xml"
+rust_method = "prepare_xml"
+rust_response = "LawsuitFilingsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "LawsuitFiling"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+icnm = "case_name"
+ac_ap = "plaintiff_or_applicant"
+rq_cn = "claim_details"
+cpct = "competent_court"
+ft_ctp = "future_measures"
+lgd = "filing_date"
+cfd = "confirmation_date"
+
+[[operation]]
+logical_id = "DS005-2020029"
+rust_module = "material_event"
+rust_input = "OverseasMarketListingDecisionsInput"
+cli_command = "overseas-market-listing-decisions"
+cli_alias = "DS005-2020029"
+
+[[operation.physical]]
+operation_id = "get_ovLstDecsn_json"
+rust_method = "prepare_json"
+rust_response = "OverseasMarketListingDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_ovLstDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "OverseasMarketListingDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OverseasMarketListingDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+lstprstk_ostk_cnt = "planned_common_share_listing_count"
+lstprstk_estk_cnt = "planned_other_share_listing_count"
+tisstk_ostk = "total_issued_common_shares"
+tisstk_estk = "total_issued_other_shares"
+psmth_nstk_sl = "public_offering_new_share_count"
+psmth_ostk_sl = "public_offering_existing_share_sale_count"
+fdpp = "fundraising_purpose"
+lststk_orlst = "underlying_share_listing_count"
+lststk_drlst = "depositary_receipt_listing_count"
+lstex_nt = "listing_exchange_country"
+lstpp = "overseas_listing_purpose"
+lstprd = "planned_listing_date"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+
+[[operation]]
+logical_id = "DS005-2020030"
+rust_module = "material_event"
+rust_input = "OverseasMarketDelistingDecisionsInput"
+cli_command = "overseas-market-delisting-decisions"
+cli_alias = "DS005-2020030"
+
+[[operation.physical]]
+operation_id = "get_ovDlstDecsn_json"
+rust_method = "prepare_json"
+rust_response = "OverseasMarketDelistingDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_ovDlstDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "OverseasMarketDelistingDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OverseasMarketDelistingDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+dlststk_ostk_cnt = "delisted_common_share_count"
+dlststk_estk_cnt = "delisted_other_share_count"
+lstex_nt = "listing_exchange_and_country"
+dlstrq_prd = "delisting_application_planned_date"
+dlst_prd = "delisting_date"
+dlst_rs = "delisting_reason"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+
+[[operation]]
+logical_id = "DS005-2020031"
+rust_module = "material_event"
+rust_input = "OverseasMarketListingsInput"
+cli_command = "overseas-market-listings"
+cli_alias = "DS005-2020031"
+
+[[operation.physical]]
+operation_id = "get_ovLst_json"
+rust_method = "prepare_json"
+rust_response = "OverseasMarketListingsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_ovLst_xml"
+rust_method = "prepare_xml"
+rust_response = "OverseasMarketListingsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OverseasMarketListing"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+lststk_ostk_cnt = "listed_common_share_count"
+lststk_estk_cnt = "listed_other_share_count"
+lstex_nt = "listing_exchange_and_country"
+stk_cd = "security_name_and_code"
+lstd = "listing_date"
+cfd = "confirmation_date"
+
+[[operation]]
+logical_id = "DS005-2020032"
+rust_module = "material_event"
+rust_input = "OverseasMarketDelistingsInput"
+cli_command = "overseas-market-delistings"
+cli_alias = "DS005-2020032"
+
+[[operation.physical]]
+operation_id = "get_ovDlst_json"
+rust_method = "prepare_json"
+rust_response = "OverseasMarketDelistingsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_ovDlst_xml"
+rust_method = "prepare_xml"
+rust_response = "OverseasMarketDelistingsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "OverseasMarketDelisting"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+lstex_nt = "listing_exchange_and_country"
+dlststk_ostk_cnt = "delisted_common_share_count"
+dlststk_estk_cnt = "delisted_other_share_count"
+tredd = "trading_end_date"
+dlst_rs = "delisting_reason"
+cfd = "confirmation_date"
+
+[[operation]]
+logical_id = "DS005-2020033"
+rust_module = "material_event"
+rust_input = "ConvertibleBondIssuanceDecisionsInput"
+cli_command = "convertible-bond-issuance-decisions"
+cli_alias = "DS005-2020033"
+
+[[operation.physical]]
+operation_id = "get_cvbdIsDecsn_json"
+rust_method = "prepare_json"
+rust_response = "ConvertibleBondIssuanceDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_cvbdIsDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "ConvertibleBondIssuanceDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "ConvertibleBondIssuanceDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+bd_tm = "bond_series"
+bd_knd = "bond_type"
+bd_fta = "bond_face_value_total"
+atcsc_rmislmt = "remaining_articles_issuance_limit"
+ovis_fta = "overseas_issuance_face_value_total"
+ovis_fta_crn = "overseas_issuance_currency"
+ovis_ster = "overseas_issuance_exchange_rate_basis"
+ovis_isar = "overseas_issuance_region"
+ovis_mktnm = "overseas_listing_market_name"
+fdpp_fclt = "facility_funding_amount"
+fdpp_bsninh = "business_acquisition_funding_amount"
+fdpp_op = "operating_funding_amount"
+fdpp_dtrp = "debt_repayment_funding_amount"
+fdpp_ocsa = "other_corporation_securities_acquisition_funding_amount"
+fdpp_etc = "other_funding_amount"
+bd_intr_ex = "bond_coupon_interest_rate"
+bd_intr_sf = "bond_maturity_interest_rate"
+bd_mtd = "bond_maturity_date"
+bdis_mthn = "bond_issuance_method"
+cv_rt = "conversion_ratio"
+cv_prc = "conversion_price_per_share"
+cvisstk_knd = "conversion_share_type"
+cvisstk_cnt = "conversion_share_count"
+cvisstk_tisstk_vs = "conversion_shares_to_total_ratio"
+cvrqpd_bgd = "conversion_request_start_date"
+cvrqpd_edd = "conversion_request_end_date"
+act_mktprcfl_cvprc_lwtrsprc = "lowest_adjusted_conversion_price"
+act_mktprcfl_cvprc_lwtrsprc_bs = "lowest_adjusted_conversion_price_basis"
+rmislmt_lt70p = "remaining_below_seventy_percent_adjustment_limit"
+abmg = "merger_matters"
+sbd = "subscription_date"
+pymd = "payment_date"
+rpmcmp = "lead_underwriter"
+grint = "guarantor"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+rs_sm_atn = "securities_registration_statement_required"
+ex_sm_r = "registration_statement_exemption_reason"
+ovis_ltdtl = "overseas_issuance_linked_securities_lending_details"
+ftc_stt_atn = "fair_trade_commission_reporting_required"
+
+[[operation]]
+logical_id = "DS005-2020034"
+rust_module = "material_event"
+rust_input = "BondWithWarrantsIssuanceDecisionsInput"
+cli_command = "bond-with-warrants-issuance-decisions"
+cli_alias = "DS005-2020034"
+
+[[operation.physical]]
+operation_id = "get_bdwtIsDecsn_json"
+rust_method = "prepare_json"
+rust_response = "BondWithWarrantsIssuanceDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_bdwtIsDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "BondWithWarrantsIssuanceDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "BondWithWarrantsIssuanceDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+bd_tm = "bond_series"
+bd_knd = "bond_type"
+bd_fta = "bond_face_value_total"
+atcsc_rmislmt = "remaining_articles_issuance_limit"
+ovis_fta = "overseas_issuance_face_value_total"
+ovis_fta_crn = "overseas_issuance_currency"
+ovis_ster = "overseas_issuance_exchange_rate_basis"
+ovis_isar = "overseas_issuance_region"
+ovis_mktnm = "overseas_listing_market_name"
+fdpp_fclt = "facility_funding_amount"
+fdpp_bsninh = "business_acquisition_funding_amount"
+fdpp_op = "operating_funding_amount"
+fdpp_dtrp = "debt_repayment_funding_amount"
+fdpp_ocsa = "other_corporation_securities_acquisition_funding_amount"
+fdpp_etc = "other_funding_amount"
+bd_intr_ex = "bond_coupon_interest_rate"
+bd_intr_sf = "bond_maturity_interest_rate"
+bd_mtd = "bond_maturity_date"
+bdis_mthn = "bond_issuance_method"
+ex_rt = "warrant_exercise_ratio"
+ex_prc = "warrant_exercise_price_per_share"
+ex_prc_dmth = "warrant_exercise_price_determination_method"
+bdwt_div_atn = "bond_and_warrant_separable"
+nstk_pym_mth = "new_share_payment_method"
+nstk_isstk_knd = "warrant_exercise_share_type"
+nstk_isstk_cnt = "warrant_exercise_share_count"
+nstk_isstk_tisstk_vs = "warrant_exercise_shares_to_total_ratio"
+expd_bgd = "warrant_exercise_period_start_date"
+expd_edd = "warrant_exercise_period_end_date"
+act_mktprcfl_cvprc_lwtrsprc = "lowest_adjusted_exercise_price"
+act_mktprcfl_cvprc_lwtrsprc_bs = "lowest_adjusted_exercise_price_basis"
+rmislmt_lt70p = "remaining_below_seventy_percent_adjustment_limit"
+abmg = "merger_matters"
+sbd = "subscription_date"
+pymd = "payment_date"
+rpmcmp = "lead_underwriter"
+grint = "guarantor"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+rs_sm_atn = "securities_registration_statement_required"
+ex_sm_r = "registration_statement_exemption_reason"
+ovis_ltdtl = "overseas_issuance_linked_securities_lending_details"
+ftc_stt_atn = "fair_trade_commission_reporting_required"
+
+[[operation]]
+logical_id = "DS005-2020035"
+rust_module = "material_event"
+rust_input = "ExchangeableBondIssuanceDecisionsInput"
+cli_command = "exchangeable-bond-issuance-decisions"
+cli_alias = "DS005-2020035"
+
+[[operation.physical]]
+operation_id = "get_exbdIsDecsn_json"
+rust_method = "prepare_json"
+rust_response = "ExchangeableBondIssuanceDecisionsJsonResponse"
+
+[[operation.physical]]
+operation_id = "get_exbdIsDecsn_xml"
+rust_method = "prepare_xml"
+rust_response = "ExchangeableBondIssuanceDecisionsXmlResponse"
+
+[[operation.parameter]]
+openapi_name = "corp_code"
+rust_name = "company_code"
+cli_flag = "company-code"
+
+[[operation.parameter]]
+openapi_name = "bgn_de"
+rust_name = "start_date"
+cli_flag = "start-date"
+
+[[operation.parameter]]
+openapi_name = "end_de"
+rust_name = "end_date"
+cli_flag = "end-date"
+
+[[operation.response_view]]
+path = "$"
+accessors = {}
+
+[[operation.response_view]]
+path = "$.list[]"
+rust_type = "ExchangeableBondIssuanceDecision"
+[operation.response_view.accessors]
+rcept_no = "receipt_number"
+corp_cls = "company_class"
+corp_code = "company_code"
+corp_name = "company_name"
+bd_tm = "bond_series"
+bd_knd = "bond_type"
+bd_fta = "bond_face_value_total"
+ovis_fta = "overseas_issuance_face_value_total"
+ovis_fta_crn = "overseas_issuance_currency"
+ovis_ster = "overseas_issuance_exchange_rate_basis"
+ovis_isar = "overseas_issuance_region"
+ovis_mktnm = "overseas_listing_market_name"
+fdpp_fclt = "facility_funding_amount"
+fdpp_bsninh = "business_acquisition_funding_amount"
+fdpp_op = "operating_funding_amount"
+fdpp_dtrp = "debt_repayment_funding_amount"
+fdpp_ocsa = "other_corporation_securities_acquisition_funding_amount"
+fdpp_etc = "other_funding_amount"
+bd_intr_ex = "bond_coupon_interest_rate"
+bd_intr_sf = "bond_maturity_interest_rate"
+bd_mtd = "bond_maturity_date"
+bdis_mthn = "bond_issuance_method"
+ex_rt = "exchange_ratio"
+ex_prc = "exchange_price_per_share"
+ex_prc_dmth = "exchange_price_determination_method"
+extg = "exchange_target_share_type"
+extg_stkcnt = "exchange_target_share_count"
+extg_tisstk_vs = "exchange_target_shares_to_total_ratio"
+exrqpd_bgd = "exchange_request_start_date"
+exrqpd_edd = "exchange_request_end_date"
+sbd = "subscription_date"
+pymd = "payment_date"
+rpmcmp = "lead_underwriter"
+grint = "guarantor"
+bddd = "board_resolution_date"
+od_a_at_t = "outside_directors_present_count"
+od_a_at_b = "outside_directors_absent_count"
+adt_a_atn = "auditor_attendance_status"
+rs_sm_atn = "securities_registration_statement_required"
+ex_sm_r = "registration_statement_exemption_reason"
+ovis_ltdtl = "overseas_issuance_linked_securities_lending_details"
+ftc_stt_atn = "fair_trade_commission_reporting_required"

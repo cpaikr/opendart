@@ -14,6 +14,7 @@ import (
 	"github.com/cpaikr/opendart/internal/liveconformance"
 	openapispec "github.com/cpaikr/opendart/internal/openapi"
 	"github.com/cpaikr/opendart/internal/releaseguard"
+	"github.com/cpaikr/opendart/internal/rustconformance"
 	"github.com/cpaikr/opendart/internal/sdkgen"
 	"github.com/cpaikr/opendart/internal/sdkgen/model"
 )
@@ -67,6 +68,10 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(source)+":"+sdkCrate+":"+cliCrate)
 			return nil
 		},
+		checkRustContract: func(root string) (rustconformance.Report, error) {
+			calls = append(calls, phaseRustConformance+":"+filepath.Base(root))
+			return rustconformance.Report{Batches: 6, LogicalOperations: 85, PhysicalOperations: 167, ResponseViews: 171, ResponseAccessors: 1900, ExecutableCases: 3}, nil
+		},
 	}
 
 	report, err := verifyWith(filepath.Join("testdata", "repository"), deps)
@@ -80,6 +85,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
 		"rust-sdk-freshness:openapi.yaml:opendart:opendart-cli",
+		"rust-conformance-contract:repository",
 		"live-conformance-preflight:repository",
 		"auditor-evidence:auditor-2026-07-18.json",
 		"release-guard:repository",
@@ -96,9 +102,21 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 	}) {
 		t.Fatalf("catalog summary = %#v", report.Catalog)
 	}
+	if report.RustConformance != (rustconformance.Report{Batches: 6, LogicalOperations: 85, PhysicalOperations: 167, ResponseViews: 171, ResponseAccessors: 1900, ExecutableCases: 3}) {
+		t.Fatalf("Rust conformance summary = %#v", report.RustConformance)
+	}
 	encoded, err := json.Marshal(report)
 	if err != nil {
 		t.Fatal(err)
+	}
+	var serialized struct {
+		RustConformance rustconformance.Report `json:"rustConformance"`
+	}
+	if err := json.Unmarshal(encoded, &serialized); err != nil {
+		t.Fatal(err)
+	}
+	if serialized.RustConformance != report.RustConformance {
+		t.Fatalf("serialized Rust conformance = %#v, want %#v", serialized.RustConformance, report.RustConformance)
 	}
 	for _, forbidden := range []string{"testdata", "GroupCounts", "groupCounts", "sourceUrl", "https://"} {
 		if strings.Contains(string(encoded), forbidden) {
@@ -151,9 +169,10 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 		{name: "Rust CLI freshness artifact", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantArtifactParent: "opendart-cli", wantRule: "generated-missing", rustCLIArtifact: true, wantCallCount: 6},
 		{name: "Rust SDK model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "openapi.yaml", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 6},
 		{name: "Rust SDK normalized model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "openapi.yaml", wantRule: "rust-name-collision", wantOperation: "get_company_json", wantLocation: "/logicalOperations/0", rustError: &model.Error{Rule: "rust-name-collision", Operation: "get_company_json", Location: "/logicalOperations/0", Detail: "collision"}, wantCallCount: 6},
-		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 7},
-		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 8},
-		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 9},
+		{name: "Rust conformance contract", fail: phaseRustConformance, wantPhase: phaseRustConformance, wantArtifact: "ds001.toml", wantRule: "interface-header", wantOperation: "DS001-2019001", wantCallCount: 7},
+		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 8},
+		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 9},
+		{name: "release guard", fail: phaseReleaseGuard, wantPhase: phaseReleaseGuard, wantArtifact: "verify.yml", wantRule: "permissions are read-only", wantCallCount: 10},
 	}
 
 	for _, test := range tests {
@@ -234,6 +253,13 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					}
 					return nil
 				},
+				checkRustContract: func(string) (rustconformance.Report, error) {
+					calls++
+					if test.fail == phaseRustConformance {
+						return rustconformance.Report{}, &rustconformance.Error{Rule: "interface-header", Artifact: "sdk/rust/interface/ds001.toml", Operation: "DS001-2019001"}
+					}
+					return rustconformance.Report{}, nil
+				},
 			}
 
 			_, err := verifyWith(t.TempDir(), deps)
@@ -289,12 +315,13 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 			}
 			return nil, nil
 		},
-		checkFresh:    func(string, string) error { return openapispec.ErrBundleMissing },
-		checkFixtures: func(string) error { return nil },
-		checkLive:     func(string) error { return nil },
-		checkEvidence: func(string) error { return nil },
-		checkRelease:  func(string) error { return nil },
-		checkRustSDK:  func(string, sdkgen.RustOutputs) error { return nil },
+		checkFresh:        func(string, string) error { return openapispec.ErrBundleMissing },
+		checkFixtures:     func(string) error { return nil },
+		checkLive:         func(string) error { return nil },
+		checkEvidence:     func(string) error { return nil },
+		checkRelease:      func(string) error { return nil },
+		checkRustSDK:      func(string, sdkgen.RustOutputs) error { return nil },
+		checkRustContract: func(string) (rustconformance.Report, error) { return rustconformance.Report{}, nil },
 	}
 
 	_, err := verifyWith(t.TempDir(), deps)
