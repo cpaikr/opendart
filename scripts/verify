@@ -58,8 +58,9 @@ fast_rust() {
 }
 
 verify_targeted_race() {
-  # Each package owns concurrency or a shared test fixture. Releaseguard's AST
-  # audit keeps this explicit set aligned with concurrency-bearing Go packages.
+  # These include the CLI projection generator and model packages, which own
+  # shared test fixtures. Releaseguard's AST audit keeps this explicit set
+  # aligned with concurrency-bearing Go packages.
   go test -race -vet=off \
     ./internal/driftnotifier \
     ./internal/guide \
@@ -150,6 +151,10 @@ verify_rust_packages() {
   cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
   diff -u sdk/rust/opendart-cli-package-files.txt "${cli_package_files}"
   CARGO_TARGET_DIR="${verification_tmp}/package-target" cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml
+  sdk_packaged_source=$(find "${verification_tmp}/package-target/package" -mindepth 1 -maxdepth 1 -type d -name 'opendart-[0-9]*' -print)
+  test -n "${sdk_packaged_source}"
+  test "$(printf '%s\n' "${sdk_packaged_source}" | wc -l | tr -d ' ')" -eq 1
+  cargo +1.97.1 test --locked --offline --manifest-path "${sdk_packaged_source}/Cargo.toml" --all-features --no-run
 }
 
 verify_rust_install() {

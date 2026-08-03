@@ -9,8 +9,9 @@ publication status lives in the
 [CLI delivery plan](../../../../plans/rust/public-opendart-cli.md).
 
 The CLI owns reviewed semantic command and flag names independently of Rust SDK
-symbols. A separately generated private adapter still dispatches exhaustively
-to the current generated SDK until the later handwritten cutover.
+symbols. A separately generated private adapter dispatches exhaustively to the
+handwritten SDK without owning validation, serialization, decoding, or HTTP
+behavior.
 
 From a reviewed source checkout, install the locked package reproducibly with:
 

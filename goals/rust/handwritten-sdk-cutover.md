@@ -1,6 +1,6 @@
 # Goal: Deliver the offline-qualified handwritten Rust SDK conformer
 
-Status: active
+Status: complete upon merge of PR #76
 Planning scope: ROADMAP_RUST.md
 
 ## Original contract
@@ -29,18 +29,22 @@ _None._
 - Reviewed product contract and Rust-native conformance gate. Implementation,
   repository validation, independent review, feedback resolution, and PR
   delivery completed in [PR #74](https://github.com/cpaikr/opendart/pull/74).
+- CLI-owned grammar, discovery, and isolated private dispatch. Implementation,
+  complete offline qualification, independent review, feedback resolution, and
+  PR delivery completed in [PR #75](https://github.com/cpaikr/opendart/pull/75).
 
 ### Current in-scope result
 
-CLI-owned grammar, discovery, and isolated private dispatch. The result is
-active from merge commit `d071546`; implementation and independent review are
-complete, and clean-tree offline qualification passes. PR delivery remains
-pending.
+Handwritten SDK implementation, CLI retargeting, generated-SDK deletion,
+documentation reconciliation, and offline package qualification. Every result
+and completion criterion is satisfied on the reviewed PR head; merge of
+[PR #76](https://github.com/cpaikr/opendart/pull/76) completes delivery and this
+goal.
 
 ### Next in-scope action
 
-Create, review, and merge the qualified CLI projection PR before starting the
-handwritten conformer result.
+Wait for the final required checks on PR #76 and merge it into `rust`. Public
+SDK publication remains deferred and requires separate authority.
 
 ### Evidence and blockers
 
@@ -62,3 +66,34 @@ handwritten conformer result.
   complete clean-tree `./scripts/verify pre-push` gate pass, including package
   verification, clean release installation, MSRV, WASM, reqwest compatibility,
   rustdoc, and doctests.
+- Result-two delivery: PR #75 merged into `rust` as `176f440` after all required
+  checks passed and both CodeRabbit review conversations were addressed and
+  resolved.
+- Boundary check: the final included result owns the handwritten conformer,
+  private CLI dispatch retargeting, generated-SDK deletion, documentation, and
+  offline qualification. Publication and adoption remain excluded.
+- Result-three implementation: all 85 logical inputs, 167 preparation paths,
+  164 structured wrappers, and 1,900 reviewed accessors are handwritten in
+  per-operation modules behind six public family facades. Generated SDK source,
+  renderers, selection, projection provenance, and freshness machinery are
+  absent; private CLI dispatch targets only the handwritten API while its
+  public projection checksum is unchanged.
+- Result-three conformance: all 164 structured physical cases cross public
+  representation-specific interpretation, all three ZIP cases cross the real
+  client alternate-status lifecycle, and distinct operation-local validators
+  have focused coverage. Registry case kinds bind root, list, and group-list
+  topology directly to canonical OpenAPI, with root-to-list and
+  group-list-to-list mutations rejected.
+- Result-three review: design, SDK, CLI/tooling, and system reviewers confirmed
+  the single-conformer architecture, per-operation locality, source-backed
+  wrappers, package and release boundaries, and final conformance closure with
+  no remaining actionable findings.
+- Result-three validation: clean `./scripts/verify exhaustive` passes every Go
+  and Rust contract, including full race detection, strict feature and target
+  checks, exact package inventories, freshly extracted SDK all-feature test
+  compilation, and clean CLI installation, all without credentials.
+- Result-three delivery: PR #76 is open against `rust`. Independent reviews and
+  Codex PR review completed with no actionable findings; the CodeRabbit check
+  passed without review because automatic reviews are disabled for the
+  repository. The final required checks are active, and merge is the only
+  remaining delivery transition.

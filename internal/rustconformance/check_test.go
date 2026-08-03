@@ -18,7 +18,7 @@ func TestCheckAcceptsReviewedRepositoryContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v: %v", err, errors.Unwrap(err))
 	}
-	want := Report{Batches: 6, LogicalOperations: 85, PhysicalOperations: 167, ResponseViews: 171, ResponseAccessors: 1900, ExecutableCases: 3}
+	want := Report{Batches: 6, LogicalOperations: 85, PhysicalOperations: 167, ResponseViews: 171, ResponseAccessors: 1900, ExecutableCases: 167}
 	if report != want {
 		t.Fatalf("report = %#v, want %#v", report, want)
 	}
@@ -242,27 +242,19 @@ func TestObligationAndCutoverGuardMutationsFailTheirReviewedRule(t *testing.T) {
 
 	obligations = copyManifestFile(t, filepath.Join(root, "sdk", "rust", "conformance", "obligations.toml"))
 	mutateFirst(t, obligations,
-		"operation_id = \"get_company_json\"\nobligations = [\"decoder\", \"prepare\", \"response-binding\"]\nexecutable = true",
-		"operation_id = \"get_company_json\"\nobligations = [\"decoder\", \"prepare\", \"response-binding\"]\nexecutable = false")
-	mutateFirst(t, obligations,
-		"operation_id = \"get_list_json\"\nobligations = [\"decoder\", \"prepare\", \"response-binding\"]\nexecutable = false",
-		"operation_id = \"get_list_json\"\nobligations = [\"decoder\", \"prepare\", \"response-binding\"]\nexecutable = true")
+		"operation_id = \"get_list_json\"\nobligations = [\"decoder\", \"prepare\", \"response-binding\"]\nexecutable = true",
+		"operation_id = \"get_list_json\"\nobligations = [\"decoder\", \"prepare\", \"response-binding\"]\nexecutable = false")
 	_, err = checkObligations(obligations, sources)
 	assertRule(t, err, "executable-case")
 
 	guards := copyManifestFile(t, filepath.Join(root, "sdk", "rust", "conformance", "cutover-guards.toml"))
-	mutateFirst(t, guards, `active = false`, `active = true`)
+	mutateFirst(t, guards, `active = true`, `active = false`)
 	assertRule(t, checkCutoverGuards(root, guards), "cutover-guard-activation")
 
 	guards = copyManifestFile(t, filepath.Join(root, "sdk", "rust", "conformance", "cutover-guards.toml"))
-	body, err := os.ReadFile(guards)
-	if err != nil {
-		t.Fatal(err)
+	if err := checkCutoverGuards(root, guards); err != nil {
+		t.Fatalf("activated cutover guards rejected the handwritten tree: %v", err)
 	}
-	if err := os.WriteFile(guards, []byte(strings.ReplaceAll(string(body), `active = false`, `active = true`)), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	assertRule(t, checkCutoverGuards(root, guards), "cutover-guard-violation")
 }
 
 func TestCompileTimeGuardRejectsPublicRuntimeSelector(t *testing.T) {
@@ -386,7 +378,11 @@ func TestDecodeManifestRejectsZeroByteFile(t *testing.T) {
 	}
 }
 
-func TestExecutableCaseHarnessRejectsMissingDispatcher(t *testing.T) {
+func TestExecutableCaseHarnessRejectsMissingDispatcherOrRegistryEntry(t *testing.T) {
+	sources, err := loadSourceOperations(repositoryRoot(t))
+	if err != nil {
+		t.Fatal(err)
+	}
 	root := t.TempDir()
 	relative := filepath.FromSlash("sdk/rust/crates/opendart/src/conformance.rs")
 	path := filepath.Join(root, relative)
@@ -401,7 +397,77 @@ func TestExecutableCaseHarnessRejectsMissingDispatcher(t *testing.T) {
 	if err := os.WriteFile(path, body, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	assertRule(t, checkExecutableCaseHarness(root), "executable-case-harness")
+	assertRule(t, checkExecutableCaseHarness(root, sources), "executable-case-harness")
+
+	body, err = os.ReadFile(filepath.Join(repositoryRoot(t), relative))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body = []byte(strings.Replace(
+		string(body),
+		`executable_case!("get_list_json", "DS001-2019001",`,
+		`removed_case!("get_list_json", "DS001-2019001",`,
+		1,
+	))
+	if err := os.WriteFile(path, body, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	assertRule(t, checkExecutableCaseHarness(root, sources), "executable-case-harness")
+
+	for _, topologyMutation := range []struct {
+		old         string
+		replacement string
+	}{
+		{
+			old:         `root_executable_case!("get_company_json", "DS001-2019002",`,
+			replacement: `executable_case!("get_company_json", "DS001-2019002",`,
+		},
+		{
+			old:         `group_list_executable_case!("get_estkRs_json", "DS006-2020054",`,
+			replacement: `executable_case!("get_estkRs_json", "DS006-2020054",`,
+		},
+	} {
+		body, err = os.ReadFile(filepath.Join(repositoryRoot(t), relative))
+		if err != nil {
+			t.Fatal(err)
+		}
+		mutated := strings.Replace(string(body), topologyMutation.old, topologyMutation.replacement, 1)
+		if mutated == string(body) {
+			t.Fatalf("topology registry entry %q not found", topologyMutation.old)
+		}
+		if err := os.WriteFile(path, []byte(mutated), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		assertRule(t, checkExecutableCaseHarness(root, sources), "executable-case-harness")
+	}
+
+	for _, exercise := range []string{
+		"universal_response_body(expected, $topology)",
+		"ResponseTopology::List,",
+		"ResponseTopology::Root,",
+		"ResponseTopology::GroupList,",
+		".interpret_response(&inspector, &key, 200, body)",
+		"SourceReply::Success(_)",
+		".decode(wrong_kind_root())",
+		"expected_relative_path($physical)",
+		"expected_query($logical)",
+		"exercise_binary_alternate_status(&prepared)",
+		".execute_binary(prepared)",
+		"BinaryReply::Status(status)",
+	} {
+		body, err = os.ReadFile(filepath.Join(repositoryRoot(t), relative))
+		if err != nil {
+			t.Fatal(err)
+		}
+		mutated := strings.ReplaceAll(string(body), exercise, "removed_exercise()")
+		if mutated == string(body) {
+			t.Fatalf("exercise token %q not found", exercise)
+		}
+		if err := os.WriteFile(path, []byte(mutated), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		assertRule(t, checkExecutableCaseHarness(root, sources), "executable-case-harness")
+	}
 }
 
 func repositoryRoot(t *testing.T) string {

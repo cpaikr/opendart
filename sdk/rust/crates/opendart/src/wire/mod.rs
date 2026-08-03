@@ -169,14 +169,14 @@ pub enum SourceValueKind {
     Object,
 }
 
-/// A generated response did not satisfy its documented wire shape.
+/// A handwritten response did not satisfy its documented wire shape.
 #[derive(Clone, Debug, Eq, PartialEq, thiserror::Error)]
 #[non_exhaustive]
 pub enum ResponseDecodeError {
     /// The XML document root did not match the selected operation contract.
     #[error("response XML root does not match the expected {expected} element")]
     UnexpectedXmlRoot {
-        /// Root element required by the generated operation metadata.
+        /// Root element required by the handwritten operation contract.
         expected: &'static str,
     },
     /// A required documented field was absent.

@@ -85,11 +85,9 @@ pub(crate) struct RequestParts {
     identity: OperationIdentity,
     expected_representations: &'static [Representation],
     expected_xml_root: Option<&'static str>,
-    generator_schema: u32,
-    projection_identity: &'static str,
 }
 
-/// An immutable structured request bound to its generated success payload.
+/// An immutable structured request bound to its handwritten success payload.
 pub struct PreparedRequest<T> {
     parts: RequestParts,
     contract: StructuredResponseContract,
@@ -126,12 +124,12 @@ pub enum ResponseInterpretError {
         /// The sanitized envelope failure.
         source: EnvelopeError,
     },
-    /// The response violated the selected generated response shape.
+    /// The response violated the selected operation response shape.
     #[error("{operation}: {source}")]
     Decode {
         /// The prepared operation.
         operation: OperationIdentity,
-        /// The sanitized generated-shape failure.
+        /// The sanitized response-shape failure.
         source: ResponseDecodeError,
     },
 }
@@ -151,15 +149,64 @@ pub(crate) struct QueryParameter<'a> {
     pub(crate) value: QueryValue<'a>,
 }
 
+const JSON_REPRESENTATION: &[Representation] = &[Representation::Json];
+const XML_REPRESENTATION: &[Representation] = &[Representation::Xml];
+const ZIP_OR_XML_REPRESENTATIONS: &[Representation] = &[Representation::Zip, Representation::Xml];
+
 impl RequestParts {
+    /// Binds the invariant facts shared by every structured JSON operation.
+    pub(crate) fn structured_json(
+        relative_path: &'static str,
+        identity: OperationIdentity,
+        parameters: &[QueryParameter<'_>],
+    ) -> Self {
+        Self::new(
+            relative_path,
+            identity,
+            parameters,
+            JSON_REPRESENTATION,
+            None,
+        )
+    }
+
+    /// Binds the invariant facts shared by every structured XML operation.
+    pub(crate) fn structured_xml(
+        relative_path: &'static str,
+        identity: OperationIdentity,
+        parameters: &[QueryParameter<'_>],
+        expected_root: &'static str,
+    ) -> Self {
+        Self::new(
+            relative_path,
+            identity,
+            parameters,
+            XML_REPRESENTATION,
+            Some(expected_root),
+        )
+    }
+
+    /// Binds the ZIP success and alternate XML-status lifecycle.
+    pub(crate) fn binary_zip(
+        relative_path: &'static str,
+        identity: OperationIdentity,
+        parameters: &[QueryParameter<'_>],
+        expected_xml_root: &'static str,
+    ) -> Self {
+        Self::new(
+            relative_path,
+            identity,
+            parameters,
+            ZIP_OR_XML_REPRESENTATIONS,
+            Some(expected_xml_root),
+        )
+    }
+
     pub(crate) fn new(
         relative_path: &'static str,
         identity: OperationIdentity,
         parameters: &[QueryParameter<'_>],
         expected_representations: &'static [Representation],
         expected_xml_root: Option<&'static str>,
-        generator_schema: u32,
-        projection_identity: &'static str,
     ) -> Self {
         debug_assert!(relative_path.starts_with("/api/"));
         debug_assert!(!relative_path.contains(['?', '#']));
@@ -192,8 +239,6 @@ impl RequestParts {
             identity,
             expected_representations,
             expected_xml_root,
-            generator_schema,
-            projection_identity,
         }
     }
 
@@ -213,8 +258,6 @@ impl RequestParts {
             .field("authentication", &self.authentication)
             .field("identity", &self.identity)
             .field("expected_representations", &self.expected_representations)
-            .field("generator_schema", &self.generator_schema)
-            .field("projection_identity", &self.projection_identity)
             .finish()
     }
 
@@ -249,10 +292,10 @@ impl<T> PreparedRequest<T> {
             StructuredResponseContract::Xml {
                 expected_root: parts
                     .expected_xml_root
-                    .expect("generated XML requests carry their expected root"),
+                    .expect("handwritten XML requests carry their expected root"),
             }
         } else {
-            unreachable!("generated typed requests are JSON or XML")
+            unreachable!("handwritten typed requests are JSON or XML")
         };
         Self {
             parts,
@@ -270,11 +313,11 @@ impl<T> PreparedRequest<T> {
         &self.parts
     }
 
-    /// Interprets one bounded HTTP response using this generated operation contract.
+    /// Interprets one bounded HTTP response using this handwritten operation contract.
     ///
     /// The caller owns HTTP execution and must bound body collection while reading.
     /// This method defensively rechecks the supplied bytes, selects JSON or XML from
-    /// generated facts, validates XML roots, removes evidence reflecting `api_key`,
+    /// operation facts, validates XML roots, removes evidence reflecting `api_key`,
     /// preserves other provider-status evidence, and decodes successful payloads
     /// without depending on an HTTP client or async runtime.
     ///
@@ -283,7 +326,7 @@ impl<T> PreparedRequest<T> {
     /// Returns [`ResponseInterpretError::HttpStatus`] for every non-2xx status,
     /// retaining normalized body evidence only when it does not expose `api_key`.
     /// Successful HTTP responses can instead fail body bounds, envelope validation,
-    /// XML-root validation, or typed generated decoding.
+    /// XML-root validation, or typed response decoding.
     pub fn interpret_response(
         &self,
         inspector: &WireInspector,
@@ -389,18 +432,6 @@ impl<T> PreparedRequest<T> {
         self.parts.expected_representations
     }
 
-    /// Returns the SDK generator schema version used to prepare this request.
-    #[must_use]
-    pub const fn generator_schema(&self) -> u32 {
-        self.parts.generator_schema
-    }
-
-    /// Returns the SDK projection identity used for safe diagnostics.
-    #[must_use]
-    pub const fn projection_identity(&self) -> &'static str {
-        self.parts.projection_identity
-    }
-
     /// Adds the API credential at the explicit adapter boundary.
     #[must_use]
     pub fn authorize<'a>(&'a self, api_key: &'a ApiKey) -> AuthorizedRequest<'a> {
@@ -463,18 +494,6 @@ impl PreparedBinaryRequest {
     #[must_use]
     pub const fn expected_representations(&self) -> &'static [Representation] {
         self.parts.expected_representations
-    }
-
-    /// Returns the SDK generator schema version used to prepare this request.
-    #[must_use]
-    pub const fn generator_schema(&self) -> u32 {
-        self.parts.generator_schema
-    }
-
-    /// Returns the SDK projection identity used for safe diagnostics.
-    #[must_use]
-    pub const fn projection_identity(&self) -> &'static str {
-        self.parts.projection_identity
     }
 
     /// Adds the API credential at the explicit adapter boundary.
@@ -596,8 +615,8 @@ impl AuthorizedRequest<'_> {
     /// separate attempt, authorize the credential-free [`PreparedRequest`] again.
     ///
     /// ```compile_fail
-    /// # use opendart::{ApiKey, operations::Company};
-    /// # let prepared = Company::new("00126380").prepare_json()?;
+    /// # use opendart::{ApiKey, operations::disclosure::CompanyOverviewInput};
+    /// # let prepared = CompanyOverviewInput::new("00126380".to_owned()).prepare_json()?;
     /// # let key = ApiKey::new("example-key")?;
     /// let authorized = prepared.authorize(&key);
     /// authorized.with_exposed_relative_uri(|_| ());

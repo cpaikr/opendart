@@ -401,7 +401,7 @@ impl ErrorEnvelope {
             ),
             ClientError::ResponseDecode { .. } => (
                 "response_decode",
-                "the OpenDART success response does not match the generated SDK contract",
+                "the OpenDART success response does not match the SDK contract",
             ),
             ClientError::Representation { .. } => (
                 "sdk_contract_mismatch",

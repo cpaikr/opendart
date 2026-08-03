@@ -1,22 +1,18 @@
-use crate::generated::{GENERATOR_SCHEMA, PROJECTION_CHECKSUM};
-
 const CANONICAL_BUNDLE_SHA256: &str =
     "61dae078d750cde76a83ccb48d5b37ab9bf9d034528fd46600aff1d2523e34e3";
 const SPECIFICATION_SOURCE_RELEASE: Option<&str> = Some("v0.1.0");
 
-/// The reviewed specification sources, generated artifact, and SDK projection.
+/// The reviewed specification sources implemented by this crate.
 ///
 /// The packaged archive's Cargo-generated `.cargo_vcs_info.json` records the
 /// exact repository revision. The specification source release identifies the
 /// canonical source inputs semantically; the bundle checksum independently
-/// identifies the exact generated OpenAPI artifact selected for this crate.
+/// identifies the exact canonical OpenAPI bundle selected for this crate.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SourceProvenance {
     crate_version: &'static str,
     specification_source_release: Option<&'static str>,
     canonical_bundle_sha256: &'static str,
-    generator_schema: u32,
-    sdk_projection_sha256: &'static str,
 }
 
 impl SourceProvenance {
@@ -28,7 +24,7 @@ impl SourceProvenance {
 
     /// Returns the release whose canonical specification sources were selected.
     ///
-    /// This tag identifies source inputs, not byte identity of a generated
+    /// This tag identifies source inputs, not byte identity of the canonical
     /// bundle. Use [`Self::canonical_bundle_sha256`] for exact artifact identity.
     #[must_use]
     pub const fn specification_source_release(self) -> Option<&'static str> {
@@ -40,18 +36,6 @@ impl SourceProvenance {
     pub const fn canonical_bundle_sha256(self) -> &'static str {
         self.canonical_bundle_sha256
     }
-
-    /// Returns the private normalized-model schema version.
-    #[must_use]
-    pub const fn generator_schema(self) -> u32 {
-        self.generator_schema
-    }
-
-    /// Returns the deterministic generated Rust projection SHA-256.
-    #[must_use]
-    pub const fn sdk_projection_sha256(self) -> &'static str {
-        self.sdk_projection_sha256
-    }
 }
 
 /// Returns the source snapshot implemented by this crate version.
@@ -61,8 +45,6 @@ pub const fn source_provenance() -> SourceProvenance {
         crate_version: env!("CARGO_PKG_VERSION"),
         specification_source_release: SPECIFICATION_SOURCE_RELEASE,
         canonical_bundle_sha256: CANONICAL_BUNDLE_SHA256,
-        generator_schema: GENERATOR_SCHEMA,
-        sdk_projection_sha256: PROJECTION_CHECKSUM,
     }
 }
 
@@ -76,10 +58,5 @@ mod tests {
         assert_eq!(provenance.crate_version(), env!("CARGO_PKG_VERSION"));
         assert_eq!(provenance.specification_source_release(), Some("v0.1.0"));
         assert_eq!(provenance.canonical_bundle_sha256().len(), 64);
-        assert_eq!(provenance.sdk_projection_sha256().len(), 64);
-        assert_ne!(
-            provenance.canonical_bundle_sha256(),
-            provenance.sdk_projection_sha256()
-        );
     }
 }

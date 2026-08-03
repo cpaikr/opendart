@@ -1,137 +1,103 @@
-use std::collections::BTreeMap;
+use super::{ResponseDecodeError, SourceValue, SourceValueKind};
 
-use super::{ResponseDecodeError, SourceStatus, SourceValue, SourceValueKind, SourceValueRepr};
+pub(crate) type Decoder = fn(&SourceValue, String) -> Result<(), ResponseDecodeError>;
 
-pub(crate) type Decoder<T> = fn(SourceValue, String) -> Result<T, ResponseDecodeError>;
-
-pub(crate) struct ObjectDecoder {
-    fields: BTreeMap<String, SourceValue>,
+/// A borrowed object-shape validator that never duplicates retained source data.
+pub(crate) struct ObjectDecoder<'a> {
+    value: &'a SourceValue,
     path: String,
 }
 
-impl ObjectDecoder {
-    pub(crate) fn new(value: SourceValue, path: String) -> Result<Self, ResponseDecodeError> {
+impl<'a> ObjectDecoder<'a> {
+    pub(crate) fn new(value: &'a SourceValue, path: String) -> Result<Self, ResponseDecodeError> {
         let actual = value.kind();
-        let SourceValueRepr::Object(fields) = value.0 else {
+        if actual != SourceValueKind::Object {
             return Err(ResponseDecodeError::WrongKind {
                 path,
                 expected: SourceValueKind::Object,
                 actual,
             });
-        };
-        Ok(Self { fields, path })
+        }
+        Ok(Self { value, path })
     }
 
-    pub(crate) fn new_xml(value: SourceValue, path: String) -> Result<Self, ResponseDecodeError> {
+    pub(crate) fn new_xml(
+        value: &'a SourceValue,
+        path: String,
+    ) -> Result<Self, ResponseDecodeError> {
         let actual = value.kind();
-        let fields = match value.0 {
-            SourceValueRepr::Object(fields) => fields,
-            SourceValueRepr::String(value) if value.is_empty() => BTreeMap::new(),
-            _ => {
-                return Err(ResponseDecodeError::WrongKind {
-                    path,
-                    expected: SourceValueKind::Object,
-                    actual,
-                });
-            }
-        };
-        Ok(Self { fields, path })
+        if actual != SourceValueKind::Object && value.as_str() != Some("") {
+            return Err(ResponseDecodeError::WrongKind {
+                path,
+                expected: SourceValueKind::Object,
+                actual,
+            });
+        }
+        Ok(Self { value, path })
     }
 
-    // Canonical inputs currently mark response fields optional, but generated
-    // decoders use this as soon as a future contract establishes a required field.
-    #[allow(dead_code)]
-    pub(crate) fn required<T>(
-        &mut self,
+    pub(crate) fn optional(
+        &self,
         name: &'static str,
-        decoder: Decoder<T>,
-    ) -> Result<T, ResponseDecodeError> {
-        let path = child_path(&self.path, name);
-        let value = self
-            .fields
-            .remove(name)
-            .ok_or_else(|| ResponseDecodeError::MissingRequired { path: path.clone() })?;
-        decoder(value, path)
-    }
-
-    pub(crate) fn optional<T>(
-        &mut self,
-        name: &'static str,
-        decoder: Decoder<T>,
-    ) -> Result<Option<T>, ResponseDecodeError> {
-        let Some(value) = self.fields.remove(name) else {
-            return Ok(None);
+        decoder: Decoder,
+    ) -> Result<(), ResponseDecodeError> {
+        let Some(value) = self.value.get(name) else {
+            return Ok(());
         };
-        decoder(value, child_path(&self.path, name)).map(Some)
-    }
-
-    pub(crate) fn finish(self) -> BTreeMap<String, SourceValue> {
-        self.fields
+        decoder(value, child_path(&self.path, name))
     }
 }
 
-pub(crate) fn decode_array<T>(
-    value: SourceValue,
+pub(crate) fn decode_array(
+    value: &SourceValue,
     path: String,
-    decoder: Decoder<T>,
-) -> Result<Vec<T>, ResponseDecodeError> {
+    decoder: Decoder,
+) -> Result<(), ResponseDecodeError> {
     let actual = value.kind();
-    let SourceValueRepr::Array(values) = value.0 else {
+    let Some(values) = value.as_array() else {
         return Err(ResponseDecodeError::WrongKind {
             path,
             expected: SourceValueKind::Array,
             actual,
         });
     };
-    values
-        .into_iter()
-        .enumerate()
-        .map(|(index, value)| decoder(value, format!("{path}/{index}")))
-        .collect()
-}
-
-pub(crate) fn decode_xml_array<T>(
-    value: SourceValue,
-    path: String,
-    decoder: Decoder<T>,
-) -> Result<Vec<T>, ResponseDecodeError> {
-    match value.0 {
-        SourceValueRepr::Array(values) => values
-            .into_iter()
-            .enumerate()
-            .map(|(index, value)| decoder(value, format!("{path}/{index}")))
-            .collect(),
-        value => decoder(SourceValue(value), format!("{path}/0")).map(|value| vec![value]),
+    for (index, value) in values.iter().enumerate() {
+        decoder(value, format!("{path}/{index}"))?;
     }
+    Ok(())
 }
 
-pub(crate) fn decode_string(
-    value: SourceValue,
+pub(crate) fn decode_xml_array(
+    value: &SourceValue,
     path: String,
-) -> Result<String, ResponseDecodeError> {
+    decoder: Decoder,
+) -> Result<(), ResponseDecodeError> {
+    if let Some(values) = value.as_array() {
+        for (index, value) in values.iter().enumerate() {
+            decoder(value, format!("{path}/{index}"))?;
+        }
+        return Ok(());
+    }
+    decoder(value, format!("{path}/0"))
+}
+
+pub(crate) fn decode_string(value: &SourceValue, path: String) -> Result<(), ResponseDecodeError> {
     let actual = value.kind();
-    let SourceValueRepr::String(value) = value.0 else {
+    if actual != SourceValueKind::String {
         return Err(ResponseDecodeError::WrongKind {
             path,
             expected: SourceValueKind::String,
             actual,
         });
-    };
-    Ok(value)
+    }
+    Ok(())
 }
 
 pub(crate) fn decode_source_status(
-    value: SourceValue,
+    value: &SourceValue,
     path: String,
-) -> Result<SourceStatus, ResponseDecodeError> {
-    decode_string(value, path).map(SourceStatus::new)
-}
-
-pub(crate) fn decode_source_value(
-    value: SourceValue,
-    _path: String,
-) -> Result<SourceValue, ResponseDecodeError> {
-    Ok(value)
+) -> Result<(), ResponseDecodeError> {
+    decode_string(value, path)
 }
 
 fn child_path(parent: &str, name: &str) -> String {

@@ -28,10 +28,11 @@ oracle.
 - The retained fictional corpus is bounded and digest-checked, and its JSON,
   XML, ZIP, provider-status, HTTP-status, malformed, wrong-root, unknown-field,
   unknown-status, and credential-reflection evidence runs offline.
-- Four atomic cutover guards are reviewed but inactive while the generated SDK
-  remains the current public product. They cover generated exports and source,
-  generator and projection provenance, public implementation selection, and a
-  second structured execution result.
+- At this plan's PR #74 delivery boundary, four reviewed atomic cutover guards
+  were inactive while the generated SDK remained the current public product.
+  The later handwritten cutover has activated all four; they cover generated
+  exports and source, generator and projection provenance, public
+  implementation selection, and a second structured execution result.
 - Focused conformance, full Go verification, Rust tests, strict Clippy, package
   qualification evidence, release guards, and independent implementation and
   system reviews pass without changing current public behavior or publication
@@ -220,7 +221,6 @@ This Rust plan neither changes nor certifies those Go commands.
 
 ## Next action
 
-Execute [the CLI presentation projection plan](cli-presentation-projection.md).
-Keep the generated SDK as the sole runtime conformer until that plan is
-independently complete; do not scale the handwritten operation inventory before
-then.
+None in this completed boundary. The
+[CLI presentation projection](cli-presentation-projection.md) subsequently
+completed in PR #75, and the handwritten conformer plan owns the final cutover.

@@ -2,11 +2,11 @@
 
 ## Product boundary
 
-This document describes the implemented repository architecture. The accepted
-handwritten-only Rust SDK target is recorded in
-[ADR 0004](docs/decisions/0004-handwritten-rust-sdk-conformer.md); generated SDK
-sections below remain current until the implementation cutover, while CLI
-presentation sections update earlier with the staged CLI projection plan.
+This document describes the implemented repository architecture. The Rust SDK
+has one handwritten conformer governed by
+[ADR 0004](docs/decisions/0004-handwritten-rust-sdk-conformer.md). Generation is
+limited to the CLI's independently owned public interface and private exhaustive
+dispatch projections.
 
 This repository maintains public products derived from one source-backed
 OpenDART contract:
@@ -26,9 +26,8 @@ OpenDART guide
     -> staged acquisition and normalization
     -> canonical multi-file OpenAPI 3.2
     -> deterministic bundle ----------------------> GitHub specification release
-    -> repository-owned Rust artifact model
-       -> deterministic checked-in SDK -----------> opendart crate package
-       -> deterministic checked-in CLI breadth ---> opendart-cli crate package
+    -> handwritten Rust conformer ----------------> opendart crate package
+    -> deterministic checked-in CLI projections -> opendart-cli crate package
 
 OpenDART guide
     -> manual trusted-main semantic comparison
@@ -49,7 +48,7 @@ OpenDART API + protected environment key
 ```
 
 Pull-request verification never refreshes from OpenDART and never receives an
-API key. It validates the committed specification, generated artifacts, live
+API key. It validates the committed specification, CLI projections, live
 case inventory, Rust workspace, package contents, and release policy.
 
 ## Runtime flows
@@ -63,43 +62,40 @@ bundle; `opendart-tool bundle` regenerates it explicitly.
 
 `internal/openapi` confines third-party OpenAPI types and local reference
 loading. It owns strict linting, deterministic bundling, semantic comparison,
-response validation, and the repository-owned SDK input projection.
+response validation, and the repository-owned protocol inspection surface.
 
-### Rust generation and use
+### Rust implementation and CLI projections
 
-`opendart-tool generate-sdk` passes the canonical contract through one
-`internal/sdkgen/model` build and the Rust artifact renderer. It stages and
-validates independently owned SDK and CLI trees before replacing either
-accepted tree.
-Generated source is reviewed and committed beneath each crate's `src/generated`
-directory; consumer builds do not run Go or parse OpenAPI.
+The SDK crate exposes reviewed handwritten operation inputs, preparation,
+source-backed response wrappers, authorization, wire inspection, and
+provenance. Its core performs no I/O. The optional default `client-reqwest`
+feature adds one-attempt bounded HTTP execution with redirects, retries,
+ambient proxies, and automatic response decoding disabled. Applications retain
+persistence, quota, retry, collection, and domain policy.
 
-The SDK crate exposes generated operation types plus handwritten request,
-authorization, wire-inspection, and provenance contracts. Its core performs no
-I/O. The optional default `client-reqwest` feature adds one-attempt bounded HTTP
-execution with redirects, retries, ambient proxies, and automatic response
-decoding disabled. Applications retain persistence, quota, retry, collection,
-and domain policy.
+Private Go tooling derives only two checked-in CLI projections from the
+canonical contract and reviewed interface manifests. The public interface
+projection owns command grammar and discovery without Rust symbols. The
+private dispatch projection owns exhaustive typed wiring to the handwritten
+SDK. Both are staged, ownership-checked, and verified independently; consumer
+builds do not run Go or parse OpenAPI.
 
 The binary-only CLI crate keeps orchestration and output policy handwritten.
-Two separately checksummed CLI projections split this ownership. The public
-interface projection owns reviewed command grammar, source-concept discovery,
-physical identities, and coarse output shape without Rust symbols. The private
-dispatch projection alone owns current SDK input construction, response types,
-and exhaustive preparation dispatch.
+Its private dispatch contains Rust symbols but owns no provider validation,
+request serialization, response decoding, response schema, or HTTP behavior.
 
 ### Verify and package
 
 `.github/workflows/verify.yml` runs read-only Go and Cargo gates. The Rust gate
 fetches locked dependencies explicitly, then runs compilation, tests,
 documentation, compatibility checks, and package inspection offline. The
-verifier requires exact generated operation coverage, complete live-case
-coverage and request budgets, a tracked crate inventory, matching Cargo
+verifier requires exact handwritten operation and CLI dispatch coverage,
+complete live-case coverage and request budgets, a tracked crate inventory, matching Cargo
 versions, source provenance, and approved workflow and release configuration.
 
 Cargo records the exact packaged source revision in `.cargo_vcs_info.json`.
-The crate's `source_provenance()` additionally records the canonical bundle,
-SDK projection, generator schema, and applicable specification release.
+The crate's `source_provenance()` additionally records the canonical bundle and
+applicable specification release.
 
 ### Releases
 
@@ -198,13 +194,14 @@ closes the issue. Offline release guards enforce these boundaries.
 - `internal/guide` owns guide acquisition and guarded generation.
 - `internal/driftnotifier` owns strict drift-report consumption, fixed workflow
   failure fallback, issue deduplication, and recovery recording.
-- `internal/openapi` confines OpenAPI dependencies and owns SDK projection.
-- `internal/sdkgen/model` and `internal/sdkgen/rust` own deterministic Rust
-  semantic normalization plus the independent SDK and CLI projections.
+- `internal/openapi` confines OpenAPI dependencies and owns the reviewed
+  repository-side protocol inspection boundary.
+- `internal/sdkgen/model` and `internal/sdkgen/rust` own only deterministic CLI
+  interface and private dispatch projections.
 - `sdk/rust` is the isolated Cargo workspace. The public crate lives under
   `sdk/rust/crates/opendart`, and the binary-only CLI lives under
-  `sdk/rust/crates/opendart-cli`; each has an independently owned generated
-  subtree.
+  `sdk/rust/crates/opendart-cli`; only the CLI has independently owned generated
+  subtrees.
 - `internal/verification` coordinates repository verification, while
   `internal/releaseguard` enforces workflow, package, provenance, and release
   policy. `internal/crateverification` compares local candidate and accepted
@@ -224,10 +221,10 @@ closes the issue. Offline release guards enforce these boundaries.
 
 ## Invariants
 
-- OpenAPI 3.2 remains canonical; generated SDK and CLI files never become an
-  alternate endpoint inventory.
-- Generated OpenAPI and Rust files change through their generators, not by
-  hand, and verification requires byte-for-byte freshness.
+- OpenAPI 3.2 remains canonical; handwritten SDK source and generated CLI files
+  never become an alternate endpoint inventory.
+- Generated OpenAPI and CLI projection files change through their generators,
+  not by hand, and verification requires byte-for-byte freshness.
 - Guide facts, empirical observations, and executable policy remain separate.
 - Offline verification makes no OpenDART request and requires no credential.
 - Third-party OpenAPI types remain confined to `internal/openapi`; reference
@@ -253,7 +250,8 @@ migration to private Go repository tooling. [ADR 0002](docs/decisions/0002-publi
 accepts the first-party Rust SDK boundary.
 
 [ADR 0003](docs/decisions/0003-agent-first-opendart-cli.md) accepts the
-agent-first public CLI that consumes the SDK through generated typed dispatch.
+agent-first public CLI that consumes the SDK through generated private typed
+dispatch.
 Its [architecture](docs/rust-cli/architecture.md),
 [public contract](docs/rust-cli/public-contract.md), and
 [verification guide](docs/rust-cli/verification-and-release.md) record the

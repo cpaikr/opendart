@@ -1,5 +1,7 @@
 # Implement and cut over the handwritten Rust SDK conformer
 
+Status: complete upon merge of PR #76
+
 ## Outcome
 
 Every supported OpenDART operation has an idiomatic handwritten Rust request
@@ -228,8 +230,9 @@ to preserve generator-shaped compatibility.
 
 ## Next action
 
-After the contract and CLI presentation plans complete, deepen the shared
-private helpers and implement one representative JSON/XML operation plus the
-ZIP operation through the Rust-native gate. Continue within this plan through
-full inventory coverage, private CLI dispatch retargeting, SDK generator
-deletion, active-documentation cutover, and offline package qualification.
+Wait for the final required checks on PR #76, then merge it into `rust`.
+Implementation, clean-tree exhaustive offline qualification, independent and
+Codex review, public structured interpretation, ZIP alternate-status execution,
+operation-local validation, and OpenAPI-bound response topology mutation
+controls are complete with no actionable findings. Public SDK publication
+remains deferred.

@@ -1,6 +1,16 @@
 # Decouple the CLI presentation projection from Rust SDK symbols
 
-Status: implementation and independent review complete; PR delivery pending
+Status: complete
+
+## Delivery state
+
+- Delivery completed in [PR #75](https://github.com/cpaikr/opendart/pull/75),
+  merged into `rust` as `176f440` after required CI and review resolution.
+- The interface projection covers all 85 logical commands, and the private
+  dispatch projection covers all 167 physical cases with independent freshness
+  identities.
+- Public discovery is Rust-symbol-free. The later handwritten cutover has
+  retained the projection and retargeted only its private dispatch adapter.
 
 ## Outcome
 
@@ -8,11 +18,11 @@ The `opendart` CLI exposes the reviewed CLI-owned command grammar and discovery
 contract for every logical OpenDART operation without publishing Rust SDK
 implementation names. Its generated interface projection remains complete and
 fresh against OpenAPI and the approved interface manifests, while a separately
-checked private dispatch adapter remains exhaustive against the current
-generated SDK as the sole runtime conformer until the later handwritten
-cutover.
+checked private dispatch adapter remains exhaustive. This plan delivered that
+adapter against the then-current generated SDK; the later conformer cutover
+retargets the adapter without changing the interface projection.
 
-## Entry conditions
+## Entry conditions at plan start
 
 - The [contract and conformance plan](handwritten-sdk-contract-and-conformance.md)
   has approved all six DS-family interface manifests and their global identity,
@@ -23,7 +33,7 @@ cutover.
   symbols. Those dependencies are transitional rather than compatibility
   requirements because neither Rust package has an accepted registry release.
 
-## Work
+## Completed work
 
 ### 1. Give the CLI projection its own inputs
 
@@ -111,6 +121,6 @@ cutover.
 
 ## Next action
 
-Commit the reviewed slice, run the clean-tree full offline Rust package and
-install gate, then finish PR review and merge into `rust`. Do not begin the
-handwritten conformer implementation before this result's delivery completes.
+None in this completed boundary. The
+[handwritten conformer plan](handwritten-sdk-conformer.md) owns the subsequent
+dispatch retargeting and SDK cutover.

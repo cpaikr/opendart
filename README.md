@@ -45,7 +45,7 @@ but narrative lengths, enums, defaults, ranges, and date shapes are not promoted
 automatically. A closed, reviewed set of stable request constraints—such as
 company-code and date formats, documented code sets, and pagination bounds—is
 curated explicitly by the guide generator and enforced through the canonical
-OpenAPI and generated SDK rather than inferred from prose.
+OpenAPI and handwritten SDK rather than inferred from prose.
 
 The multi-company operations are the deliberate exception. Their guide test
 forms use comma-separated company codes and the guide documents a maximum of 100
@@ -68,11 +68,12 @@ collection analysis.
 
 ## Rust SDK
 
-The first-party `opendart` crate provides generated typed requests, bounded
-source-envelope inspection, a one-attempt convenience client, and a
-transport-independent core. Usage examples and the supported caller contract
-live in the [crate guide](sdk/rust/crates/opendart/README.md); repository build
-and package gates live in the [SDK workspace guide](sdk/rust/README.md).
+The first-party `opendart` crate provides handwritten typed requests,
+source-backed response wrappers, bounded wire inspection, a one-attempt
+convenience client, and a transport-independent core. Usage examples and the
+supported caller contract live in the
+[crate guide](sdk/rust/crates/opendart/README.md); repository build and package
+gates live in the [SDK workspace guide](sdk/rust/README.md).
 
 ## Rust CLI
 
@@ -111,7 +112,7 @@ go run ./cmd/opendart-tool sync --checked-at YYYY-MM-DD
 go run ./cmd/opendart-tool bundle \
   --root openapi/openapi.yaml \
   --output openapi/generated/openapi.bundle.yaml
-./scripts/verify fast go ./internal/sdkgen/...
+./scripts/verify rust-conformance
 ./scripts/verify fast rust -p opendart
 ./scripts/verify pre-push
 ./scripts/verify exhaustive

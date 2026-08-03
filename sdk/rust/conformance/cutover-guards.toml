@@ -1,14 +1,13 @@
 schema_version = 1
 activation = "handwritten-sdk-cutover"
 
-# These guards are reviewed now and deliberately inactive while the generated
-# implementation remains the current product. The cutover activates all four
-# together; the repository checker then enforces their file and symbol rules.
+# The handwritten cutover activates all four guards together. The repository
+# checker enforces their file and symbol rules on every subsequent verification.
 
 [[guard]]
 id = "generated-sdk-exports"
 kind = "public-contract"
-active = false
+active = true
 artifacts = ["sdk/rust/crates/opendart/src/lib.rs"]
 forbidden = [
   "mod generated;",
@@ -20,7 +19,7 @@ must_be_absent = ["sdk/rust/crates/opendart/src/generated"]
 [[guard]]
 id = "generator-provenance"
 kind = "public-contract"
-active = false
+active = true
 artifacts = [
   "sdk/rust/crates/opendart/src",
 ]
@@ -35,7 +34,7 @@ forbidden = [
 [[guard]]
 id = "public-implementation-selector"
 kind = "compile-time"
-active = false
+active = true
 [[guard.target]]
 artifacts = ["sdk/rust/crates/opendart/Cargo.toml"]
 forbidden = ["generated =", "handwritten ="]
@@ -54,6 +53,6 @@ forbidden = [
 [[guard]]
 id = "second-structured-execution-result"
 kind = "public-contract"
-active = false
+active = true
 artifacts = ["sdk/rust/crates/opendart/src"]
 forbidden = ["pub async fn execute_raw"]

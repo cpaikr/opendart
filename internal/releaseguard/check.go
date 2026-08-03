@@ -65,7 +65,7 @@ const (
 	minimalToolchainScriptDigest   = "c77326a24c08ec5f7d261209b5acc436c1a8a7f550d711ff1507ae2578c60ed5"
 	publishScriptDigest            = "ccbc7055e7dc4e0b708ca469943021c693eeede20489a70242c2ce44b660f0e4"
 	reconcileCrateScriptDigest     = "e1ec7e345fe461414f38fb08dce44f776ea0aa94f2604c1908133deaa629a88d"
-	reconcileConsumerScriptDigest  = "aadfff67de44b6c0542080a5a5855d36357ecd1f3cdf6ba7a067041454b3d506"
+	reconcileConsumerScriptDigest  = "df31de593f52f364b5ff74af416dc2dc0590a21c84ae6b33170da76ed228c42b"
 	reconcileReadinessScriptDigest = "0d25fae53a860c390e350414fb2bcc853444159b338e40f22d6cff3af8762ff9"
 	finalizeScriptDigest           = "679196ebf280c34d7829aa6d39d96a54b4405ecbfdd88fb5958eb00e066ecc10"
 
@@ -162,7 +162,11 @@ cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendar
 diff -u sdk/rust/package-files.txt "${sdk_package_files}"
 cargo +1.97.1 package --locked --offline --manifest-path sdk/rust/crates/opendart-cli/Cargo.toml --list > "${cli_package_files}"
 diff -u sdk/rust/opendart-cli-package-files.txt "${cli_package_files}"
-CARGO_TARGET_DIR="${verification_tmp}/package-target" cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml`
+CARGO_TARGET_DIR="${verification_tmp}/package-target" cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml
+sdk_packaged_source=$(find "${verification_tmp}/package-target/package" -mindepth 1 -maxdepth 1 -type d -name 'opendart-[0-9]*' -print)
+test -n "${sdk_packaged_source}"
+test "$(printf '%s\n' "${sdk_packaged_source}" | wc -l | tr -d ' ')" -eq 1
+cargo +1.97.1 test --locked --offline --manifest-path "${sdk_packaged_source}/Cargo.toml" --all-features --no-run`
 	sourceInstallScript = `install_workspace="$(mktemp -d)"
 CARGO_TARGET_DIR="${install_workspace}/target" cargo +1.97.1 install --locked --offline --path sdk/rust/crates/opendart-cli --root "${install_workspace}/root"
 "${install_workspace}/root/bin/opendart" --version
@@ -428,13 +432,23 @@ func checkRustPackage(cargoSource, provenanceSource, packageListSource, bundleSo
 		"Cargo.toml",
 		"LICENSE",
 		"README.md",
-		"src/generated/.opendart-sdk-generated",
-		"src/generated/operations/mod.rs",
+		"src/client.rs",
 		"src/lib.rs",
+		"src/operations/mod.rs",
+		"src/protocol/mod.rs",
 		"src/provenance.rs",
+		"src/request/mod.rs",
+		"src/values/mod.rs",
+		"src/wire/mod.rs",
+		"tests/public_contract.rs",
 	} {
 		if !contains(lines, name) {
 			return &Error{Artifact: rustPackageListArtifact, Invariant: "contains required package evidence", Detail: name}
+		}
+	}
+	for _, name := range lines {
+		if name == "src/generated" || strings.HasPrefix(name, "src/generated/") {
+			return &Error{Artifact: rustPackageListArtifact, Invariant: "excludes generated SDK source", Detail: name}
 		}
 	}
 	return checkPackageInventoryPrivateInputs(rustPackageListArtifact, lines)

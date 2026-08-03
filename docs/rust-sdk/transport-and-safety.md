@@ -62,8 +62,8 @@ required native TLS client handshake, and preserves the fixed runtime policy.
 - a visible-ASCII application suffix for the SDK user agent.
 
 Invalid or unrepresentable values fail during `build`, before network access.
-Representation selection belongs to the generated `prepare_json`,
-`prepare_xml`, or binary preparation method. Streaming storage and workflow
+Representation selection belongs to the handwritten `prepare_json`,
+`prepare_xml`, or `prepare_archive` method. Streaming storage and workflow
 budgets remain caller-owned.
 
 Applications needing an explicit proxy, custom connector or resolver, different

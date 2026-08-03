@@ -62,10 +62,9 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 			calls = append(calls, phaseReleaseGuard+":"+filepath.Base(root))
 			return nil
 		},
-		checkRustSDK: func(inputs sdkgen.RustInputs, output sdkgen.RustOutputs) error {
-			sdkCrate := filepath.Base(filepath.Dir(filepath.Dir(output.SDK)))
-			cliCrate := filepath.Base(filepath.Dir(filepath.Dir(output.CLI)))
-			calls = append(calls, phaseRustSDKFreshness+":"+filepath.Base(inputs.OpenAPI)+":"+filepath.Base(inputs.Interface)+":"+sdkCrate+":"+cliCrate)
+		checkCLIProjection: func(inputs sdkgen.Inputs, output string) error {
+			cliCrate := filepath.Base(filepath.Dir(filepath.Dir(output)))
+			calls = append(calls, phaseCLIProjectionFreshness+":"+filepath.Base(inputs.OpenAPI)+":"+filepath.Base(inputs.Interface)+":"+cliCrate)
 			return nil
 		},
 		checkRustContract: func(root string) (rustconformance.Report, error) {
@@ -84,7 +83,7 @@ func TestVerifyRunsPhasesInOrderAndReturnsBoundedReport(t *testing.T) {
 		"contract-fixtures:repository",
 		"bundle-freshness:openapi.yaml:openapi.bundle.yaml",
 		"lint:openapi.bundle.yaml",
-		"rust-sdk-freshness:openapi.yaml:interface:opendart:opendart-cli",
+		"rust-cli-projection-freshness:openapi.yaml:interface:opendart-cli",
 		"rust-conformance-contract:repository",
 		"live-conformance-preflight:repository",
 		"auditor-evidence:auditor-2026-07-18.json",
@@ -165,11 +164,11 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 		{name: "contract fixtures", fail: phaseContractFixtures, wantPhase: phaseContractFixtures, wantArtifact: "manifest.json", wantRule: "fixture-corpus", wantCallCount: 3},
 		{name: "bundle lint error", fail: phaseBundleLint, wantPhase: phaseBundleLint, wantArtifact: "openapi.bundle.yaml", wantRule: "openapi-load-or-validation", wantCallCount: 5},
 		{name: "stale bundle", fail: phaseBundleFreshness, wantPhase: phaseBundleFreshness, wantArtifact: "openapi.bundle.yaml", wantRule: "bundle-stale", wantCallCount: 4},
-		{name: "Rust SDK freshness", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 6},
-		{name: "Rust CLI freshness artifact", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "generated", wantArtifactParent: "opendart-cli", wantRule: "generated-missing", rustCLIArtifact: true, wantCallCount: 6},
-		{name: "Rust interface input", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "interface", wantRule: "rust-interface-input", rustError: fmt.Errorf("load failed: %w", sdkgen.ErrRustInterfaceInput), wantCallCount: 6},
-		{name: "Rust SDK model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "openapi.yaml", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 6},
-		{name: "Rust SDK normalized model context", fail: phaseRustSDKFreshness, wantPhase: phaseRustSDKFreshness, wantArtifact: "openapi.yaml", wantRule: "rust-name-collision", wantOperation: "get_company_json", wantLocation: "/logicalOperations/0", rustError: &model.Error{Rule: "rust-name-collision", Operation: "get_company_json", Location: "/logicalOperations/0", Detail: "collision"}, wantCallCount: 6},
+		{name: "CLI projection freshness", fail: phaseCLIProjectionFreshness, wantPhase: phaseCLIProjectionFreshness, wantArtifact: "generated", wantRule: "generated-stale", wantCallCount: 6},
+		{name: "CLI freshness artifact", fail: phaseCLIProjectionFreshness, wantPhase: phaseCLIProjectionFreshness, wantArtifact: "generated", wantArtifactParent: "opendart-cli", wantRule: "generated-missing", rustCLIArtifact: true, wantCallCount: 6},
+		{name: "Rust interface input", fail: phaseCLIProjectionFreshness, wantPhase: phaseCLIProjectionFreshness, wantArtifact: "interface", wantRule: "rust-interface-input", rustError: fmt.Errorf("load failed: %w", sdkgen.ErrRustInterfaceInput), wantCallCount: 6},
+		{name: "OpenAPI surface context", fail: phaseCLIProjectionFreshness, wantPhase: phaseCLIProjectionFreshness, wantArtifact: "openapi.yaml", wantRule: "unsupported-response-schema", wantOperation: "get_company_json", wantLocation: "/company.json/get/responses/default", rustError: &openapispec.SDKSurfaceError{Rule: "unsupported-response-schema", Operation: "get_company_json", Location: "/company.json/get/responses/default", Detail: "const"}, wantCallCount: 6},
+		{name: "CLI model context", fail: phaseCLIProjectionFreshness, wantPhase: phaseCLIProjectionFreshness, wantArtifact: "openapi.yaml", wantRule: "rust-name-collision", wantOperation: "get_company_json", wantLocation: "/logicalOperations/0", rustError: &model.Error{Rule: "rust-name-collision", Operation: "get_company_json", Location: "/logicalOperations/0", Detail: "collision"}, wantCallCount: 6},
 		{name: "Rust conformance contract", fail: phaseRustConformance, wantPhase: phaseRustConformance, wantArtifact: "ds001.toml", wantRule: "interface-header", wantOperation: "DS001-2019001", wantCallCount: 7},
 		{name: "live conformance", fail: phaseLiveConformance, wantPhase: phaseLiveConformance, wantArtifact: "live conformance repository", wantRule: "unknown-rule", wantCallCount: 8},
 		{name: "auditor evidence", fail: phaseAuditorEvidence, wantPhase: phaseAuditorEvidence, wantArtifact: "auditor-2026-07-18.json", wantRule: "sanitized-evidence-manifest", wantCallCount: 9},
@@ -234,20 +233,17 @@ func TestVerifyStopsAtFailedPhaseWithStructuredContext(t *testing.T) {
 					}
 					return nil
 				},
-				checkRustSDK: func(sdkgen.RustInputs, sdkgen.RustOutputs) error {
+				checkCLIProjection: func(sdkgen.Inputs, string) error {
 					calls++
-					if test.fail == phaseRustSDKFreshness {
+					if test.fail == phaseCLIProjectionFreshness {
 						if test.rustCLIArtifact {
 							root := repositoryRoot(t)
-							return sdkgen.CheckRustFresh(
-								sdkgen.RustInputs{
+							return sdkgen.CheckCLIFresh(
+								sdkgen.Inputs{
 									OpenAPI:   filepath.Join(root, "openapi", "openapi.yaml"),
 									Interface: filepath.Join(root, "sdk", "rust", "interface"),
 								},
-								sdkgen.RustOutputs{
-									SDK: filepath.Join(root, "sdk", "rust", "crates", "opendart", "src", "generated"),
-									CLI: filepath.Join(t.TempDir(), "opendart-cli", "src", "generated"),
-								},
+								filepath.Join(t.TempDir(), "opendart-cli", "src", "generated"),
 							)
 						}
 						if test.rustError != nil {
@@ -319,13 +315,13 @@ func TestVerifyReportsMissingBundleBeforeTryingToLintIt(t *testing.T) {
 			}
 			return nil, nil
 		},
-		checkFresh:        func(string, string) error { return openapispec.ErrBundleMissing },
-		checkFixtures:     func(string) error { return nil },
-		checkLive:         func(string) error { return nil },
-		checkEvidence:     func(string) error { return nil },
-		checkRelease:      func(string) error { return nil },
-		checkRustSDK:      func(sdkgen.RustInputs, sdkgen.RustOutputs) error { return nil },
-		checkRustContract: func(string) (rustconformance.Report, error) { return rustconformance.Report{}, nil },
+		checkFresh:         func(string, string) error { return openapispec.ErrBundleMissing },
+		checkFixtures:      func(string) error { return nil },
+		checkLive:          func(string) error { return nil },
+		checkEvidence:      func(string) error { return nil },
+		checkRelease:       func(string) error { return nil },
+		checkCLIProjection: func(sdkgen.Inputs, string) error { return nil },
+		checkRustContract:  func(string) (rustconformance.Report, error) { return rustconformance.Report{}, nil },
 	}
 
 	_, err := verifyWith(t.TempDir(), deps)

@@ -1,16 +1,16 @@
 # ADR 0002: Add a first-party Rust SDK
 
-- Status: accepted; generated-conformer mechanism amended by
-  [ADR 0004](0004-handwritten-rust-sdk-conformer.md)
+- Status: accepted; generated-conformer mechanism replaced by the implemented
+  [ADR 0004](0004-handwritten-rust-sdk-conformer.md) handwritten conformer
 - Date: 2026-07-19
 
 ## Context
 
 This ADR still owns the first-party SDK product, pure request boundary, safe
 native client, security, compatibility, packaging, and independent release
-decisions. ADR 0004 replaces the accepted generated-conformer mechanism with a
-handwritten-only target. The generated implementation remains current until
-that cutover lands.
+decisions. ADR 0004 replaces the originally accepted generated-conformer
+mechanism with the implemented handwritten SDK and retained CLI-only
+projections.
 
 The canonical OpenAPI 3.2 contract is useful to generators and tooling, but
 ordinary Rust callers otherwise have to choose their own generator, reproduce
@@ -29,11 +29,11 @@ canonical specification plus first-party SDKs derived from it. The first SDK is
 one crates.io package named `opendart`. Its package version and release stream
 are independent from the specification version.
 
-Keep the OpenAPI 3.2 document canonical. Extend the private Go tooling governed
-by [ADR 0001](0001-go-repository-tooling.md) with a repository-owned normalized
-SDK model and deterministic language emitters. Third-party OpenAPI model types
-remain inside `internal/openapi`; generated Rust is committed and verified
-offline. Consumer builds do not run Go or parse OpenAPI.
+Keep the OpenAPI 3.2 document canonical. The SDK implements that contract in
+handwritten Rust. Private Go tooling governed by
+[ADR 0001](0001-go-repository-tooling.md) confines third-party OpenAPI types and
+generates only reviewed CLI interface and private dispatch projections.
+Consumer builds do not run Go or parse OpenAPI.
 
 The Rust crate has one always-available, transport-independent core. It prepares
 immutable requests, authorizes them at an explicit credential boundary, and
@@ -44,14 +44,14 @@ provided `reqwest::Client`.
 
 The core exposes repository-owned public types. JSON and XML libraries, URL
 machinery, secret storage, and HTTP-client types remain implementation details.
-Generated wire values preserve unknown scalar kinds and fields rather than
-becoming application domain models. Source status is evidence, including
+Opaque source-backed wrappers preserve unknown scalar kinds and fields rather
+than becoming application domain models. Source status is evidence, including
 unknown future strings; it does not define retry, successful-empty, collection,
 quota, persistence, or domain policy.
 
 Every crate release records its own version, the exact Git revision, the source
-specification release when one exists, the canonical bundle checksum, and the
-SDK generator schema version. Specification and Rust changes are classified,
+specification release when one exists, and the canonical bundle checksum.
+Specification and Rust changes are classified,
 versioned, tagged, and authorized independently.
 
 ## Compatibility gate
@@ -106,8 +106,8 @@ all-target default and no-default graphs form the MSRV contract.
 `internal/openapi.InspectSDKSurface` proves that the private OpenAPI boundary
 exposes every canonical physical operation, stable logical identity, source
 provenance, request serialization fact, security scheme, and response
-representation through repository-owned values. `internal/sdkgen/model` builds
-the normalized SDK and CLI projections from that surface. Tests compare
+representation through repository-owned values. Rust-native conformance and
+CLI-only projection tooling consume those facts. Tests compare
 physical and logical coverage with the canonical catalog without embedding an
 endpoint total, and no layer exposes libopenapi types.
 
@@ -115,16 +115,16 @@ endpoint total, and no layer exposes libopenapi types.
 
 - The repository now owns a supported Rust protocol surface and its SemVer,
   packaging, documentation, and security guarantees.
-- The specification remains the only endpoint inventory; generated source is a
-  reproducible derivative rather than a second authority.
+- The specification remains the only endpoint inventory; handwritten Rust is a
+  conforming implementation rather than a second authority.
 - The default client offers a deliberately narrow safe path. Callers requiring
   different proxy, DNS, connector, retry, decoding, or persistence behavior use
   the prepared-request core and own execution policy.
 - Dependency upgrades that can change MSRV, wire bytes, retry, redirect, proxy,
   TLS, DNS, parsing, or credential behavior require a renewed compatibility
   review and focused fixtures.
-- Later SDKs reuse the private normalized model and contract fixtures, not Rust
-  syntax or a public Go API.
+- Later SDKs reuse canonical identities and independently authored evidence,
+  not Rust syntax or a public Go API.
 
 ## Alternatives considered
 
@@ -143,6 +143,6 @@ endpoint total, and no layer exposes libopenapi types.
 
 - [Public Rust SDK plan](../../plans/rust/public-rust-sdk.md)
 - [Rust SDK public contract](../rust-sdk/public-contract.md)
-- [Rust SDK generation](../rust-sdk/generation.md)
+- [Rust CLI projection generation](../rust-sdk/generation.md)
 - [Rust transport and safety](../rust-sdk/transport-and-safety.md)
 - [Rust verification and release](../rust-sdk/verification-and-release.md)

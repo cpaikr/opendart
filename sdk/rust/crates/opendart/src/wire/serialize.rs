@@ -51,10 +51,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
-    use crate::{
-        ResponseHeader, ResponseMetadata, SourceReply, SourceResponse, StatusEnvelope,
-        generated::responses::ds001::{decode_company_json_response, decode_list_json_response},
-    };
+    use crate::{ResponseHeader, ResponseMetadata, SourceReply, SourceResponse, StatusEnvelope};
 
     #[test]
     fn exact_json_numbers_bypass_fixed_width_numeric_types() {
@@ -125,56 +122,6 @@ mod tests {
         assert_eq!(
             serde_json::to_string(&response).unwrap(),
             r#"{"metadata":{"status":200,"version":"http/1.1","headers":[{"name":"x-first","value":[102,128]},{"name":"x-second","value":[50]}]},"reply":{"kind":"status","value":{"code":"future-status","evidence":{"explicit_null":null,"number":1.20e+30}}}}"#
-        );
-    }
-
-    #[test]
-    fn generated_response_flattens_additive_fields_in_source_order() {
-        let response = decode_company_json_response(SourceValue::object(BTreeMap::from([
-            ("corp_name".to_owned(), SourceValue::string("Example")),
-            (
-                "future_number".to_owned(),
-                SourceValue::number("9.90E-7").expect("valid source number"),
-            ),
-        ])))
-        .expect("fixture must decode through the generated public shape");
-
-        assert_eq!(
-            serde_json::to_string(&SourceReply::Success(response)).unwrap(),
-            r#"{"kind":"success","value":{"corp_name":"Example","future_number":9.90E-7}}"#
-        );
-    }
-
-    #[test]
-    fn generated_response_serializes_nested_lists_and_objects() {
-        let response = decode_list_json_response(SourceValue::object(BTreeMap::from([
-            (
-                "future_root".to_owned(),
-                SourceValue::array(vec![SourceValue::string("source")]),
-            ),
-            (
-                "list".to_owned(),
-                SourceValue::array(vec![SourceValue::object(BTreeMap::from([
-                    ("corp_name".to_owned(), SourceValue::string("Example")),
-                    (
-                        "future_nested".to_owned(),
-                        SourceValue::object(BTreeMap::from([(
-                            "flag".to_owned(),
-                            SourceValue::boolean(false),
-                        )])),
-                    ),
-                ]))]),
-            ),
-            (
-                "page_no".to_owned(),
-                SourceValue::number("1").expect("valid source number"),
-            ),
-        ])))
-        .expect("nested fixture must decode through the generated public shape");
-
-        assert_eq!(
-            serde_json::to_string(&response).unwrap(),
-            r#"{"list":[{"corp_name":"Example","future_nested":{"flag":false}}],"page_no":1,"future_root":["source"]}"#
         );
     }
 

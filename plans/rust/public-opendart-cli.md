@@ -20,11 +20,11 @@ endpoint contracts.
   and the [public contract](../../docs/rust-cli/public-contract.md) owns
   observable behavior.
 - Canonical request constraints flow through OpenAPI, SDK preparation, CLI
-  parsing, discovery, and sanitized errors. SDK and CLI projections remain
-  independently checksummed and verified.
-- Credential-free verification covers generated freshness, package inventory,
-  package dry runs, locked source installation, process behavior, and
-  compatibility loopbacks. Clean source installs run on Linux, macOS, and
+  parsing, discovery, and sanitized errors. The CLI-owned interface and private
+  dispatch projections remain independently checksummed and verified.
+- Credential-free verification covers CLI projection freshness, package
+  inventory, package dry runs, locked source installation, process behavior,
+  and compatibility loopbacks. Clean source installs run on Linux, macOS, and
   Windows. Credentialed smoke coverage is separately and explicitly gated.
 - The package has its own README, changelog, lockfile, exact local SDK pin, and
   prepared local registry-artifact verifier. It is package-ready but
@@ -34,14 +34,11 @@ endpoint contracts.
   contains the SDK component but no CLI component, the release guard rejects
   CLI release output, and the reusable crate workflow is still SDK-specific.
   No current workflow can publish `opendart-cli`.
-- The SDK's generated conformer is scheduled for replacement by the
-  [handwritten contract](handwritten-sdk-contract-and-conformance.md),
-  [CLI presentation projection](cli-presentation-projection.md), and
-  [implementation and cutover](handwritten-sdk-conformer.md) plans. The retained
-  CLI interface projection may own commands and discovery; its separate private
-  dispatch adapter projection may own exhaustive typed wiring. Only the adapter
-  may contain Rust implementation names, and neither may own provider
-  validation, request serialization, or response decoding.
+- The SDK is handwritten-only. The retained CLI interface projection owns
+  commands and discovery; its separate private dispatch adapter projection owns
+  exhaustive typed wiring. Only the adapter contains Rust implementation names,
+  and neither projection owns provider validation, request serialization, or
+  response decoding.
 
 ## Source-publication gate
 
@@ -132,9 +129,7 @@ publish the crate, or finalize a CLI release.
 
 ## Next action
 
-Wait for the contract plan to establish the CLI-owned interface, the CLI
-presentation plan to implement it, and the conformer plan to complete the
-handwritten-only product cutover. Then wait for the SDK task to publish and
-verify the exact non-prerelease `opendart` registry artifact. Align the CLI's
-exact dependency pin only after that gate; do not bootstrap CLI publication
-from generated-SDK or prerelease evidence alone.
+Wait for the SDK task to publish and verify the exact non-prerelease `opendart`
+registry artifact under explicit publication authority. Align the CLI's exact
+dependency pin only after that gate; do not bootstrap CLI publication from
+repository-only or prerelease evidence.

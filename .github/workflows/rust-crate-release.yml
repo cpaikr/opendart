@@ -355,10 +355,10 @@ jobs:
           ${PACKAGE} = { version = "=${VERSION}", default-features = false }
           EOF
           cat > "${consumer}/src/main.rs" <<'EOF'
-          use opendart::operations::Company;
+          use opendart::operations::disclosure::CompanyOverviewInput;
 
           fn main() -> Result<(), Box<dyn std::error::Error>> {
-              let request = Company::new("00126380").prepare_json()?;
+              let request = CompanyOverviewInput::new("00126380".to_owned()).prepare_json()?;
               assert_eq!(request.relative_path(), "/api/company.json");
               Ok(())
           }

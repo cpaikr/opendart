@@ -1,6 +1,6 @@
 # ADR 0004: Use one handwritten Rust SDK conformer
 
-- Status: accepted; implementation pending
+- Status: accepted; implemented
 - Date: 2026-08-03
 - Amends: [ADR 0002](0002-public-rust-sdk.md) and
   [ADR 0003](0003-agent-first-opendart-cli.md)
@@ -37,11 +37,11 @@ own its presentation language.
 
 OpenAPI remains the sole authority for operation inventory, paths, methods,
 parameters, authentication shape, schemas, statuses, media types, and provider
-failure envelopes. The public Rust SDK will contain one handwritten conformer
-for that contract.
+failure envelopes. The public Rust SDK contains one handwritten conformer for
+that contract.
 
-The repository will remove generated SDK request builders, validators, wire
-types, response decoders, and their renderer after cutover. It will not retain
+The repository has removed generated SDK request builders, validators, wire
+types, response decoders, and their renderer. It does not retain
 a public or private permanent generated/handwritten selector, differential
 conformer, compatibility alias layer, runtime OpenAPI parser, schema manifest,
 build script, or proc-macro replacement.
@@ -56,8 +56,9 @@ Rust modules, inputs, methods, wrappers, and accessors use reviewed concise
 semantic English even when it diverges from abbreviated OpenDART stems rather
 than preserving generator spelling. Required values are constructor inputs;
 optional values use consuming builders or equally explicit project-owned
-setters. Reusable validated values exist only for recurring invariants proven
-identical across operations.
+setters. Private reusable validation exists only for recurring invariants
+proven identical across operations and does not create a second public input
+API.
 
 Every operation and representation retains its exact physical and logical
 OpenAPI identity as protocol evidence. Those identities do not force Rust names
@@ -126,14 +127,11 @@ Structured CLI output serializes the SDK wrapper's retained source evidence
 inside the CLI-owned process envelope. The CLI does not re-decode response
 bodies or maintain endpoint-specific response mirrors.
 
-The CLI interface and private dispatch adapter projections are implemented
-after the reviewed interface manifests and before the handwritten SDK
-conformer. During that interval, the private adapter may still name generated
-SDK types while public grammar and discovery are already independent of those
-symbols. This is a temporary adapter at the runtime seam, not a public
-compatibility interface or a second conformer.
+The CLI interface and private dispatch adapter remain generated after the SDK
+cutover. The private adapter names handwritten Rust symbols, while public
+grammar and discovery remain independent of them.
 
-### Provenance and migration
+### Provenance and completed migration
 
 Runtime SDK provenance retains the crate version, applicable specification
 source release, and canonical OpenAPI bundle checksum. Generator schema and SDK
@@ -141,18 +139,12 @@ projection identity are removed. Exact Git revision remains Cargo package and
 release evidence through `.cargo_vcs_info.json`; no runtime Git-revision or
 undefined contract-profile field is introduced.
 
-The CLI-owned grammar and discovery projection may land first while the
-generated SDK remains the sole public and runtime conformer. CLI documentation
-changes with that presentation implementation and continues to identify its
-private dispatch as generated-SDK-backed.
-
-The handwritten implementation may then be developed privately. SDK export
-switch, private CLI dispatch retargeting, SDK generator deletion, SDK and
-integration-documentation changes, and offline package qualification form one
-later product-state transition. The work may use multiple reviewable commits,
-but a dual-conformer state is not a completed or supported milestone. SDK
-documentation continues to describe the generated implementation until that
-atomic cutover lands.
+The SDK export switch, private CLI dispatch retargeting, SDK generator deletion,
+documentation reconciliation, and offline source-package qualification form one
+product-state transition. Registry-artifact qualification remains a later
+release concern. The repository exposes no generated SDK path, compatibility
+selector, or supported dual-conformer state. The retained CLI interface and
+dispatch projections have independent ownership and freshness identities.
 
 ADR 0002's first-party SDK product, pure request boundary, safe native client,
 security, compatibility, packaging, and independent release decisions remain.
@@ -162,7 +154,7 @@ before-CLI publication order remain.
 
 ## Consequences
 
-- OpenAPI is the only complete wire authority, and the final Rust product has
+- OpenAPI is the only complete wire authority, and the Rust product has
   one handwritten conformance path.
 - Rust and CLI compatibility reflect reviewed product language instead of
   incidental generator layout.

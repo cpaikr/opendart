@@ -69,8 +69,8 @@ type ResponseView struct {
 	Accessors map[string]string `toml:"accessors"`
 }
 
-// Physical binds a canonical physical identity to future handwritten Rust
-// symbols. Current generated-SDK dispatch does not consume these names.
+// Physical binds a canonical physical identity to handwritten Rust symbols.
+// Only the CLI's private dispatch projection consumes these names.
 type Physical struct {
 	OperationID  string `toml:"operation_id"`
 	RustMethod   string `toml:"rust_method"`

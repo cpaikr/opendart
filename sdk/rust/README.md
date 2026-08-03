@@ -5,14 +5,11 @@ This isolated Cargo workspace contains:
 - `opendart`, the public protocol SDK; and
 - `opendart-cli`, the independently versioned binary-only public CLI.
 
-Consumer builds use Cargo and the checked-in Rust source. The private Go
-generator and canonical OpenAPI inputs remain repository tooling.
-
-This README describes the current generated SDK workspace. The accepted
-handwritten-only target and the implemented CLI presentation boundary are
-recorded in
+Consumer builds use Cargo and the checked-in Rust source. The SDK implementation
+is handwritten. Private Go tooling and canonical OpenAPI inputs remain
+repository-only and generate only the CLI interface and private dispatch
+projections described by
 [ADR 0004](../../docs/decisions/0004-handwritten-rust-sdk-conformer.md).
-Generated SDK guidance remains current until the later implementation cutover.
 
 ## Verification
 
@@ -67,14 +64,13 @@ changing either behavior-defining pin requires CLI compatibility review.
 
 The package inventories require Cargo's `.cargo_vcs_info.json` for the exact
 source revision. The SDK also exposes `source_provenance()` for the semantic
-specification source, canonical bundle checksum, generator schema, and SDK
-projection checksum.
+specification source and canonical bundle checksum.
 
 ## Documentation
 
 - [Repository layout](../../docs/rust-sdk/repository-layout.md)
 - [SDK public contract](../../docs/rust-sdk/public-contract.md)
-- [Generation](../../docs/rust-sdk/generation.md)
+- [CLI projection generation](../../docs/rust-sdk/generation.md)
 - [Transport and safety](../../docs/rust-sdk/transport-and-safety.md)
 - [SDK verification and release](../../docs/rust-sdk/verification-and-release.md)
 - [CLI architecture](../../docs/rust-cli/architecture.md)

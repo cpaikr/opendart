@@ -112,7 +112,7 @@ func TestCheckRejectsVerificationPortfolioMutations(t *testing.T) {
 		},
 		{
 			name: "targeted race package", artifact: verificationScriptArtifact,
-			old: "    ./internal/guide \\\n", replacement: "",
+			old: "    ./internal/sdkgen/model\n", replacement: "",
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
@@ -678,8 +678,13 @@ func TestCheckRejectsRustPackageMutations(t *testing.T) {
 		},
 		{
 			name: "required package evidence", artifact: rustPackageListArtifact,
-			old: "src/provenance.rs\n", replacement: "",
+			old: "src/operations/mod.rs\n", replacement: "",
 			invariant: "contains required package evidence",
+		},
+		{
+			name: "generated SDK source", artifact: rustPackageListArtifact,
+			old: "src/lib.rs\n", replacement: "src/generated/mod.rs\nsrc/lib.rs\n",
+			invariant: "excludes generated SDK source",
 		},
 		{
 			name: "private package input", artifact: rustPackageListArtifact,
@@ -1334,6 +1339,11 @@ func TestCheckRejectsReleasePolicyMutations(t *testing.T) {
 		{
 			name: "isolated workspace package dry run", artifact: verificationScriptArtifact,
 			old: `CARGO_TARGET_DIR="${verification_tmp}/package-target" cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml`, replacement: "cargo +1.97.1 package --workspace --locked --offline --manifest-path sdk/rust/Cargo.toml",
+			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
+		},
+		{
+			name: "packaged SDK source compiles", artifact: verificationScriptArtifact,
+			old: `cargo +1.97.1 test --locked --offline --manifest-path "${sdk_packaged_source}/Cargo.toml" --all-features --no-run`, replacement: `test -f "${sdk_packaged_source}/Cargo.toml"`,
 			invariant: "matches the reviewed fast, pull-request, and exhaustive tier contract",
 		},
 		{
