@@ -10,8 +10,9 @@ generator and canonical OpenAPI inputs remain repository tooling.
 
 This README describes the current generated SDK workspace. The accepted
 handwritten-only target and its CLI projection boundary are recorded in
-[ADR 0004](../../docs/decisions/0004-handwritten-rust-sdk-conformer.md) and will
-replace this current-state guidance only when the implementation cutover lands.
+[ADR 0004](../../docs/decisions/0004-handwritten-rust-sdk-conformer.md). The CLI
+presentation guidance changes when its staged plan lands; generated SDK
+guidance remains current until the later implementation cutover.
 
 ## Verification
 

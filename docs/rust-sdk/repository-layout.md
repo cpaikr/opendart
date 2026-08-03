@@ -7,8 +7,9 @@ component owns each part of its implementation. Delivery state and next actions
 belong in the [Public Rust SDK plan](../../plans/rust/public-rust-sdk.md).
 
 The topology below is current. [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md)
-accepts a handwritten-only SDK layout and a retained CLI interface projection;
-the combined implementation plan will update this page when that layout exists.
+accepts a handwritten-only SDK layout and retained CLI interface and private
+dispatch adapter projections; the staged CLI presentation and SDK cutover plans
+will update this page when that layout exists.
 
 ## Topology
 

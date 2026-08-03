@@ -35,11 +35,13 @@ endpoint contracts.
   CLI release output, and the reusable crate workflow is still SDK-specific.
   No current workflow can publish `opendart-cli`.
 - The SDK's generated conformer is scheduled for replacement by the
-  [handwritten contract](handwritten-sdk-contract-and-conformance.md) and
-  combined [implementation and cutover](handwritten-sdk-conformer.md) plans.
-  The retained CLI interface projection may own commands, discovery, and
-  exhaustive typed wiring, but it must not expose Rust implementation names or
-  own provider validation, request serialization, or response decoding.
+  [handwritten contract](handwritten-sdk-contract-and-conformance.md),
+  [CLI presentation projection](cli-presentation-projection.md), and
+  [implementation and cutover](handwritten-sdk-conformer.md) plans. The retained
+  CLI interface projection may own commands and discovery; its separate private
+  dispatch adapter projection may own exhaustive typed wiring. Only the adapter
+  may contain Rust implementation names, and neither may own provider
+  validation, request serialization, or response decoding.
 
 ## Source-publication gate
 
@@ -120,17 +122,19 @@ publish the crate, or finalize a CLI release.
   installers, and package-manager publication remain in the
   [prebuilt-release task](../../tasks/rust/opendart-cli-prebuilt-releases.md).
 - CLI generation and ordinary verification remain offline and
-  credential-free. Generated CLI code may own explicit CLI grammar, discovery,
-  and exhaustive private typed wiring, with its own checksum and freshness
-  gate. Public discovery must not expose SDK field or response-type symbols,
-  and the projection must not own provider serialization, validation, or
-  response decoding. A real OpenDART smoke call is optional post-release
-  evidence, never a publication or finalization gate.
+  credential-free. The generated interface projection may own explicit CLI
+  grammar and discovery; the generated private dispatch adapter may own
+  exhaustive typed wiring. Each has its own checksum and freshness gate. Public
+  discovery must not expose SDK field or response-type symbols, and neither
+  projection may own provider serialization, validation, or response decoding.
+  A real OpenDART smoke call is optional post-release evidence, never a
+  publication or finalization gate.
 
 ## Next action
 
-Wait for the handwritten SDK plans to establish the CLI-owned interface and
-complete the handwritten-only product cutover, then wait for the SDK task to
-publish and verify the exact non-prerelease `opendart` registry artifact. Align
-the CLI's exact dependency pin only after that gate; do not bootstrap CLI
-publication from generated-SDK or prerelease evidence alone.
+Wait for the contract plan to establish the CLI-owned interface, the CLI
+presentation plan to implement it, and the conformer plan to complete the
+handwritten-only product cutover. Then wait for the SDK task to publish and
+verify the exact non-prerelease `opendart` registry artifact. Align the CLI's
+exact dependency pin only after that gate; do not bootstrap CLI publication
+from generated-SDK or prerelease evidence alone.

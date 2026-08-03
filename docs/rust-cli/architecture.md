@@ -7,8 +7,10 @@ CLI. The repository-wide view is documented in
 
 [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md) accepts a target
 where generation owns only CLI grammar, discovery, and private exhaustive typed
-wiring while the handwritten SDK owns all HTTP behavior. This page continues
-to describe the implemented generated-SDK integration until that cutover lands.
+wiring while the handwritten SDK owns all HTTP behavior. The
+[CLI presentation plan](../../plans/rust/cli-presentation-projection.md) first
+decouples public grammar and discovery from Rust symbols; this page continues
+to describe the implemented generated-SDK integration until that plan lands.
 
 ## Purpose and boundaries
 

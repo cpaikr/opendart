@@ -17,7 +17,7 @@ contract.
 | Implementation | The generated SDK, transport-independent response interpretation, safe client, and CLI integration are implemented; no handwritten operation conformer exists yet |
 | Delivery | `0.1.0-beta.1` is superseded; its publication stopped before `cargo publish` |
 | Public availability | No accepted registry artifact, SDK tag, or published SDK release has been verified |
-| Scheduling | Release recovery is deferred behind the two handwritten-conformer plans in [the Rust roadmap](../../ROADMAP_RUST.md) |
+| Scheduling | Release recovery is deferred behind the contract, CLI presentation, and handwritten-conformer plans in [the Rust roadmap](../../ROADMAP_RUST.md) |
 
 The merged Release Please proposal advanced the SDK manifest, changelog, lock
 files, and release manifest to `0.1.0-beta.1`. Those repository changes are
@@ -48,8 +48,9 @@ do not infer current release state from this dated record.
 
 ## Remaining delivery work
 
-1. Complete the [contract and Rust-native conformance plan](../../plans/rust/handwritten-sdk-contract-and-conformance.md)
-   and the combined [handwritten implementation and cutover plan](../../plans/rust/handwritten-sdk-conformer.md).
+1. Complete the [contract and Rust-native conformance plan](../../plans/rust/handwritten-sdk-contract-and-conformance.md),
+   the [CLI presentation projection plan](../../plans/rust/cli-presentation-projection.md),
+   and the [handwritten implementation and cutover plan](../../plans/rust/handwritten-sdk-conformer.md).
 2. Review the resulting breaking package contract, then let Release Please
    propose a new beta candidate from the handwritten-only SDK revision.
 3. Revalidate the new draft, version, candidate commit, environment, registry,
@@ -74,6 +75,7 @@ superseded beta.1 draft is not an authorized recovery source.
 - [Rust roadmap](../../ROADMAP_RUST.md)
 - [ADR 0004: Use one handwritten Rust SDK conformer](../../docs/decisions/0004-handwritten-rust-sdk-conformer.md)
 - [Handwritten SDK contract and conformance](../../plans/rust/handwritten-sdk-contract-and-conformance.md)
+- [CLI presentation projection](../../plans/rust/cli-presentation-projection.md)
 - [Handwritten SDK implementation and cutover](../../plans/rust/handwritten-sdk-conformer.md)
 - [SDK public contract](../../docs/rust-sdk/public-contract.md)
 - [Generation pipeline](../../docs/rust-sdk/generation.md)

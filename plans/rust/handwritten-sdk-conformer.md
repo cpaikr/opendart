@@ -19,12 +19,17 @@ completed or supported milestone.
   has approved the exact Rust and CLI product interface, physical/logical
   identity mapping, Rust-native coverage inventory, independent evidence, and
   mutation controls.
-- Current public-contract, architecture, generation, and README documents still
-  describe the generated implementation. ADR 0004 describes the accepted
-  target until this plan changes implementation and active documentation
-  together.
-- The CLI's current generated dispatch constructs SDK types directly, so SDK
-  exports, CLI adaptation, and generator deletion belong to this same plan.
+- The [CLI presentation projection plan](cli-presentation-projection.md) has
+  implemented reviewed CLI-owned grammar and discovery while isolating current
+  generated-SDK symbols inside private exhaustive dispatch.
+- Current SDK contract, architecture, generation, layout, and README documents
+  still describe the generated conformer. CLI documents describe the reviewed
+  presentation projection backed by that current conformer. ADR 0004 describes
+  the accepted target until this plan changes implementation and active SDK and
+  integration documentation together.
+- The CLI's private generated dispatch still constructs SDK types directly, so
+  retargeting that adapter, switching SDK exports, and deleting SDK generation
+  belong to this same plan.
 
 ## Final implementation shape
 
@@ -38,7 +43,8 @@ opendart
 └── client/                 safe native transport
 
 opendart-cli
-├── generated interface/    commands, discovery, and exhaustive typed wiring
+├── generated interface/    commands and discovery
+├── generated adapter/      private exhaustive typed wiring
 └── handwritten runtime/    process, credential, output, and artifact policy
 ```
 
@@ -47,9 +53,9 @@ methods, representation-specific wrappers, private decoder, and focused tests.
 Shared helpers own only mechanics that are genuinely identical. There is no
 Rust schema manifest or macro input that becomes a parallel wire authority.
 
-The CLI projection owns CLI grammar and exhaustive typed wiring. It does not
-own provider parameter validation, request serialization, response decoding,
-or response schemas.
+The CLI interface projection owns grammar and discovery. Its separate private
+dispatch adapter owns exhaustive typed wiring. Neither owns provider parameter
+validation, request serialization, response decoding, or response schemas.
 
 ## Work
 
@@ -115,22 +121,19 @@ or response schemas.
   target, MSRV, WebAssembly, documentation, and package tests through the same
   public seams consumers use.
 
-### 6. Adapt the CLI as a presentation consumer
+### 6. Retarget the private CLI runtime adapter
 
-- Give commands and flags the reviewed CLI-owned product names rather than
-  deriving them from Rust identifiers. Preserve stable logical and physical
-  OpenAPI identities as discovery data.
-- Retain generated catalog, command breadth, discovery, and exhaustive typed
-  call wiring as a CLI interface projection with its own checksum and freshness
-  gate.
-- Remove `sdk_field` and `response_type` from public discovery. Rust symbol
-  names may appear only inside private generated dispatch.
-- Route every call through handwritten SDK constructors, preparation, wrappers,
-  and failure categories.
+- Preserve the already-reviewed CLI grammar, discovery, aliases, catalog, and
+  interface-projection checksum without deriving any public change from Rust
+  symbols.
+- Regenerate or rewrite only the exhaustive private dispatch adapter so every
+  call uses handwritten SDK constructors, preparation, wrappers, and failure
+  categories. Rust symbols remain confined to that adapter and its independent
+  freshness identity.
 - Serialize SDK wrappers through their source-shaped serialization contract.
   Do not re-decode bodies or maintain endpoint-specific CLI response mirrors.
-- Preserve keyless discovery, exit codes, binary artifact transactions, and
-  credential boundaries.
+- Preserve keyless discovery, exit codes, process envelopes, binary artifact
+  transactions, credential boundaries, and dispatch completeness.
 
 ### 7. Apply one final product-state transition
 
@@ -142,8 +145,9 @@ or response schemas.
   `#[rustfmt::skip]` wiring, renderer, SDK-specific artifact model, projection
   checksums, freshness paths, generation-only fixtures, and generator-only
   tests. Retain the independent fictional provider evidence.
-- Split `internal/sdkgen/model` so only the CLI interface projection remains.
-  Confirm that it contains no provider validation, serialization, or decoding.
+- Delete the remaining SDK-specific parts of `internal/sdkgen/model` so only
+  the CLI interface and private dispatch adapter projections remain. Confirm
+  that neither contains provider validation, serialization, or decoding.
 - Remove runtime generator schema and SDK projection identity. Runtime
   provenance retains crate version, specification source release, and canonical
   bundle checksum; Cargo `.cargo_vcs_info.json` retains exact Git revision.
@@ -156,9 +160,9 @@ dual-conformer architecture.
 
 ### 8. Reconcile active documentation and release inputs
 
-- Update `ARCHITECTURE.md`, SDK and CLI contracts, verification guides,
-  repository layout, READMEs, package docs, and ADR status notes to describe
-  the handwritten-only implementation.
+- Update `ARCHITECTURE.md`, SDK contracts, verification guides, repository
+  layout, READMEs, package docs, ADR status notes, and any CLI integration
+  references to describe the handwritten-only implementation.
 - Remove or replace the active SDK generation guide. Retain only CLI interface
   projection guidance where it remains true.
 - Package SDK and CLI from clean source. Prove neither archive contains SDK
@@ -201,7 +205,8 @@ to preserve generator-shaped compatibility.
   projection checksum, SDK freshness command, runtime generator provenance, or
   active SDK generation guidance.
 - CLI discovery exposes no Rust field or response-type symbols. Its retained
-  interface projection is exhaustive and contains no HTTP semantics.
+  interface projection is complete, its private dispatch adapter is exhaustive,
+  and neither contains HTTP semantics.
 - Full Go and Rust verification, formatting, linting, documentation, MSRV,
   WebAssembly, feature-unification, adversarial transport, CLI process,
   package-content, clean-install, provenance, and release-guard checks pass
@@ -214,7 +219,7 @@ to preserve generator-shaped compatibility.
 - Source, packages, tests, and active documentation expose one handwritten SDK
   conformer and no generated compatibility path.
 - The CLI consumes the conformer as a presentation client and retains only its
-  bounded interface projection.
+  bounded interface and private dispatch adapter projections.
 - Independent evidence, mutation controls, real transport safety, clean package
   installation, and release guards all pass.
 - The [public SDK delivery plan](public-rust-sdk.md) becomes the
@@ -223,8 +228,8 @@ to preserve generator-shaped compatibility.
 
 ## Next action
 
-After the contract plan completes, deepen the shared private helpers and
-implement one representative JSON/XML operation plus the ZIP operation through
-the Rust-native gate. Continue within this plan through full inventory coverage,
-CLI adaptation, SDK generator deletion, active-documentation cutover, and
-offline package qualification.
+After the contract and CLI presentation plans complete, deepen the shared
+private helpers and implement one representative JSON/XML operation plus the
+ZIP operation through the Rust-native gate. Continue within this plan through
+full inventory coverage, private CLI dispatch retargeting, SDK generator
+deletion, active-documentation cutover, and offline package qualification.

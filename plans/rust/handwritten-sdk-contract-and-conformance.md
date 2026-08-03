@@ -52,9 +52,12 @@ are scaled across the inventory:
   and serializes through the retained source representation rather than a
   second field model.
 - Rust operation names and CLI command names are reviewed as product language.
-  They do not inherit generator spelling. Exact physical and logical OpenAPI
-  identities remain available as protocol evidence; compatibility aliases are
-  not added for the unpublished generated interface.
+  Use concise semantic English even when it diverges from abbreviated OpenDART
+  stems. Rust and CLI names do not inherit generator spelling or need to match
+  each other mechanically. Exact physical and logical OpenAPI identities remain
+  available as protocol evidence; stable logical IDs remain CLI machine-call
+  aliases, and compatibility aliases are not added for the unpublished
+  generated interface.
 - CLI discovery exposes CLI and source concepts, not Rust implementation names.
   Generated CLI typed dispatch may refer to Rust symbols privately.
 
@@ -64,7 +67,8 @@ are scaled across the inventory:
 
 - Review the complete logical operation inventory in DS001 through DS006
   batches. Approve each batch's idiomatic Rust module, input, method, response,
-  and accessor names before that family is handwritten.
+  and accessor names before that family is handwritten. Use DS001 to establish
+  the semantic-English convention, then apply it consistently through DS006.
 - Approve explicit CLI-owned command and flag names independently of Rust field
   spelling. Keep stable logical IDs as machine-call aliases for the reviewed
   command names rather than coupling those names to Rust symbols.

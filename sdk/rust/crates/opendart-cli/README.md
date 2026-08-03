@@ -8,11 +8,11 @@ The CLI package is prepared for crates.io but is not yet published. Current
 publication status lives in the
 [CLI delivery plan](../../../../plans/rust/public-opendart-cli.md).
 
-This README describes the current CLI integration. The accepted handwritten
-SDK cutover gives the CLI explicit presentation names and removes Rust symbols
-from public discovery; see
-[ADR 0004](../../../../docs/decisions/0004-handwritten-rust-sdk-conformer.md).
-Those changes are not current behavior.
+This README describes the current CLI integration. The accepted
+[CLI presentation plan](../../../../plans/rust/cli-presentation-projection.md)
+gives the CLI explicit presentation names and removes Rust symbols from public
+discovery before the later handwritten SDK cutover. Those changes are not
+current behavior.
 
 From a reviewed source checkout, install the locked package reproducibly with:
 

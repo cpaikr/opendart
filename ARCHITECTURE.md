@@ -5,8 +5,8 @@
 This document describes the implemented repository architecture. The accepted
 handwritten-only Rust SDK target is recorded in
 [ADR 0004](docs/decisions/0004-handwritten-rust-sdk-conformer.md); generated SDK
-sections below remain current until the combined implementation cutover updates
-code and active architecture together.
+sections below remain current until the implementation cutover, while CLI
+presentation sections update earlier with the staged CLI projection plan.
 
 This repository maintains public products derived from one source-backed
 OpenDART contract:
@@ -259,8 +259,9 @@ implemented source-distribution boundary and durable publication contract.
 [ADR 0004](docs/decisions/0004-handwritten-rust-sdk-conformer.md) accepts one
 handwritten Rust conformer, Rust-native conformance, deliberate Rust and CLI
 product names, source-complete response wrappers, and a presentation-only CLI
-interface projection. The linked Rust plans own the transition; this document
-continues to describe the generated implementation until that transition lands.
+interface projection with a separate private dispatch adapter. The linked Rust
+plans own the transition; this document continues to describe current
+implementation and updates at each staged transition.
 
 [`ROADMAP.md`](ROADMAP.md) and [`ROADMAP_RUST.md`](ROADMAP_RUST.md) own delivery
 priority. Their linked plans and tasks own implementation status, blockers, and

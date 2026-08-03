@@ -52,11 +52,12 @@ public operation registry, operation trait, or transport trait is introduced.
 
 ### Deliberate Rust interface
 
-Rust modules, inputs, methods, wrappers, and accessors use reviewed idiomatic
-product names rather than preserving generator spelling. Required values are
-constructor inputs; optional values use consuming builders or equally explicit
-project-owned setters. Reusable validated values exist only for recurring
-invariants proven identical across operations.
+Rust modules, inputs, methods, wrappers, and accessors use reviewed concise
+semantic English even when it diverges from abbreviated OpenDART stems rather
+than preserving generator spelling. Required values are constructor inputs;
+optional values use consuming builders or equally explicit project-owned
+setters. Reusable validated values exist only for recurring invariants proven
+identical across operations.
 
 Every operation and representation retains its exact physical and logical
 OpenAPI identity as protocol evidence. Those identities do not force Rust names
@@ -105,24 +106,32 @@ language conformer creates a concrete need.
 
 ### CLI presentation boundary
 
-The CLI owns explicit command names, flags, descriptions, discovery fields,
-process envelopes, exit codes, and binary artifact policy. Public command names
-are not mechanically derived from Rust identifiers. Stable logical IDs remain
-machine-call aliases for those reviewed command names. Discovery retains
-logical and physical OpenAPI identities, source parameter concepts,
-constraints, and coarse response shape, but removes Rust implementation fields
-such as `sdk_field` and `response_type`.
+The CLI owns explicit concise semantic-English command names, flags,
+descriptions, discovery fields, process envelopes, exit codes, and binary
+artifact policy. Public command names are not mechanically derived from Rust
+identifiers. Stable logical IDs remain machine-call aliases for those reviewed
+command names. Discovery retains logical and physical OpenAPI identities,
+source parameter concepts, constraints, and coarse response shape, but removes
+Rust implementation fields such as `sdk_field` and `response_type`.
 
 An OpenAPI-derived CLI interface projection may continue to generate the
-command catalog, parser breadth, discovery, and exhaustive private typed call
-wiring. That projection retains its own checksum and freshness verification.
-It must not own provider parameter validation, request serialization, response
-decoding, or response schemas. Rust symbol names may occur only inside private
-dispatch wiring.
+command catalog, parser breadth, and discovery. A separate private dispatch
+adapter projection generates exhaustive typed call wiring and is the only CLI
+projection that may contain Rust symbol names. Each projection has its own
+checksum and freshness verification so a private Rust rename cannot change the
+public interface projection. Neither projection owns provider parameter
+validation, request serialization, response decoding, or response schemas.
 
 Structured CLI output serializes the SDK wrapper's retained source evidence
 inside the CLI-owned process envelope. The CLI does not re-decode response
 bodies or maintain endpoint-specific response mirrors.
+
+The CLI interface and private dispatch adapter projections are implemented
+after the reviewed interface manifests and before the handwritten SDK
+conformer. During that interval, the private adapter may still name generated
+SDK types while public grammar and discovery are already independent of those
+symbols. This is a temporary adapter at the runtime seam, not a public
+compatibility interface or a second conformer.
 
 ### Provenance and migration
 
@@ -132,17 +141,18 @@ projection identity are removed. Exact Git revision remains Cargo package and
 release evidence through `.cargo_vcs_info.json`; no runtime Git-revision or
 undefined contract-profile field is introduced.
 
-The generated implementation may remain the sole public path while the
-handwritten implementation is developed privately. Implementation, SDK export
-switch, CLI adaptation, SDK generator deletion, active-documentation changes,
-and offline package qualification form one product-state transition. The work
-may use multiple reviewable commits, but a dual-conformer state is not a
-completed or supported milestone.
+The CLI-owned grammar and discovery projection may land first while the
+generated SDK remains the sole public and runtime conformer. CLI documentation
+changes with that presentation implementation and continues to identify its
+private dispatch as generated-SDK-backed.
 
-Until that transition lands, current SDK and CLI architecture, contract,
-generation, and README pages continue to describe the generated implementation
-and link to this ADR as the accepted target. They change to handwritten-only
-language atomically with the implementation cutover.
+The handwritten implementation may then be developed privately. SDK export
+switch, private CLI dispatch retargeting, SDK generator deletion, SDK and
+integration-documentation changes, and offline package qualification form one
+later product-state transition. The work may use multiple reviewable commits,
+but a dual-conformer state is not a completed or supported milestone. SDK
+documentation continues to describe the generated implementation until that
+atomic cutover lands.
 
 ADR 0002's first-party SDK product, pure request boundary, safe native client,
 security, compatibility, packaging, and independent release decisions remain.
@@ -163,6 +173,9 @@ before-CLI publication order remain.
   bounded live evidence rather than one all-purpose projection.
 - CLI generation remains valuable for exhaustive presentation and integration
   wiring but cannot become another HTTP conformer.
+- Separating the CLI presentation implementation gives its grammar and
+  discovery contract an independent review surface; only the private runtime
+  adapter remains coupled to SDK cutover.
 - Removing the generated public interface is intentionally breaking, but no
   published SDK contract requires aliases or a staged compatibility mode.
 
@@ -178,11 +191,18 @@ before-CLI publication order remain.
   part of the first public compatibility contract.
 - Moving response conversion into the CLI would duplicate SDK schemas and make
   CLI releases responsible for provider decoding.
+- Keeping all CLI presentation changes inside the conformer cutover would make
+  one review surface own two independently testable interfaces without an
+  atomicity requirement.
+- Moving private CLI dispatch retargeting after SDK cutover would either break
+  the CLI or require a temporary public compatibility path.
 
 ## Delivery
 
 - [Contract and Rust-native conformance
   plan](../../plans/rust/handwritten-sdk-contract-and-conformance.md)
+- [CLI presentation projection
+  plan](../../plans/rust/cli-presentation-projection.md)
 - [Handwritten implementation and cutover
   plan](../../plans/rust/handwritten-sdk-conformer.md)
 - [Public Rust SDK delivery plan](../../plans/rust/public-rust-sdk.md)

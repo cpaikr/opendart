@@ -16,14 +16,18 @@ not authorize a registry, release, secret, or workflow side effect.
 
 ## Plans
 
-1. [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
+1. [Decouple the CLI presentation projection from Rust SDK symbols](plans/rust/cli-presentation-projection.md)
+   implements the reviewed CLI-owned grammar and discovery contract while the
+   generated SDK remains the sole runtime conformer behind private dispatch.
+2. [Implement and cut over the handwritten Rust SDK conformer](plans/rust/handwritten-sdk-conformer.md)
    owns the complete transition from the generated public implementation to one
-   handwritten product path, including CLI adaptation, SDK generator deletion,
-   active-documentation reconciliation, and offline package qualification.
-2. [Publish and adopt the public Rust SDK](plans/rust/public-rust-sdk.md) remains
+   handwritten product path, including private CLI dispatch retargeting, SDK
+   generator deletion, active-documentation reconciliation, and offline package
+   qualification.
+3. [Publish and adopt the public Rust SDK](plans/rust/public-rust-sdk.md) remains
    the enabling delivery item after the handwritten package passes its complete
    release gate.
-3. [Publish and adopt the public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
+4. [Publish and adopt the public agent-first OpenDART CLI](plans/rust/public-opendart-cli.md)
    remains blocked on a verified non-prerelease `opendart` registry release.
 
 The list is the intended work order. Capturing these plans does not start them

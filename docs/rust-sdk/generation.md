@@ -13,8 +13,9 @@ Delivery state belongs in the
 This document describes the current SDK and CLI generation pipeline. Under
 [ADR 0004](../decisions/0004-handwritten-rust-sdk-conformer.md), SDK wire-code
 generation is transitional and will be deleted with the handwritten cutover;
-only a bounded CLI interface projection may remain. Until then, these commands
-and freshness rules remain the implemented repository contract.
+only bounded CLI interface and private dispatch adapter projections may remain.
+Until then, these commands and freshness rules remain the implemented
+repository contract.
 
 ## Inputs and source of truth
 
